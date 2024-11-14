@@ -28,7 +28,7 @@ class HangmanGameState:
 class Hangman(Game):
 
     def __init__(self, word_to_guess: str = "") -> None:
-        """ Important: Game initialization also requires a set_state call to set the 'word_to_guess' """
+        """ Important: Game initialization also requires a set_state call to set the 'word_to_guess'. """
         self.word_to_guess = word_to_guess.lower()
         self.guesses = []
         self.incorrect_guesses = []
