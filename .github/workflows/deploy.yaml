@@ -28,8 +28,8 @@ jobs:
 
       - name: Run Linting
         run: |
-          flake8 . --count --select=E9,F63,F7,F82 --show-source --statistics
-          flake8 . --count --max-complexity=10 --max-line-length=150 --statistics
+          flake8 /server/py --count --select=E9,F63,F7,F82 --show-source --statistics
+          flake8 /server/py --count --max-complexity=10 --max-line-length=150 --statistics
 
   test:
     runs-on: ubuntu-latest
