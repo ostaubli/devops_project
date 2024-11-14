@@ -1,0 +1,93 @@
+name: CI/CD Workflow
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  lint:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v3
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.x'
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install flake8
+
+      - name: Run Linting
+        run: |
+          flake8 . --count --select=E9,F63,F7,F82 --show-source --statistics
+          flake8 . --count --max-complexity=10 --max-line-length=150 --statistics
+
+  test:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v3
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.x'
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+          pip install pytest
+
+      - name: Run Unit Tests
+        run: |
+          pytest --junitxml=test-results.xml || true
+
+      - name: Upload Test Results
+        uses: actions/upload-artifact@v3
+        with:
+          name: test-results
+          path: test-results.xml
+
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v3
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.x'
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+# TODO step for later.
+#  deploy-job:
+#    # add missing code
+#    permissions:
+#      contents: 'read'
+#      id-token: 'write'
+#    runs-on:  ubuntu-latest
+#    steps:
+#      # add missing steps
+#      - name: Authenticate Google Cloud
+#        uses: google-github-actions/auth@v2
+#        with:
+#          service_account: "Google Cloud Service Account (see Google Team Spreadsheet)"
+#          project_id: "Google Cloud project id (see Google Team Spreadsheet)"
+#          workload_identity_provider: "Google Cloud Workload Identity Provider (see Google Team Spreadsheet)"
+#      # add missing steps
