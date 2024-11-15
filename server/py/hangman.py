@@ -7,7 +7,12 @@ from server.py.game import Game, Player
 class GuessLetterAction:
 
     def __init__(self, letter: str) -> None:
-        self.letter = letter
+        if len(letter) != 1 or not letter.isalpha():
+            raise ValueError("A guess must be a single alphabetic character.")
+        self.letter = letter.lower()  # Ensure the letter is stored in lowercase
+
+    def __repr__(self) -> str:
+        return f"GuessLetterAction(letter='{self.letter}')"
 
 
 class GamePhase(str, Enum):
@@ -45,7 +50,9 @@ class Hangman(Game):
 
     def get_list_action(self) -> List[GuessLetterAction]:
         """ Get a list of possible actions for the active player """
-        pass
+        alphabet = 'abcdefghijklmnopqrstuvwxyz'
+        possible_guesses = [letter for letter in alphabet if letter not in self.state.guesses]
+        return [GuessLetterAction(letter) for letter in possible_guesses]
 
     def apply_action(self, action: GuessLetterAction) -> None:
         """ Apply the given action to the game """
