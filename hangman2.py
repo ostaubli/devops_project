@@ -108,7 +108,6 @@ ____
 """]
     def __init__(self) -> None:
         """ Important: Game initialization also requires a set_state call to set the 'word_to_guess' """
-        super().__init__()
         initial_state = HangmanGameState(
             word_to_guess=random.choice(["PYTHON", "HANGMAN", "DEVELOPER", "CHALLENGE"]),
             phase=GamePhase.SETUP,
