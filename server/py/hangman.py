@@ -28,8 +28,9 @@ class HangmanGameState:
 class Hangman(Game):
 
     def __init__(self) -> None:
+        self.state: Optional[HangmanGameState] = None # Game state, initially None, set later via `set_state` as shown in `__main__`
+        print("Hangman game initialized successfully!")
         """ Important: Game initialization also requires a set_state call to set the 'word_to_guess' """
-        pass
 
     def get_state(self) -> HangmanGameState:
         """ Set the game to a given state """
@@ -70,3 +71,4 @@ if __name__ == "__main__":
     game = Hangman()
     game_state = HangmanGameState(word_to_guess='DevOps', phase=GamePhase.SETUP, guesses=[], incorrect_guesses=[])
     game.set_state(game_state)
+    
