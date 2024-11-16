@@ -32,12 +32,29 @@ class Hangman(Game):
         """ Important: Game initialization also requires a set_state call to set the 'word_to_guess' """
 
     def get_state(self) -> HangmanGameState:
-        """ Set the game to a given state """
-        pass
+        """ Get the game state """
+        if self.state is None:
+            raise ValueError("Game state has not been initialized. Call `set_state` first.")
+        return self.state
 
     def set_state(self, state: HangmanGameState) -> None:
-        """ Get the complete, unmasked game state """
-        pass
+        """
+        Set the game's state.
+        Args:
+            state (HangmanGameState): The state to initialize or update the game with.
+        """
+        # Ensure the `state` parameter is explicitly passed and used
+        if not state.word_to_guess:
+            raise ValueError("The word to guess cannot be empty.")
+
+        # Automatically initialize for SETUP phase
+        if self.state is None:  # Check if this is the first time setting the state
+            state.phase = GamePhase.SETUP
+            state.guesses = []
+            state.incorrect_guesses = []
+
+        # Update the game state
+        self.state = state
 
     def print_state(self) -> None:
         """ Print the current game state """
@@ -70,4 +87,9 @@ if __name__ == "__main__":
     game = Hangman()
     game_state = HangmanGameState(word_to_guess='DevOps', phase=GamePhase.SETUP, guesses=[], incorrect_guesses=[])
     game.set_state(game_state)
-    
+    print("Game initialized successfully!")
+    print(f"Word to guess: {game.state.word_to_guess}")
+    print(f"Game phase: {game.state.phase}")
+
+
+
