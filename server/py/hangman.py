@@ -15,7 +15,7 @@ class GamePhase(str, Enum):
     RUNNING = 'running'        # while the game is running
     FINISHED = 'finished'      # when the game is finished
 
-
+# Kommentar für git test
 class HangmanGameState:
 
     def __init__(self, word_to_guess: str, phase: GamePhase, guesses: List[str], incorrect_guesses: List[str]) -> None:
