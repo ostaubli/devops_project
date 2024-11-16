@@ -28,7 +28,20 @@ class HangmanGameState:
 class Hangman(Game):
 
     def __init__(self) -> None:
-        """ Important: Game initialization also requires a set_state call to set the 'word_to_guess' """
+        print("Welcome to Hangman!")
+
+        # get the word to guess from player 1
+        word_to_guess = input("Please enter the word to guess: ")
+        
+        # initialize game state variables
+        self.guesses = []
+        self.phase = GamePhase.SETUP
+        initial_state = HangmanGameState(word_to_guess=word_to_guess,
+                                         guesses=self.guesses,
+                                         phase=self.phase)
+        
+        # call set_state to initialize game
+        self.set_state(initial_state)
         pass
 
     def get_state(self) -> HangmanGameState:
