@@ -51,31 +51,31 @@ class BattleshipGameState:
 
 class Battleship(Game):
 
-    def __init__(self):
+    def __init__(self): # Kägi
         """ Game initialization (set_state call not necessary) """
         pass
 
-    def print_state(self) -> None:
+    def print_state(self) -> None: # Kägi
         """ Set the game to a given state """
         pass
 
-    def get_state(self) -> BattleshipGameState:
+    def get_state(self) -> BattleshipGameState: # Kägi
         """ Get the complete, unmasked game state """
         pass
 
-    def set_state(self, state: BattleshipGameState) -> None:
+    def set_state(self, state: BattleshipGameState) -> None: # Kägi
         """ Print the current game state """
         pass
 
-    def get_list_action(self) -> List[BattleshipAction]:
+    def get_list_action(self) -> List[BattleshipAction]: # Kened
         """ Get a list of possible actions for the active player """
         pass
 
-    def apply_action(self, action: BattleshipAction) -> None:
+    def apply_action(self, action: BattleshipAction) -> None: # Kened
         """ Apply the given action to the game """
         pass
 
-    def get_player_view(self, idx_player: int) -> BattleshipGameState:
+    def get_player_view(self, idx_player: int) -> BattleshipGameState: # Kened
         """ Get the masked state for the active player (e.g. the oppontent's cards are face down)"""
         pass
 
