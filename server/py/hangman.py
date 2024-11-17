@@ -28,26 +28,26 @@ class Hangman(Game):
 
     def __init__(self) -> None:
         """ Important: Game initialization also requires a set_state call to set the 'word_to_guess' """
-        word_to_guess: input("Gib ein Wort ein")
+        word_to_guess = input("Gib ein Wort ein")
         initial_state = HangmanGameState(word_to_guess, GamePhase.SETUP, [], [])
         self.set_state(initial_state)
-        pass
+
+    def set_state(self, state: HangmanGameState) -> None:
+        """ Set the game to a given state """
+        self.state = state
 
     def get_state(self) -> HangmanGameState:
         """ Set the game to a given state """
-        pass
-
-    def set_state(self, state: HangmanGameState) -> None:
-        """ Get the complete, unmasked game state """
-        pass
+        return self.state
 
     def print_state(self) -> None:
         """ Print the current game state """
-        pass
+        print(self.state)
 
     def get_list_action(self) -> List[GuessLetterAction]:
         """ Get a list of possible actions for the active player """
-        pass
+        action = [GuessLetterAction(letter) for letter in "ABCDEFGHIJKLMNOPQRSTUVWXYZ"]
+        print(f'Du kannst aus folgenden Buchstaben raten {action}')
 
     def apply_action(self, action: GuessLetterAction) -> None:
         """ Apply the given action to the game """
