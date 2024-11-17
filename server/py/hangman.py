@@ -9,13 +9,12 @@ class GuessLetterAction:
     def __init__(self, letter: str) -> None:
         self.letter = letter
 
-
 class GamePhase(str, Enum):
     SETUP = 'setup'            # before the game has started
     RUNNING = 'running'        # while the game is running
     FINISHED = 'finished'      # when the game is finished
 
-# Kommentar für git test
+
 class HangmanGameState:
 
     def __init__(self, word_to_guess: str, phase: GamePhase, guesses: List[str], incorrect_guesses: List[str]) -> None:
@@ -29,6 +28,9 @@ class Hangman(Game):
 
     def __init__(self) -> None:
         """ Important: Game initialization also requires a set_state call to set the 'word_to_guess' """
+        word_to_guess: input("Gib ein Wort ein")
+        initial_state = HangmanGameState(word_to_guess, GamePhase.SETUP, [], [])
+        self.set_state(initial_state)
         pass
 
     def get_state(self) -> HangmanGameState:
