@@ -51,7 +51,12 @@ class Hangman(Game):
 
     def print_state(self) -> None:
         """ Print the current game state """
-        pass
+        masked_word = ''.join([c if c in self.guesses else '_' for c in self.word_to_guess])
+        print(f"Word to guess: {masked_word}")
+        print(f"Guesses: {', '.join(self.guesses)}")
+        print(f"Incorrect guesses ({len(self.incorrect_guesses)}): {', '.join(self.incorrect_guesses)}")
+        print(f"Remaining attempts: {self.max_incorrect_guesses - len(self.incorrect_guesses)}")
+        print(f"Phase: {self.phase}")
 
     def get_list_action(self) -> List[GuessLetterAction]:
         """ Get a list of possible actions for the active player """
