@@ -29,6 +29,7 @@ class Hangman(Game):
 
     def __init__(self) -> None:
         self.state: Optional[HangmanGameState] = None # Game state, initially None, set later via `set_state` as shown in `__main__`
+        self.max_attempts = 8 # Remaining attempts (e.g., max 6 incorrect guesses allowed)
         """ Important: Game initialization also requires a set_state call to set the 'word_to_guess' """
 
     def get_state(self) -> HangmanGameState:
@@ -45,9 +46,7 @@ class Hangman(Game):
             print("Game state is not initialized.")
             return
 
-        # Remaining attempts (e.g., max 6 incorrect guesses allowed)
-        max_attempts = 6
-        remaining_attempts = max_attempts - len(self.state.incorrect_guesses)
+        remaining_attempts = self.max_attempts - len(self.state.incorrect_guesses)
 
         # Print game state
         print("=== Hangman Game Test ===")
@@ -58,7 +57,15 @@ class Hangman(Game):
 
     def get_list_action(self) -> List[GuessLetterAction]:
         """ Get a list of possible actions for the active player """
-        pass
+        # Define the alphabet
+        alphabet = set("abcdefghijklmnopqrstuvwxyz")
+
+        # Find unguessed letters
+        guessed_letters = set(self.state.guesses + self.state.incorrect_guesses)
+        available_letters = alphabet - guessed_letters
+
+        # Return available letters as GuessLetterAction objects
+        return [GuessLetterAction(letter) for letter in sorted(available_letters)]
 
     def apply_action(self, action: GuessLetterAction) -> None:
         """ Apply the given action to the game """
@@ -85,11 +92,15 @@ if __name__ == "__main__":
 
     # Set up a new game state
     game_state = HangmanGameState(
-        word_to_guess="DevOps",
-        phase=GamePhase.RUNNING,
-        guesses=["D", "e", "p"],
-        incorrect_guesses=["X", "Z"]
+        word_to_guess="DevOps".lower(),  # Word to guess
+        phase=GamePhase.RUNNING,         # Phase set to RUNNING
+        guesses=[],                      # No correct guesses yet
+        incorrect_guesses=[]             # No incorrect guesses yet
     )
-    game.set_state(game_state)
+    game.set_state(game_state)  # Initialize the game state
 
     game.print_state()
+    print(game.state)
+    # Display available actions
+    actions = game.get_list_action()
+    print("\nAvailable actions:", [action.letter for action in actions])
