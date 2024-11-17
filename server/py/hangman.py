@@ -37,7 +37,7 @@ class Hangman(Game):
 
     def set_state(self, state: HangmanGameState) -> None:
         """ Get the complete, unmasked game state """
-        pass
+        self._state = state
 
     def print_state(self) -> None:
         """ Print the current game state """
