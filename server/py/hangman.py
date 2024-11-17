@@ -29,7 +29,8 @@ class Hangman(Game):
 
     def __init__(self) -> None:
         """ Important: Game initialization also requires a set_state call to set the 'word_to_guess' """
-        pass
+        self._state = None
+        self._players = [RandomPlayer()]
 
     def get_state(self) -> HangmanGameState:
         """ Set the game to a given state """
