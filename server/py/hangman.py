@@ -80,17 +80,16 @@ class RandomPlayer(Player):
 
 if __name__ == "__main__":
 
-    if __name__ == "__main__":
     # Initialize the Hangman game
-        game = Hangman()
+    game = Hangman()
 
-        # Set up a new game state
-        game_state = HangmanGameState(
-            word_to_guess="DevOps",
-            phase=GamePhase.RUNNING,
-            guesses=["D", "e", "p"],
-            incorrect_guesses=["X", "Z"]
-        )
-        game.set_state(game_state)
+    # Set up a new game state
+    game_state = HangmanGameState(
+        word_to_guess="DevOps",
+        phase=GamePhase.RUNNING,
+        guesses=["D", "e", "p"],
+        incorrect_guesses=["X", "Z"]
+    )
+    game.set_state(game_state)
 
-        game.print_state()
+    game.print_state()
