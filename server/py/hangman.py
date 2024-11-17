@@ -32,13 +32,19 @@ class Hangman(Game):
         self.word_to_guess = word_to_guess.lower()
         self.guesses = []
         self.incorrect_guesses = []
-        self.phase = GamePhase.SETUP if word_to_guess else GamePhase.FINISHED
-        self.max_incorrect_guesses = 6
+        self.phase = GamePhase.SETUP
+        self.max_incorrect_guesses = 8
 
     def get_state(self) -> HangmanGameState:
         """ Set the game to a given state """
-        pass
+        return HangmanGameState(
+            word_to_guess=self.word_to_guess,
+            phase=self.phase,
+            guesses=self.guesses,
+            incorrect_guesses=self.incorrect_guesses
+        )
 
+    self.phase = GamePhase.SETUP if word_to_guess else GamePhase.FINISHED
     def set_state(self, state: HangmanGameState) -> None:
         """ Get the complete, unmasked game state """
         pass
