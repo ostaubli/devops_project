@@ -33,15 +33,28 @@ class Hangman(Game):
 
     def get_state(self) -> HangmanGameState:
         """ Set the game to a given state """
-        pass
+        return self.state 
 
     def set_state(self, state: HangmanGameState) -> None:
         """ Get the complete, unmasked game state """
-        pass
+        self.state = state
 
     def print_state(self) -> None:
-        """ Print the current game state """
-        pass
+        """ Print the current game state. """
+        if not self.state:
+            print("Game state is not initialized.")
+            return
+
+        # Remaining attempts (e.g., max 6 incorrect guesses allowed)
+        max_attempts = 6
+        remaining_attempts = max_attempts - len(self.state.incorrect_guesses)
+
+        # Print game state
+        print("=== Hangman Game Test ===")
+        print(f"Word to Guess: {[letter for letter in self.state.word_to_guess]}")
+        print(f"Incorrect Guesses: {self.state.incorrect_guesses}")
+        print(f"Remaining Attempts: {remaining_attempts}")
+        print("=========================")
 
     def get_list_action(self) -> List[GuessLetterAction]:
         """ Get a list of possible actions for the active player """
@@ -67,7 +80,17 @@ class RandomPlayer(Player):
 
 if __name__ == "__main__":
 
-    game = Hangman()
-    game_state = HangmanGameState(word_to_guess='DevOps', phase=GamePhase.SETUP, guesses=[], incorrect_guesses=[])
-    game.set_state(game_state)
-    
+    if __name__ == "__main__":
+    # Initialize the Hangman game
+        game = Hangman()
+
+        # Set up a new game state
+        game_state = HangmanGameState(
+            word_to_guess="DevOps",
+            phase=GamePhase.RUNNING,
+            guesses=["D", "e", "p"],
+            incorrect_guesses=["X", "Z"]
+        )
+        game.set_state(game_state)
+
+        game.print_state()
