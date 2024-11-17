@@ -23,12 +23,11 @@ class HangmanGameState:
         self.guesses = guesses
         self.incorrect_guesses = incorrect_guesses
 
-
 class Hangman(Game):
 
     def __init__(self) -> None:
         """ Important: Game initialization also requires a set_state call to set the 'word_to_guess' """
-        word_to_guess = input("Gib ein Wort ein")
+        word_to_guess = input("Gib ein Wort ein").lower()
         initial_state = HangmanGameState(word_to_guess, GamePhase.SETUP, [], [])
         self.set_state(initial_state)
 
@@ -46,12 +45,27 @@ class Hangman(Game):
 
     def get_list_action(self) -> List[GuessLetterAction]:
         """ Get a list of possible actions for the active player """
-        action = [GuessLetterAction(letter) for letter in "ABCDEFGHIJKLMNOPQRSTUVWXYZ"]
-        print(f'Du kannst aus folgenden Buchstaben raten {action}')
+        guessed_letters = self.state.guesses + self.state.incorrect_guesses
+        available_letters = [letter for letter in "abcdefghijklmnopqrstuvwxyz" if letter not in guessed_letters]
+        action = [GuessLetterAction(letter) for letter in available_letters]
+        print(f"Du kannst aus folgenden Buchstaben raten: {available_letters}")
+        print(f"Diese Buchstaben hast du bereits verbraucht: {guessed_letters}")
+        print(f"Status des Spiels ist:{self.state.phase}")
 
     def apply_action(self, action: GuessLetterAction) -> None:
-        """ Apply the given action to the game """
-        pass
+        if self.state.phase == GamePhase.RUNNING:
+            letter = input("Gib einen Buchstaben ein").lower()
+
+            if letter in self.state.guesses:
+                print("Diesen Buchstaben hattest du bereits. Nimm einen anderen")
+
+            elif letter in self.state.word_to_guess:
+                self.state.guesses.append(letter)
+                print(f"Richtig, der Buchstabe ist im {self.state.word_to_guess} enthalten")
+            else:
+                self.state.incorrect_guesses.append(letter)
+                print(f"Falsch, der Buchstabe ist nicht im {self.state.word_to_guess} enthalten")
+
 
     def get_player_view(self, idx_player: int) -> HangmanGameState:
         """ Get the masked state for the active player (e.g. the oppontent's cards are face down)"""
