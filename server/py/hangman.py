@@ -39,6 +39,14 @@ class Hangman(Game):
     def set_state(self, state: HangmanGameState) -> None:
         """ Get the complete, unmasked game state """
         self.state = state
+        
+        if len(self.state.incorrect_guesses) >= self.max_attempts or \
+            all(letter in self.state.guesses for letter in self.state.word_to_guess):
+            self.state.phase = GamePhase.FINISHED
+        elif not self.state.guesses and not self.state.incorrect_guesses:
+            self.state.phase = GamePhase.SETUP
+        else:
+            self.state.phase = GamePhase.RUNNING
 
     def print_state(self) -> None:
         """ Print the current game state. """
