@@ -15,7 +15,7 @@ class GamePhase(str, Enum):
     RUNNING = 'running'        # while the game is running
     FINISHED = 'finished'      # when the game is finished
 
-# Kommentar für git test
+
 class HangmanGameState:
 
     def __init__(self, word_to_guess: str, phase: GamePhase, guesses: List[str], incorrect_guesses: List[str]) -> None:
@@ -29,7 +29,8 @@ class Hangman(Game):
 
     def __init__(self) -> None:
         """ Important: Game initialization also requires a set_state call to set the 'word_to_guess' """
-        pass
+        self.state = None
+
 
     def get_state(self) -> HangmanGameState:
         """ Set the game to a given state """
@@ -45,7 +46,19 @@ class Hangman(Game):
 
     def get_list_action(self) -> List[GuessLetterAction]:
         """ Get a list of possible actions for the active player """
-        pass
+        if self.state and self.state.phase == GamePhase.RUNNING:
+            guessed_letters = set(self.state.guesses + self.state.incorrect_guesses)
+            actions = []
+            for i in range(ord('a'), ord('z') + 1):  # Loop through ASCII values of 'a' to 'z'
+                letter = chr(i)  # Convert ASCII value to a character
+                if letter not in guessed_letters:  # Check if the letter has not been guessed
+                    actions.append(GuessLetterAction(letter))  # Add the action to the list
+            return actions
+        return []
+
+
+
+
 
     def apply_action(self, action: GuessLetterAction) -> None:
         """ Apply the given action to the game """
