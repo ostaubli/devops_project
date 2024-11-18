@@ -29,17 +29,17 @@ class Hangman(Game):
 
     def __init__(self) -> None:
         self.state: Optional[HangmanGameState] = None # Game state, initially None, set later via `set_state` as shown in `__main__`
+        self.max_attempts = 8 # Remaining attempts (e.g., max 6 incorrect guesses allowed)
         """ Important: Game initialization also requires a set_state call to set the 'word_to_guess' """
 
     def get_state(self) -> HangmanGameState:
-        """ Get the game state """
-        if self.state is None:
-            raise ValueError("Game state has not been initialized. Call `set_state` first.")
-        return self.state
+        """ Get the complete, unmasked game state """
+        return self.state 
 
     def set_state(self, state: HangmanGameState) -> None:
         # Update the game state
-        """ Get the complete, unmasked game state """
+        """ Set the game to a given state """
+
         # Ensure the `state` parameter is explicitly passed and used
         if not state.word_to_guess:
             raise ValueError("The word to guess cannot be empty.")
@@ -60,12 +60,31 @@ class Hangman(Game):
         self.state 
 
     def print_state(self) -> None:
-        """ Print the current game state """
-        pass
+        """ Print the current game state. """
+        if not self.state:
+            print("Game state is not initialized.")
+            return
+
+        remaining_attempts = self.max_attempts - len(self.state.incorrect_guesses)
+
+        # Print game state
+        print("=== Hangman Game Test ===")
+        print(f"Word to Guess: {[letter for letter in self.state.word_to_guess]}")
+        print(f"Incorrect Guesses: {self.state.incorrect_guesses}")
+        print(f"Remaining Attempts: {remaining_attempts}")
+        print("=========================")
 
     def get_list_action(self) -> List[GuessLetterAction]:
         """ Get a list of possible actions for the active player """
-        pass
+        # Define the alphabet
+        alphabet = set("abcdefghijklmnopqrstuvwxyz")
+
+        # Find unguessed letters
+        guessed_letters = set(self.state.guesses + self.state.incorrect_guesses)
+        available_letters = alphabet - guessed_letters
+
+        # Return available letters as GuessLetterAction objects
+        return [GuessLetterAction(letter) for letter in sorted(available_letters)]
 
     def apply_action(self, action: GuessLetterAction) -> None:
         """ Apply the given action to the game """
@@ -87,7 +106,9 @@ class RandomPlayer(Player):
 
 if __name__ == "__main__":
 
+    # Initialize the Hangman game
     game = Hangman()
+<<<<<<< HEAD
     game_state = HangmanGameState(word_to_guess='DevOps', phase=GamePhase.SETUP, guesses=[], incorrect_guesses=[])
     game.set_state(game_state)
     print("Game initialized successfully!")
@@ -96,3 +117,20 @@ if __name__ == "__main__":
 
 
 
+=======
+
+    # Set up a new game state
+    game_state = HangmanGameState(
+        word_to_guess="DevOps".lower(),  # Word to guess
+        phase=GamePhase.RUNNING,         # Phase set to RUNNING
+        guesses=[],                      # No correct guesses yet
+        incorrect_guesses=[]             # No incorrect guesses yet
+    )
+    game.set_state(game_state)  # Initialize the game state
+
+    game.print_state()
+    print(game.state)
+    # Display available actions
+    actions = game.get_list_action()
+    print("\nAvailable actions:", [action.letter for action in actions])
+>>>>>>> 819b563da575938209c4676382346b6ebf4a20a3
