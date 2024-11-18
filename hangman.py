@@ -3,6 +3,7 @@ from typing import List, Optional
 import random
 from enum import Enum
 from server.py.game import Game, Player
+import getpass
 
 
 class GuessLetterAction:
@@ -31,7 +32,7 @@ class Hangman(Game):
         print("Welcome to Hangman!")
 
         # get the word to guess from player 1
-        word_to_guess = input("Please enter the word to guess: ")
+        word_to_guess = getpass.getpass("Please enter the word to guess: ").lower()
         
         # initialize game state variables
         self.guesses = []
