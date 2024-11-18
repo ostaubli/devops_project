@@ -47,7 +47,7 @@ class Hangman(Game):
     def get_list_action(self) -> List[GuessLetterAction]:
         """ Get a list of possible actions for the active player """
         if self.state and self.state.phase == GamePhase.RUNNING:
-            guessed_letters = set(self.state.guesses + self.state.incorrect_guesses)
+            guessed_letters = set(self.state.guesses)
             actions = []
             for i in range(ord('a'), ord('z') + 1):  # Loop through ASCII values of 'a' to 'z'
                 letter = chr(i)  # Convert ASCII value to a character
@@ -57,12 +57,23 @@ class Hangman(Game):
         return []
 
 
-
-
-
     def apply_action(self, action: GuessLetterAction) -> None:
-        """ Apply the given action to the game """
-        pass
+        if self.state and self.state.phase == GamePhase.RUNNING:
+            letter = action.letter.lower()
+            self.state.guesses.append(letter)
+            if letter not in self.state.word_to_guess.lower():
+                self.state.incorrect_guesses.append(letter)
+
+            # Check if the game is finished
+            word_set = set(self.state.word_to_guess.lower())
+            guessed_set = set(self.state.guesses)
+            if word_set.issubset(guessed_set):
+                self.state.phase = GamePhase.FINISHED
+                print("Congratulations! You've guessed the word.")
+            elif len(self.state.incorrect_guesses) >= 6:  # Limit for incorrect guesses
+                self.state.phase = GamePhase.FINISHED
+                print(f"Game Over! The word was: {self.state.word_to_guess}")
+
 
     def get_player_view(self, idx_player: int) -> HangmanGameState:
         """ Get the masked state for the active player (e.g. the oppontent's cards are face down)"""
