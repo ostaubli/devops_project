@@ -60,8 +60,18 @@ class Hangman(Game):
 
 
     def print_state(self) -> None:
-        """ Print the current game state """
-        pass
+        state = self.get_state()
+
+        with open("hangman_pics.txt", "r") as file:
+            hangman_pics = file.read().strip().split("###")
+        
+        masked_word = " ".join([l if l.lower() in state.guesses else "_" for l in state.word_to_guess])
+        incorrect_guesses = [g for g in state.guesses if g not in state.word_to_guess]
+
+        print(hangman_pics[min(len(incorrect_guesses), len(hangman_pics) - 1)])
+        print("\nWord to guess: ", masked_word)
+        print("Guessed letters: ", " ".join(state.guesses))
+        print(f"Game phase: {state.phase.value}")
 
     def get_list_action(self) -> List[GuessLetterAction]:
         """ Get a list of possible actions for the active player """
