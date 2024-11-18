@@ -29,7 +29,7 @@ class Hangman(Game):
 
     def __init__(self) -> None:
         """ Important: Game initialization also requires a set_state call to set the 'word_to_guess' """
-        self.state = None
+        self.state = Optional[HangmanGameState] = None
 
 
     def get_state(self) -> HangmanGameState:
@@ -94,3 +94,19 @@ if __name__ == "__main__":
     game = Hangman()
     game_state = HangmanGameState(word_to_guess='DevOps', phase=GamePhase.SETUP, guesses=[], incorrect_guesses=[])
     game.set_state(game_state)
+
+    random_player = RandomPlayer()  # Create an instance of RandomPlayer
+
+    # Main gameplay loop
+    while game.state.phase == GamePhase.RUNNING:
+        game.print_state()  # Print the current game state
+        actions = game.get_list_action()  # Get all possible actions for the player
+
+        # RandomPlayer selects an action
+        action = random_player.select_action(game.get_state(), actions)
+        if action:
+            print(f"RandomPlayer guesses: {action.letter}")
+            game.apply_action(action)  # Apply the chosen action to the game
+        else:
+            print("No more possible actions.")
+            break
