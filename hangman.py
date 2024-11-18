@@ -36,7 +36,7 @@ class Hangman(Game):
         
         # initialize game state variables
         self.guesses = []
-        self.phase = GamePhase.SETUP
+        self.phase = GamePhase.RUNNING
         initial_state = HangmanGameState(word_to_guess=word_to_guess,
                                          guesses=self.guesses,
                                          phase=self.phase)
