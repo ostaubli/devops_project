@@ -108,16 +108,6 @@ if __name__ == "__main__":
 
     # Initialize the Hangman game
     game = Hangman()
-<<<<<<< HEAD
-    game_state = HangmanGameState(word_to_guess='DevOps', phase=GamePhase.SETUP, guesses=[], incorrect_guesses=[])
-    game.set_state(game_state)
-    print("Game initialized successfully!")
-    print(f"Word to guess: {game.state.word_to_guess}")
-    print(f"Game phase: {game.state.phase}")
-
-
-
-=======
 
     # Set up a new game state
     game_state = HangmanGameState(
@@ -126,6 +116,7 @@ if __name__ == "__main__":
         guesses=[],                      # No correct guesses yet
         incorrect_guesses=[]             # No incorrect guesses yet
     )
+
     game.set_state(game_state)  # Initialize the game state
 
     game.print_state()
@@ -133,4 +124,4 @@ if __name__ == "__main__":
     # Display available actions
     actions = game.get_list_action()
     print("\nAvailable actions:", [action.letter for action in actions])
->>>>>>> 819b563da575938209c4676382346b6ebf4a20a3
+
