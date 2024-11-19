@@ -25,6 +25,15 @@ class HangmanGameState:
         self.guesses = guesses
         self.phase = phase
 
+    def __repr__(self) -> str:
+        """Provides a readable representation of the HangmanGameState."""
+        return (
+            f"HangmanGameState("
+            f"word_to_guess='{self.word_to_guess}', "
+            f"guesses={self.guesses}, "
+            f"phase='{self.phase.value}')"
+        )
+
 
 class Hangman(Game):
 
@@ -32,7 +41,8 @@ class Hangman(Game):
         print("Welcome to Hangman!")
 
         # get the word to guess from player 1
-        word_to_guess = getpass.getpass("Please enter the word to guess: ").lower()
+        # word_to_guess = getpass.getpass("Please enter the word to guess: ").lower()
+        word_to_guess = input("Please enter the word to guess: ").lower()
         
         # initialize game state variables
         self.guesses = []
@@ -83,8 +93,14 @@ class Hangman(Game):
         pass
 
     def get_player_view(self, idx_player: int) -> HangmanGameState:
-        """ Get the masked state for the active player (e.g. the oppontent's cards are face down)"""
-        pass
+        """ Get the masked state for the active player (e.g., the word is partially revealed) """
+        state = self.get_state()
+        masked_word = "".join([l if l.lower() in state.guesses else "_" for l in state.word_to_guess])
+        return HangmanGameState(
+            word_to_guess=masked_word,
+            guesses=state.guesses,
+            phase=state.phase,
+        )
 
 
 class RandomPlayer(Player):
