@@ -143,3 +143,16 @@ if __name__ == "__main__":
     game = Hangman()
     game_state = HangmanGameState(word_to_guess='DevOps', phase=GamePhase.SETUP, guesses=[], incorrect_guesses=[])
     game.set_state(game_state)
+
+    # Create a random player for the simulation  <-- **Added**
+    player = RandomPlayer()  <-- **Added**
+
+    # Start the game loop  <-- **Added**
+    while game.state.phase == GamePhase.RUNNING:  # **Added**
+        game.print_state()  # Print the current state of the game
+        actions = game.get_list_action()  # Get the list of possible actions
+        action = player.select_action(game.state, actions)  # Select a random action
+
+        if action:
+            print(f"Player guesses: {action.letter}")  # **Added**: Print the guessed letter
+            game.apply_action(action)  # Apply the guessed letter

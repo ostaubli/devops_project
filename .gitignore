@@ -1,3 +1,13 @@
+# Ignore system files
+.DS_Store
+
+# Ignore IDE configuration files
+.idea/
+
+# Other common files to ignore
+*.log
+*.tmp
+
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]
