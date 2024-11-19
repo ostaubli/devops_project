@@ -111,7 +111,7 @@ class Hangman(Game):
 
     def apply_action(self, action: GuessLetterAction) -> None:
         """ Apply the given action to the game """
-        if not self.state:
+        if not self.state or self.state.phase == GamePhase.FINISHED:
             return
         if action.letter in self.state.word_to_guess:
             self.state.guesses.append(action.letter)
@@ -125,9 +125,14 @@ class Hangman(Game):
                 print("\nGame Over! The word was:", self.state.word_to_guess)
 
     def get_player_view(self, idx_player: int) -> HangmanGameState:
-        """ Get the masked state for the active player (e.g. the oppontent's cards are face down)"""
-        return self.state.phase == GamePhase.FINISHED
-
+        """ Get the masked state for the active player """
+        word_display = ''.join([letter if letter in self.state.guesses else '_' for letter in self.state.word_to_guess])
+        return HangmanGameState(
+            word_to_guess=word_display,
+            phase=self.state.phase,
+            guesses=self.state.guesses,
+            incorrect_guesses=self.state.incorrect_guesses
+        )
 
 class RandomPlayer(Player):
 
@@ -141,14 +146,23 @@ class RandomPlayer(Player):
 if __name__ == "__main__":
 
     game = Hangman()
-    game_state = HangmanGameState(word_to_guess='DevOps', phase=GamePhase.SETUP, guesses=[], incorrect_guesses=[])
-    game.set_state(game_state)
 
-    # Start the game
-    game.state.phase = GamePhase.RUNNING  # Transition to the running phase
+    def setup_game():
+        word_list = ['daniela', 'geraldine', 'liliana', 'laura']
+        chosen_word = random.choice(word_list)
+        game_state = HangmanGameState(word_to_guess=chosen_word, phase=GamePhase.SETUP, guesses=[], incorrect_guesses=[])
+        game.set_state(game_state)
+        game.state.phase = GamePhase.RUNNING
+
+
+    # Setup the game
+    setup_game()
 
     # Create a random player for the simulation
     player = RandomPlayer()
+
+    # Start the game
+    game.state.phase = GamePhase.RUNNING  # Transition to the running phase
 
     # Start the game loop
     while game.state.phase == GamePhase.RUNNING:
@@ -159,7 +173,7 @@ if __name__ == "__main__":
         if action:
             print(f"Player guesses: {action.letter}")  # Print the guessed letter
             game.apply_action(action)  # Apply the guessed letter
-            
+
     # Once game is finished, print final message
     if game.state.phase == GamePhase.FINISHED:
         print(f"Game Over! The word was: {game.state.word_to_guess}")
