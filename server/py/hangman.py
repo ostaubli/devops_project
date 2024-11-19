@@ -67,8 +67,21 @@ class Hangman(Game):
         pass
 
     def get_player_view(self, idx_player: int) -> HangmanGameState:
-        """ Get the masked state for the active player (e.g. the oppontent's cards are face down)"""
-        pass
+        """
+        Get the masked state for the active player.
+        The word to guess is masked with underscores for unrevealed letters.
+        """
+        # Mask the word with underscores for unguessed letters
+        masked_word = ''.join([c if c in self.guesses else '_' for c in self.word_to_guess])
+
+        # Create a masked game state to return to the player
+        return HangmanGameState(
+            word_to_guess=masked_word,  # Return the masked version of the word
+            phase=self.phase,
+            guesses=self.guesses,
+            incorrect_guesses=self.incorrect_guesses
+        )
+
 
 
 class RandomPlayer(Player):
