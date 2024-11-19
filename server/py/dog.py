@@ -97,6 +97,7 @@ class Dog(Game):
         pass
 
     def get_state(self) -> GameState:
+        test = ""
         """ Get the complete, unmasked game state """
         pass
 
