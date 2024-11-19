@@ -102,8 +102,20 @@ class Hangman(Game):
 
 
     def get_player_view(self, idx_player: int) -> HangmanGameState:
-        """ Get the masked state for the active player (e.g. the oppontent's cards are face down)"""
-        pass
+        """ Get the masked state for the active player (player only sees the words which were guessed right)"""
+        if not self.state:
+            raise ValueError("Game state is not set.")
+        # Create the masked word to hide unguessed letters
+        masked_word = ' '.join(
+            letter if letter.lower() in self.state.guesses else '_'
+            for letter in self.state.word_to_guess
+        )
+        return HangmanGameState(
+            word_to_guess=masked_word,
+            phase=self.state.phase,
+            guesses=self.state.guesses,
+            incorrect_guesses=self.state.incorrect_guesses
+        )
 
 
 class RandomPlayer(Player):
@@ -118,6 +130,7 @@ class RandomPlayer(Player):
         selected_action = random.choice(actions)
         print(f"RandomPlayer selected action: {selected_action.letter}")
         return selected_action
+
 
 
 if __name__ == "__main__":
@@ -139,3 +152,4 @@ if __name__ == "__main__":
     # Display available actions
     actions = game.get_list_action()
     print("\nAvailable actions:", [action.letter for action in actions])
+
