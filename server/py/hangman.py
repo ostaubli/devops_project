@@ -74,6 +74,15 @@ class HangmanGameState:
         self.guesses = guesses
         self.incorrect_guesses = incorrect_guesses
 
+    def display_state(self):
+        """ Zeigt den aktuellen Spielzustand (Wort, falsche Buchstaben, Hangman-Bild) """
+        # Das Wort wird angezeigt, wobei ungerratene Buchstaben durch "_" ersetzt werden
+        word_display = ''.join([letter if letter in self.guesses else '_' for letter in self.word_to_guess])
+        print(f"Word: {word_display}")  # Zeigt das Wort mit den erratenen Buchstaben
+        print(f"Incorrect guesses: {', '.join(self.incorrect_guesses)}")  # Zeigt die falschen Buchstaben
+        print(f"Hangman:\n{HANGMAN_PICS[len(self.incorrect_guesses)]}")  # Zeigt das entsprechende Hangman-Bild
+        print()
+
 
 class Hangman(Game):
 
