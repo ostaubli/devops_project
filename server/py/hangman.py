@@ -19,7 +19,7 @@ class GamePhase(str, Enum):
 class HangmanGameState:
 
     def __init__(self, word_to_guess: str, phase: GamePhase, guesses: List[str], incorrect_guesses: List[str]) -> None:
-        self.word_to_guess = word_to_guess
+        self.word_to_guess = word_to_guess.lower()
         self.phase = phase
         self.guesses = guesses
         self.incorrect_guesses = incorrect_guesses
@@ -29,19 +29,25 @@ class Hangman(Game):
 
     def __init__(self) -> None:
         """ Important: Game initialization also requires a set_state call to set the 'word_to_guess' """
+        self.state: HangmanGameState
+
         pass
 
     def get_state(self) -> HangmanGameState:
-        """ Set the game to a given state """
+        """ Get the complete, unmasked game state """
         pass
 
     def set_state(self, state: HangmanGameState) -> None:
-        """ Get the complete, unmasked game state """
+        """ Set the game to a given state """
         pass
 
     def print_state(self) -> None:
         """ Print the current game state """
-        pass
+        if self.state:
+            print("Word:" , ''.join([char if char in self.guesses else '_' for char in self.word_to_guess]))
+            print(f"Guesses: {', '.join(self.state.guesses)}")
+
+
 
     def get_list_action(self) -> List[GuessLetterAction]:
         """ Get a list of possible actions for the active player """
