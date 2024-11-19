@@ -53,6 +53,7 @@ class Hangman(Game):
         
         # call set_state to initialize game
         self.set_state(initial_state)
+        self.get_list_action()
         pass
 
     def get_state(self) -> HangmanGameState:
@@ -86,11 +87,20 @@ class Hangman(Game):
 
     def get_list_action(self) -> List[GuessLetterAction]:
         """ Get a list of possible actions for the active player """
-        pass
+        print("Inside get list action")
+        while True:
+            chosen_action = input("""Please guess a letter A-Z or choose one of the following actions: 
+            1: Start new
+            2: Give up """)
+            if chosen_action not in ("1", "2") and (not chosen_action.isalpha() or not len(chosen_action) == 1):
+                print("Invalid input. Try again.")
+                continue
+            break
+        self.apply_action(chosen_action)
 
     def apply_action(self, action: GuessLetterAction) -> None:
         """ Apply the given action to the game """
-        pass
+        print(action)
 
     def get_player_view(self, idx_player: int) -> HangmanGameState:
         """ Get the masked state for the active player (e.g., the word is partially revealed) """
