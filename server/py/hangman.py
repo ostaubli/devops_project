@@ -37,7 +37,7 @@ class Hangman(Game):
 
     def set_state(self, state: HangmanGameState) -> None:
         """ Get the complete, unmasked game state """
-        pass
+        self.state = state
 
     def print_state(self) -> None:
         """ Print the current game state """
@@ -52,8 +52,20 @@ class Hangman(Game):
         pass
 
     def get_player_view(self, idx_player: int) -> HangmanGameState:
-        """ Get the masked state for the active player (e.g. the oppontent's cards are face down)"""
-        pass
+        """ Get the masked state for the active player (player only sees the words which were guessed right)"""
+        if not self.state:
+            raise ValueError("Game state is not set.")
+        # Create the masked word to hide unguessed letters
+        masked_word = ' '.join(
+            letter if letter.lower() in self.state.guesses else '_'
+            for letter in self.state.word_to_guess
+        )
+        return HangmanGameState(
+            word_to_guess=masked_word,
+            phase=self.state.phase,
+            guesses=self.state.guesses,
+            incorrect_guesses=self.state.incorrect_guesses
+        )
 
 
 class RandomPlayer(Player):
@@ -65,9 +77,9 @@ class RandomPlayer(Player):
         return None
 
 
+
 if __name__ == "__main__":
 
     game = Hangman()
     game_state = HangmanGameState(word_to_guess='DevOps', phase=GamePhase.SETUP, guesses=[], incorrect_guesses=[])
     game.set_state(game_state)
-    
