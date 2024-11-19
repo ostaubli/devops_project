@@ -159,3 +159,7 @@ if __name__ == "__main__":
         if action:
             print(f"Player guesses: {action.letter}")  # Print the guessed letter
             game.apply_action(action)  # Apply the guessed letter
+            
+    # Once game is finished, print final message
+    if game.state.phase == GamePhase.FINISHED:
+        print(f"Game Over! The word was: {game.state.word_to_guess}")
