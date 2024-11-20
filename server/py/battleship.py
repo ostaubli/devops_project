@@ -1,7 +1,11 @@
 from typing import List, Optional
 from enum import Enum
 import random
-from server.py.game import Game, Player
+
+if __name__ == "__main__":
+    from game import Game, Player
+else:
+    from server.py.game import Game, Player
 
 
 class ActionType(str, Enum):
@@ -53,18 +57,26 @@ class Battleship(Game):
 
     def __init__(self): # Kägi
         """ Game initialization (set_state call not necessary) """
-        pass
+        self.state = BattleshipGameState(idx_player_active = 0, 
+                                         phase= GamePhase.SETUP, 
+                                         winner = None, 
+                                         players = []
+        )
+        print("Battleship init")
+        
 
     def print_state(self) -> None: # Kägi
-        """ Set the game to a given state """
-        pass
+        """ Print the current game state """
+        print(f"Game Phase: {self.state.phase}")
+        print(f"Active Player: {self.state.players}")
 
     def get_state(self) -> BattleshipGameState: # Kägi
         """ Get the complete, unmasked game state """
         pass
 
     def set_state(self, state: BattleshipGameState) -> None: # Kägi
-        """ Print the current game state """
+        """ Set the game to a given state """
+        
         pass
 
     def get_list_action(self) -> List[BattleshipAction]: # Kened
