@@ -71,7 +71,29 @@ class Hangman(Game):
 
     def apply_action(self, action: GuessLetterAction) -> None:
         """ Apply the given action to the game """
-        pass
+        guess_letter = action.letter
+
+        # Valid guess
+        if guess_letter in (self.guesses + self.incorrect_guesses):
+            print(f"The letter {guess_letter} was already guessed!!!")
+            return None
+        
+        # Check if guess is correct
+        if guess_letter in self.word_to_guess:
+            self.guesses.append(guess_letter)
+            print(f"Correct guess: {guess_letter}")
+        else:
+            self.incorrect_guesses.append(guess_letter)
+            print(f"Incorrect guess: {guess_letter}")
+        
+        # Game end cases
+        if all(letter in self.guesses for letter in self.word_to_guess):
+            print("Congratulations! You've guessed the word!")
+            self.phase = GamePhase.FINISHED
+        elif len(self.incorrect_guesses) >= self.max_incorrect_guesses:
+            print("Game Over! You have run out of attempts and hangman is complete.")
+            print(f"The word was: {self.word_to_guess}")
+            self.phase = GamePhase.FINISHED
 
     def get_player_view(self, idx_player: int) -> HangmanGameState:
         """
