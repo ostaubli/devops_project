@@ -50,13 +50,13 @@ class Hangman(Game):
             state.guesses = []
             state.incorrect_guesses = []
         else:
-        # Determine phase based on the current state
-        if all(letter in state.guesses for letter in state.word_to_guess):
-            state.phase = GamePhase.FINISHED  # All letters guessed correctly
-        elif len(state.incorrect_guesses) >= self.max_attempts:
-            state.phase = GamePhase.FINISHED  # Maximum incorrect guesses reached
-        else:
-            state.phase = GamePhase.RUNNING  # Game is in progress
+            # Determine phase based on the current state
+            if all(letter in state.guesses for letter in state.word_to_guess):
+                state.phase = GamePhase.FINISHED  # All letters guessed correctly
+            elif len(state.incorrect_guesses) >= self.max_attempts:
+                state.phase = GamePhase.FINISHED  # Maximum incorrect guesses reached
+            else:
+                state.phase = GamePhase.RUNNING  # Game is in progress
         self.state 
 
     def print_state(self) -> None:
