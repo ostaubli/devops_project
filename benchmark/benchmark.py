@@ -1,16 +1,16 @@
-from typing import Any
 import abc
-import os
-import sys
-import subprocess
 import importlib
+import os
+import subprocess
+import sys
 import traceback
+from typing import Any
+
 import pylint.lint
 from mypy import api
 
 
 class Benchmark:
-
     COLOR_OKAY = '\033[92m'
     COLOR_FAIL = '\033[91m'
     COLOR_ENDC = '\033[0m'
@@ -66,7 +66,6 @@ class Benchmark:
         print(f'Mark:  {cnt_points_valid}/{cnt_points_total} points', )
         print()
 
-
     def get_list_function_name(self) -> list[str]:
         list_function_name = []
         for attribute in dir(self):
@@ -88,18 +87,16 @@ class Benchmark:
 
         return list_function_name
 
-
     def test_pylint(self) -> None:
         """Test 100: Code style with Pylint [5 point]"""
-        og_pipe = sys.stdout # Save original pipeline
+        og_pipe = sys.stdout  # Save original pipeline
         with open(os.devnull, 'w', encoding="utf-8") as tmp_pipe:
-            sys.stdout = tmp_pipe # Pipe stdout to temporary pipeline
+            sys.stdout = tmp_pipe  # Pipe stdout to temporary pipeline
             module_name, _ = self.script.split('.')
             pylint_score = round(pylint.lint.Run([f'server.py.{module_name}'], exit=False).linter.stats.global_note, 2)
-        sys.stdout = og_pipe # Set stdout pipe back to original
+        sys.stdout = og_pipe  # Set stdout pipe back to original
         if pylint_score != 10:
             raise AssertionError(f'Pylint score {pylint_score:.1f}/10')
-
 
     def test_mypy(self) -> None:
         """Test 101: Type checking with MyPy [5 point]"""
@@ -107,7 +104,6 @@ class Benchmark:
         result = api.run([f"server/py/{module_name}.py"])
         if result[2] != 0:
             raise AssertionError(f'MyPy exit code is {result[2]}')
-
 
     def test_pytest(self) -> None:
         """Test 102: Pytest runs successfully and coverage is >80% [5 point]"""

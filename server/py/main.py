@@ -1,15 +1,14 @@
+import asyncio
+import json
+import random
+
 from fastapi import FastAPI, Request, WebSocket, WebSocketDisconnect
 from fastapi.responses import HTMLResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 
-import json
-import asyncio
-
-import server.py.hangman as hangman
 import server.py.battleship as battleship
-
-import random
+import server.py.hangman as hangman
 
 app = FastAPI()
 
@@ -29,6 +28,7 @@ async def get(request: Request):
 async def hangman_singleplayer(request: Request):
     return templates.TemplateResponse("game/hangman/singleplayer_local.html", {"request": request})
 
+
 @app.websocket("/hangman/singleplayer/ws")
 async def hangman_singleplayer_ws(websocket: WebSocket):
     await websocket.accept()
@@ -44,7 +44,8 @@ async def hangman_singleplayer_ws(websocket: WebSocket):
             words = json.load(fin)
         word_to_guess = random.choice(words)
 
-        state = hangman.HangmanGameState(word_to_guess=word_to_guess, phase=hangman.GamePhase.RUNNING, guesses=[], incorrect_guesses=[])
+        state = hangman.HangmanGameState(word_to_guess=word_to_guess, phase=hangman.GamePhase.RUNNING, guesses=[],
+                                         incorrect_guesses=[])
         game.set_state(state)
 
         while True:
@@ -153,7 +154,7 @@ async def battleship_singleplayer_ws(websocket: WebSocket):
             if state.phase == battleship.GamePhase.FINISHED:
                 break
 
-            #game.print_state()
+            # game.print_state()
 
             if state.idx_player_active == idx_player_you:
 
@@ -256,6 +257,7 @@ async def dog_simulation(request: Request):
     return templates.TemplateResponse("game/dog/simulation.html", {"request": request})
 
 
+# TODO
 @app.websocket("/dog/simulation/ws")
 async def dog_simulation_ws(websocket: WebSocket):
     await websocket.accept()
@@ -273,6 +275,7 @@ async def dog_singleplayer(request: Request):
     return templates.TemplateResponse("game/dog/singleplayer.html", {"request": request})
 
 
+# TODO
 @app.websocket("/dog/singleplayer/ws")
 async def dog_singleplayer_ws(websocket: WebSocket):
     await websocket.accept()
@@ -284,7 +287,7 @@ async def dog_singleplayer_ws(websocket: WebSocket):
     except WebSocketDisconnect:
         print('DISCONNECTED')
 
-
+# TODO
 @app.websocket("/dog/random_player/ws")
 async def dog_random_player_ws(websocket: WebSocket):
     await websocket.accept()
