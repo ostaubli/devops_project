@@ -33,12 +33,31 @@ class Hangman(Game):
         """ Important: Game initialization also requires a set_state call to set the 'word_to_guess' """
 
     def get_state(self) -> HangmanGameState:
-        """ Set the game to a given state """
+        """ Get the complete, unmasked game state """
         return self.state 
 
     def set_state(self, state: HangmanGameState) -> None:
-        """ Get the complete, unmasked game state """
-        self.state = state
+        # Update the game state
+        """ Set the game to a given state """
+
+        # Ensure the `state` parameter is explicitly passed and used
+        if not state.word_to_guess:
+            raise ValueError("The word to guess cannot be empty.")
+
+        # Automatically initialize for SETUP phase
+        if self.state is None:  # Check if this is the first time setting the state
+            state.phase = GamePhase.SETUP
+            state.guesses = []
+            state.incorrect_guesses = []
+        else:
+            # Determine phase based on the current state
+            if all(letter in state.guesses for letter in state.word_to_guess):
+                state.phase = GamePhase.FINISHED  # All letters guessed correctly
+            elif len(state.incorrect_guesses) >= self.max_attempts:
+                state.phase = GamePhase.FINISHED  # Maximum incorrect guesses reached
+            else:
+                state.phase = GamePhase.RUNNING  # Game is in progress
+        self.state 
 
     def print_state(self) -> None:
         """ Print the current game state. """
@@ -145,6 +164,7 @@ if __name__ == "__main__":
         guesses=[],                      # No correct guesses yet
         incorrect_guesses=[]             # No incorrect guesses yet
     )
+
     game.set_state(game_state)  # Initialize the game state
 
     game.print_state()
