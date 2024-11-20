@@ -256,6 +256,7 @@ class Dog(Game):
             active_player.list_card.remove(action.card)
             self._state.list_id_card_discard.append(action.card)
 
+
             # Example logic to update the game state based on the action
             if action.pos_from is not None and action.pos_to is not None:
                 # TODO Move marble logic
@@ -267,14 +268,13 @@ class Dog(Game):
         self._state.idx_player_active = (self._state.idx_player_active + 1) % self._state.cnt_player
 
 
-def get_player_view(self, idx_player: int) -> GameState:
-    """ Get the masked state for the active player (e.g. the opponent's cards are face down) """
-    masked_state = self._state.copy()
-    for i, player in enumerate(masked_state.list_player):
-        if i != idx_player:
-            player.list_card = [Card(suit='?', rank='?')] * len(player.list_card)
-    return masked_state
-
+    def get_player_view(self, idx_player: int) -> GameState:
+        """ Get the masked state for the active player (e.g. the opponent's cards are face down) """
+        masked_state = self._state.copy()
+        for i, player in enumerate(masked_state.list_player):
+            if i != idx_player:
+                player.list_card = [Card(suit='?', rank='?')] * len(player.list_card)
+        return masked_state
 
 class RandomPlayer(Player):
 
