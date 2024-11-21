@@ -257,7 +257,7 @@ async def dog_simulation(request: Request):
     return templates.TemplateResponse("game/dog/simulation.html", {"request": request})
 
 
-# TODO
+# TODO LATIN-21
 @app.websocket("/dog/simulation/ws")
 async def dog_simulation_ws(websocket: WebSocket):
     await websocket.accept()
@@ -275,7 +275,7 @@ async def dog_singleplayer(request: Request):
     return templates.TemplateResponse("game/dog/singleplayer.html", {"request": request})
 
 
-# TODO
+# TODO LATIN-20
 @app.websocket("/dog/singleplayer/ws")
 async def dog_singleplayer_ws(websocket: WebSocket):
     await websocket.accept()
@@ -287,7 +287,7 @@ async def dog_singleplayer_ws(websocket: WebSocket):
     except WebSocketDisconnect:
         print('DISCONNECTED')
 
-# TODO
+# TODO LATIN-23
 @app.websocket("/dog/random_player/ws")
 async def dog_random_player_ws(websocket: WebSocket):
     await websocket.accept()

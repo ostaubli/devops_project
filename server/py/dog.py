@@ -28,7 +28,7 @@ class Action(BaseModel):
     card: Card  # card to play
     pos_from: Optional[int]  # position to move the marble from
     pos_to: Optional[int]  # position to move the marble to
-    card_swap: Optional[Card]  # optional card to swap () # TODO what is this used for? is this even required for Brandi-Dog?!?
+    card_swap: Optional[Card]  # optional card to swap () # TODO what is this used for? is this even required for Brandi-Dog?!? LATIN-37
 
 
 class GamePhase(str, Enum):
@@ -165,7 +165,8 @@ class Dog(Game):
                     return True
         return False
 
-    # TODO write test cases
+
+    # TODO complete method LATIN-34
     def _calculate_position_to(self, pos_from: int, card: Card, active_player_indx: int) -> List[int]:
         """ Calculate the final possible_positions based on the card """
 
@@ -233,19 +234,19 @@ class Dog(Game):
         active_player = self._state.list_player[self._state.idx_player_active]
         for card in active_player.list_card:
             for marble in active_player.list_marble:
-                # TODO logic for action creation. Go through all cards and marbles and return the possible positions.
+                # TODO Go through all cards and marbles and return the possible positions.
                 if card.rank.isdigit() and card.rank not in ['7', '4']:
                     possible_final_positions = self._calculate_position_to(int(marble.pos), card,
                                                                            self._state.idx_player_active)
 
-                # TODO Add more logic for all the other cards
+                # TODO Add more logic for all the other cards LATIN-35
                 if card.rank == '7':
                     pass
 
                 for pos_to in possible_final_positions:
-                    if not self._is_position_occupied(pos_to): # TODO add logic for in case the way is blocked (marble on 0/16/32/48 of the player with correct index?)
+                    if not self._is_position_occupied(pos_to): # TODO add logic for in case the way is blocked (marble on 0/16/32/48 of the player with correct index?). LATIN-36
                         actions.append(Action(card=card, pos_from=marble.pos, pos_to=pos_to,
-                                              card_swap=None))  # TODO add logic for card_swap (once we know what this is used for)
+                                              card_swap=None))  # TODO add logic for card_swap (once we know what this is used for) LATIN-37
         return actions
 
     def apply_action(self, action: Action) -> None:
@@ -259,7 +260,7 @@ class Dog(Game):
 
             # Example logic to update the game state based on the action
             if action.pos_from is not None and action.pos_to is not None:
-                # TODO Move marble logic
+                # TODO Move marble logic LATIN-38
                 pass
             # TODO Add more logic for other actions
 

@@ -1,14 +1,13 @@
 from abc import ABCMeta, abstractmethod
 from typing import List, Any
 
-from server.py.dog import GameState
 
-# GameState = Any
-GameAction = Any # TODO not sure what to do with this. is it an enum of "TAKING OVER" ,etc?
+GameState = Any # TODO LATIN-13
+GameAction = Any # TODO not sure what to do with this. is it an enum of "TAKING OVER" ,etc? LATIN-14
 
 class Game(metaclass=ABCMeta):
-    def __init__(self):
-        self._state: GameState = None
+    def __init__(self) -> None:
+        self._state: GameState = None # TODO LATIN-13
         self._actions: List[GameAction] = []
 
     @abstractmethod
@@ -34,13 +33,13 @@ class Game(metaclass=ABCMeta):
     @abstractmethod
     def apply_action(self, action: GameAction) -> None:
         """ Apply the given action to the game """
-        # TODO
+        # TODO LATIN-27
         pass
 
     @abstractmethod
     def get_player_view(self, idx_player: int) -> GameState:
         """ Get the masked state for the active player (e.g. the opponent's cards are face down)"""
-        # TODO
+        # TODO LATIN-28
         pass
 
 
@@ -48,6 +47,6 @@ class Player(metaclass=ABCMeta):
 
     @abstractmethod
     def select_action(self, state: GameState, actions: List[GameAction]) -> GameAction:
-        # TODO
+        # TODO LATIN-33
         """ Given masked game state and possible actions, select the next action """
         pass
