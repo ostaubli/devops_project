@@ -56,7 +56,7 @@ class Hangman(Game):
                 state.phase = GamePhase.FINISHED  # Maximum incorrect guesses reached
             else:
                 state.phase = GamePhase.RUNNING  # Game is in progress
-        self.state 
+        self.state = state
 
     def print_state(self) -> None:
         """ Print the current game state. """
