@@ -31,7 +31,7 @@ class Hangman(Game):
 
     def set_state(self, state: HangmanGameState) -> None:
         """ Set the game to a given state """
-        self.state = state
+        self.state = G
 
     def get_state(self) -> HangmanGameState:
         """ Set the game to a given state """
