@@ -28,7 +28,7 @@ class Action(BaseModel):
     card: Card  # card to play
     pos_from: Optional[int]  # position to move the marble from
     pos_to: Optional[int]  # position to move the marble to
-    card_swap: Optional[Card]  # optional card to swap () # TODO what is this used for? is this even required for Brandi-Dog?!? LATIN-37
+    card_swap: Optional[Card]  # optional card to swap () # TODO what is this used for? is this even required for Brandi-Dog?!?
 
 
 class GamePhase(str, Enum):
@@ -157,14 +157,66 @@ class Dog(Game):
         """ Print the current game state """
         print(self._state)
 
-    def _is_position_occupied(self, pos: int) -> bool:
-        """ Check if a position is occupied by any marble """
-        for player in self._state.list_player:
-            for marble in player.list_marble:
-                if marble.pos == pos:
-                    return True
-        return False
+    def get_list_action(self) -> List[Action]:
+        """ Get a list of possible actions for the active player """
+        actions = []
+        to_positions = []
+        active_player = self._state.list_player[self._state.idx_player_active]
+        for card in active_player.list_card:
+            for marble in active_player.list_marble:
+                # TODO Go through all cards and marbles and return the possible positions.
+                if card.rank.isdigit() and card.rank not in ['7', '4']:
+                    to_positions = self._calculate_position_to(int(marble.pos), card, self._state.idx_player_active)
 
+                # TODO Add more logic for all the other cards LATIN-35
+                if card.rank == '7':
+                    # can be split into multiple marbles. if takes over, reset other marble
+                    # to_positions = ...
+                    pass
+
+                # checks for each possible position if the way is blocked. if it is not blocked, we add it to action.
+                for pos_to in to_positions:
+                    if not self._is_way_blocked(
+                            pos_to, int(marble.pos), self._get_all_safe_marbles()):
+                        actions.append(Action(card=card, pos_from=marble.pos, pos_to=pos_to,
+                                              card_swap=None))  # TODO add logic for card_swap (once we know what this is used for) LATIN-37
+
+        return actions
+
+    # TODO LATIN-27
+    def apply_action(self, action: Action) -> None:
+        """ Apply the given action to the game """
+        active_player = self._state.list_player[self._state.idx_player_active]
+        if action.card in active_player.list_card:
+            # removing card from players hand and putting it to discarded stack
+            active_player.list_card.remove(action.card)
+            self._state.list_id_card_discard.append(action.card)
+
+            # Example logic to update the game state based on the action
+            if action.pos_from is not None and action.pos_to is not None:
+                # TODO Move marble logic LATIN-38
+                pass
+            # TODO Add more logic for other actions
+
+        # calculate the next player (after 4, comes 1 again). not sure if needed here or somewhere else
+        # example: (4+1)%4=1 -> after player 4, it's player 1's turn again
+        self._state.idx_player_active = (self._state.idx_player_active + 1) % self._state.cnt_player
+
+    # TODO LATIN-28 check if logic is actually what we need it to be
+    def get_player_view(self, idx_player: int) -> GameState:
+        """ Get the masked state for the active player (e.g. the opponent's cards are face down) """
+        masked_state: GameState = self._state.copy()
+        for i, player in enumerate(masked_state.list_player):
+            if i != idx_player:
+                player.list_card = [Card(suit='?', rank='?')] * len(player.list_card)
+        return masked_state
+
+    ##################################################### PRIVATE METHODS #############################################
+
+    # TODO in case the way is blocked (marble on 0/16/32/48 of the player with correct index?). LATIN-36
+    def _is_way_blocked(self, pos_to: int, pos_from: int, safe_marbles : List[Marble]) -> bool:
+        """ Check if the way is blocked between from  & to by any safe marble """
+        pass
 
     # TODO complete method LATIN-34
     def _calculate_position_to(self, pos_from: int, card: Card, active_player_indx: int) -> List[int]:
@@ -227,55 +279,12 @@ class Dog(Game):
 
         return possible_positions
 
-    def get_list_action(self) -> List[Action]:
-        """ Get a list of possible actions for the active player """
-        actions = []
-        possible_final_positions = []
-        active_player = self._state.list_player[self._state.idx_player_active]
-        for card in active_player.list_card:
-            for marble in active_player.list_marble:
-                # TODO Go through all cards and marbles and return the possible positions.
-                if card.rank.isdigit() and card.rank not in ['7', '4']:
-                    possible_final_positions = self._calculate_position_to(int(marble.pos), card,
-                                                                           self._state.idx_player_active)
+    # TODO LATIN-41
+    def _get_all_safe_marbles(self) -> List[Marble]:
+        # use marble.is_save
 
-                # TODO Add more logic for all the other cards LATIN-35
-                if card.rank == '7':
-                    pass
+        pass
 
-                for pos_to in possible_final_positions:
-                    if not self._is_position_occupied(pos_to): # TODO add logic for in case the way is blocked (marble on 0/16/32/48 of the player with correct index?). LATIN-36
-                        actions.append(Action(card=card, pos_from=marble.pos, pos_to=pos_to,
-                                              card_swap=None))  # TODO add logic for card_swap (once we know what this is used for) LATIN-37
-        return actions
-
-    def apply_action(self, action: Action) -> None:
-        """ Apply the given action to the game """
-        active_player = self._state.list_player[self._state.idx_player_active]
-        if action.card in active_player.list_card:
-            # removing card from players hand and putting it to discarded stack
-            active_player.list_card.remove(action.card)
-            self._state.list_id_card_discard.append(action.card)
-
-
-            # Example logic to update the game state based on the action
-            if action.pos_from is not None and action.pos_to is not None:
-                # TODO Move marble logic LATIN-38
-                pass
-            # TODO Add more logic for other actions
-
-        # calculate the next player (after 4, comes 1 again)
-        # example: (4+1)%4=1 -> after player 4, it's player 1's turn again
-        self._state.idx_player_active = (self._state.idx_player_active + 1) % self._state.cnt_player
-
-
-    def get_player_view(self, idx_player: int) -> GameState:
-        """ Get the masked state for the active player (e.g. the opponent's cards are face down) """
-        masked_state = self._state.copy()
-        for i, player in enumerate(masked_state.list_player):
-            if i != idx_player:
-                player.list_card = [Card(suit='?', rank='?')] * len(player.list_card)
-        return masked_state
 
 class RandomPlayer(Player):
 
