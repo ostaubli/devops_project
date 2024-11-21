@@ -69,9 +69,62 @@ class Battleship(Game):
 
     def get_list_action(self) -> List[BattleshipAction]:
         """ Get a list of possible actions for the active player """
-        pass
+        state = self.get_state()  # Retrieve the current game state
+        actions = []  # Initialize the list of possible actions
 
-    def apply_action(self, action: BattleshipAction) -> None:
+        # Get the active player and their state
+        active_player_idx = state.idx_player_active
+        active_player = state.players[active_player_idx]
+
+        if state.phase == GamePhase.SETUP:
+            # SETUP Phase: Generate actions to set ships
+            for ship in active_player.ships:
+                if not ship.location:  # Check if the ship is not yet placed
+                    # Example logic to add potential ship placement actions
+                    # Assuming a 10x10 grid labeled "A1" to "J10"
+                    grid_positions = [f"{chr(row)}{col}" for row in range(65, 75) for col in range(1, 11)]
+                    for position in grid_positions:
+                        # Assuming ships are placed horizontally (you can expand to other orientations)
+                        if self.is_valid_ship_placement(position, ship.length):
+                            actions.append(BattleshipAction(ActionType.SET_SHIP, ship.name, [position]))
+
+        elif state.phase == GamePhase.RUNNING:
+            # RUNNING Phase: Generate actions to shoot
+            # Assuming a 10x10 grid labeled "A1" to "J10"
+            grid_positions = [f"{chr(row)}{col}" for row in range(65, 75) for col in range(1, 11)]
+            for position in grid_positions:
+                if position not in active_player.shots:  # Avoid duplicate shots
+                    actions.append(BattleshipAction(ActionType.SHOOT, None, [position]))
+
+        elif state.phase == GamePhase.FINISHED:
+            # FINISHED Phase: No actions possible
+            pass
+
+        return actions
+
+    def is_valid_ship_placement(self, start_position: str, length: int) -> bool:
+        """Check if a ship can be placed starting from the given position."""
+        # Example logic to validate ship placement (you can expand this as needed)
+        row, col = start_position[0], int(start_position[1:])
+        for i in range(length):
+            if col + i > 10:  # Ensure it doesn't exceed grid boundaries
+                return False
+            if f"{row}{col + i}" in self.get_occupied_positions():  # Avoid collisions
+                return False
+        return True
+
+    def get_occupied_positions(self) -> List[str]:
+        """Get all positions occupied by ships."""
+        state = self.get_state()
+        occupied_positions = []
+        for player in state.players:
+            for ship in player.ships:
+                if ship.location:
+                    occupied_positions.extend(ship.location)
+        return occupied_positions
+
+
+def apply_action(self, action: BattleshipAction) -> None:
         """ Apply the given action to the game """
         pass
 
