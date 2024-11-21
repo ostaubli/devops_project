@@ -34,7 +34,7 @@ class Hangman(Game):
         """ Important: Game initialization also requires a set_state call to set the 'word_to_guess' """
         self._state = None
         self._players = [RandomPlayer()]
-        self._actions = [GuessLetterAction(chr(i)) for i in range(65, 90)]
+        self._actions = [GuessLetterAction(chr(i)) for i in range(65, 91)]
 
     def get_state(self) -> HangmanGameState:
         """ Set the game to a given state """
