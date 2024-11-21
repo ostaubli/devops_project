@@ -53,7 +53,16 @@ class Battleship(Game):
 
     def __init__(self):
         """ Game initialization (set_state call not necessary) """
-        pass
+        # just setting players to 2 is not working. Players need to be initialized as well with their parameters
+        # from class PlayerState.
+        self.state = BattleshipGameState(
+            idx_player_active=0,
+            phase=GamePhase.SETUP,
+            winner=None,
+            players=[
+                PlayerState("Player 1", [], [], []),
+                PlayerState("Player 2", [], [], [])
+            ])
 
     def print_state(self) -> None:
         """ Set the game to a given state """
@@ -61,11 +70,11 @@ class Battleship(Game):
 
     def get_state(self) -> BattleshipGameState:
         """ Get the complete, unmasked game state """
-        pass
+        return self.state
 
     def set_state(self, state: BattleshipGameState) -> None:
         """ Print the current game state """
-        pass
+        self.state = state
 
     def get_list_action(self) -> List[BattleshipAction]:
         """ Get a list of possible actions for the active player """
@@ -92,3 +101,18 @@ class RandomPlayer(Player):
 if __name__ == "__main__":
 
     game = Battleship()
+    Player1 = RandomPlayer()
+    Player2 = RandomPlayer()
+
+    while game.get_state().phase != GamePhase.FINISHED:
+        state = game.get_player_view(game.get_state().idx_player_active)
+        actions = game.get_list_action()
+        action = Player1.select_action(state, actions) if state.idx_player_active == 0 else Player2.select_action(state, actions)
+        if action:
+            game.apply_action(action)
+        game.print_state()
+
+    print("\nGame Over!")
+    winner = game.get_state().winner
+    if winner is not None:
+        print(f"Winner: {game.get_state().players[winner].name}")
