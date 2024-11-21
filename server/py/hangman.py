@@ -3,6 +3,51 @@ import random
 from enum import Enum
 from server.py.game import Game, Player
 
+# ASCII art for the hangman stages
+HANGMAN_PICS = [
+    '''
+     +---+
+     |    
+     |    
+     |    
+    ===''', '''
+     +---+
+     |   O
+     |    
+     |    
+    ===''', '''
+     +---+
+     |   O
+     |   |
+     |    
+    ===''', '''
+     +---+
+     |   O
+     |  /|
+     |    
+    ===''', '''
+     +---+
+     |   O
+     |  /|\
+     |    
+    ===''', '''
+     +---+
+     |   O
+     |  /|\
+     |    \
+    ===''', '''
+     +---+
+     |   O
+     |  /|\
+     |  / 
+    ===''', '''
+     +---+
+     |   O
+     |  /|\
+     |  / \
+    ==='''
+]
+
 
 class GuessLetterAction:
 
@@ -29,24 +74,34 @@ class HangmanGameState:
         self.guesses = guesses
         self.incorrect_guesses = incorrect_guesses
 
+    def display_state(self):
+        """ Zeigt den aktuellen Spielzustand (Wort, falsche Buchstaben, Hangman-Bild) """
+        # Das Wort wird angezeigt, wobei ungerratene Buchstaben durch "_" ersetzt werden
+        word_display = ''.join([letter if letter in self.guesses else '_' for letter in self.word_to_guess])
+        print(f"Word: {word_display}")  # Zeigt das Wort mit den erratenen Buchstaben
+        print(f"Incorrect guesses: {', '.join(self.incorrect_guesses)}")  # Zeigt die falschen Buchstaben
+        print(f"Hangman:\n{HANGMAN_PICS[len(self.incorrect_guesses)]}")  # Zeigt das entsprechende Hangman-Bild
+        print()
+
 
 class Hangman(Game):
 
     def __init__(self) -> None:
         """ Important: Game initialization also requires a set_state call to set the 'word_to_guess' """
-        pass
+        self.state: Optional[HangmanGameState] = None
 
     def get_state(self) -> HangmanGameState:
         """ Set the game to a given state """
-        pass
+        return self.state
 
     def set_state(self, state: HangmanGameState) -> None:
         """ Get the complete, unmasked game state """
-        pass
+        self.state = state
 
     def print_state(self) -> None:
         """ Print the current game state """
-        pass
+        if self.state:
+            self.state.display_state()
 
     def get_list_action(self) -> List[GuessLetterAction]:
         """ Get a list of possible actions for the active player """
@@ -56,12 +111,28 @@ class Hangman(Game):
 
     def apply_action(self, action: GuessLetterAction) -> None:
         """ Apply the given action to the game """
-        pass
+        if not self.state or self.state.phase == GamePhase.FINISHED:
+            return
+        if action.letter in self.state.word_to_guess:
+            self.state.guesses.append(action.letter)
+            if all(letter in self.state.guesses for letter in self.state.word_to_guess):
+                self.state.phase = GamePhase.FINISHED
+                print("\nCongratulations! You've guessed the word:", self.state.word_to_guess)
+        else:
+            self.state.incorrect_guesses.append(action.letter)
+            if len(self.state.incorrect_guesses) == len(HANGMAN_PICS) - 1:
+                self.state.phase = GamePhase.FINISHED
+                print("\nGame Over! The word was:", self.state.word_to_guess)
 
     def get_player_view(self, idx_player: int) -> HangmanGameState:
-        """ Get the masked state for the active player (e.g. the oppontent's cards are face down)"""
-        pass
-
+        """ Get the masked state for the active player """
+        word_display = ''.join([letter if letter in self.state.guesses else '_' for letter in self.state.word_to_guess])
+        return HangmanGameState(
+            word_to_guess=word_display,
+            phase=self.state.phase,
+            guesses=self.state.guesses,
+            incorrect_guesses=self.state.incorrect_guesses
+        )
 
 class RandomPlayer(Player):
 
@@ -75,5 +146,34 @@ class RandomPlayer(Player):
 if __name__ == "__main__":
 
     game = Hangman()
-    game_state = HangmanGameState(word_to_guess='DevOps', phase=GamePhase.SETUP, guesses=[], incorrect_guesses=[])
-    game.set_state(game_state)
+
+    def setup_game():
+        word_list = ['daniela', 'geraldine', 'liliana', 'laura']
+        chosen_word = random.choice(word_list)
+        game_state = HangmanGameState(word_to_guess=chosen_word, phase=GamePhase.SETUP, guesses=[], incorrect_guesses=[])
+        game.set_state(game_state)
+        game.state.phase = GamePhase.RUNNING
+
+
+    # Setup the game
+    setup_game()
+
+    # Create a random player for the simulation
+    player = RandomPlayer()
+
+    # Start the game
+    game.state.phase = GamePhase.RUNNING  # Transition to the running phase
+
+    # Start the game loop
+    while game.state.phase == GamePhase.RUNNING:
+        game.print_state()  # Print the current state of the game
+        actions = game.get_list_action()  # Get the list of possible actions
+        action = player.select_action(game.state, actions)  # Select a random action
+
+        if action:
+            print(f"Player guesses: {action.letter}")  # Print the guessed letter
+            game.apply_action(action)  # Apply the guessed letter
+
+    # Once game is finished, print final message
+    if game.state.phase == GamePhase.FINISHED:
+        print(f"Game Over! The word was: {game.state.word_to_guess}")
