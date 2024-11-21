@@ -15,7 +15,7 @@ class GuessLetterAction:
 
     def __repr__(self):
        """ String representation of self """
-        return f"GuessLetterAction(letter='{self.letter}')"
+       return f"GuessLetterAction(letter='{self.letter}')"
 
 
 class GamePhase(str, Enum):
