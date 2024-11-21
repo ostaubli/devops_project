@@ -34,7 +34,7 @@ class Hangman(Game):
         """ Important: Game initialization also requires a set_state call to set the 'word_to_guess' """
         self._state = None
         self._players = [RandomPlayer()]
-        self._letters = [GuessLetterAction(chr(i)) for i in range(65, 90)]
+        self._actions = [GuessLetterAction(chr(i)) for i in range(65, 90)]
 
     def get_state(self) -> HangmanGameState:
         """ Set the game to a given state """
@@ -50,7 +50,7 @@ class Hangman(Game):
 
     def get_list_action(self) -> List[GuessLetterAction]:
         """ Get a list of possible actions for the active player """
-        return self._letters
+        return self._actions
 
     def apply_action(self, action: GuessLetterAction) -> None:
         """ Apply the given action to the game """
