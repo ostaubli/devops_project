@@ -31,14 +31,14 @@ Open up your browser and go to http://localhost:8000
 For example, the hangman.py script
 ````
 "../.venv\Scripts\activate" # if not already activated
-set PYTHONPATH=%cd%
+set PYTHONPATH=%cd% # in PyCharm terminal use '$env:PYTHONPATH="C:\path\to\project\devops_project_aaajp"'
 python server/py/hangman.py
 ````
 
 ### Run the Benchmark
 ````
 "../.venv\Scripts\activate" # if not already activated
-set PYTHONPATH=%cd%
+set PYTHONPATH=%cd% # in PyCharm terminal use '$env:PYTHONPATH="C:\path\to\project\devops_project_aaajp"'
 python benchmark/benchmark_hangman.py python hangman.Hangman # or battleship.Battleship
 ````
 
