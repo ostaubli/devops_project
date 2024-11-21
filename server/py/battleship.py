@@ -58,8 +58,8 @@ class Battleship(Game):
     def __init__(self): # Kägi
         """ Game initialization (set_state call not necessary) """
         ship1 = Ship(name= "DST5", length=5, location=None) #, location=["A1","A2","A3","A4","A5"]
-        player1 = PlayerState(name = "Player1", ships=[ship1, ship1], shots = [], successful_shots=[])
-        player2 = PlayerState(name = "Player2", ships=[ship1, ship1], shots = [], successful_shots=[])
+        player1 = PlayerState(name = "Player1", ships=[], shots = [], successful_shots=[])
+        player2 = PlayerState(name = "Player2", ships=[], shots = [], successful_shots=[])
 
         self.state = BattleshipGameState(idx_player_active = 0, 
                                          phase= GamePhase.SETUP, 
@@ -80,6 +80,7 @@ class Battleship(Game):
 
     def set_state(self, state: BattleshipGameState) -> None: # Kägi
         """ Set the game to a given state """
+        self.state = state
         
         pass
 
