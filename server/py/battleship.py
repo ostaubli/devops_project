@@ -1,7 +1,11 @@
 from typing import List, Optional
 from enum import Enum
 import random
-from server.py.game import Game, Player
+
+if __name__ == "__main__":
+    from game import Game, Player
+else:
+    from server.py.game import Game, Player
 
 
 class ActionType(str, Enum):
@@ -51,31 +55,43 @@ class BattleshipGameState:
 
 class Battleship(Game):
 
-    def __init__(self):
+    def __init__(self): # Kägi
         """ Game initialization (set_state call not necessary) """
-        pass
+        ship1 = Ship(name= "DST5", length=5, location=None) #, location=["A1","A2","A3","A4","A5"]
+        player1 = PlayerState(name = "Player1", ships=[ship1, ship1], shots = [], successful_shots=[])
+        player2 = PlayerState(name = "Player2", ships=[ship1, ship1], shots = [], successful_shots=[])
 
-    def print_state(self) -> None:
-        """ Set the game to a given state """
-        pass
+        self.state = BattleshipGameState(idx_player_active = 0, 
+                                         phase= GamePhase.SETUP, 
+                                         winner = None, 
+                                         players = [player1,player2]
+        )
 
-    def get_state(self) -> BattleshipGameState:
-        """ Get the complete, unmasked game state """
-        pass
+        print("Battleship init")
+        
 
-    def set_state(self, state: BattleshipGameState) -> None:
+    def print_state(self) -> None: # Kägi
         """ Print the current game state """
+        print(f"Game Phase: {self.state.phase}")
+        print(f"Active Player: {self.state.players}")
+
+    def get_state(self) -> BattleshipGameState: # Kägi
+        return self.state
+
+    def set_state(self, state: BattleshipGameState) -> None: # Kägi
+        """ Set the game to a given state """
+        
         pass
 
-    def get_list_action(self) -> List[BattleshipAction]:
+    def get_list_action(self) -> List[BattleshipAction]: # Kened
         """ Get a list of possible actions for the active player """
         pass
 
-    def apply_action(self, action: BattleshipAction) -> None:
+    def apply_action(self, action: BattleshipAction) -> None: # Kened
         """ Apply the given action to the game """
         pass
 
-    def get_player_view(self, idx_player: int) -> BattleshipGameState:
+    def get_player_view(self, idx_player: int) -> BattleshipGameState: # Kened
         """ Get the masked state for the active player (e.g. the oppontent's cards are face down)"""
         pass
 
@@ -92,3 +108,5 @@ class RandomPlayer(Player):
 if __name__ == "__main__":
 
     game = Battleship()
+    board = [[' ' for _ in range(10)] for _ in range(10)]
+    print(board)
