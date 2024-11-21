@@ -9,6 +9,9 @@ class GuessLetterAction:
     def __init__(self, letter: str) -> None:
         self.letter = letter
 
+    def __str__(self):
+        return str(self.letter)
+
 
 class GamePhase(str, Enum):
     SETUP = 'setup'            # before the game has started
@@ -31,6 +34,7 @@ class Hangman(Game):
         """ Important: Game initialization also requires a set_state call to set the 'word_to_guess' """
         self._state = None
         self._players = [RandomPlayer()]
+        self._actions = [GuessLetterAction(chr(i)) for i in range(65, 90)]
 
     def get_state(self) -> HangmanGameState:
         """ Set the game to a given state """
@@ -46,7 +50,7 @@ class Hangman(Game):
 
     def get_list_action(self) -> List[GuessLetterAction]:
         """ Get a list of possible actions for the active player """
-        pass
+        return self._actions
 
     def apply_action(self, action: GuessLetterAction) -> None:
         """ Apply the given action to the game """
@@ -71,3 +75,6 @@ if __name__ == "__main__":
     game = Hangman()
     game_state = HangmanGameState(word_to_guess='DevOps', phase=GamePhase.SETUP, guesses=[], incorrect_guesses=[])
     game.set_state(game_state)
+
+    print(', '.join(map(str,game.get_list_action())))
+    
