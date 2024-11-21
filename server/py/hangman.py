@@ -8,7 +8,14 @@ import string
 class GuessLetterAction:
 
     def __init__(self, letter: str) -> None:
-        self.letter = letter
+        """ Ensure that the letter isalpha() and that there is only one, and lowercase """
+        if not isinstance(letter, str) or not letter.isalpha() or len(letter) != 1:
+            raise ValueError("The guessed letter must be a single alphabetic character.")
+        self.letter = letter.lower()
+
+    def __repr__(self):
+       """ String representation of self """
+        return f"GuessLetterAction(letter='{self.letter}')"
 
 
 class GamePhase(str, Enum):
