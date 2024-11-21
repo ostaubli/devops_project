@@ -14,6 +14,7 @@ class GamePhase(str, Enum):
     SETUP = 'setup'            # before the game has started
     RUNNING = 'running'        # while the game is running
     FINISHED = 'finished'      # when the game is finished
+    #add comment
 
 
 class HangmanGameState:
