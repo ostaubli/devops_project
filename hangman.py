@@ -11,12 +11,10 @@ class GuessLetterAction:
     def __init__(self, letter: str) -> None:
         self.letter = letter
 
-
 class GamePhase(str, Enum):
     SETUP = 'setup'            # before the game has started
     RUNNING = 'running'        # while the game is running
     FINISHED = 'finished'      # when the game is finished
-
 
 class HangmanGameState:
 
@@ -33,7 +31,6 @@ class HangmanGameState:
             f"guesses={self.guesses}, "
             f"phase='{self.phase.value}')"
         )
-
 
 class Hangman(Game):
 
@@ -73,13 +70,20 @@ class Hangman(Game):
 
     def print_state(self) -> None:
         state = self.get_state()
-
+        print("word to guess " + state.word_to_guess)
         with open("hangman_pics.txt", "r") as file:
             hangman_pics = file.read().strip().split("###")
-        
         masked_word = " ".join([l if l.lower() in state.guesses else "_" for l in state.word_to_guess])
         incorrect_guesses = [g for g in state.guesses if g not in state.word_to_guess]
-
+        if len(incorrect_guesses) > len(hangman_pics) - 1:
+            print("You've guessed too many wrong letters! You lose!")
+            print("The word was:", state.word_to_guess)
+            print(hangman_pics[-1])
+            exit()
+        if "_" not in masked_word:
+            print("Congratulations, you've guessed the word!")
+            print("The word was:", state.word_to_guess)
+            exit()
         print(hangman_pics[min(len(incorrect_guesses), len(hangman_pics) - 1)])
         print("\nWord to guess: ", masked_word)
         print("Guessed letters: ", " ".join(state.guesses))
@@ -87,20 +91,32 @@ class Hangman(Game):
 
     def get_list_action(self) -> List[GuessLetterAction]:
         """ Get a list of possible actions for the active player """
-        print("Inside get list action")
         while True:
-            chosen_action = input("""Please guess a letter A-Z or choose one of the following actions: 
-            1: Start new
-            2: Give up """)
-            if chosen_action not in ("1", "2") and (not chosen_action.isalpha() or not len(chosen_action) == 1):
-                print("Invalid input. Try again.")
-                continue
-            break
-        self.apply_action(chosen_action)
+                chosen_action = input("""Please guess a letter A-Z or choose one of the following actions: 
+                1: Start new
+                2: Give up 
+                """)
+                if chosen_action not in ("1", "2") and (not chosen_action.isalpha() or not len(chosen_action) == 1):
+                    print("Invalid input. Try again.")
+                    continue
+                self.apply_action(chosen_action)
 
     def apply_action(self, action: GuessLetterAction) -> None:
         """ Apply the given action to the game """
-        print(action)
+        if(action == "1"):
+            print("Restarting the game")
+            game = Hangman()
+            game_state = HangmanGameState(word_to_guess='', guesses=[], phase=GamePhase.SETUP)
+            game.set_state(game_state)
+        elif(action == "2"):
+            print("You gave up, game has ended. Goodbye.")
+            exit()
+        elif(action.isalpha()):
+            new_guesses = self.get_state().guesses
+            new_guesses.append(action)
+            game_state = HangmanGameState(word_to_guess=self.word_to_guess, guesses = new_guesses, phase=GamePhase.SETUP)
+            self.set_state(game_state)
+            self.print_state()
 
     def get_player_view(self, idx_player: int) -> HangmanGameState:
         """ Get the masked state for the active player (e.g., the word is partially revealed) """
@@ -112,7 +128,6 @@ class Hangman(Game):
             phase=state.phase,
         )
 
-
 class RandomPlayer(Player):
 
     def select_action(self, state: HangmanGameState, actions: List[GuessLetterAction]) -> Optional[GuessLetterAction]:
@@ -120,7 +135,6 @@ class RandomPlayer(Player):
         if len(actions) > 0:
             return random.choice(actions)
         return None
-
 
 if __name__ == "__main__":
 
