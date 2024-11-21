@@ -27,6 +27,8 @@ Open up your browser and go to http://localhost:8000
 
 
 ## Windows
+Use cmd not Powershell! Otherwise the the commands are different.
+
 ### Run your Script
 For example, the hangman.py script
 ````
