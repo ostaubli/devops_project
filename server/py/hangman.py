@@ -3,33 +3,26 @@ import random
 from enum import Enum
 from server.py.game import Game, Player
 
-
 class GuessLetterAction:
-
     def __init__(self, letter: str) -> None:
         self.letter = letter
-
 
 class GamePhase(str, Enum):
     SETUP = 'setup'            # before the game has started
     RUNNING = 'running'        # while the game is running
     FINISHED = 'finished'      # when the game is finished
 
-
 class HangmanGameState:
-
     def __init__(self, word_to_guess: str, phase: GamePhase, guesses: List[str], incorrect_guesses: List[str]) -> None:
         self.word_to_guess = word_to_guess
         self.phase = phase
         self.guesses = guesses
         self.incorrect_guesses = incorrect_guesses
 
-
 class Hangman(Game):
-
     def __init__(self) -> None:
         """ Important: Game initialization also requires a set_state call to set the 'word_to_guess' """
-        self.state = Optional[HangmanGameState] = None
+        self.state = HangmanGameState
 
     def set_state(self, state: HangmanGameState) -> None:
         """ Set the game to a given state """
@@ -41,20 +34,18 @@ class Hangman(Game):
 
     def print_state(self) -> None:
         """ Print the current game state """
-        print(self.state)
+        print(f"Korrekt erratene Buchstaben {self.state.guesses}")
+        print(f"Nicht korrekt erratene Buchstaben {self.state.incorrect_guesses}")
+        print(f"Verfügbare Versuche {7 - len(self.state.incorrect_guesses)}")
 
+# List[GuessLetterAction] ist deine Typisierung der Rückgabewerte der Methode. Das bedeutet, dass die Methode eine Liste
+# von GuessLetterAction-Objekten zurückgibt.
     def get_list_action(self) -> List[GuessLetterAction]:
         """ Get a list of possible actions for the active player """
-        if self.state and self.state.phase == GamePhase.RUNNING:
-            guessed_letters = set(self.state.guesses)
-            actions = []
-            for i in range(ord('a'), ord('z') + 1):  # Loop through ASCII values of 'a' to 'z'
-                letter = chr(i)  # Convert ASCII value to a character
-                if letter not in guessed_letters:  # Check if the letter has not been guessed
-                    actions.append(GuessLetterAction(letter))  # Add the action to the list
-            return actions
-        return []
-
+        all_letters = set(chr(i) for i in range(ord("a"), ord("z") + 1))
+        remaining_letters = all_letters - set(self.state.guesses)
+        actions = [GuessLetterAction(letter) for letter in sorted(remaining_letters)]
+        return actions
 
     def apply_action(self, action: GuessLetterAction) -> None:
         if self.state and self.state.phase == GamePhase.RUNNING:
@@ -73,7 +64,6 @@ class Hangman(Game):
                 self.state.phase = GamePhase.FINISHED
                 print(f"Game Over! The word was: {self.state.word_to_guess}")
 
-
     def get_player_view(self, idx_player: int) -> HangmanGameState:
         """ Get the masked state for the active player (e.g. the oppontent's cards are face down)"""
         if self.state.phase != GamePhase.RUNNING:
@@ -90,9 +80,7 @@ class RandomPlayer(Player):
             return random.choice(actions)
         return None
 
-
 if __name__ == "__main__":
-
     game = Hangman()
     game_state = HangmanGameState(word_to_guess='DevOps', phase=GamePhase.SETUP, guesses=[], incorrect_guesses=[])
     game.set_state(game_state)
