@@ -127,7 +127,47 @@ class Battleship(Game):
 
     def get_list_action(self) -> List[BattleshipAction]:
         """ Get a list of possible actions for the active player """
-        pass
+        actions = []
+        if not self.state:
+            return actions
+
+        if self.state.phase == GamePhase.SETUP:
+            # Define available ships
+            ships_config = [
+                ("Carrier", 5),
+                ("Battleship", 4),
+                ("Cruiser", 3),
+                ("Submarine", 3),
+                ("Destroyer", 2)
+            ]
+            
+            current_player = self.state.players[self.state.idx_player_active]
+            if len(current_player.ships) < len(ships_config):
+                ship_name, length = ships_config[len(current_player.ships)]
+                # Simplified ship placement - only horizontal from A1
+                for row in 'ABCDEFGHIJ':
+                    for col in range(1, 11 - length + 1):
+                        location = [f"{row}{col + i}" for i in range(length)]
+                        actions.append(BattleshipAction(
+                            action_type=ActionType.SET_SHIP,
+                            ship_name=ship_name,
+                            location=location
+                        ))
+
+        elif self.state.phase == GamePhase.RUNNING:
+            current_player = self.state.players[self.state.idx_player_active]
+            # Generate all possible shots excluding already taken shots
+            for row in 'ABCDEFGHIJ':
+                for col in range(1, 11):
+                    location = f"{row}{col}"
+                    if location not in current_player.shots:
+                        actions.append(BattleshipAction(
+                            action_type=ActionType.SHOOT,
+                            ship_name=None,
+                            location=[location]
+                        ))
+
+        return actions
 
     def apply_action(self, action: BattleshipAction) -> None:
         """ Apply the given action to the game """
