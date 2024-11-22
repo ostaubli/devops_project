@@ -53,7 +53,23 @@ class Battleship(Game):
 
     def __init__(self):
         """ Game initialization (set_state call not necessary) """
-        pass
+        # initialize player list and game phase
+        self.players = [] 
+        self.phase = GamePhase.SETUP
+
+        # create an initial empty game state 
+        self.state = BattleshipGameState(
+            idx_player_active=0, 
+            phase = self. phase, 
+            winner=None, 
+            players=[])
+        
+        # create two players and add their initial states
+        player1 = PlayerState(name="Player 1", ships=[], shots=[], successful_shots=[])
+        player2 = PlayerState(name="Player 2", ships=[], shots=[], successful_shots=[])
+
+        # add players to the game state
+        self.state.players.extend([player1, player2])
 
     def print_state(self) -> None:
         """ Set the game to a given state """
