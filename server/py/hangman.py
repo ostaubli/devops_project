@@ -3,31 +3,33 @@ import random
 from enum import Enum
 from server.py.game import Game, Player
 
+
 class GuessLetterAction:
 
     def __init__(self, letter: str) -> None:
         self.letter = letter
+
 
 class GamePhase(str, Enum):
     SETUP = 'setup'            # before the game has started
     RUNNING = 'running'        # while the game is running
     FINISHED = 'finished'      # when the game is finished
 
+
 class HangmanGameState:
+
     def __init__(self, word_to_guess: str, phase: GamePhase, guesses: List[str], incorrect_guesses: List[str]) -> None:
         self.word_to_guess = word_to_guess
         self.phase = phase
         self.guesses = guesses
         self.incorrect_guesses = incorrect_guesses
-        self.masked_word = ["_"]*len(word_to_guess)
+
 
 class Hangman(Game):
+
     def __init__(self) -> None:
         """ Important: Game initialization also requires a set_state call to set the 'word_to_guess' """
-        word_to_guess = input("Gib das zu erratende Wort ein: ").lower()
-        initial_state = HangmanGameState(word_to_guess, GamePhase.SETUP, [], [])
-        self.set_state(initial_state)
-        self.state.phase = GamePhase.RUNNING
+        self.state = Optional[HangmanGameState] = None
 
     def set_state(self, state: HangmanGameState) -> None:
         """ Set the game to a given state """
@@ -43,47 +45,34 @@ class Hangman(Game):
 
     def get_list_action(self) -> List[GuessLetterAction]:
         """ Get a list of possible actions for the active player """
-        guessed_letters = self.state.guesses + self.state.incorrect_guesses
-        available_letters = [letter for letter in "abcdefghijklmnopqrstuvwxyz" if letter not in guessed_letters]
-        action = [GuessLetterAction(letter) for letter in available_letters]
-        print(f"Du kannst aus folgenden Buchstaben raten: {available_letters}")
-        print(f"Diese Buchstaben hast du bereits verbraucht: {guessed_letters}")
-        print(f"Status des Spiels ist: {self.state.phase}")
+        if self.state and self.state.phase == GamePhase.RUNNING:
+            guessed_letters = set(self.state.guesses)
+            actions = []
+            for i in range(ord('a'), ord('z') + 1):  # Loop through ASCII values of 'a' to 'z'
+                letter = chr(i)  # Convert ASCII value to a character
+                if letter not in guessed_letters:  # Check if the letter has not been guessed
+                    actions.append(GuessLetterAction(letter))  # Add the action to the list
+            return actions
+        return []
+
 
     def apply_action(self, action: GuessLetterAction) -> None:
-        """ Applies the action (i.e. guesses a letter) to the game and checks if it's correct or not. """
-        while len(self.state.guesses) < len(self.state.word_to_guess) and len(self.state.incorrect_guesses) < 6:
-            print(f"Das zu erratende Wort ist: {self.state.masked_word}")
-
-            letter = input("Gib einen Buchstaben ein: ").lower().strip()
-
-            if len(letter) != 1 or not letter.isalpha():
-                print("Falsche Eingabe, bitte gib nur einen einzelnen Buchstaben ein.")
-                continue
-
-            elif letter in self.state.guesses or letter in self.state.incorrect_guesses:
-                print("Diesen Buchstaben hattest du schon, nimm einen anderen: ")
-
-            elif letter in self.state.word_to_guess:
-                self.state.guesses.append(letter)
-                print("Richtig, der Buchstabe ist im gesuchten Wort enthalten")
-
-                for i, char in enumerate(self.state.word_to_guess):
-                    if char == letter:
-                        self.state.masked_word[i] = letter
-
-                if all(c != "_" for c in self.state.masked_word):
-                    self.state.phase = GamePhase.FINISHED
-                    print(f"Herzlichen Glückwunsch, du hast das Wort {self.state.word_to_guess} richtig erraten")
-                    break
-            else:
+        if self.state and self.state.phase == GamePhase.RUNNING:
+            letter = action.letter.lower()
+            self.state.guesses.append(letter)
+            if letter not in self.state.word_to_guess.lower():
                 self.state.incorrect_guesses.append(letter)
-                print(f"Der Buchstabe {letter} ist nicht im gesuchten Wort enthalten")
 
-                if len(self.state.incorrect_guesses) >=6:
-                    self.state.phase = GamePhase.FINISHED
-                    print(f"Leider verloren. Du hast das gesuchte Wort {self.state.word_to_guess} nicht erraten")
-                    break
+            # Check if the game is finished
+            word_set = set(self.state.word_to_guess.lower())
+            guessed_set = set(self.state.guesses)
+            if word_set.issubset(guessed_set):
+                self.state.phase = GamePhase.FINISHED
+                print("Congratulations! You've guessed the word.")
+            elif len(self.state.incorrect_guesses) >= 6:  # Limit for incorrect guesses
+                self.state.phase = GamePhase.FINISHED
+                print(f"Game Over! The word was: {self.state.word_to_guess}")
+
 
     def get_player_view(self, idx_player: int) -> HangmanGameState:
         """ Get the masked state for the active player (e.g. the oppontent's cards are face down)"""
@@ -101,7 +90,25 @@ class RandomPlayer(Player):
             return random.choice(actions)
         return None
 
+
 if __name__ == "__main__":
+
     game = Hangman()
-    letter = input("Gib einen Buchstaben ein: ").lower().strip()
-    game.apply_action(GuessLetterAction(letter))
+    game_state = HangmanGameState(word_to_guess='DevOps', phase=GamePhase.SETUP, guesses=[], incorrect_guesses=[])
+    game.set_state(game_state)
+
+    random_player = RandomPlayer()  # Create an instance of RandomPlayer
+
+    # Main gameplay loop
+    while game.state.phase == GamePhase.RUNNING:
+        game.print_state()  # Print the current game state
+        actions = game.get_list_action()  # Get all possible actions for the player
+
+        # RandomPlayer selects an action
+        action = random_player.select_action(game.get_state(), actions)
+        if action:
+            print(f"RandomPlayer guesses: {action.letter}")
+            game.apply_action(action)  # Apply the chosen action to the game
+        else:
+            print("No more possible actions.")
+            break
