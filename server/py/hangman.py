@@ -109,7 +109,7 @@ class Hangman(Game):
         
         # check if the game is won - the word is guessed
         if all(char in self.state.guesses for char in self.state.word_to_guess):
-            print("THe word has been guessed!")
+            print("The word has been guessed!")
             self.state.phase = GamePhase.FINISHED
 
         # set a maximum number of guessed in order to finish the game faster
@@ -122,15 +122,42 @@ class Hangman(Game):
 
     def get_player_view(self, idx_player: int) -> HangmanGameState:
         """ Get the masked state for the active player (e.g. the oppontent's cards are face down)"""
-        pass
+        # Check to ensure state exists
+        if not self.state:
+            raise ValueError("Game state not initialized.")
 
+        # Generate the masked version of the word to guess
+        masked_word = ''.join(
+            char if char in self.state.guesses else '_' for char in self.state.word_to_guess
+        )
+        masked = True
+        # Return a new HangmanGameState with the masked word
+        return HangmanGameState(
+            word_to_guess=masked_word,
+            phase=self.state.phase,
+            guesses=self.state.guesses,
+            incorrect_guesses=self.state.incorrect_guesses
+        )
 
 class RandomPlayer(Player):
 
     def select_action(self, state: HangmanGameState, actions: List[GuessLetterAction]) -> Optional[GuessLetterAction]:
         """ Given masked game state and possible actions, select the next action """
-        if len(actions) > 0:
-            return random.choice(actions)
+        
+        if not actions:
+            return None
+
+        vowels = {'a', 'e', 'i', 'o', 'u'}
+        # Separate vowels and consonants from actions
+        vowel_actions = [action for action in actions if action.letter in vowels]
+        consonant_actions = [action for action in actions if action.letter not in vowels]
+
+        # Prioritize vowels; if no vowels are available, randomly pick a consonant
+        if vowel_actions:
+            return random.choice(vowel_actions)
+        if consonant_actions:
+            return random.choice(consonant_actions)
+
         return None
 
 
