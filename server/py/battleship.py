@@ -52,21 +52,21 @@ class BattleshipGameState:
 class Battleship(Game):
 
     def __init__(self):
-        """ Game initialization (set_state call not necessary) """
-        # just setting players to 2 is not working. Players need to be initialized as well with their parameters
-        # from class PlayerState.
-        self.state = BattleshipGameState(
-            idx_player_active=0,
-            phase=GamePhase.SETUP,
-            winner=None,
-            players=[
-                PlayerState("Player 1", [], [], []),
-                PlayerState("Player 2", [], [], [])
-            ])
+        self.state: Optional[BattleshipGameState] = None
 
     def print_state(self) -> None:
-        """ Set the game to a given state """
-        print(self.state)
+        if not self.state:
+            print("No state set.")
+            return
+        print(f"Phase: {self.state.phase}, Active Player: {self.state.idx_player_active}")
+        for idx, player in enumerate(self.state.players):
+            print(f"Player {idx + 1}: {player.name}")
+            print("  Ships:")
+            for ship in player.ships:
+                print(f"    {ship.name} - Location: {ship.location}")
+            print(f"  Shots: {player.shots}")
+            print(f"  Successful Shots: {player.successful_shots}")
+
 
     def get_state(self) -> BattleshipGameState:
         """ Get the complete, unmasked game state """
@@ -75,7 +75,7 @@ class Battleship(Game):
     def set_state(self, state: BattleshipGameState) -> None:
         """ Print the current game state """
         self.state = state
-
+    
     def get_list_action(self) -> List[BattleshipAction]:
         """ Get a list of possible actions for the active player """
         actions: List[BattleshipAction] = []
@@ -141,12 +141,41 @@ class Battleship(Game):
         return actions
 
     def apply_action(self, action: BattleshipAction) -> None:
-        """ Apply the given action to the game """
-        pass
+        if action.action_type == ActionType.SET_SHIP:
+            player = self.state.players[self.state.idx_player_active]
+            for ship in player.ships:
+                if ship.name == action.ship_name:
+                    ship.location = action.location
+            all_ships_set = all(ship.location for ship in player.ships)
+            if all_ships_set:
+                self.state.idx_player_active = (self.state.idx_player_active + 1) % 2
+                if all(all(ship.location for ship in p.ships) for p in self.state.players):
+                    self.state.phase = GamePhase.RUNNING
+
+        elif action.action_type == ActionType.SHOOT:
+            player = self.state.players[self.state.idx_player_active]
+            opponent = self.state.players[(self.state.idx_player_active + 1) % 2]
+            target = action.location[0]
+            player.shots.append(target)
+            if any(target in ship.location for ship in opponent.ships if ship.location):
+                player.successful_shots.append(target)
+                opponent.ships = [ship for ship in opponent.ships if target not in ship.location]
+            if not opponent.ships:
+                self.state.phase = GamePhase.FINISHED
+                self.state.winner = self.state.idx_player_active
+            else:
+                self.state.idx_player_active = (self.state.idx_player_active + 1) % 2
 
     def get_player_view(self, idx_player: int) -> BattleshipGameState:
-        """ Get the masked state for the active player (e.g. the oppontent's cards are face down)"""
-        pass
+        players_copy = []
+        for i, player in enumerate(self.state.players):
+            if i == idx_player:
+                players_copy.append(player)
+            else:
+                hidden_ships = [Ship(ship.name, ship.length, None) for ship in player.ships]
+                players_copy.append(PlayerState(player.name, hidden_ships, player.shots, player.successful_shots))
+        return BattleshipGameState(self.state.idx_player_active, self.state.phase, self.state.winner, players_copy)
+
 
 
 class RandomPlayer(Player):
