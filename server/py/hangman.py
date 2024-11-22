@@ -3,16 +3,12 @@ from typing import List, Optional
 import random
 from enum import Enum
 from server.py.game import Game, Player
+from pydantic import BaseModel
 
 
-class GuessLetterAction:
+class GuessLetterAction(BaseModel):
     """Class representing an action of guessing a letter in the Hangman game."""
-
-    def __init__(self, letter: str) -> None:
-        """
-        Initialize a GuessLetterAction with the specified letter.
-        """
-        self.letter = letter
+    letter: str
 
     def get_letter(self) -> str:
         """
@@ -28,23 +24,21 @@ class GuessLetterAction:
 
 
 class GamePhase(str, Enum):
+    """
+    Enum representing the different phases of the Hangman game.
+    """
     SETUP = 'setup'            # before the game has started
     RUNNING = 'running'        # while the game is running
     FINISHED = 'finished'      # when the game is finished
 
 
-class HangmanGameState:
+class HangmanGameState(BaseModel):
     """Class representing the state of a Hangman game."""
 
-    def __init__(self, word_to_guess: str, phase: GamePhase,
-                 guesses: List[str], incorrect_guesses: List[str]) -> None:
-        """
-        Initialize the Hangman game state.
-        """
-        self.word_to_guess = word_to_guess
-        self.phase = phase
-        self.guesses = guesses
-        self.incorrect_guesses = incorrect_guesses
+    word_to_guess: str
+    phase: GamePhase
+    guesses: List[str]
+    incorrect_guesses: List[str]
 
     def is_word_guessed(self) -> bool:
         """
@@ -148,7 +142,8 @@ class Hangman(Game):
 
     def __init__(self) -> None:
         """Initialize the game with default values."""
-        self.state = HangmanGameState(word_to_guess='', phase=GamePhase.SETUP, guesses=[], incorrect_guesses=[])
+        self.state = HangmanGameState(
+            word_to_guess='', phase=GamePhase.SETUP, guesses=[], incorrect_guesses=[])
 
     def get_state(self) -> HangmanGameState:
         """Return the current game state."""
@@ -168,7 +163,7 @@ class Hangman(Game):
 
     def get_list_action(self) -> List[GuessLetterAction]:
         """Get a list of possible actions for the active player."""
-        return [GuessLetterAction(letter) for letter in string.ascii_uppercase
+        return [GuessLetterAction(letter=letter) for letter in string.ascii_uppercase
                 if letter not in self.state.guesses]
 
     def apply_action(self, action: GuessLetterAction) -> None:
@@ -186,7 +181,7 @@ class Hangman(Game):
         if all(l.upper() in (g.upper() for g in self.state.guesses) for l in self.state.word_to_guess):
             print("You've won!")
             self.state.phase = GamePhase.FINISHED
-        elif len(self.state.incorrect_guesses) >= len(self.HANGMAN_PICS) - 1:
+        elif len(self.state.incorrect_guesses) >= 8:
             print("Game over!")
             self.state.phase = GamePhase.FINISHED
 
@@ -212,16 +207,25 @@ class RandomPlayer(Player):
 
     def get_available_actions(self, actions: List[GuessLetterAction]) -> List[str]:
         """
-        Get the list of available actions as strings.
+        Retrieve the list of available actions as strings.
+
+        Args:
+            actions (List[GuessLetterAction]): The possible actions for the player.
+
+        Returns:
+            List[str]: The available actions as a list of letters.
         """
         return [action.letter for action in actions]
 
 
 if __name__ == "__main__":
-
     game = Hangman()
-    game_state = HangmanGameState(word_to_guess='DevOps',
-                                  phase=GamePhase.SETUP, guesses=[], incorrect_guesses=[])
+    game_state = HangmanGameState(
+        word_to_guess='DevOps',
+        phase=GamePhase.SETUP,
+        guesses=[],
+        incorrect_guesses=[]
+    )
     game.set_state(game_state)
 
     # # Example gameplay

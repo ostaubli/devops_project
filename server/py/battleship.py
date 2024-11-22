@@ -77,26 +77,68 @@ class Battleship(Game):
         self.state = state
     
     def get_list_action(self) -> List[BattleshipAction]:
-        if self.state.phase == GamePhase.SETUP:
-            actions = []
-            ships_to_place = [ship for ship in self.state.players[self.state.idx_player_active].ships if not ship.location]
-            for ship in ships_to_place:
-                for start in range(1, 11):
-                    for char in "ABCDEFGHIJ":
-                        loc_horizontal = [f"{chr(ord(char) + i)}{start}" for i in range(ship.length) if ord(char) + i <= ord("J")]
-                        loc_vertical = [f"{char}{start + i}" for i in range(ship.length) if start + i <= 10]
-                        if len(loc_horizontal) == ship.length:
-                            actions.append(BattleshipAction(ActionType.SET_SHIP, ship.name, loc_horizontal))
-                        if len(loc_vertical) == ship.length:
-                            actions.append(BattleshipAction(ActionType.SET_SHIP, ship.name, loc_vertical))
-            return actions
-        elif self.state.phase == GamePhase.RUNNING:
-            all_locations = [f"{chr(x)}{y}" for x in range(65, 75) for y in range(1, 11)]
-            taken_shots = self.state.players[self.state.idx_player_active].shots
-            available_shots = [loc for loc in all_locations if loc not in taken_shots]
-            return [BattleshipAction(ActionType.SHOOT, None, [loc]) for loc in available_shots]
-        return []
+        """ Get a list of possible actions for the active player """
+        actions: List[BattleshipAction] = []
+        
+        active_player_idx = self.state.idx_player_active
+        active_player = self.state.players[active_player_idx]
 
+        def is_valid_ship_placement(self, locations: List[str], existing_ship_locations: List[str]) -> bool:
+            """
+            Validate that the proposed locations:
+            - Do not overlap with any existing ship.
+            - Do not touch (including diagonals) any existing ship.
+            """
+            # Create a set of all occupied cells, including adjacent cells
+            occupied_cells = set()
+            for loc in existing_ship_locations:
+                row, col = ord(loc[0]), int(loc[1:])
+                # Add the cell and its surrounding cells
+                for r in range(row - 1, row + 2):
+                    for c in range(col - 1, col + 2):
+                        occupied_cells.add(f"{chr(r)}{c}")
+
+            # Check if any of the proposed locations overlap or touch existing ships
+            for loc in locations:
+                if loc in occupied_cells:
+                    return False
+
+            return True
+
+        if self.state.phase == GamePhase.SETUP:
+            # Generate ship placement actions
+            for ship in active_player.ships:
+                if not ship.location:
+                    board_size = 10
+                    # Collect all existing ship locations
+                    existing_ship_locations = [
+                        loc for other_ship in active_player.ships if other_ship.location for loc in other_ship.location
+                    ]
+                    for row in range(board_size):
+                        for col in range(board_size):
+                            # Generate all possible horizontal and vertical placements
+                            if col + ship.length <= board_size:
+                                # Horizontal placement
+                                locations = [f"{chr(65 + row)}{c + 1}" for c in range(col, col + ship.length)]
+                                if self.is_valid_ship_placement(locations, existing_ship_locations):
+                                    actions.append(BattleshipAction(ActionType.SET_SHIP, ship.name, locations))
+                            if row + ship.length <= board_size:
+                                # Vertical placement
+                                locations = [f"{chr(65 + r)}{col + 1}" for r in range(row, row + ship.length)]
+                                if self.is_valid_ship_placement(locations, existing_ship_locations):
+                                    actions.append(BattleshipAction(ActionType.SET_SHIP, ship.name, locations))
+
+
+        elif self.state.phase == GamePhase.RUNNING:
+            # Generate shooting actions
+            board_size = 10
+            for row in range(board_size):
+                for col in range(board_size):
+                    location = f"{chr(65 + row)}{col + 1}"
+                    if location not in active_player.shots:
+                        actions.append(BattleshipAction(ActionType.SHOOT, None, [location]))
+
+        return actions
 
     def apply_action(self, action: BattleshipAction) -> None:
         if action.action_type == ActionType.SET_SHIP:
