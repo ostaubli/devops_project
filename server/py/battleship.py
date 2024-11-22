@@ -48,24 +48,40 @@ class BattleshipGameState:
         self.winner = winner
         self.players = players
 
+    def __repr__(self):
+        return (f"BattleshipGameState(active_player={self.idx_player_active}, "
+                f"phase={self.phase}, winner={self.winner}, "
+                f"players={self.players})")
+
 
 class Battleship(Game):
 
     def __init__(self):
         """ Game initialization (set_state call not necessary) """
-        pass
+        self.state = None
+        player1 = PlayerState(name='Player 1', ships=[], shots=[], successful_shots=[])
+        player2 = PlayerState(name='Player 2', ships=[], shots=[], successful_shots=[])
+        
+        initial_state = BattleshipGameState(idx_player_active=0,
+                                            phase=GamePhase.SETUP,
+                                            winner=None,
+                                            players=[player1, player2])
+        self.state = self.set_state(initial_state)
+        
 
     def print_state(self) -> None:
-        """ Set the game to a given state """
-        pass
+        """ Print the current game state """
+        print(self.state)
 
     def get_state(self) -> BattleshipGameState:
         """ Get the complete, unmasked game state """
-        pass
+        if not self.state:
+            raise ValueError("Game state has not been initialized")
+        return self.state
 
     def set_state(self, state: BattleshipGameState) -> None:
-        """ Print the current game state """
-        pass
+        """ Set the game to a given state """
+        self.state = state
 
     def get_list_action(self) -> List[BattleshipAction]:
         """ Get a list of possible actions for the active player """
