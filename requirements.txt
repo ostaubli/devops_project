@@ -1,4 +1,4 @@
-gfastapi
+fastapi
 uvicorn
 websockets
 jinja2

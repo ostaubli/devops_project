@@ -1,7 +1,7 @@
 from typing import List, Optional
 import random
 from enum import Enum
-from game import Game, Player
+from server.py.game import Game, Player
 
 class GuessLetterAction:
 
@@ -105,4 +105,3 @@ if __name__ == "__main__":
     game = Hangman()
     letter = input("Gib einen Buchstaben ein: ").lower().strip()
     game.apply_action(GuessLetterAction(letter))
-
