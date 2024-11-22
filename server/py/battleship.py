@@ -58,17 +58,17 @@ class Battleship(Game):
     def __init__(self): # Kägi
         """ Game initialization (set_state call not necessary) """
         ship1 = Ship(name= "DST5", length=5, location=None) #, location=["A1","A2","A3","A4","A5"]
-        player1 = PlayerState(name = "Player1", ships=[ship1, ship1], shots = [], successful_shots=[])
-        player2 = PlayerState(name = "Player2", ships=[ship1, ship1], shots = [], successful_shots=[])
+        player1 = PlayerState(name = "Player1", ships=[], shots = [], successful_shots=[])
+        player2 = PlayerState(name = "Player2", ships=[], shots = [], successful_shots=[])
 
-        self.state = BattleshipGameState(idx_player_active = 0,
-                                         phase= GamePhase.SETUP,
-                                         winner = None,
+        self.state = BattleshipGameState(idx_player_active = 0, 
+                                         phase= GamePhase.SETUP, 
+                                         winner = None, 
                                          players = [player1,player2]
         )
 
         print("Battleship init")
-
+        
 
     def print_state(self) -> None: # Kägi
         """ Print the current game state """
@@ -80,6 +80,7 @@ class Battleship(Game):
 
     def set_state(self, state: BattleshipGameState) -> None: # Kägi
         """ Set the game to a given state """
+        self.state = state
 
         pass
 
@@ -88,31 +89,6 @@ class Battleship(Game):
         pass
 
     def apply_action(self, action: BattleshipAction) -> None: # Kened
-        return actions
-
-    def is_valid_ship_placement(self, start_position: str, length: int) -> bool:
-        """Check if a ship can be placed starting from the given position."""
-        # Example logic to validate ship placement (you can expand this as needed)
-        row, col = start_position[0], int(start_position[1:])
-        for i in range(length):
-            if col + i > 10:  # Ensure it doesn't exceed grid boundaries
-                return False
-            if f"{row}{col + i}" in self.get_occupied_positions():  # Avoid collisions
-                return False
-        return True
-
-    def get_occupied_positions(self) -> List[str]:
-        """Get all positions occupied by ships."""
-        state = self.get_state()
-        occupied_positions = []
-        for player in state.players:
-            for ship in player.ships:
-                if ship.location:
-                    occupied_positions.extend(ship.location)
-        return occupied_positions
-
-
-def apply_action(self, action: BattleshipAction) -> None:
         """ Apply the given action to the game """
         pass
 
