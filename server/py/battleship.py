@@ -53,23 +53,121 @@ class Battleship(Game):
 
     def __init__(self):
         """ Game initialization (set_state call not necessary) """
-        pass
+        self.state = BattleshipGameState(
+            idx_player_active=0,
+            phase=GamePhase.SETUP,
+            winner=None,
+            players=[
+                PlayerState(name="Player 1", ships=[], shots=[], successful_shots=[]),
+                PlayerState(name="Player 2", ships=[], shots=[], successful_shots=[])
+            ]
+        )
 
     def print_state(self) -> None:
-        """ Set the game to a given state """
-        pass
+        """ Print the current game state """
+        print(f"Game Phase: {self.state.phase}")
+        print(f"Active Player: {self.state.idx_player_active + 1}")
+        if self.state.winner is not None:
+            print(f"Winner: Player {self.state.winner + 1}")
+        
+        for idx, player in enumerate(self.state.players):
+            print(f"\nPlayer {idx + 1}:")
+            print(f"Ships: {[f'{ship.name} at {ship.location}' for ship in player.ships]}")
+            print(f"Shots: {player.shots}")
+            print(f"Hits: {player.successful_shots}")
 
     def get_state(self) -> BattleshipGameState:
-        """ Get the complete, unmasked game state """
-        pass
+        """ Get the complete, unmasked game state. Returns a copy of current game state to ensure no external modifications affect the internal game state afterwards."""
+        if not self.state:
+            raise ValueError("Game state not initialized")
+        
+        # Create new lists to avoid external modification
+        players = [
+            PlayerState(
+                name=player.name,
+                ships=[Ship(s.name, s.length, s.location.copy() if s.location else None) 
+                      for s in player.ships],
+                shots=player.shots.copy(),
+                successful_shots=player.successful_shots.copy()
+            )
+            for player in self.state.players
+        ]
+        
+        # Return new state object with copied data
+        return BattleshipGameState(
+            idx_player_active=self.state.idx_player_active,
+            phase=self.state.phase,
+            winner=self.state.winner,
+            players=players
+        )
 
     def set_state(self, state: BattleshipGameState) -> None:
-        """ Print the current game state """
-        pass
+        """Set the game state with defensive copying to ensure encapsulation."""
+        if not state:
+            raise ValueError("Cannot set None state")
+        if not isinstance(state, BattleshipGameState):
+            raise ValueError("Invalid state type")
+        if not state.players or len(state.players) != 2:
+            raise ValueError("State must contain exactly 2 players")
+            
+        # Create defensive copy
+        self.state = BattleshipGameState(
+            idx_player_active=state.idx_player_active,
+            phase=state.phase,
+            winner=state.winner,
+            players=[
+                PlayerState(
+                    name=p.name,
+                    ships=[Ship(s.name, s.length, s.location.copy() if s.location else None) for s in p.ships],
+                    shots=p.shots.copy(),
+                    successful_shots=p.successful_shots.copy()
+                ) for p in state.players
+            ]
+        )
 
     def get_list_action(self) -> List[BattleshipAction]:
         """ Get a list of possible actions for the active player """
-        pass
+        actions = []
+        if not self.state:
+            return actions
+
+        if self.state.phase == GamePhase.SETUP:
+            # Define available ships
+            ships_config = [
+                ("Carrier", 5),
+                ("Battleship", 4),
+                ("Cruiser", 3),
+                ("Submarine", 3),
+                ("Destroyer", 2)
+            ]
+            
+            current_player = self.state.players[self.state.idx_player_active]
+            if len(current_player.ships) < len(ships_config):
+                ship_name, length = ships_config[len(current_player.ships)]
+                # Simplified ship placement - only horizontal from A1
+                for row in 'ABCDEFGHIJ':
+                    for col in range(1, 11 - length + 1):
+                        location = [f"{row}{col + i}" for i in range(length)]
+                        actions.append(BattleshipAction(
+                            action_type=ActionType.SET_SHIP,
+                            ship_name=ship_name,
+                            location=location
+                        ))
+
+        elif self.state.phase == GamePhase.RUNNING:
+            current_player = self.state.players[self.state.idx_player_active]
+            # Generate all possible shots excluding already taken shots
+            for row in 'ABCDEFGHIJ':
+                for col in range(1, 11):
+                    location = f"{row}{col}"
+                    if location not in current_player.shots:
+                        actions.append(BattleshipAction(
+                            action_type=ActionType.SHOOT,
+                            ship_name=None,
+                            location=[location]
+                        ))
+
+        return actions
 
     def apply_action(self, action: BattleshipAction) -> None:
         """ Apply the given action to the game """
@@ -92,3 +190,6 @@ class RandomPlayer(Player):
 if __name__ == "__main__":
 
     game = Battleship()
+    
+    
+

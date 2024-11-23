@@ -37,6 +37,7 @@ class Hangman(Game):
         return self.state 
 
     def set_state(self, state: HangmanGameState) -> None:
+
         # Update the game state
         """ Set the game to a given state """
 
