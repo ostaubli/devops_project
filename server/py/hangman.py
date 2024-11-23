@@ -46,7 +46,21 @@ class Hangman(Game):
 
     def print_state(self) -> None:
         """ Print the current game state """
-        pass
+
+        # show the current correct guessed letters
+        masked_word = ''.join(
+            letter if letter.upper() in self._state.guesses else '_'
+            for letter in self._state.word_to_guess
+        )
+
+        # print current status of the game
+        print("=== Current Game State ===")
+        print(f"Word to guess: {masked_word}")
+        print(f"Guessed letters: {', '.join(self._state.guesses) if self._state.guesses else 'None'}")
+        print(
+            f"Incorrect guesses: {', '.join(self._state.incorrect_guesses) if self._state.incorrect_guesses else 'None'}")
+        print(f"Game phase: {self._state.phase}")
+        print("==========================")
 
     def get_list_action(self) -> List[GuessLetterAction]:
         """ Get a list of possible actions for the active player """
