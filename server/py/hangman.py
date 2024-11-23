@@ -1,34 +1,48 @@
-from typing import List, Optional
+from typing import List, Optional, Type
 import random
 from enum import Enum
+from pydantic import BaseModel
+import string
+from pydantic.v1 import validator
 from server.py.game import Game, Player
 
-class GuessLetterAction:
-    def __init__(self, letter: str) -> None:
-        self.letter = letter
+
+class GuessLetterAction(BaseModel):
+    letter: str
+
+    @validator('letter')
+    def validate_letter(cls, v):
+        if v.upper() not in string.ascii_uppercase:
+            raise ValueError("you have to insert a letter")
+        return v
 
 class GamePhase(str, Enum):
     SETUP = 'setup'            # before the game has started
     RUNNING = 'running'        # while the game is running
     FINISHED = 'finished'      # when the game is finished
 
-class HangmanGameState:
-    def __init__(self, word_to_guess: str, phase: GamePhase, guesses: List[str], incorrect_guesses: List[str]) -> None:
-        self.word_to_guess = word_to_guess
-        self.phase = phase
-        self.guesses = guesses
-        self.incorrect_guesses = incorrect_guesses
+class HangmanGameState (BaseModel):
+    word_to_guess: str
+    phase: GamePhase
+    guesses: List[str]
+    incorrect_guesses: List[str]
+
+    @validator("word_to_guess")
+    def validate_word_to_guess(cls, v):
+        if not v.isalpha():
+            raise ValueError("The word go guess must contain only letters")
+        return v
 
 class Hangman(Game):
     def __init__(self) -> None:
         """ Important: Game initialization also requires a set_state call to set the 'word_to_guess' """
-        self.state = HangmanGameState
+        self.state = None
 
     def set_state(self, state: HangmanGameState) -> None:
         """ Set the game to a given state """
         self.state = state
 
-    def get_state(self) -> HangmanGameState:
+    def get_state(self) -> Type[HangmanGameState]:
         """ Set the game to a given state """
         return self.state
 
