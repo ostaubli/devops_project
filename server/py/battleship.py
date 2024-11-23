@@ -51,6 +51,15 @@ class BattleshipGameState:
 
 class Battleship(Game):
 
+    # set of ships and their lengths
+    SHIPS_TO_PLACE = [
+        ("Carrier", 5), 
+        ("Battleship", 4), 
+        ("Cruiser", 3), 
+        ("Submarine", 3), 
+        ("Destroyer", 2)
+    ]
+
     def __init__(self):
         """ Game initialization (set_state call not necessary) """
         # initialize player list and game phase
@@ -88,15 +97,6 @@ class Battleship(Game):
         if self.phase != GamePhase.SETUP:
             # enter here all action why in other GamePhase (e.g. running)
             return []
-        
-        # set of ships and their lengths
-        ships_to_place = [
-            ("Carrier", 5), 
-            ("Battleship", 4), 
-            ("Cruiser", 3), 
-            ("Submarine", 3), 
-            ("Destroyer", 2)
-        ]
 
         # check how many ships the active player has placed
         active_player = self.state.players[self.state.idx_player_active]
@@ -127,7 +127,40 @@ class Battleship(Game):
 
     def apply_action(self, action: BattleshipAction) -> None:
         """ Apply the given action to the game """
-        pass
+        active_player = self.state.players[self.state.idx_player_active]
+        
+        if action.action_type == ActionType.SET_SHIP:
+            # Check for overlap
+            occupied_cells = set()
+            for ship in active_player.ships:
+                occupied_cells.update(ship.location)
+
+            # Check if any of the new ship's locations are already occupied
+            if any(cell in occupied_cells for cell in action.location):
+                print(f"Invalid placement: The ship's location overlaps with an existing ship.")
+                return
+            
+            # Add the new ship to the player's list of ships
+            ship = Ship(name=action.ship_name, length=len(action.location), location=action.location)
+            active_player.ships.append(ship)
+            print(f"{action.ship_name} placed at {action.location}.")
+
+             # Check if the current player has placed all ships
+            if len(active_player.ships) == len(Battleship.SHIPS_TO_PLACE):
+                # Switch to the next player
+                next_player_idx = (self.state.idx_player_active + 1) % len(self.state.players)
+                self.state.idx_player_active = next_player_idx
+                
+                # Check if both players have placed all ships
+                if len(self.state.players[0].ships) == len(Battleship.SHIPS_TO_PLACE) and len(self.state.players[1].ships) == len(Battleship.SHIPS_TO_PLACE):
+                    self.state.phase = GamePhase.RUNNING
+                    print("Both players have placed their ships. Let the shooting begin!!")
+                else:
+                    print(f"{self.state.players[self.state.idx_player_active].name}'s turn to place ships.")
+            else:
+                print(f"{active_player.name} has placed {len(active_player.ships)}/{len(Battleship.SHIPS_TO_PLACE)} ships.")
+
+        # Other action types (e.g., shooting) can be handled here in future
 
     def get_player_view(self, idx_player: int) -> BattleshipGameState:
         """ Get the masked state for the active player (e.g. the oppontent's cards are face down)"""
