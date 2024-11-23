@@ -30,6 +30,7 @@ class Hangman(Game):
     def __init__(self) -> None:
         """ Important: Game initialization also requires a set_state call to set the 'word_to_guess' """
         self.state = None
+        self.display_word = []
 
     def get_state(self) -> HangmanGameState:
         """ Set the game to a given state """
@@ -38,6 +39,13 @@ class Hangman(Game):
     def set_state(self, state: HangmanGameState) -> None:
         """ Get the complete, unmasked game state """
         self.state = state
+        if state and state.word_to_guess:
+            self.display_word = ["_" for _ in state.word_to_guess]
+            # Display any existing guesses
+            for guess in state.guesses:
+                for i, char in enumerate(state.word_to_guess):
+                    if char.upper() == guess.upper():
+                        self.display_word[i] = char
 
     def print_state(self) -> None:
         """ Print the current game state """
@@ -45,11 +53,39 @@ class Hangman(Game):
 
     def get_list_action(self) -> List[GuessLetterAction]:
         """ Get a list of possible actions for the active player """
-        pass
+        if self.state is None or self.state.phase != GamePhase.RUNNING:
+            return []
+        
+        uppercase_letters = "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
+
+        # Combine guessed and incorrect letters
+        guessed_letters = set(self.state.guesses + self.state.incorrect_guesses)
+
+        # Return actions for unused letters
+        return [GuessLetterAction(letter) for letter in uppercase_letters if letter not in guessed_letters]
 
     def apply_action(self, action: GuessLetterAction) -> None:
         """ Apply the given action to the game """
-        pass
+        if not self.state or self.state.phase != GamePhase.RUNNING:
+            return
+
+        guess = action.letter.upper()
+        if guess in self.state.guesses or guess in self.state.incorrect_guesses:
+            return
+
+        if guess in self.state.word_to_guess.upper():
+            self.state.guesses.append(guess)
+            for i, char in enumerate(self.state.word_to_guess):
+                if char.upper() == guess:
+                    self.display_word[i] = char
+        else:
+            self.state.incorrect_guesses.append(guess)
+
+        # Check win/lose conditions
+        if "_" not in self.display_word:
+            self.state.phase = GamePhase.FINISHED
+        elif len(self.state.incorrect_guesses) >= 8:  # Maximum wrong guesses
+            self.state.phase = GamePhase.FINISHED
 
     def get_player_view(self, idx_player: int) -> HangmanGameState:
         """ Get the masked state for the active player (e.g. the oppontent's cards are face down)"""
@@ -66,45 +102,37 @@ class RandomPlayer(Player):
 
 
 if __name__ == "__main__":
-    wrong_guesses = 8
 
     # Initialise Hangman game and state
     game = Hangman()
-    game_state = HangmanGameState(word_to_guess='DevOps'.lower(), phase=GamePhase.SETUP, guesses=[], incorrect_guesses=[])
+    game_state = HangmanGameState(word_to_guess='DevOps'.upper(), phase=GamePhase.RUNNING, guesses=[], incorrect_guesses=[])
     game.set_state(game_state)
 
-    # Create the display word
-    display_word = ["_" for _ in game_state.word_to_guess]
 
     # Main game loop
-    while len(game_state.incorrect_guesses) < wrong_guesses:
-        print("Word: ", " ".join(display_word))
-        print(f"Incorrect guesses left: {wrong_guesses - len(game_state.incorrect_guesses)}")
-        print(f"Guessed letters: {', '.join(sorted(game_state.guesses + game_state.incorrect_guesses))}")
-    
-        # Get user input
-        guess = input("Guess a letter: ").lower()
-
-        # Check if the guess is valid
-        if guess in game_state.guesses or guess in game_state.incorrect_guesses:
-            print(f"You already guessed '{guess}'. Try a different letter.")
-            continue
-
-        # If the guess is right
-        if guess in game_state.word_to_guess:
-            for i, char in enumerate(game_state.word_to_guess):
-                if char.lower() == guess:
-                    display_word[i] = char
-            game_state.guesses.append(guess)
-        else:
-            game_state.incorrect_guesses.append(guess)
-            print(f"Wrong guess! You have {wrong_guesses - len(game_state.incorrect_guesses)} guesses left.")
-
-        # Check if player has guessed the full word
-        if "_" not in display_word:
-            print(f"Congratulations! You have guessed the word: {game_state.word_to_guess}")
+    while game.state.phase == GamePhase.RUNNING:
+        # Show current state
+        print("\nWord:", " ".join(game.display_word))
+        print(f"Incorrect guesses left: {8 - len(game.state.incorrect_guesses)}")
+        print(f"Guessed letters: {', '.join(sorted(game.state.guesses + game.state.incorrect_guesses))}")
+        
+        # Get valid actions
+        valid_actions = game.get_list_action()
+        if not valid_actions:
             break
-    
-        # Check if the player has reached maximum guesses  
-        if len(game_state.incorrect_guesses) == wrong_guesses:
-            print(f"You have lost the game! The word was: {game_state.word_to_guess}")
+            
+        # Get and validate user input
+        guess = input("Guess a letter: ").upper()
+        action = next((a for a in valid_actions if a.letter == guess), None)
+        
+        if not action:
+            print(f"Invalid guess '{guess}'. Please try again.")
+            continue
+            
+        game.apply_action(action)
+        
+    # Game over
+    if "_" not in game.display_word:
+        print(f"\nCongratulations! You have guessed the word: {game.state.word_to_guess}")
+    else:
+        print(f"\nGame Over! The word was: {game.state.word_to_guess}")
