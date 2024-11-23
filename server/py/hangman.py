@@ -29,15 +29,15 @@ class Hangman(Game):
 
     def __init__(self) -> None:
         """ Important: Game initialization also requires a set_state call to set the 'word_to_guess' """
-        pass
+        self.state = None
 
     def get_state(self) -> HangmanGameState:
         """ Set the game to a given state """
-        pass
+        return self.state
 
     def set_state(self, state: HangmanGameState) -> None:
         """ Get the complete, unmasked game state """
-        pass
+        self.state = state
 
     def print_state(self) -> None:
         """ Print the current game state """
