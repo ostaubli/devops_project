@@ -66,7 +66,45 @@ class RandomPlayer(Player):
 
 
 if __name__ == "__main__":
+    wrong_guesses = 8
 
+    # Initialise Hangman game and state
     game = Hangman()
-    game_state = HangmanGameState(word_to_guess='DevOps', phase=GamePhase.SETUP, guesses=[], incorrect_guesses=[])
+    game_state = HangmanGameState(word_to_guess='DevOps'.lower(), phase=GamePhase.SETUP, guesses=[], incorrect_guesses=[])
     game.set_state(game_state)
+
+    # Create the display word
+    display_word = ["_" for _ in game_state.word_to_guess]
+
+    # Main game loop
+    while len(game_state.incorrect_guesses) < wrong_guesses:
+        print("Word: ", " ".join(display_word))
+        print(f"Incorrect guesses left: {wrong_guesses - len(game_state.incorrect_guesses)}")
+        print(f"Guessed letters: {', '.join(sorted(game_state.guesses + game_state.incorrect_guesses))}")
+    
+        # Get user input
+        guess = input("Guess a letter: ").lower()
+
+        # Check if the guess is valid
+        if guess in game_state.guesses or guess in game_state.incorrect_guesses:
+            print(f"You already guessed '{guess}'. Try a different letter.")
+            continue
+
+        # If the guess is right
+        if guess in game_state.word_to_guess:
+            for i, char in enumerate(game_state.word_to_guess):
+                if char.lower() == guess:
+                    display_word[i] = char
+            game_state.guesses.append(guess)
+        else:
+            game_state.incorrect_guesses.append(guess)
+            print(f"Wrong guess! You have {wrong_guesses - len(game_state.incorrect_guesses)} guesses left.")
+
+        # Check if player has guessed the full word
+        if "_" not in display_word:
+            print(f"Congratulations! You have guessed the word: {game_state.word_to_guess}")
+            break
+    
+        # Check if the player has reached maximum guesses  
+        if len(game_state.incorrect_guesses) == wrong_guesses:
+            print(f"You have lost the game! The word was: {game_state.word_to_guess}")
