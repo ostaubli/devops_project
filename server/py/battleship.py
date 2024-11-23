@@ -85,7 +85,45 @@ class Battleship(Game):
 
     def get_list_action(self) -> List[BattleshipAction]:
         """ Get a list of possible actions for the active player """
-        pass
+        if self.phase != GamePhase.SETUP:
+            # enter here all action why in other GamePhase (e.g. running)
+            return []
+        
+        # set of ships and their lengths
+        ships_to_place = [
+            ("Carrier", 5), 
+            ("Battleship", 4), 
+            ("Cruiser", 3), 
+            ("Submarine", 3), 
+            ("Destroyer", 2)
+        ]
+
+        # check how many ships the active player has placed
+        active_player = self.state.players[self.state.idx_player_active]
+        if len(active_player.ships) == len(ships_to_place):
+            return []
+        
+        # Get the next ship to place
+        ship_name, ship_length = ships_to_place[len(active_player.ships)]
+
+        # Generate possible placements (horizontal and vertical)
+        actions = []
+        rows = "ABCDEFGHIJ" 
+        columns = [str(i) for i in range(1, 11)]
+        
+        # Horizontal placements
+        for row in rows:  
+            for col_start in range(11 - ship_length):  
+                location = [f"{row}{int(columns[col_start + i])}" for i in range(ship_length)]
+                actions.append(BattleshipAction(action_type=ActionType.SET_SHIP, ship_name=ship_name, location=location))
+
+        # Vertical placements
+        for col in columns:
+            for row_start in range(11 - ship_length):
+                location = [f"{rows[row_start + i]}{col}" for i in range(ship_length)]
+                actions.append(BattleshipAction(action_type=ActionType.SET_SHIP, ship_name=ship_name, location=location))
+
+        return actions
 
     def apply_action(self, action: BattleshipAction) -> None:
         """ Apply the given action to the game """
