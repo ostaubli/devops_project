@@ -1,3 +1,10 @@
+"""
+Battleship game implementation module.
+This module implements the classic Battleship board game,
+including game state management,
+ship placement, and shooting mechanics.
+"""
+
 import random
 from enum import Enum
 from typing import List, Optional
@@ -5,12 +12,13 @@ from server.py.game import Game, Player
 
 
 class ActionType(str, Enum):
+    """Type of possible actions in the game."""
     SET_SHIP = 'set_ship'
     SHOOT = 'shoot'
 
 
 class BattleshipAction:
-
+    """Represents an action in the Battleship game."""
     def __init__(self, action_type: ActionType, ship_name: Optional[str], location: List[str]) -> None:
         self.action_type = action_type
         self.ship_name = ship_name  # only for set_ship actions
@@ -18,7 +26,7 @@ class BattleshipAction:
 
 
 class Ship:
-
+    """Represents a ship in the Battleship game."""
     def __init__(self, name: str, length: int, location: Optional[List[str]]) -> None:
         self.name = name
         self.length = length
@@ -26,7 +34,7 @@ class Ship:
 
 
 class PlayerState:
-
+    """Represents the state of a player in the game."""
     def __init__(self, name: str, ships: List[Ship], shots: List[str], successful_shots: List[str]) -> None:
         self.name = name
         self.ships = ships
@@ -35,13 +43,14 @@ class PlayerState:
 
 
 class GamePhase(str, Enum):
+    """Type of possible game phases."""
     SETUP = 'setup'  # before the game has started (including setting ships)
     RUNNING = 'running'  # while the game is running (shooting)
     FINISHED = 'finished'  # when the game is finished
 
 
 class BattleshipGameState:
-
+    """Represents the complete state of a Battleship game."""
     def __init__(self, idx_player_active: int, phase: GamePhase, winner: Optional[int],
                  players: List[PlayerState]) -> None:
         self.idx_player_active = idx_player_active
@@ -153,23 +162,38 @@ class Battleship(Game):
         if self.state.phase == GamePhase.SETUP:
             available_actions = []
             active_player = self.state.players[self.state.idx_player_active]
-            required_ships = [("Destroyer", 2), ("Submarine", 3), ("Cruiser", 3), ("Battleship", 4), ("Carrier", 5)]
+            required_ships = [("destroyer", 2), ("submarine", 3), ("cruiser", 3), ("battleship", 4), ("carrier", 5)]
 
             # Determine the next required ship
             if len(active_player.ships) < len(required_ships):
                 next_ship_name, next_length = required_ships[len(active_player.ships)]
-                for start_row in "ABCDEFGHIJ":
-                    for start_col in range(1, 11):
-                        for orientation in ["H", "V"]:
+            
+                # Try all possible starting positions
+                for start_row in range(10):  # A-J
+                    for start_col in range(10):  # 1-10
+                        # Try horizontal placement
+                        if start_col + next_length <= 10:  # Check if ship fits horizontally
                             locations = [
-                                f"{chr(ord(start_row) + i if orientation == 'V' else 0)}{start_col + i if orientation == 'H' else start_col}"
+                                f"{chr(ord('A') + start_row)}{start_col + i + 1}"
                                 for i in range(next_length)
                             ]
                             if self.validate_ship_placement(Ship(next_ship_name, next_length, locations)):
                                 available_actions.append(
                                     BattleshipAction(ActionType.SET_SHIP, next_ship_name, locations)
                                 )
-            return available_actions
+                    
+                        # Try vertical placement
+                        if start_row + next_length <= 10:  # Check if ship fits vertically
+                            locations = [
+                                f"{chr(ord('A') + start_row + i)}{start_col + 1}"
+                                for i in range(next_length)
+                            ]
+                            if self.validate_ship_placement(Ship(next_ship_name, next_length, locations)):
+                                available_actions.append(
+                                    BattleshipAction(ActionType.SET_SHIP, next_ship_name, locations)
+                                )
+
+                return available_actions
 
         elif self.state.phase == GamePhase.RUNNING:
             active_player = self.state.players[self.state.idx_player_active]
