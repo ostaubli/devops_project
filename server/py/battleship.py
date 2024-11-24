@@ -242,7 +242,7 @@ class Battleship(Game):
 
 class RandomPlayer(Player):
 
-    def __init__(self):
+    def __init__(self) -> None:
         self.past_shots = set()
 
     def select_action(self, state: BattleshipGameState, actions: List[BattleshipAction]) -> Optional[BattleshipAction]:
