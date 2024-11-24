@@ -14,7 +14,6 @@ class GamePhase(str, Enum):
     SETUP = 'setup'            # before the game has started
     RUNNING = 'running'        # while the game is running
     FINISHED = 'finished'      # when the game is finished
-    #add comment
 
 
 class HangmanGameState:
@@ -37,17 +36,14 @@ class Hangman(Game):
         return self.state 
 
     def set_state(self, state: HangmanGameState) -> None:
-
-        # Update the game state
         """ Set the game to a given state """
-
-        # Ensure the `state` parameter is explicitly passed and used
         if not state.word_to_guess:
             raise ValueError("The word to guess cannot be empty.")
-
-        # Automatically initialize for SETUP phase
-        if self.state is None:  # Check if this is the first time setting the state
-            state.phase = GamePhase.SETUP
+        
+        if self.state is None:  # This is the first time setting the state
+            # The first time, keep the provided phase (e.g., RUNNING)
+            if state.phase != GamePhase.RUNNING:
+                state.phase = GamePhase.RUNNING  # Default to RUNNING if not explicitly set
             state.guesses = []
             state.incorrect_guesses = []
         else:
@@ -57,7 +53,8 @@ class Hangman(Game):
             elif len(state.incorrect_guesses) >= self.max_attempts:
                 state.phase = GamePhase.FINISHED  # Maximum incorrect guesses reached
             else:
-                state.phase = GamePhase.RUNNING  # Game is in progress
+                state.phase = GamePhase.RUNNING  # Game is still in progress
+        
         self.state = state
 
     def print_state(self) -> None:
@@ -66,16 +63,29 @@ class Hangman(Game):
             print("Game state is not initialized.")
             return
 
-        remaining_attempts = self.max_attempts - len(self.state.incorrect_guesses)
+        # Check if the game is finished
+        if self.state.phase == GamePhase.FINISHED:
+            # If the player has won
+            if set(self.state.word_to_guess) <= set(self.state.guesses):
+                print("🎉 Congratulations! You've guessed the word:", self.state.word_to_guess)
+            else:  # If the player has lost
+                print("💀 Game Over! You've run out of attempts. The word was:", self.state.word_to_guess)
+            return  # Exit the method to avoid printing unnecessary details
 
-        # Print game state
-        print("=== Hangman Game Test ===")
-        print(f"Word to Guess: {[letter for letter in self.state.word_to_guess]}")
+        # If the game is still running
+        remaining_attempts = self.max_attempts - len(self.state.incorrect_guesses)
+        print("=== Hangman Game ===")
+        # Masked word display (show guessed letters, hide unguessed ones)
+        masked_word = ''.join(
+            letter if letter in self.state.guesses else '_'
+            for letter in self.state.word_to_guess
+        )
+        print(f"Word to Guess: {masked_word}")
         print(f"Incorrect Guesses: {self.state.incorrect_guesses}")
         print(f"Remaining Attempts: {remaining_attempts}")
         print("=========================")
 
-             # Print the hangman drawing based on incorrect guesses
+        # Print hangman drawing based on incorrect guesses
         self.print_hangman(len(self.state.incorrect_guesses))
 
     def print_hangman(self, incorrect_guess_count: int) -> None:
@@ -221,13 +231,11 @@ class Hangman(Game):
         # Check if the game has been won
         if all(letter in self.state.guesses for letter in self.state.word_to_guess):
             self.state.phase = GamePhase.FINISHED
-            print("Congratulations! You've guessed the word:", self.state.word_to_guess)
         
         # Check if the game has been lost
         remaining_attempts = self.max_attempts - len(self.state.incorrect_guesses)
         if remaining_attempts <= 0:
             self.state.phase = GamePhase.FINISHED
-            print("Game over! You've run out of attempts. The word was:", self.state.word_to_guess)
 
 
     def get_player_view(self, idx_player: int) -> HangmanGameState:
@@ -269,7 +277,7 @@ if __name__ == "__main__":
 
     # Set up a new game state
     game_state = HangmanGameState(
-        word_to_guess="DevOps".lower(),  # Word to guess
+        word_to_guess="DevOpsp".lower(),  # Word to guess
         phase=GamePhase.RUNNING,         # Phase set to RUNNING
         guesses=[],                      # No correct guesses yet
         incorrect_guesses=[]             # No incorrect guesses yet
