@@ -186,26 +186,43 @@ class Battleship(Game):
         :type action: BattleshipAction
         """
         if action.action_type == ActionType.SET_SHIP:
-            required_ships = [("Destroyer", 2), ("Submarine", 3), ("Cruiser", 3), ("Battleship", 4), ("Carrier", 5)]
             active_player = self.state.players[self.state.idx_player_active]
+        
+            required_ships = {
+                "destroyer": 2,
+                "submarine": 3,
+                "cruiser": 3,
+                "battleship": 4,
+                "carrier": 5
+            }
+        
+            if action.ship_name.lower() not in required_ships:
+                raise ValueError(f"Invalid ship name: {action.ship_name}")
+            
+            expected_length = required_ships[action.ship_name.lower()]
+            if len(action.location) != expected_length:
+                raise ValueError(f"Ship {action.ship_name} must have length {expected_length}")
 
-            if len(active_player.ships) >= len(required_ships):
-                raise ValueError("All required ships are already placed.")
-
-            expected_ship_name, expected_length = required_ships[len(active_player.ships)]
-            if action.ship_name != expected_ship_name or len(action.location) != expected_length:
-                raise ValueError(f"Ship must be '{expected_ship_name}' with length {expected_length}.")
-
-            new_ship = Ship(name=action.ship_name, length=expected_length, location=action.location)
+            new_ship = Ship(
+                name=action.ship_name.lower(),
+                length=expected_length,
+                location=action.location
+            )
+        
             if not self.validate_ship_placement(new_ship):
                 raise ValueError(f"Invalid placement for {new_ship.name} at locations: {new_ship.location}")
+            
             active_player.ships.append(new_ship)
+        
+            self.state.idx_player_active = 1 - self.state.idx_player_active
+        
             self.check_and_update_phase()
 
         elif action.action_type == ActionType.SHOOT:
             location = action.location[0]
             if not self.validate_shot(location):
                 raise ValueError(f"Invalid shot location: {location}")
+            
             active_player = self.state.players[self.state.idx_player_active]
             opponent = self.state.players[1 - self.state.idx_player_active]
 
