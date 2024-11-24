@@ -169,13 +169,132 @@ class Battleship(Game):
 
         return actions
 
-    def apply_action(self, action: BattleshipAction) -> None:
-        """ Apply the given action to the game """
-        pass
+    def apply_action(self, action: Optional[BattleshipAction] = None) -> None:
+        """Apply the given action to the game."""
+        current_player = self.state.players[self.state.idx_player_active]
+        
+        while True:  # Keep retrying until a valid action is provided
+            try:
+                # If no action is provided, prompt the player for one
+                if not action:
+                    actions = self.get_list_action()
+                    
+                    print("Available actions:")
+                    for idx, act in enumerate(actions):
+                        print(f"{idx + 1}: {act.action_type} at {act.location}")
+                    
+                    while True:
+                        try:
+                            choice = input("Choose an action: ").strip()
+                            
+                            # Validate input
+                            if not choice.isdigit():
+                                raise ValueError("Input must be a number corresponding to an action.")
+                            
+                            choice = int(choice)
+                            if not (1 <= choice <= len(actions)):
+                                raise ValueError(f"Invalid choice. Please choose a number between 1 and {len(actions)}.")
+                            
+                            action = actions[choice - 1]
+                            break  # Exit the input loop
+                        except ValueError as e:
+                            print(e)
+                
+                # Handle the setup phase
+                if self.state.phase == GamePhase.SETUP:
+                    if action.action_type != ActionType.SET_SHIP:
+                        raise ValueError("Only 'set_ship' actions are allowed during the setup phase.")
+                    
+                    # Validate and place the ship
+                    if not action.ship_name or not action.location:
+                        raise ValueError("Invalid ship placement action.")
+                    
+                    # Check if the ship overlaps with existing ships
+                    for ship in current_player.ships:
+                        if set(ship.location).intersection(set(action.location)):
+                            raise ValueError("Ship placement overlaps with existing ship.")
+                    
+                    current_player.ships.append(Ship(action.ship_name, len(action.location), action.location))
+                    
+                    # Check if all ships are placed
+                    ships_config = [("Carrier", 5), ("Battleship", 4), ("Cruiser", 3), ("Submarine", 3), ("Destroyer", 2)]
+                    if len(current_player.ships) == len(ships_config):
+                        # Switch to the next player or start the game
+                        if self.state.idx_player_active == 0:
+                            self.state.idx_player_active = 1
+                        else:
+                            self.state.phase = GamePhase.RUNNING
+                            self.state.idx_player_active = 0
+                    break  # Exit the loop when action is valid
 
+                # Handle the running phase
+                elif self.state.phase == GamePhase.RUNNING:
+                    if action.action_type != ActionType.SHOOT:
+                        raise ValueError("Only 'shoot' actions are allowed during the running phase.")
+                    
+                    target = action.location[0]
+                    if target in current_player.shots:
+                        raise ValueError("This location has already been shot.")
+                    
+                    current_player.shots.append(target)
+                    
+                    # Check if the shot hits an opponent's ship
+                    opponent_player = self.state.players[1 - self.state.idx_player_active]
+                    hit = False
+                    for ship in opponent_player.ships:
+                        if target in ship.location:
+                            current_player.successful_shots.append(target)
+                            ship.location.remove(target)  # Mark part of the ship as hit
+                            hit = True
+                            break
+                    
+                    # Check if the opponent has no remaining ships
+                    if all(len(ship.location) == 0 for ship in opponent_player.ships):
+                        self.state.phase = GamePhase.FINISHED
+                        self.state.winner = self.state.idx_player_active
+                        break
+                    
+                    # Switch to the next player if it was a miss
+                    if not hit:
+                        self.state.idx_player_active = 1 - self.state.idx_player_active
+                    break  # Exit the loop when action is valid
+
+            except ValueError as e:
+                print(f"Invalid action: {e}")
+                action = None  # Reset action and reprompt
+
+                
     def get_player_view(self, idx_player: int) -> BattleshipGameState:
-        """ Get the masked state for the active player (e.g. the oppontent's cards are face down)"""
-        pass
+        """Get the masked state for the active player (e.g., the opponent's ships are hidden)."""
+        # Current player's view
+        current_player = self.state.players[idx_player]
+        
+        # Opponent's view
+        opponent_player = self.state.players[1 - idx_player]
+        
+        # Create masked opponent player state
+        masked_opponent = PlayerState(
+            name=opponent_player.name,
+            ships=[Ship(ship.name, ship.length, None) for ship in opponent_player.ships],  # Hide ship locations
+            shots=opponent_player.shots,  # Opponent's shots are visible
+            successful_shots=opponent_player.successful_shots  # Opponent's successful hits are visible
+        )
+        
+        # Create full view of current player's state
+        visible_current_player = PlayerState(
+            name=current_player.name,
+            ships=current_player.ships,  # All ships are visible
+            shots=current_player.shots,
+            successful_shots=current_player.successful_shots
+        )
+        
+        # Construct and return the masked game state
+        return BattleshipGameState(
+            idx_player_active=self.state.idx_player_active,
+            phase=self.state.phase,
+            winner=self.state.winner,
+            players=[visible_current_player, masked_opponent] if idx_player == 0 else [masked_opponent, visible_current_player]
+        )
 
 
 class RandomPlayer(Player):
@@ -190,6 +309,28 @@ class RandomPlayer(Player):
 if __name__ == "__main__":
 
     game = Battleship()
+
+    while game.state.phase != GamePhase.FINISHED:
+        #print general state
+        #game.print_state()
+
+        #extract active player view state
+        active_player_index = game.state.idx_player_active
+        player_view = game.get_player_view(active_player_index)
+        # Print the masked state for the current player
+        print(f"Player {active_player_index + 1}'s Turn:")
+        print(f"Game Phase: {player_view.phase}")
+        print(f"Your Ships:")
+        for ship in player_view.players[active_player_index].ships:
+            print(f"  {ship.name}: {ship.location}")
+        print(f"Your Shots: {player_view.players[active_player_index].shots}")
+        print(f"Your Hits: {player_view.players[active_player_index].successful_shots}")
+
+        # Play the game and input actions from players
+        game.apply_action(None)
     
+    print(f"Game Over! Winner: Player {game.state.winner + 1}")
+
+
     
 
