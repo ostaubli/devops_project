@@ -100,11 +100,11 @@ class Battleship(Game):
 
         # check how many ships the active player has placed
         active_player = self.state.players[self.state.idx_player_active]
-        if len(active_player.ships) == len(ships_to_place):
+        if len(active_player.ships) == len(self.SHIPS_TO_PLACE):
             return []
         
         # Get the next ship to place
-        ship_name, ship_length = ships_to_place[len(active_player.ships)]
+        ship_name, ship_length = self.SHIPS_TO_PLACE[len(active_player.ships)]
 
         # Generate possible placements (horizontal and vertical)
         actions = []
@@ -128,7 +128,20 @@ class Battleship(Game):
     def apply_action(self, action: BattleshipAction) -> None:
         """ Apply the given action to the game """
         active_player = self.state.players[self.state.idx_player_active]
-        
+        opponent_idx = (self.state.idx_player_active + 1) % len(self.state.players)
+        opponent = self.state.players[opponent_idx]
+
+        if action.action_type == ActionType.SHOOT:
+            # TODO: @ Fabian & Jach add shooting & hitting function here
+
+            
+            # Check if all opponent's ships are sunk
+            if self.check_win_condition(opponent):
+                self.state.phase = GamePhase.FINISHED
+                self.state.winner = self.state.idx_player_active
+                print(f"{active_player.name} wins the game!")
+                return  # No further actions needed as the game is over
+
         if action.action_type == ActionType.SET_SHIP:
             # Check for overlap
             occupied_cells = set()
@@ -159,8 +172,6 @@ class Battleship(Game):
                     print(f"{self.state.players[self.state.idx_player_active].name}'s turn to place ships.")
             else:
                 print(f"{active_player.name} has placed {len(active_player.ships)}/{len(Battleship.SHIPS_TO_PLACE)} ships.")
-
-        # Other action types (e.g., shooting) can be handled here in future
 
     def get_player_view(self, idx_player: int) -> BattleshipGameState:
         """ Get the masked state for the active player (e.g. the oppontent's cards are face down)"""
