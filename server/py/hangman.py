@@ -1,4 +1,5 @@
 from typing import List, Optional
+import string
 import random
 from enum import Enum
 from server.py.game import Game, Player
@@ -92,6 +93,7 @@ class Hangman(Game):
         return self.state
 
     def set_state(self, state: HangmanGameState) -> None:
+
         """
         Sets the game's state. Initializes game progress and updates phases.
 
@@ -257,11 +259,10 @@ class Hangman(Game):
     def get_list_action(self) -> List[GuessLetterAction]:
         """
         Returns a list of available actions (letters that have not been guessed).
-
         Returns:
             List[GuessLetterAction]: A list of unguessed letters wrapped in GuessLetterAction objects.
         """
-        alphabet = set("abcdefghijklmnopqrstuvwxyz")
+        alphabet = set("ABCDEFGHIJKLMNOPQRSTUVWXYZ")
         guessed_letters = set(self.state.guesses + self.state.incorrect_guesses)
         available_letters = alphabet - guessed_letters
         return [GuessLetterAction(letter) for letter in sorted(available_letters)]
@@ -281,7 +282,8 @@ class Hangman(Game):
             print("Actions cannot be applied when the game is not in the RUNNING phase.")
             return
 
-        guessed_letter = action.letter.lower()
+        guessed_letter = action.letter.upper()
+        self.state.guesses.append(guessed_letter)
 
         if guessed_letter in self.state.guesses + self.state.incorrect_guesses:
             print(f"The letter '{guessed_letter}' has already been guessed.")
@@ -313,7 +315,7 @@ class Hangman(Game):
             raise ValueError("Game state is not set.")
 
         masked_word = ' '.join(
-            letter if letter.lower() in self.state.guesses else '_'
+            letter if letter.upper() in self.state.guesses else '_'
             for letter in self.state.word_to_guess
         )
         return HangmanGameState(
@@ -361,7 +363,9 @@ if __name__ == "__main__":
     while game.get_state().phase != GamePhase.FINISHED:
         actions = game.get_list_action()
         print("\nAvailable actions:", [action.letter for action in actions])
+
         guess = input("Enter your guess: ").lower()
+
         selected_action = next((action for action in actions if action.letter == guess), None)
         if selected_action:
             game.apply_action(selected_action)
