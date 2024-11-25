@@ -2,6 +2,9 @@ from typing import List, Optional
 from enum import Enum
 import random
 
+from fontTools.feaLib import location
+from mypy.dmypy.client import action
+
 if __name__ == "__main__":
     from game import Game, Player
 else:
@@ -54,26 +57,35 @@ class BattleshipGameState:
 
 
 class Battleship(Game):
+    counter = 0 #for counting our rounds
+    location = ["A1", "A2", "A3", "A4", "A5","A6","A7","A8","A9","A10",
+                "B1", "B2", "B3", "B4", "B5","B6","B7","B8","B9","B10",
+                "C1", "C2", "C3", "C4", "C5","C6","C7","C8","C9","C10",
+                "D1", "D2", "D3", "D4", "D5","D6","D7","D8","D9","D10",
+                "E1", "E2", "E3", "E4", "E5","E6","E7","E8","E9","E10",
+                "F1", "F2", "F3", "F4", "F5","F6","F7","F8","F9","F10",
+                "G1", "G2", "G3", "G4", "G5","G6","G7","G8","G9","G10",
+                "H1", "H2", "H3", "H4", "H5","H6","H7","H8","H9","H10",
+                "I1", "I2", "I3", "I4", "I5","I6","I7","I8","I9","I10",
+                "J1", "J2", "J3", "J4", "J5","J6","J7","J8","J9","J10"]
 
     def __init__(self): # Kägi
         """ Game initialization (set_state call not necessary) """
-        ship1 = Ship(name= "Carrier", length=5, location=None) #, location=["A1","A2","A3","A4","A5"]
-        ship2 = Ship(name= "Battleship", length=4, location=None)
-        ship3 = Ship(name= "Cruiser", length=3, location=None)
-        ship4 = Ship(name= "Submarine", length=3, location=None)
-        ship5 = Ship(name= "Destroyer", length=2, location=None)
-
-
-        player1 = PlayerState(name = "Player1", ships=[ship1,ship2,ship3,ship4,ship5], shots = [], successful_shots=[])
-        player2 = PlayerState(name = "Player2", ships=[ship1,ship2,ship3,ship4,ship5], shots = [], successful_shots=[])
+        """ships = [Ship(name= "Carrier", length=5, location=None), #, location=["A1","A2","A3","A4","A5"]
+                Ship(name= "Battleship", length=4, location=None),
+                Ship(name= "Cruiser", length=3, location=None),
+                Ship(name= "Submarine", length=3, location=None),
+                Ship(name= "Destroyer", length=2, location=None)
+                 ]
+        """
+        player1 = PlayerState(name = "Player1", ships=[], shots = [], successful_shots=[])
+        player2 = PlayerState(name = "Player2", ships=[], shots = [], successful_shots=[])
 
         self.state = BattleshipGameState(idx_player_active = 0, 
                                          phase= GamePhase.SETUP, 
                                          winner = None, 
                                          players = [player1,player2]
         )
-
-        print("Battleship init")
         
 
     def print_state(self) -> None: # Kägi
@@ -88,15 +100,45 @@ class Battleship(Game):
         """ Set the game to a given state """
         self.state = state
 
-        pass
+
+
 
     def get_list_action(self) -> List[BattleshipAction]: # Kened
         """ Get a list of possible actions for the active player """
-        pass
+        list_action = []
 
-    def apply_action(self, action: BattleshipAction) -> None: # Kened
+
+
+        if self.counter <= 9:   #unfinished
+            return list_action
+            #ship_name, location, actiontype set ship
+
+
+        else:   #finished
+            for loc in self.location:
+                if loc not in self.state.players[self.state.idx_player_active].shots:
+                    list_action.append(BattleshipAction(action_type= ActionType.SHOOT,ship_name=None, location = loc))
+            return list_action
+
+
+
+
+
+
+    def apply_action(self, action: BattleshipAction) -> None:# Kened
         """ Apply the given action to the game """
-        pass
+
+        if action.action_type.value == ActionType.SET_SHIP:
+            self.state.players[self.state.idx_player_active].ships.append(Ship(name=action.ship_name,
+                                                                               length=len(action.location),
+                                                                               location=action.location))
+        else:
+            self.state.players[self.state.idx_player_active].shots.append(action.location[0])
+
+        self.state.idx_player_active = (self.state.idx_player_active + 1)%2
+        self.counter = self.counter + 1
+
+
 
     def get_player_view(self, idx_player: int) -> BattleshipGameState: # Kened
         """ Get the masked state for the active player (e.g. the oppontent's cards are face down)"""
