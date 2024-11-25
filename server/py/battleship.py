@@ -86,7 +86,8 @@ class Battleship(Game):
                                          winner = None, 
                                          players = [player1,player2]
         )
-        
+
+        #test
 
     def print_state(self) -> None: # Kägi
         """ Print the current game state """
