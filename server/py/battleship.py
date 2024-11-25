@@ -1,8 +1,19 @@
+"""
+Battleship game implementation with player actions and game state management.
+This module provides classes for managing a two-player Battleship game.
+"""
+
 from typing import List, Optional
 from enum import Enum
 import random
 from pydantic import BaseModel, Field, model_validator
 from server.py.game import Game, Player
+
+# Constants
+MAX_SHIP_COUNT = 5  # Max. Number of Ships
+EXIT_ACTION = 999   # Exit the Game
+GRID_ROWS = 'ABCDEFGHIJ'
+GRID_COLS = range(1, 11)
 
 class ActionType(str, Enum):
     """
@@ -61,7 +72,10 @@ class BattleshipGameState(BaseModel):
         return values
 
 class Battleship(Game):
-
+    """
+    Main Battleship game class.
+    Handles game state and game logic for battleship.
+    """
     def __init__(self):
         """ Game initialization (set_state call not necessary) """
         self.state = BattleshipGameState(
@@ -125,7 +139,7 @@ class Battleship(Game):
                 )
 
                 # Simplified ship placement - both horizontal and vertical
-                for row in 'ABCDEFGHIJ':
+                for row in GRID_ROWS:
                     for col in range(1, 11 - length + 1):
                         # Horizontal placement
                         horizontal_location = [f"{row}{col + i}" for i in range(length)]
@@ -149,8 +163,8 @@ class Battleship(Game):
         elif self.state.phase == GamePhase.RUNNING:
             # Generate all possible shots excluding already taken shots
             taken_shots = set(current_player.shots)
-            for row in 'ABCDEFGHIJ':
-                for col in range(1, 11):
+            for row in GRID_ROWS:
+                for col in GRID_COLS:
                     location = f"{row}{col}"
                     if location not in taken_shots:  # Exclude already shot locations
                         actions.append(BattleshipAction(
@@ -178,19 +192,19 @@ class Battleship(Game):
                     for loc in ship.location
                 )
                 new_ship_locations = set(action.location)
-                
+                if not set(action.location).isdisjoint(existing_locations):
+                    raise ValueError("Ships cannot overlap.")
 
                 # Add ship to the current player's fleet
                 ship = Ship(name=action.ship_name, length=len(action.location), location=action.location)
                 current_player.ships.append(ship)
 
                 # Check if all ships are placed for all players
-                if all(len(player.ships) == 5 for player in self.state.players):
-                    self.state.idx_player_active = 1 - self.state.idx_player_active
+                if all(len(player.ships) == MAX_SHIP_COUNT for player in self.state.players):
                     self.state.phase = GamePhase.RUNNING
                 else:
                     # Switch to the next player
-                    self.state.idx_player_active = 1 - self.state.idx_player_active
+                    self.switch_turn()
 
         elif self.state.phase == GamePhase.RUNNING:
             if action.action_type == ActionType.SHOOT:
@@ -214,8 +228,12 @@ class Battleship(Game):
 
                 # Always switch turns unless game is finished
                 if self.state.phase != GamePhase.FINISHED:
-                    self.state.idx_player_active = 1 - self.state.idx_player_active
-               
+                    self.switch_turn()
+
+    def switch_turn(self) -> None:
+        """Switch the active player's turn."""
+        self.state.idx_player_active = 1 - self.state.idx_player_active
+
     def get_player_view(self, idx_player: int) -> BattleshipGameState:
         """Get the masked state for the active player (e.g., the opponent's ships are hidden)."""
         # Current player's view
@@ -249,6 +267,9 @@ class Battleship(Game):
         )
 
 class RandomPlayer(Player):
+    """
+    A random player for the Battleship game. This player selects actions randomly from the available list of actions.
+    """
 
     def select_action(self, 
         state: BattleshipGameState, 
@@ -276,6 +297,6 @@ if __name__ == "__main__":
 
         # Get user input
         choice = int(input("\nSelect an action (enter the number): "))
-        if choice == 999:
+        if choice == EXIT_ACTION:
             print("Exiting the game. Goodbye!")
             break
