@@ -24,6 +24,7 @@ class ActionType(str, Enum):
         """List all possible action types."""
         return [action.value for action in ActionType]
 
+
 @dataclass
 class BattleshipAction:
     """Represents an action in the Battleship game."""
@@ -39,6 +40,7 @@ class BattleshipAction:
         """Check if the action is related to shooting."""
         return self.action_type == ActionType.SHOOT
 
+
 @dataclass
 class Ship:
     """Represents a ship in the Battleship game."""
@@ -48,7 +50,10 @@ class Ship:
 
     def is_sunk(self, successful_shots: List[str]) -> bool:
         """Check if the ship is sunk."""
-        return self.location and all(loc in successful_shots for loc in self.location)
+        if self.location is None:
+            return False
+        return all(loc in successful_shots for loc in self.location)
+
 
 @dataclass
 class ShipPlacement:
@@ -63,6 +68,7 @@ class ShipPlacement:
     def describe(self) -> str:
         """Provide a human-readable description of the ship."""
         return f"Ship '{self.name}' with length {self.length}"
+
 
 @dataclass
 class PlayerState:
@@ -154,10 +160,10 @@ class Battleship(Game):
         occupied_locations = {
             loc for player in self.state.players
             for s in player.ships
-            for loc in s.location
+            if s.location for loc in s.location
         }
 
-        if len(ship.location) != ship.length:
+        if ship.location is None or len(ship.location) != ship.length:
             return False
 
         rows = {loc[0] for loc in ship.location}
@@ -191,17 +197,16 @@ class Battleship(Game):
         elif self.state.phase == GamePhase.RUNNING:
             for i, player in enumerate(self.state.players):
                 opponent = self.state.players[1 - i]
-                if all(any(loc in player.successful_shots for loc in ship.location)
-                        for ship in opponent.ships):
+                if all(
+                    any(loc in player.successful_shots for loc in ship.location or [])
+                    for ship in opponent.ships
+                ):
                     self.state.phase = GamePhase.FINISHED
                     self.state.winner = i
                     break
 
     def get_state(self) -> BattleshipGameState:
-        """
-        Get current game state.
-        BattleshipGameState: Complete game state
-        """
+        """Get current game state."""
         return self.state
 
     def set_state(self, state: BattleshipGameState) -> None:
@@ -238,8 +243,8 @@ class Battleship(Game):
 
     def _generate_ship_placements(self, ship_name: str, ship_length: int) -> List[BattleshipAction]:
         """Generate all valid ship placements for a ship."""
-        available_actions = []
-        ship = ShipPlacement(ship_name, ship_length)  # Create a grouped object
+        available_actions: List[BattleshipAction] = []
+        ship = ShipPlacement(ship_name, ship_length)
 
         for start_row in range(10):
             for start_col in range(10):
@@ -317,17 +322,17 @@ class Battleship(Game):
                 "carrier": 5
             }
 
-            if action.ship_name.lower() not in required_ships:
+            if action.ship_name and action.ship_name.lower() not in required_ships:
                 raise ValueError(f"Invalid ship name: {action.ship_name}")
 
-            expected_length = required_ships[action.ship_name.lower()]
+            expected_length = required_ships[action.ship_name.lower()] if action.ship_name else 0
             if len(action.location) != expected_length:
                 raise ValueError(
                     f"Ship {action.ship_name} must have length {expected_length}"
                 )
 
             new_ship = Ship(
-                name=action.ship_name.lower(),
+                name=action.ship_name.lower() if action.ship_name else "",
                 length=expected_length,
                 location=action.location
             )
@@ -350,7 +355,7 @@ class Battleship(Game):
             opponent = self.state.players[1 - self.state.idx_player_active]
 
             active_player.shots.append(location)
-            if any(location in ship.location for ship in opponent.ships):
+            if any(location in ship.location for ship in opponent.ships if ship.location):
                 active_player.successful_shots.append(location)
 
             self.state.idx_player_active = 1 - self.state.idx_player_active
@@ -383,7 +388,7 @@ class RandomPlayer(Player):
 
     def __init__(self) -> None:
         """Initialize random player."""
-        self.past_shots = set()
+        self.past_shots: set[str] = set()
 
     def select_action(
         self, state: BattleshipGameState, actions: List[BattleshipAction]
