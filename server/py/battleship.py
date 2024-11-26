@@ -88,7 +88,7 @@ class Battleship(Game):
 
     def set_state(self, state: BattleshipGameState) -> None:
         """ Print the current game state """
-        pass
+        self.state = state
 
     def get_list_action(self) -> List[BattleshipAction]:
         """ Get a list of possible actions for the active player """
