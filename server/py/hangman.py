@@ -144,7 +144,7 @@ class Hangman(Game):
             letter if letter in self.state.guesses else '_'
             for letter in self.state.word_to_guess
         )
-        print("=== Hangman Game ===")
+        print("\n === Hangman Game ===")
         print(f"Word to Guess: {masked_word}")
         print(f"Incorrect Guesses: {self.state.incorrect_guesses}")
         print(f"Remaining Attempts: {remaining_attempts}")
@@ -258,37 +258,41 @@ class Hangman(Game):
 
     def get_list_action(self) -> List[GuessLetterAction]:
         """
-        Returns a list of available actions (letters that have not been guessed).
-        Returns:
-            List[GuessLetterAction]: A list of unguessed letters wrapped in GuessLetterAction objects.
+        Returns a list of available actions (letters not yet guessed).
         """
-        alphabet = set("ABCDEFGHIJKLMNOPQRSTUVWXYZ")
-        guessed_letters = set(self.state.guesses + self.state.incorrect_guesses)
+        # Ensure alphabet is uppercase
+        alphabet = set(string.ascii_uppercase)
+
+        # Normalize guessed letters to uppercase
+        guessed_letters = {letter.upper() for letter in self.state.guesses + self.state.incorrect_guesses}
+
+        # Calculate available letters by subtracting guessed letters
         available_letters = alphabet - guessed_letters
+
+        # Return sorted actions as GuessLetterAction objects
         return [GuessLetterAction(letter) for letter in sorted(available_letters)]
 
     def apply_action(self, action: GuessLetterAction) -> None:
         """
         Applies a player's guess to the game.
-
         Args:
             action (GuessLetterAction): The guessed letter provided by the player.
         """
         if not self.state:
             print("Game state is not initialized.")
             return
-
         if self.state.phase != GamePhase.RUNNING:
             print("Actions cannot be applied when the game is not in the RUNNING phase.")
             return
 
         guessed_letter = action.letter.upper()
-        self.state.guesses.append(guessed_letter)
-
+        
+        # Prüfen, ob Buchstabe schon geraten wurde
         if guessed_letter in self.state.guesses + self.state.incorrect_guesses:
             print(f"The letter '{guessed_letter}' has already been guessed.")
             return
 
+        # Prüfen, ob der Buchstabe korrekt ist
         if guessed_letter in self.state.word_to_guess:
             print(f"Correct! The letter '{guessed_letter}' is in the word.")
             self.state.guesses.append(guessed_letter)
@@ -296,6 +300,7 @@ class Hangman(Game):
             print(f"Incorrect! The letter '{guessed_letter}' is not in the word.")
             self.state.incorrect_guesses.append(guessed_letter)
 
+        # Überprüfen, ob das Spiel beendet wurde
         if all(letter in self.state.guesses for letter in self.state.word_to_guess):
             self.state.phase = GamePhase.FINISHED
         elif len(self.state.incorrect_guesses) >= self.max_attempts:
@@ -352,7 +357,7 @@ class RandomPlayer(Player):
 if __name__ == "__main__":
     game = Hangman()
     game_state = HangmanGameState(
-        word_to_guess="DevOpsp".lower(),
+        word_to_guess="DevOpsp".upper(),
         phase=GamePhase.RUNNING,
         guesses=[],
         incorrect_guesses=[]
@@ -364,7 +369,7 @@ if __name__ == "__main__":
         actions = game.get_list_action()
         print("\nAvailable actions:", [action.letter for action in actions])
 
-        guess = input("Enter your guess: ").lower()
+        guess = input("Enter your guess: ").upper()
 
         selected_action = next((action for action in actions if action.letter == guess), None)
         if selected_action:
