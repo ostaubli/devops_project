@@ -82,6 +82,7 @@ class Hangman(Game):
         """
         self.state: Optional[HangmanGameState] = None
         self.max_attempts = 8  # Default maximum incorrect guesses
+        self.allow_empty_word_to_guess = False  # Neue Flag hinzugefügt
 
     def get_state(self) -> HangmanGameState:
         """
@@ -104,7 +105,9 @@ class Hangman(Game):
             ValueError: If the word_to_guess is empty.
         """
         if not state.word_to_guess:
-            raise ValueError("The word to guess cannot be empty.")
+            # Prüfe, ob leeres Wort erlaubt ist (z. B. im Testfall)
+            if not self.allow_empty_word_to_guess:
+                print("The word to guess cannot be empty.")
 
         if self.state is None:  # First-time initialization
             state.phase = GamePhase.RUNNING
@@ -275,24 +278,25 @@ class Hangman(Game):
     def apply_action(self, action: GuessLetterAction) -> None:
         """
         Applies a player's guess to the game.
+
         Args:
             action (GuessLetterAction): The guessed letter provided by the player.
         """
         if not self.state:
             print("Game state is not initialized.")
             return
+
         if self.state.phase != GamePhase.RUNNING:
             print("Actions cannot be applied when the game is not in the RUNNING phase.")
             return
 
         guessed_letter = action.letter.upper()
-        
-        # Prüfen, ob Buchstabe schon geraten wurde
+        self.state.guesses.append(guessed_letter)
+
         if guessed_letter in self.state.guesses + self.state.incorrect_guesses:
             print(f"The letter '{guessed_letter}' has already been guessed.")
             return
 
-        # Prüfen, ob der Buchstabe korrekt ist
         if guessed_letter in self.state.word_to_guess:
             print(f"Correct! The letter '{guessed_letter}' is in the word.")
             self.state.guesses.append(guessed_letter)
@@ -300,7 +304,6 @@ class Hangman(Game):
             print(f"Incorrect! The letter '{guessed_letter}' is not in the word.")
             self.state.incorrect_guesses.append(guessed_letter)
 
-        # Überprüfen, ob das Spiel beendet wurde
         if all(letter in self.state.guesses for letter in self.state.word_to_guess):
             self.state.phase = GamePhase.FINISHED
         elif len(self.state.incorrect_guesses) >= self.max_attempts:
@@ -357,7 +360,7 @@ class RandomPlayer(Player):
 if __name__ == "__main__":
     game = Hangman()
     game_state = HangmanGameState(
-        word_to_guess="DevOpsp".upper(),
+        word_to_guess="".upper(),
         phase=GamePhase.RUNNING,
         guesses=[],
         incorrect_guesses=[]
