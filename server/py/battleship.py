@@ -84,7 +84,7 @@ class Battleship(Game):
 
     def get_state(self) -> BattleshipGameState:
         """ Get the complete, unmasked game state """
-        pass
+        return self.state
 
     def set_state(self, state: BattleshipGameState) -> None:
         """ Print the current game state """
