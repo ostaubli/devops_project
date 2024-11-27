@@ -14,6 +14,15 @@ from dataclasses import dataclass
 
 # Hangman ASCII art representations for different game stages
 HANGMAN_ART = [
+        """
+       ------
+            |
+            |
+            |
+            |
+            |
+    =========
+    """,
     """
        ------
        |    |
@@ -110,12 +119,14 @@ class HangmanGameState:
 class Hangman:
     """The main Hangman game logic."""
 
+    MAX_INCORRECT_GUESSES: int = 8
+
     def __init__(self) -> None:
         """Initialize a new Hangman game instance."""
-        self.state = None
-        self.display_word = []
+        self.state: Optional[HangmanGameState] = None
+        self.display_word: List[str] = []
 
-    def get_state(self) -> HangmanGameState:
+    def get_state(self) -> Optional[HangmanGameState]:
         """Retrieve the current game state."""
         return self.state
 
@@ -129,7 +140,7 @@ class Hangman:
                 else "_" for char in state.word_to_guess
             ]
 
-            state.guesses = list(dict.fromkeys(state.guesses))
+            state.guesses = list(set(state.guesses))
             incorrect_guesses_set = set(state.incorrect_guesses)
             incorrect_guesses_set.update(
                 [guess for guess in state.guesses
@@ -141,7 +152,7 @@ class Hangman:
             self.state.phase = GamePhase.FINISHED
             return
 
-        if len(self.state.incorrect_guesses) >= 8:
+        if len(self.state.incorrect_guesses) >= self.MAX_INCORRECT_GUESSES:
             self.state.phase = GamePhase.FINISHED
 
     def print_state(self) -> None:
@@ -178,7 +189,6 @@ class Hangman:
             return
 
         self.state.guesses.append(guess)
-        self.state.guesses = list(dict.fromkeys(self.state.guesses))
 
         if guess in self.state.word_to_guess.upper():
             for idx, char in enumerate(self.state.word_to_guess):
@@ -191,7 +201,7 @@ class Hangman:
             self.state.phase = GamePhase.FINISHED
             return
 
-        if len(self.state.incorrect_guesses) >= 8:
+        if len(self.state.incorrect_guesses) >= self.MAX_INCORRECT_GUESSES:
             self.state.phase = GamePhase.FINISHED
 
     def get_player_view(self, idx_player: int) -> HangmanGameState:
@@ -213,8 +223,10 @@ class Hangman:
 class RandomPlayer:
     """Implementation of a player that makes random guesses."""
 
-    def select_action(self, state: HangmanGameState,
-                     actions: List[GuessLetterAction]) -> Optional[GuessLetterAction]:
+    def select_action(
+        self, state: HangmanGameState, actions: List[GuessLetterAction]
+    ) -> Optional[GuessLetterAction]:
+        """Select a random valid action."""
         if actions:
             return random.choice(actions)
         return None
