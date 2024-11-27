@@ -138,7 +138,19 @@ class Battleship(Game):
 
     def get_player_view(self, idx_player: int) -> BattleshipGameState:
         """ Get the masked state for the active player (e.g. the oppontent's cards are face down)"""
-        pass
+        masked_players = []
+        for i, player in enumerate(self.state.players):
+            if i == idx_player:
+                masked_players.append(player)
+            else:
+                masked_ships = [Ship(ship.name, ship.length, None) for ship in player.ships]
+                masked_players.append(PlayerState(player.name, masked_ships, player.shots, player.successful_shots))
+        return BattleshipGameState(
+            idx_player_active=self.state.idx_player_active,
+            phase=self.state.phase,
+            winner=self.state.winner,
+            players=masked_players
+        )
 
 
 class RandomPlayer(Player):
