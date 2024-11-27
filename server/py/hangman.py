@@ -186,6 +186,7 @@ class Hangman:
         guess = action.letter.upper()
 
         if guess in self.state.guesses or guess in self.state.incorrect_guesses:
+            print(f"Already guessed: {guess}")
             return
 
         self.state.guesses.append(guess)
@@ -195,13 +196,19 @@ class Hangman:
                 if char.upper() == guess:
                     self.display_word[idx] = char
         else:
+            print(f"Incorrect guess: {guess}")
             self.state.incorrect_guesses.append(guess)
 
+        print(f"Incorrect guesses: {self.state.incorrect_guesses}")
+        print(f"Display word: {self.display_word}")
+
         if "_" not in self.display_word:
+            print("Game won!")
             self.state.phase = GamePhase.FINISHED
             return
 
         if len(self.state.incorrect_guesses) >= self.MAX_INCORRECT_GUESSES:
+            print("Game lost!")
             self.state.phase = GamePhase.FINISHED
 
     def get_player_view(self) -> HangmanGameState:
