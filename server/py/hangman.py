@@ -204,7 +204,7 @@ class Hangman:
         if len(self.state.incorrect_guesses) >= self.MAX_INCORRECT_GUESSES:
             self.state.phase = GamePhase.FINISHED
 
-    def get_player_view(self, idx_player: int) -> HangmanGameState:
+    def get_player_view(self) -> HangmanGameState:
         """Get the game state from a player's perspective."""
         if not self.state:
             raise ValueError("Game state is not initialized")
@@ -223,13 +223,30 @@ class Hangman:
 class RandomPlayer:
     """Implementation of a player that makes random guesses."""
 
+    def __init__(self) -> None:
+        """Initialize random player."""
+        self.past_guesses: set[str] = set()
+
     def select_action(
-        self, state: HangmanGameState, actions: List[GuessLetterAction]
+        self, actions: List[GuessLetterAction]
     ) -> Optional[GuessLetterAction]:
         """Select a random valid action."""
-        if actions:
-            return random.choice(actions)
+        valid_actions = [
+            action for action in actions if action.letter.upper() not in self.past_guesses
+        ]
+        if valid_actions:
+            chosen_action = random.choice(valid_actions)
+            self.past_guesses.add(chosen_action.letter.upper())
+            return chosen_action
         return None
+
+    def reset_guesses(self) -> None:
+        """Reset the player's past guesses."""
+        self.past_guesses.clear()
+
+    def get_past_guesses(self) -> set:
+        """Return the set of past guesses."""
+        return self.past_guesses
 
 
 if __name__ == "__main__":
