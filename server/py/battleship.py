@@ -99,8 +99,38 @@ class Battleship(Game):
         self.state = state
 
     def get_list_action(self) -> List[BattleshipAction]:
-        """ Get a list of possible actions for the active player """
-        pass
+        """Get a list of possible actions for the active player."""
+        actions = []
+        player = self.state.players[self.state.idx_player_active]
+
+        if self.state.phase == GamePhase.SETUP:
+            # Generate SET_SHIP actions for unset ships directly within this method
+            for ship in player.ships:
+                if ship.location is None:  # Ship not yet placed
+                    alphabet = 'ABCDEFGHIJ'
+                    grid = [f"{letter}{number}" for letter in alphabet for number in range(1, 11)]
+                    for start in grid:
+                        x, y = start[0], int(start[1:])
+                        valid_locations = []
+                        # Generate horizontal placements
+                        if y + ship.length - 1 <= 10:
+                            valid_locations.append([f"{x}{y + i}" for i in range(ship.length)])
+                        # Generate vertical placements
+                        if ord(x) - ord('A') + ship.length <= 10:
+                            valid_locations.append([f"{chr(ord(x) + i)}{y}" for i in range(ship.length)])
+                        # Add valid placement actions
+                        for loc in valid_locations:
+                            actions.append(BattleshipAction(ActionType.SET_SHIP, ship.name, loc))
+
+        elif self.state.phase == GamePhase.RUNNING:
+            # Generate SHOOT actions for valid grid locations
+            alphabet = 'ABCDEFGHIJ'
+            grid = [f"{letter}{number}" for letter in alphabet for number in range(1, 11)]
+            for loc in grid:
+                if loc not in player.shots:  # Avoid locations already targeted
+                    actions.append(BattleshipAction(ActionType.SHOOT, None, [loc]))
+
+        return actions
 
     def apply_action(self, action: BattleshipAction) -> None:
         """ Apply the given action to the game """
