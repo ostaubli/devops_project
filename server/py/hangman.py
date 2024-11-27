@@ -23,10 +23,10 @@ class GamePhase(str, Enum):
 class HangmanGameState:
 
     def __init__(self, word_to_guess: str, phase: GamePhase, guesses: List[str], incorrect_guesses: List[str]) -> None:
-        self.word_to_guess = word_to_guess
+        self.word_to_guess = word_to_guess.upper()
         self.phase = phase
-        self.guesses = guesses
-        self.incorrect_guesses = incorrect_guesses
+        self.guesses = [guess.upper() for guess in guesses]
+        self.incorrect_guesses = [incorrect.upper() for incorrect in incorrect_guesses]
 
 
 class Hangman(Game):
@@ -43,6 +43,10 @@ class Hangman(Game):
 
     def set_state(self, state: HangmanGameState) -> None:
         """ Get the complete, unmasked game state """
+        for letter in state.guesses:
+            if letter not in state.word_to_guess.upper():
+                state.incorrect_guesses.append(letter.upper())
+
         self._state = state
 
     def print_state(self) -> None:
@@ -65,7 +69,8 @@ class Hangman(Game):
 
     def get_list_action(self) -> List[GuessLetterAction]:
         """ Get a list of possible actions for the active player """
-        return self._actions
+        return [a for a in self._actions if
+                a.letter not in self._state.guesses and a.letter not in self._state.incorrect_guesses]
 
     def apply_action(self, action: GuessLetterAction) -> None:
         """ Apply the given action to the game """
@@ -102,8 +107,17 @@ class Hangman(Game):
 
     def get_player_view(self, idx_player: int) -> HangmanGameState:
         """ Get the masked state for the active player (e.g. the oppontent's cards are face down)"""
-        pass
+        masked_word = ''.join(
+            letter if letter.upper() in self._state.guesses else '_'
+            for letter in self._state.word_to_guess
+        )
 
+        return HangmanGameState(
+            word_to_guess=masked_word,
+            phase=self._state.phase,
+            guesses=self._state.guesses,
+            incorrect_guesses=self._state.incorrect_guesses
+        )
 
 class RandomPlayer(Player):
 
