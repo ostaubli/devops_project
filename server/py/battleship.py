@@ -6,8 +6,10 @@ This module provides classes for managing a two-player Battleship game.
 from typing import List, Optional
 from enum import Enum
 import random
-from pydantic import BaseModel, Field, model_validator
+from copy import deepcopy
+from pydantic import BaseModel, Field
 from server.py.game import Game, Player
+
 
 # Constants
 MAX_SHIP_COUNT = 5  # Max. Number of Ships
@@ -64,21 +66,14 @@ class BattleshipGameState(BaseModel):
     winner: Optional[int] = None
     players: List[PlayerState]
 
-    @model_validator(mode="after")
-    def validate_players(cls, values: "BattleshipGameState"):
-        """Ensure exactly two players are present."""
-        if len(values.players) != 2:
-            raise ValueError("There must be exactly two players.")
-        return values
-
 class Battleship(Game):
     """
     Main Battleship game class.
     Handles game state and game logic for battleship.
     """
-    def __init__(self):
+    def __init__(self) -> None:
         """ Game initialization (set_state call not necessary) """
-        self.state = BattleshipGameState(
+        self.state: BattleshipGameState = BattleshipGameState(
             idx_player_active=0,
             phase=GamePhase.SETUP,
             players=[
@@ -101,9 +96,9 @@ class Battleship(Game):
             print(f"Hits: {player.successful_shots}")
 
     def get_state(self) -> BattleshipGameState:
-        """ Get the complete, unmasked game state. Returns a copy of current game state to 
+        """ Get the complete, unmasked game state. Returns a copy of current game state to
         ensure no external modifications affect the internal game state afterwards."""
-        return self.state.copy(deep=True)
+        return deepcopy(self.state)
 
     def set_state(self, state: BattleshipGameState) -> None:
         """Set the game state with defensive copying to ensure encapsulation."""
@@ -113,7 +108,7 @@ class Battleship(Game):
 
     def get_list_action(self) -> List[BattleshipAction]:
         """ Get a list of possible actions for the active player """
-        actions = []
+        actions: List[BattleshipAction] = []
         if not self.state:
             return actions
 
@@ -121,7 +116,7 @@ class Battleship(Game):
 
         if self.state.phase == GamePhase.SETUP:
             # Define available ships
-            SHIPS_CONFIG = [
+            ships_config = [
                 ("Carrier", 5),
                 ("Battleship", 4),
                 ("Cruiser", 3),
@@ -129,8 +124,8 @@ class Battleship(Game):
                 ("Destroyer", 2)
             ]
 
-            if len(current_player.ships) < len(SHIPS_CONFIG):
-                ship_name, length = SHIPS_CONFIG[len(current_player.ships)]
+            if len(current_player.ships) < len(ships_config):
+                ship_name, length = ships_config[len(current_player.ships)]
                 # Get existing ship locations for validation
                 existing_locations = set(
                     loc
@@ -192,7 +187,7 @@ class Battleship(Game):
                     for loc in ship.location
                 )
                 new_ship_locations = set(action.location)
-                if not set(action.location).isdisjoint(existing_locations):
+                if not new_ship_locations.isdisjoint(existing_locations):
                     raise ValueError("Ships cannot overlap.")
 
                 # Add ship to the current player's fleet
@@ -216,11 +211,11 @@ class Battleship(Game):
                     if shot_location in ship.location:
                         current_player.successful_shots.append(shot_location)  # Record successful shot
                         if all(loc in current_player.successful_shots for loc in ship.location):
-                            print(f"{ship.name} has been sunk!") 
+                            print(f"{ship.name} has been sunk!")
 
                         # Check win condition
                         if all(
-                            all(loc in current_player.successful_shots for loc in ship.location) 
+                            all(loc in current_player.successful_shots for loc in ship.location)
                             for ship in opponent.ships):
                             self.state.phase = GamePhase.FINISHED
                             self.state.winner = self.state.idx_player_active
@@ -238,10 +233,10 @@ class Battleship(Game):
         """Get the masked state for the active player (e.g., the opponent's ships are hidden)."""
         # Current player's view
         current_player = self.state.players[idx_player]
-        
+
         # Opponent's view
         opponent_player = self.state.players[1 - idx_player]
-        
+
         # Create masked opponent player state
         masked_opponent = PlayerState(
             name=opponent_player.name,
@@ -249,7 +244,7 @@ class Battleship(Game):
             shots=opponent_player.shots,  # Opponent's shots are visible
             successful_shots=opponent_player.successful_shots  # Opponent's successful hits are visible
         )
-        
+
         # Create full view of current player's state
         visible_current_player = PlayerState(
             name=current_player.name,
@@ -257,13 +252,15 @@ class Battleship(Game):
             shots=current_player.shots,
             successful_shots=current_player.successful_shots
         )
-        
+
         # Construct and return the masked game state
         return BattleshipGameState(
             idx_player_active=self.state.idx_player_active,
             phase=self.state.phase,
             winner=self.state.winner,
-            players=[visible_current_player, masked_opponent] if idx_player == 0 else [masked_opponent, visible_current_player]
+            players=[visible_current_player, masked_opponent]
+            if idx_player == 0
+            else [masked_opponent, visible_current_player]
         )
 
 class RandomPlayer(Player):
@@ -271,8 +268,8 @@ class RandomPlayer(Player):
     A random player for the Battleship game. This player selects actions randomly from the available list of actions.
     """
 
-    def select_action(self, 
-        state: BattleshipGameState, 
+    def select_action(self,
+        state: BattleshipGameState,
         actions: List[BattleshipAction]) -> Optional[BattleshipAction]:
         """ Given masked game state and possible actions, select the next action """
         if len(actions) > 0:
@@ -282,7 +279,7 @@ class RandomPlayer(Player):
 if __name__ == "__main__":
 
     game = Battleship()
-    
+
     while game.state.phase != GamePhase.FINISHED:
         game.print_state()
         actions = game.get_list_action()
