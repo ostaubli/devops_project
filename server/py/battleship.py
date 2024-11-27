@@ -1,4 +1,5 @@
 from typing import List, Optional
+from pydantic import BaseModel, Field
 from enum import Enum
 import random
 from server.py.game import Game, Player
@@ -17,13 +18,24 @@ class BattleshipAction:
         self.location = location
 
 
-class Ship:
+class Ship(BaseModel):
+    # Name of the ship, like "Carrier" or "Battleship"
+    name: str
 
-    def __init__(self, name: str, length: int, location: Optional[List[str]]) -> None:
-        self.name = name
-        self.length = length
-        self.location = location
+    # Length of the ship, must be greater than 0
+    length: int = Field(..., gt=0, description="Length of the ship must be greater than 0")
 
+    # List of grid coordinates where the ship is placed; optional and defaults to None
+    location: Optional[List[str]] = Field(default=None, description="Coordinates of the ship's location")
+
+    class Config:
+        """
+        Pydantic configuration for the Ship class.
+
+        This allows mutation of attributes like `location` after the model is instantiated,
+        which is useful for updating the ship's state during the game.
+        """
+        allow_mutation = True
 
 class PlayerState:
 
@@ -53,12 +65,13 @@ class Battleship(Game):
 
     def __init__(self):
         self.grid_size = 10
+        # Ships using the updated Ship class
         self.ships = [
-            Ship("Carrier", 5, []),
-            Ship("Battleship", 4, []),
-            Ship("Cruiser", 3, []),
-            Ship("Submarine", 3, []),
-            Ship("Destroyer", 2, []),
+            Ship(name="Carrier", length=5, location=[]),
+            Ship(name="Battleship", length=4, location=[]),
+            Ship(name="Cruiser", length=3, location=[]),
+            Ship(name="Submarine", length=3, location=[]),
+            Ship(name="Destroyer", length=2, location=[]),
         ]
         self.state = BattleshipGameState(
             idx_player_active=0,
