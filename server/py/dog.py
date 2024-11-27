@@ -5,7 +5,7 @@ from typing import List, Optional, ClassVar
 
 from pydantic import BaseModel
 
-from server.py.game import Game, Player
+from server.py.game import Game, Player, GameAction
 
 
 class Card(BaseModel):
@@ -28,7 +28,8 @@ class Action(BaseModel):
     card: Card  # card to play
     pos_from: Optional[int]  # position to move the marble from
     pos_to: Optional[int]  # position to move the marble to
-    card_swap: Optional[Card]  # optional card to swap () # TODO what is this used for? is this even required for Brandi-Dog?!?
+    card_swap: Optional[
+        Card]  # optional card to swap () # TODO what is this used for? is this even required for Brandi-Dog?!?
 
 
 class GamePhase(str, Enum):
@@ -36,8 +37,8 @@ class GamePhase(str, Enum):
     RUNNING = 'running'  # while the game is running
     FINISHED = 'finished'  # when the game is finished
 
-class GameState(BaseModel):
 
+class GameState(BaseModel):
     LIST_SUIT: ClassVar[List[str]] = ['♠', '♥', '♦', '♣']  # 4 suits (colors)
     LIST_RANK: ClassVar[List[str]] = [
         '2', '3', '4', '5', '6', '7', '8', '9', '10',  # 13 ranks + Joker
@@ -133,7 +134,7 @@ class Dog(Game):
         super().__init__()
         self._state = GameState(
             phase=GamePhase.SETUP,
-            cnt_round=0,
+            cnt_round=1,
             bool_game_finished=False,
             bool_card_exchanged=False,
             idx_player_started=0,
@@ -144,6 +145,8 @@ class Dog(Game):
             card_active=None
         )
         random.shuffle(self._state.list_id_card_draw)
+        self._deal_cards()
+        self._set_marbles()
 
     def set_state(self, state: GameState) -> None:
         """ Set the game to a given state """
@@ -165,6 +168,9 @@ class Dog(Game):
         for card in active_player.list_card:
             for marble in active_player.list_marble:
                 # TODO Go through all cards and marbles and return the possible positions.
+
+                # TODO LATIN-43 logic for start. you can only move if your marble is not inside the kennel or you have a 5 (and some other cards). for this, check if your marble is in the kernel. if so, only then "normal" actions can be taken.
+
                 if card.rank.isdigit() and card.rank not in ['7', '4']:
                     to_positions = self._calculate_position_to(int(marble.pos), card, self._state.idx_player_active)
 
@@ -196,7 +202,9 @@ class Dog(Game):
             if action.pos_from is not None and action.pos_to is not None:
                 # TODO Move marble logic LATIN-38
                 pass
-            # TODO Add more logic for other actions
+            # TODO Add more logic for other actions like sending marble home
+
+            ## TODO LATIN-42 logic for check if game is over (define winners)
 
         # calculate the next player (after 4, comes 1 again). not sure if needed here or somewhere else
         # example: (4+1)%4=1 -> after player 4, it's player 1's turn again
@@ -214,7 +222,7 @@ class Dog(Game):
     ##################################################### PRIVATE METHODS #############################################
 
     # TODO in case the way is blocked (marble on 0/16/32/48 of the player with correct index?). LATIN-36
-    def _is_way_blocked(self, pos_to: int, pos_from: int, safe_marbles : List[Marble]) -> bool:
+    def _is_way_blocked(self, pos_to: int, pos_from: int, safe_marbles: List[Marble]) -> bool:
         """ Check if the way is blocked between from  & to by any safe marble """
         pass
 
@@ -285,6 +293,29 @@ class Dog(Game):
 
         pass
 
+    def _deal_cards(self):
+        for player in self._state.list_player:
+            for _ in range(7 - (self._state.cnt_round % 6)): # every round, you get one card less. if last one was 1, next round you get 6
+                card = self._state.list_id_card_draw.pop()
+                player.list_card.append(card)
+
+    def _set_marbles(self):
+        for player_index in range(len(self._state.list_player)):
+            for marble_index in range(4):
+                self._state.list_player[player_index].list_marble.append(
+                    Marble(
+                        pos=str(int(self.PLAYER_POSITIONS[player_index]['queue_start'] + marble_index)),
+                        is_save=True)
+                )
+
+
+class RealPlayer(Player):
+
+    def select_action(self, state: GameState, actions: List[GameAction]) -> GameAction:
+        # TODO LATIN-33
+        """ Given masked game state and possible actions, select the next action """
+        pass
+
 
 class RandomPlayer(Player):
 
@@ -297,3 +328,21 @@ class RandomPlayer(Player):
 
 if __name__ == '__main__':
     game = Dog()
+    player = RealPlayer()
+
+    while game.get_state() != GamePhase.FINISHED:
+        active_players = 4
+        while not active_players == 0:
+            list_actions = game.get_list_action()
+
+            if len(list_actions) == 0:
+                active_players = active_players-1
+                print("Player has no actions left. Please wait until the round is over")
+            else:
+                action = player.select_action(game.get_state(), list_actions)
+                game.apply_action(action)
+                game.print_state()
+
+        print(f"\n --------------- ROUND {game.get_state().cnt_round} finished -----------------")
+
+

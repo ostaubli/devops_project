@@ -47,6 +47,5 @@ class Player(metaclass=ABCMeta):
 
     @abstractmethod
     def select_action(self, state: GameState, actions: List[GameAction]) -> GameAction:
-        # TODO LATIN-33
         """ Given masked game state and possible actions, select the next action """
         pass
