@@ -157,4 +157,37 @@ class RandomPlayer(Player):
 
 if __name__ == "__main__":
 
+    # Initialize the game
     game = Battleship()
+    # Print the initial game state
+    game.print_state()
+
+    # Main game loop: Continue until the game reaches the FINISHED phase
+    while game.state.phase != GamePhase.FINISHED:
+        # Get the list of possible actions for the active player
+        actions = game.get_list_action()
+
+        if actions:  # If there are valid actions to take
+            # Get the active player's state
+            active_player = game.state.players[game.state.idx_player_active]
+
+            # Print whose turn it is
+            print(f"\n{active_player.name}'s Turn:")
+
+            # Randomly select an action from the list of possible actions
+            action = random.choice(actions)
+
+            # Describe the action being taken
+            if action.action_type == ActionType.SET_SHIP:
+                print(f"Placing ship {action.ship_name} at {action.location}")
+            elif action.action_type == ActionType.SHOOT:
+                print(f"Shooting at {action.location}")
+
+            # Apply the selected action to the game state
+            game.apply_action(action)
+
+            # Print the updated game state after the action
+            game.print_state()
+
+    # Once the loop exits, the game is over, and a winner is determined
+    print(f"\nGame Over! Winner: Player {game.state.winner + 1}")
