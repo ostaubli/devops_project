@@ -79,15 +79,23 @@ class Battleship(Game):
         )
 
     def print_state(self) -> None:
-        """ Set the game to a given state """
-        pass
+        """ Print the current game state """
+        for player in self.state.players:
+            print(f"{player.name}'s ships:")
+            for ship in player.ships:
+                print(f"  {ship.name}: {ship.location}")
+            print(f"Shots taken: {player.shots}")
+            print(f"Successful shots: {player.successful_shots}")
+        print(f"Current phase: {self.state.phase}")
+        if self.state.winner is not None:
+            print(f"Winner: Player {self.state.winner + 1}")
 
     def get_state(self) -> BattleshipGameState:
         """ Get the complete, unmasked game state """
         return self.state
 
     def set_state(self, state: BattleshipGameState) -> None:
-        """ Print the current game state """
+        """ Set the game to a given state """
         self.state = state
 
     def get_list_action(self) -> List[BattleshipAction]:
