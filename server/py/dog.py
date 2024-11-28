@@ -183,6 +183,8 @@ class Dog(Game):
         for i in range(0, board_size, 12):
             print(" ".join(board[i:i+12]))
 
+
+
     def get_list_action(self) -> List[Action]:
         """ Get a list of possible actions for the active player """
         if not self.state:
@@ -200,14 +202,36 @@ class Dog(Game):
         print(f"Player {self.state.list_player[self.state.idx_player_active].name} plays {action.card.rank} of {action.card.suit}")
         self.state.list_player[self.state.idx_player_active].list_card.remove(action.card)
         self.state.list_id_card_discard.append(action.card)
+
+        # Update marble position and check if it is in the safe space
+        safe_spaces = {
+            0: [92, 93, 94, 95],  # Player 1's safe spaces
+            1: [68, 69, 70, 71],  # Player 2's safe spaces
+            2: [44, 45, 46, 47],  # Player 3's safe spaces
+            3: [20, 21, 22, 23]   # Player 4's safe spaces
+        }
+        for marble in self.state.list_player[self.state.idx_player_active].list_marble:
+            if marble.pos == action.pos_from:
+                marble.pos = action.pos_to
+                if marble.pos in safe_spaces[self.state.idx_player_active]:
+                    marble.is_save = True
+                else:
+                    marble.is_save = False
+
         self.state.idx_player_active = (self.state.idx_player_active + 1) % len(self.state.list_player)
+
+        # Check if the round is complete (all players have played)
+        if self.state.idx_player_active == self.state.idx_player_started:
+            self.state.cnt_round += 1  # Increment the round number
 
     def draw_card(self) -> None:
         """ Draw a card for the active player """
         if not self.state:
             raise ValueError("Game state is not set.")
         if not self.state.list_id_card_draw:
-            raise ValueError("No more cards to draw.")
+            print("No more cards to draw. The game is finished.")
+            self.state.phase = GamePhase.FINISHED
+            return
         card = self.state.list_id_card_draw.pop()
         self.state.list_player[self.state.idx_player_active].list_card.append(card)
 
