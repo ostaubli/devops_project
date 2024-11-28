@@ -2,7 +2,7 @@ from typing import List, Optional
 import re
 from enum import Enum
 import random
-from game import Game, Player
+from server.py.game import Game, Player
 
 
 class ActionType(str, Enum):
