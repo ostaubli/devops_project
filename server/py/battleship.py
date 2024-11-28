@@ -1,3 +1,9 @@
+import sys
+import os
+
+# Projekthauptpfad hinzufügen
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..')))
+
 from typing import List, Optional
 from enum import Enum
 import random
@@ -81,8 +87,43 @@ class Battleship(Game):
         self.state.players.extend([player1, player2])
 
     def print_state(self) -> None:
-        """ Set the game to a given state """
-        pass
+        """ Print the current state of the game board """
+        rows = "ABCDEFGHIJ"
+        columns = [str(i) for i in range(1, 11)]
+        board_size = len(rows)
+
+        # Initialize empty boards for both players
+        player_boards = [
+            [["~"] * board_size for _ in range(board_size)],  # Player 1's board
+            [["~"] * board_size for _ in range(board_size)],  # Player 2's board
+        ]
+
+        # Populate the boards with ships and shots
+        for player_idx, player in enumerate(self.state.players):
+            # Mark ships
+            for ship in player.ships:
+                for cell in ship.location:
+                    row = rows.index(cell[0])
+                    col = int(cell[1:]) - 1
+                    player_boards[player_idx][row][col] = "S"  # 'S' for Ship
+
+            # Mark shots
+            for shot in player.shots:
+                row = rows.index(shot[0])
+                col = int(shot[1:]) - 1
+                if player_boards[player_idx][row][col] == "S":
+                    player_boards[player_idx][row][col] = "X"  # 'X' for hit
+                else:
+                    player_boards[player_idx][row][col] = "O"  # 'O' for miss
+
+        # Print the boards
+        for player_idx, board in enumerate(player_boards):
+            print(f"Player {player_idx + 1}'s Board:")
+            print("  " + " ".join(columns))
+            for i, row in enumerate(board):
+                print(rows[i] + " " + " ".join(row))
+            print()
+
 
     def get_state(self) -> BattleshipGameState:
         """ Get the complete, unmasked game state """
@@ -188,5 +229,6 @@ class RandomPlayer(Player):
 
 
 if __name__ == "__main__":
-
+    # Initialize the game
     game = Battleship()
+    
