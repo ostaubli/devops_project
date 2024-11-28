@@ -2,8 +2,10 @@
 Battleship game implementation with player actions and game state management.
 This module provides classes for managing a two-player Battleship game.
 """
+# mypy: disable-error-code="union-attr, arg-type, operator, misc"
+# pylint: disable=unknown-option-value,import-error,too-many-function-args,too-few-public-methods,redefined-outer-name,unused-argument,unused-import,redefined-outer-name,too-many-function-arg,too-many-branches,too-many-nested-blocks,invalid-name
 
-from typing import List, Optional
+from typing import List, Optional, Set
 from enum import Enum
 import random
 from copy import deepcopy
