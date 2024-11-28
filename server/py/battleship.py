@@ -10,12 +10,10 @@ class ActionType(str, Enum):
     SHOOT = 'shoot'
 
 
-class BattleshipAction:
-
-    def __init__(self, action_type: ActionType, ship_name: Optional[str], location: List[str]) -> None:
-        self.action_type = action_type
-        self.ship_name = ship_name # only for set_ship actions
-        self.location = location
+class BattleshipAction(BaseModel):
+    action_type: ActionType
+    ship_name: Optional[str]  # Only for SET_SHIP actions
+    location: List[str]
 
 
 class Ship(BaseModel):
@@ -52,13 +50,11 @@ class GamePhase(str, Enum):
     FINISHED = 'finished'      # when the game is finished
 
 
-class BattleshipGameState:
-
-    def __init__(self, idx_player_active: int, phase: GamePhase, winner: Optional[int], players: List[PlayerState]) -> None:
-        self.idx_player_active = idx_player_active
-        self.phase = phase
-        self.winner = winner
-        self.players = players
+class BattleshipGameState(BaseModel):
+    idx_player_active: int
+    phase: GamePhase
+    winner: Optional[int]
+    players: List[PlayerState]
 
 
 class Battleship(Game):
