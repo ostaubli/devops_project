@@ -1,4 +1,4 @@
-# Students Repository for HSLU Module "DevOps"
+clear# Students Repository for HSLU Module "DevOps"
 
 The following commands are all ment to be executed in the root directory of the project.
 
