@@ -1,7 +1,19 @@
 import string
 import random
-from enum import Enum
 from typing import List, Optional
+from enum import Enum
+from server.py.game import Game, Player
+
+
+class GuessLetterAction:
+    def __init__(self, letter: str) -> None:
+        self.letter = letter.upper()
+
+    def describe(self) -> str:
+        return f"Guessing letter: {self.letter}"
+
+    def is_vowel(self) -> bool:
+        return self.letter in 'AEIOU'
 
 
 class GamePhase(str, Enum):
@@ -16,29 +28,18 @@ class GamePhase(str, Enum):
         return self == GamePhase.FINISHED
 
 
-class GuessLetterAction:
-    def __init__(self, letter: str) -> None:
-        self.letter = letter.upper()
-
-    def describe(self) -> str:
-        return f"Guessing letter: {self.letter}"
-
-    def is_vowel(self) -> bool:
-        return self.letter in 'AEIOU'
-
-
 class HangmanGameState:
     def __init__(
         self,
         word_to_guess: str,
-        guesses: List[str],
-        incorrect_guesses: List[str],
         phase: GamePhase,
+        guesses: Optional[List[str]] = None,
+        incorrect_guesses: Optional[List[str]] = None
     ) -> None:
         self.word_to_guess = word_to_guess.upper()
-        self.guesses = [guess.upper() for guess in guesses]
-        self.incorrect_guesses = [guess.upper() for guess in incorrect_guesses]
         self.phase = phase
+        self.guesses = [guess.upper() for guess in (guesses or [])]
+        self.incorrect_guesses = [guess.upper() for guess in (incorrect_guesses or [])]
 
     def is_word_guessed(self) -> bool:
         return all(letter in self.guesses for letter in self.word_to_guess)
@@ -47,14 +48,13 @@ class HangmanGameState:
         return len(self.incorrect_guesses) >= 8
 
     def update_phase(self) -> None:
-        if self.has_max_incorrect_guesses():
-            self.phase = GamePhase.FINISHED
-        elif self.is_word_guessed():
+        if self.has_max_incorrect_guesses() or self.is_word_guessed():
             self.phase = GamePhase.FINISHED
 
     def describe(self) -> str:
+        masked_word = ''.join([letter if letter in self.guesses else '_' for letter in self.word_to_guess])
         return (
-            f"Word to guess: {self.word_to_guess}, Phase: {self.phase}, "
+            f"Word to guess: {masked_word}, Phase: {self.phase}, "
             f"Guesses: {self.guesses}, Incorrect guesses: {self.incorrect_guesses}"
         )
 
@@ -63,100 +63,89 @@ class HangmanGameState:
         self.incorrect_guesses.clear()
 
 
-class Hangman:
+class Hangman(Game):
     def __init__(self) -> None:
-        self.state: Optional[HangmanGameState] = None
+        """ Important: Game initialization also requires a set_state call to set the 'word_to_guess' """
+        super().__init__()
+        self._state: Optional[HangmanGameState] = None
         self.max_attempts = 8
 
     def reset(self) -> None:
-        self.state = None
+        self._state = None
 
-    def set_state(self, game_state: HangmanGameState) -> None:
+    def set_state(self, state: HangmanGameState) -> None:
         # Normalize and clean the guesses and incorrect guesses
+        all_guesses = [guess.upper() for guess in state.guesses]
         correct_guesses = [
-            guess.upper() for guess in game_state.guesses
-            if guess.upper() in game_state.word_to_guess
+            guess for guess in all_guesses
+            if guess in state.word_to_guess
         ]
         incorrect_guesses = [
-            guess.upper() for guess in game_state.guesses
-            if guess.upper() not in game_state.word_to_guess
+            guess for guess in all_guesses
+            if guess not in state.word_to_guess
         ]
 
-        game_state.guesses = correct_guesses
-        game_state.incorrect_guesses.extend(incorrect_guesses)
+        state.guesses = correct_guesses + incorrect_guesses
+        state.incorrect_guesses = incorrect_guesses
 
         # Update game phase
-        if all(letter in game_state.guesses for letter in game_state.word_to_guess):
-            game_state.phase = GamePhase.FINISHED
-        elif len(game_state.incorrect_guesses) >= self.max_attempts:
-            game_state.phase = GamePhase.FINISHED
-        else:
-            game_state.phase = GamePhase.RUNNING
+        state.update_phase()
 
-        self.state = game_state
+        self._state = state
 
     def get_state(self) -> HangmanGameState:
-        if self.state is None:
+        if self._state is None:
             raise ValueError("Game state is not set.")
-        return self.state
+        return self._state
+
+    def print_state(self) -> None:
+        if self._state is None:
+            raise ValueError("Game state is not set.")
+        print(self._state.describe())
 
     def get_list_action(self) -> List[GuessLetterAction]:
-        if self.state is None:
-            return []
-        guessed_letters = set(self.state.guesses + self.state.incorrect_guesses)
+        if self._state is None:
+            raise ValueError("Game state is not set.")
+        guessed_letters = set(self._state.guesses + self._state.incorrect_guesses)
         unused_letters = set(string.ascii_uppercase) - guessed_letters
         return [GuessLetterAction(letter) for letter in unused_letters]
 
-    def apply_action(self, guess_action: GuessLetterAction) -> None:
-        if self.state is None:
-            return
-        if self.state.phase != GamePhase.RUNNING:
+    def apply_action(self, action: GuessLetterAction) -> None:
+        if self._state is None:
+            raise ValueError("Game state is not set.")
+        if self._state.phase != GamePhase.RUNNING:
             return
 
-        guessed_letter = guess_action.letter
+        guessed_letter = action.letter.upper()
 
-        if guessed_letter in self.state.guesses + self.state.incorrect_guesses:
+        if guessed_letter in self._state.guesses or guessed_letter in self._state.incorrect_guesses:
             return  # Skip if letter has already been guessed
 
-        if guessed_letter in self.state.word_to_guess:
-            self.state.guesses.append(guessed_letter)
-        else:
-            self.state.incorrect_guesses.append(guessed_letter)
+        self._state.guesses.append(guessed_letter)
 
-        # Update game phase
-        if all(letter in self.state.guesses for letter in self.state.word_to_guess):
-            self.state.phase = GamePhase.FINISHED
-        elif len(self.state.incorrect_guesses) >= self.max_attempts:
-            self.state.phase = GamePhase.FINISHED
-
-        letter = guess_action.letter
-        if letter not in self.state.guesses:
-            self.state.guesses.append(letter)
-            if letter not in self.state.word_to_guess:
-                self.state.incorrect_guesses.append(letter)
-                if len(self.state.incorrect_guesses) >= 8:
-                    self.state.phase = GamePhase.FINISHED
+        if guessed_letter not in self._state.word_to_guess:
+            self._state.incorrect_guesses.append(guessed_letter)
 
         # Update the game phase if needed
-        self.state.update_phase()
+        self._state.update_phase()
 
-        letter = guess_action.letter
-        if letter not in self.state.guesses:
-            self.state.guesses.append(letter)
-            if letter not in self.state.word_to_guess:
-                self.state.incorrect_guesses.append(letter)
-
-        # Update the game phase if needed
-        self.state.update_phase()
+    def get_player_view(self, idx_player: int) -> HangmanGameState:
+        """ Get the masked state for the active player (e.g. the opponent's cards are face down) """
+        if self._state is None:
+            raise ValueError("Game state is not set.")
+        # In this simple game, player view is the same as the full state
+        return self._state
 
 
-class RandomPlayer:
+class RandomPlayer(Player):
     def __init__(self) -> None:
+        super().__init__()
         self.name = "RandomPlayer"
 
-    def select_action(self, possible_actions: List[GuessLetterAction]) -> Optional[GuessLetterAction]:
-        if len(possible_actions) > 0:
-            return random.choice(possible_actions)
+    def select_action(self, state: HangmanGameState, actions: List[GuessLetterAction]) -> Optional[GuessLetterAction]:
+        """ Given masked game state and possible actions, select the next action """
+        if actions:
+            return random.choice(actions)
         return None
 
     def describe(self) -> str:
@@ -164,13 +153,20 @@ class RandomPlayer:
 
 
 if __name__ == "__main__":
-    game_server = Hangman()
-    # Example usage of the game
-    state = HangmanGameState(word_to_guess='devops', guesses=[], incorrect_guesses=[], phase=GamePhase.RUNNING)
-    game_server.set_state(state)
-    print(game_server.get_state().word_to_guess)
-    actions = game_server.get_list_action()
-    for action in actions:
-        print(action.letter)
-    game_server.apply_action(GuessLetterAction(letter='d'))
-    print(game_server.get_state().guesses)
+    game = Hangman()
+    game_state = HangmanGameState(word_to_guess='DevOps', phase=GamePhase.RUNNING)
+    game.set_state(game_state)
+    game.print_state()
+
+    # Apply action for lowercase letter test
+    game.apply_action(GuessLetterAction(letter='x'))
+    game.print_state()
+
+    # Use RandomPlayer to play the game
+    player = RandomPlayer()
+    while not game.get_state().phase.is_finished():
+        possible_actions = game.get_list_action()
+        selected_action = player.select_action(game.get_state(), possible_actions)
+        if selected_action:
+            game.apply_action(selected_action)
+            game.print_state()
