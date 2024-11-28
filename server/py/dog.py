@@ -93,6 +93,34 @@ class Dog(Game):
         self.state: Optional[GameState] = None
         self.initialize_game()  # Ensure the game state is initialized
 
+    def initialize_game(self) -> None:
+        """
+        Initialize the game state with players, deck, and board positions.
+        """
+        players = [PlayerState(name=f"Player {i+1}", list_card=[], list_marble=[Marble(pos=0, is_save=True) for _ in range(4)]) for i in range(4)]
+        deck = GameState.LIST_CARD.copy()
+        random.shuffle(deck)
+        board_positions = [None] * 96  # Initialize board positions
+
+        # Deal initial cards (6 cards in first round)
+        for player in players:
+            player.list_card = [deck.pop() for _ in range(6)]
+
+        self.state = GameState(
+            cnt_player=4,
+            phase=GamePhase.RUNNING,
+            cnt_round=1,
+            bool_game_finished=False,
+            bool_card_exchanged=False,
+            idx_player_started=random.randint(0, 3),
+            idx_player_active=random.randint(0, 3),
+            list_player=players,
+            list_id_card_draw=deck,
+            list_id_card_discard=[],
+            card_active=None,
+            board_positions=board_positions
+        )
+
     def set_state(self, state: GameState) -> None:
         """ Set the game to a given state """
         pass
