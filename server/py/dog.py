@@ -121,6 +121,10 @@ class Dog(Game):
             board_positions=board_positions
         )
 
+    def reset(self) -> None:
+        """ Reset the game to its initial state """
+        self.initialize_game()
+
     def set_state(self, state: GameState) -> None:
         """ Set the game to a given state """
         pass
