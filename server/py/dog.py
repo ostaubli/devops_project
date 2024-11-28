@@ -97,8 +97,8 @@ class GameState(BaseModel):
     idx_player_started: int  # index of player that started the round
     idx_player_active: int  # index of active player in round
     list_player: List[PlayerState]  # list of players
-    list_id_card_draw: List[Card]  # list of cards to draw
-    list_id_card_discard: List[Card]  # list of cards discarded
+    list_card_draw: List[Card]  # list of cards to draw
+    list_card_discard: List[Card]  # list of cards discarded
     card_active: Optional[Card]  # active card (for 7 and JKR with sequence of actions)
 
     def __str__(self) -> str:
@@ -111,8 +111,8 @@ class GameState(BaseModel):
             f"Round: {self.cnt_round}\n"
             f"Active Player: {self.idx_player_active + 1}\n"
             f"Players:\n{player_states}\n"
-            f"Cards to Draw: {len(self.list_id_card_draw)}\n"
-            f"Cards Discarded: {len(self.list_id_card_discard)}\n"
+            f"Cards to Draw: {len(self.list_card_draw)}\n"
+            f"Cards Discarded: {len(self.list_card_discard)}\n"
             f"Active Card: {self.card_active}\n"
         )
 
@@ -133,19 +133,19 @@ class Dog(Game):
         """ Game initialization (set_state call not necessary, we expect 4 players) """
         super().__init__()
         self._state = GameState(
-            phase=GamePhase.SETUP,
+            phase=GamePhase.RUNNING,
             cnt_round=1,
             bool_game_finished=False,
             bool_card_exchanged=False,
             idx_player_started=0,
             idx_player_active=0,
             list_player=[PlayerState(name=f"Player {i + 1}", list_card=[], list_marble=[]) for i in range(4)],
-            list_id_card_draw=GameState.LIST_CARD.copy(),
-            list_id_card_discard=[],
+            list_card_draw=GameState.LIST_CARD.copy(),
+            list_card_discard=[],
             card_active=None
         )
-        random.shuffle(self._state.list_id_card_draw)
-        self._deal_cards()
+        random.shuffle(self._state.list_card_draw)
+        self.deal_cards()
         self._set_marbles()
 
     def set_state(self, state: GameState) -> None:
@@ -196,7 +196,7 @@ class Dog(Game):
         if action.card in active_player.list_card:
             # removing card from players hand and putting it to discarded stack
             active_player.list_card.remove(action.card)
-            self._state.list_id_card_discard.append(action.card)
+            self._state.list_card_discard.append(action.card)
 
             # Example logic to update the game state based on the action
             if action.pos_from is not None and action.pos_to is not None:
@@ -293,10 +293,10 @@ class Dog(Game):
 
         pass
 
-    def _deal_cards(self):
+    def deal_cards(self):
         for player in self._state.list_player:
             for _ in range(7 - (self._state.cnt_round % 6)): # every round, you get one card less. if last one was 1, next round you get 6
-                card = self._state.list_id_card_draw.pop()
+                card = self._state.list_card_draw.pop()
                 player.list_card.append(card)
 
     def _set_marbles(self):
@@ -332,6 +332,7 @@ if __name__ == '__main__':
 
     while game.get_state() != GamePhase.FINISHED:
         active_players = 4
+        game.deal_cards()
         while not active_players == 0:
             list_actions = game.get_list_action()
 
