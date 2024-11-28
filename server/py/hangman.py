@@ -19,7 +19,7 @@ class GamePhase(str, Enum):
 class HangmanGameState:
 
     def __init__(self, word_to_guess: str, phase: GamePhase, guesses: List[str], incorrect_guesses: List[str]) -> None:
-        self.word_to_guess = word_to_guess.lower()
+        self.word_to_guess = word_to_guess.upper()
         self.phase = phase
         self.guesses = guesses
         self.incorrect_guesses = incorrect_guesses
@@ -58,7 +58,7 @@ class Hangman(Game):
     def get_list_action(self) -> List[GuessLetterAction]:
         """ Get a list of possible actions for the active player """
         # all possibilities
-        alphabet = set("abcdefghijklmnopqrstuvwxyz") 
+        alphabet = set("abcdefghijklmnopqrstuvwxyz".upper()) 
 
         # possibilities left
         guessed_alphabets = set(self.state.guesses + self.state.incorrect_guesses)
@@ -68,7 +68,7 @@ class Hangman(Game):
 
     def apply_action(self, action: GuessLetterAction) -> None:
         """ Apply the given action to the game """
-        guess_letter = action.letter.lower()
+        guess_letter = action.letter.upper()
 
         # Valid guess
         if guess_letter in (self.state.guesses + self.state.incorrect_guesses):
