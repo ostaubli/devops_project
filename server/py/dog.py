@@ -91,6 +91,7 @@ class Dog(Game):
     def __init__(self) -> None:
         """ Game initialization (set_state call not necessary, we expect 4 players) """
         self.state: Optional[GameState] = None
+        self.initialize_game()  # Ensure the game state is initialized
 
     def set_state(self, state: GameState) -> None:
         """ Set the game to a given state """
