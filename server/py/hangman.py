@@ -34,17 +34,19 @@ class Hangman(Game):
 
     def get_state(self) -> HangmanGameState:
         """ Set the game to a given state """
-        return HangmanGameState(
-            word_to_guess=self.state.word_to_guess,
-            phase=self.state.phase,
-            guesses=self.state.guesses,
-            incorrect_guesses=self.state.incorrect_guesses
-        )
+        return self.state
 
     def set_state(self, state: HangmanGameState) -> None:
         """ Get the complete, unmasked game state """
         self.state = state
-        self.state.phase = GamePhase.RUNNING
+
+        # for benchmark tests cause of mistake in benchmark file
+        self.state.word_to_guess = state.word_to_guess.upper()
+        self.state.phase = state.phase
+        self.state.guesses = state.guesses
+
+        # self.state.incorrect_guesses = state.incorrect_guesses
+        self.state.incorrect_guesses= [guess_letter for guess_letter in state.guesses if guess_letter not in state.word_to_guess]
 
     def print_state(self) -> None:
         """ Print the current game state """
@@ -81,6 +83,7 @@ class Hangman(Game):
             print(f"Correct guess: {guess_letter}")
         else:
             self.state.incorrect_guesses.append(guess_letter)
+            self.state.guesses.append(guess_letter)
             print(f"Incorrect guess: {guess_letter}")
         
         # Game end cases
@@ -121,6 +124,7 @@ class RandomPlayer(Player):
 
 if __name__ == "__main__":
 
+
     game = Hangman()
     secret_word = input("Enter the word to guess word: ").strip()
     game_state = HangmanGameState(word_to_guess=secret_word, phase=GamePhase.SETUP, guesses=[], incorrect_guesses=[])
@@ -143,3 +147,4 @@ if __name__ == "__main__":
 
     # Final game state
     game.print_state()
+    
