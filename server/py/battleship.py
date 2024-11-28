@@ -1,4 +1,5 @@
 from typing import List, Optional
+import re
 from enum import Enum
 import random
 from game import Game, Player
@@ -61,13 +62,13 @@ class Battleship(Game):
         self.state = None
         player1 = PlayerState(name='Player 1', ships=[], shots=[], successful_shots=[])
         player2 = PlayerState(name='Player 2', ships=[], shots=[], successful_shots=[])
-        
+
         initial_state = BattleshipGameState(idx_player_active=0,
                                             phase=GamePhase.SETUP,
                                             winner=None,
                                             players=[player1, player2])
         self.state = self.set_state(initial_state)
-        
+
 
     def print_state(self) -> None:
         """ Print the current game state """
@@ -87,9 +88,82 @@ class Battleship(Game):
         """ Get a list of possible actions for the active player """
         pass
 
+    def __can_we_place_ship(self, player: PlayerState, ship_location: List[str]) -> bool:
+        if len(ship_location) == 0:
+            return True
+
+        try:
+            letters = [re.match(r"^[A-J]", loc).group() for loc in ship_location]
+            numbers = [int(re.match(r"^[A-J](\d{1,2})$", loc).group(1)) for loc in ship_location]
+        except AttributeError:
+            # Invalid location format
+            return False
+
+        if not (all(l == letters[0] for l in letters) or all(n == numbers[0] for n in numbers)):
+            return False
+
+        for i in range(len(ship_location) - 1):
+            if abs(ord(letters[i]) - ord(letters[i + 1])) > 1 or abs(numbers[i] - numbers[i + 1]) > 1:
+                return False
+
+        located_places = {place for ship in player.ships for place in ship.location}
+        for location in ship_location:
+            if location in located_places:
+                return False
+
+        return True
+
     def apply_action(self, action: BattleshipAction) -> None:
         """ Apply the given action to the game """
-        pass
+
+        if self.state.phase == GamePhase.FINISHED:
+            raise Exception("Game is already finished.")
+
+        active_player = self.state.players[self.state.idx_player_active]
+        enemy_player = self.state.players[(self.state.idx_player_active + 1) % 2]
+
+        action_type: ActionType = action.action_type
+        phase: GamePhase = self.state.phase
+
+        if action_type == ActionType.SET_SHIP:
+            if phase != GamePhase.SETUP:
+                raise Exception("Cannot place ship outside the setup phase.")
+
+            ship_name = action.ship_name
+            ship_location = action.location
+
+            if not self.__can_we_place_ship(active_player, ship_location):
+                raise ValueError("Invalid ship placement.")
+
+            active_player.ships.append(Ship(ship_name, len(ship_location), ship_location))
+
+            self.state.idx_player_active = (self.state.idx_player_active + 1) % 2
+            return
+
+        if action_type == ActionType.SHOOT:
+            if phase != GamePhase.RUNNING:
+                raise Exception("Cannot shoot outside the running phase.")
+
+            if len(action.location) != 1:
+                raise Exception("Invalid shot location.")
+
+            shot_place = action.location[0]
+            if shot_place in active_player.shots:
+                raise Exception("Shot already made.")
+
+            enemy_positions = [place for ship in enemy_player.ships for place in ship.location]
+            we_hit = shot_place in enemy_positions
+            active_player.shots.append(shot_place)
+            if we_hit:
+                active_player.successful_shots.append(shot_place)
+
+            if len(set(enemy_positions) - set(active_player.successful_shots)) == 0:
+                self.state.phase = GamePhase.FINISHED
+                self.state.winner = active_player.name
+
+            self.state.idx_player_active = (self.state.idx_player_active + 1) % 2
+
+        self.set_state(self.state)
 
     def get_player_view(self, idx_player: int) -> BattleshipGameState:
         """ Get the masked state for the active player (e.g. the oppontent's cards are face down)"""
