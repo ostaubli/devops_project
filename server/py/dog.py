@@ -12,7 +12,7 @@ class Card(BaseModel):
 
 
 class Marble(BaseModel):
-    pos: str       # position on board (0 to 95)
+    pos: int       # position on board (0 to 95) --> Changed from str to int
     is_save: bool  # true if marble was moved out of kennel and was not yet moved
 
 
@@ -86,6 +86,7 @@ class GameState(BaseModel):
     card_active: Optional[Card]        # active card (for 7 and JKR with sequence of actions)
 
 
+
 class Dog(Game):
 
     def __init__(self) -> None:
@@ -96,8 +97,11 @@ class Dog(Game):
     def initialize_game(self) -> None:
         """
         Initialize the game state with players, deck, and board positions.
+
+        Each player (i: range 0-3) has 4 marbles (j: range 0-3), initialized from unique positions (pos).
         """
-        players = [PlayerState(name=f"Player {i+1}", list_card=[], list_marble=[Marble(pos=0, is_save=True) for _ in range(4)]) for i in range(4)]
+
+        players = [PlayerState(name=f"Player {i+1}", list_card=[], list_marble=[Marble(pos=i*24 + j, is_save=True) for j in range(4)]) for i in range(4)]
         deck = GameState.LIST_CARD.copy()
         random.shuffle(deck)
         board_positions = [None] * 96  # Initialize board positions
@@ -135,19 +139,102 @@ class Dog(Game):
 
     def print_state(self) -> None:
         """ Print the current game state """
-        pass
+        if self.state is None:
+            raise ValueError("Game state is not set.")
+        print(f"Game Phase: {self.state.phase}")
+        print(f"Round: {self.state.cnt_round}")
+        print(f"Active Player: {self.state.list_player[self.state.idx_player_active].name}")
+        for player in self.state.list_player:
+            print(f"\nPlayer: {player.name}")
+            print(f"Cards: {[f'{card.rank} of {card.suit}' for card in player.list_card]}")
+            print(f"Marbles: {[f'Position: {marble.pos}, Safe: {marble.is_save}' for marble in player.list_marble]}")
+
+    def draw_board(self) -> None:
+        """ Draw the board with kennels as the starting positions and safe spaces as the final destinations """
+        if self.state is None:
+            raise ValueError("Game state is not set.")
+
+        board_size = 96
+        kennels = {
+            0: [0, 1, 2, 3],     # Player 1's starting positions
+            1: [24, 25, 26, 27], # Player 2's starting positions
+            2: [48, 49, 50, 51], # Player 3's starting positions
+            3: [72, 73, 74, 75]  # Player 4's starting positions
+        }
+        safe_spaces = {
+            0: [92, 93, 94, 95],  # Player 1's safe spaces
+            1: [68, 69, 70, 71],  # Player 2's safe spaces
+            2: [44, 45, 46, 47],  # Player 3's safe spaces
+            3: [20, 21, 22, 23]   # Player 4's safe spaces
+        }
+
+        board = ["." for _ in range(board_size)]
+
+        for player_idx, player in enumerate(self.state.list_player):
+            for marble in player.list_marble:
+                if marble.pos in safe_spaces[player_idx]:
+                    board[marble.pos] = f"S{player_idx+1}"
+                elif marble.pos in kennels[player_idx]:
+                    board[marble.pos] = f"K{player_idx+1}"
+                else:
+                    board[marble.pos] = f"M{player_idx+1}"
+
+        print("Board:")
+        for i in range(0, board_size, 12):
+            print(" ".join(board[i:i+12]))
 
     def get_list_action(self) -> List[Action]:
         """ Get a list of possible actions for the active player """
-        pass
+        if not self.state:
+            return []
+        actions = []
+        active_player = self.state.list_player[self.state.idx_player_active]
+        for card in active_player.list_card:
+            actions.append(Action(card=card, pos_from=None, pos_to=None, card_swap=None))
+        return actions
 
     def apply_action(self, action: Action) -> None:
         """ Apply the given action to the game """
-        pass
+        if not self.state:
+            raise ValueError("Game state is not set.")
+        print(f"Player {self.state.list_player[self.state.idx_player_active].name} plays {action.card.rank} of {action.card.suit}")
+        self.state.list_player[self.state.idx_player_active].list_card.remove(action.card)
+        self.state.list_id_card_discard.append(action.card)
+        self.state.idx_player_active = (self.state.idx_player_active + 1) % len(self.state.list_player)
+
+    def draw_card(self) -> None:
+        """ Draw a card for the active player """
+        if not self.state:
+            raise ValueError("Game state is not set.")
+        if not self.state.list_id_card_draw:
+            raise ValueError("No more cards to draw.")
+        card = self.state.list_id_card_draw.pop()
+        self.state.list_player[self.state.idx_player_active].list_card.append(card)
 
     def get_player_view(self, idx_player: int) -> GameState:
         """ Get the masked state for the active player (e.g. the oppontent's cards are face down)"""
-        pass
+        if not self.state:
+            raise ValueError("Game state is not set.")
+        masked_players = []
+        for i, player in enumerate(self.state.list_player):
+            if i == idx_player:
+                masked_players.append(player)
+            else:
+                masked_players.append(PlayerState(name=player.name, list_card=[], list_marble=player.list_marble))
+        return GameState(
+            cnt_player=self.state.cnt_player,
+            phase=self.state.phase,
+            cnt_round=self.state.cnt_round,
+            bool_game_finished=self.state.bool_game_finished,
+            bool_card_exchanged=self.state.bool_card_exchanged,
+            idx_player_started=self.state.idx_player_started,
+            idx_player_active=self.state.idx_player_active,
+            list_player=masked_players,
+            list_id_card_draw=self.state.list_id_card_draw,
+            list_id_card_discard=self.state.list_id_card_discard,
+            card_active=self.state.card_active,
+            board_positions=self.state.board_positions
+        )
 
 
 class RandomPlayer(Player):
@@ -162,3 +249,20 @@ class RandomPlayer(Player):
 if __name__ == '__main__':
 
     game = Dog()
+    game.initialize_game()
+    game.draw_board()  # Draw the board
+
+    while game.state.phase != GamePhase.FINISHED:
+        game.print_state()
+        game.draw_card()  # Draw a card for the active player
+        actions = game.get_list_action()
+
+        # Display possible actions
+        print("\nPossible Actions:")
+        for idx, action in enumerate(actions):
+            print(f"{idx}: Play {action.card.rank} of {action.card.suit}")
+
+        # Randomly select an action for the active player
+        selected_action = random.choice(actions)
+        game.apply_action(selected_action)
+        game.draw_board()  # Update the board after each action
