@@ -120,8 +120,11 @@ class Hangman(Game):
         """ Apply the given action to the game """
         if not self.state or self.state.phase == GamePhase.FINISHED:
             return
-        if action.letter in self.state.word_to_guess:
+
+        if action.letter not in self.state.guesses:
             self.state.guesses.append(action.letter)
+
+        if action.letter in self.state.word_to_guess:
             if all(letter in self.state.guesses for letter in self.state.word_to_guess):
                 self.state.phase = GamePhase.FINISHED
                 print("\nCongratulations! You've guessed the word:", self.state.word_to_guess)

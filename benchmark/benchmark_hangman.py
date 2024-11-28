@@ -3,7 +3,7 @@ import string
 from benchmark import Benchmark
 import os
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '../server/py')))
-from hangman import Hangman, HangmanGameState, GamePhase
+from hangman import Hangman, HangmanGameState, GamePhase, GuessLetterAction
 
 class HangmanBenchmark(Benchmark):
 
