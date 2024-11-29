@@ -171,7 +171,6 @@ class Dog(Game):
 
                 # Reset possible positions for each marble
                 to_positions = []
-
                 # Check if the marble is in the kennel
                 if marble.is_save:
                     # The marble can move to the start position only leave the kennel with '5', 'K' or 'A'
@@ -185,7 +184,6 @@ class Dog(Game):
                     to_positions = self._calculate_position_to(int(marble.pos), card, self._state.idx_player_active)
 
                 # TODO LATIN-43 logic for start. you can only move if your marble is not inside the kennel or you have a 5 (and some other cards). for this, check if your marble is in the kernel. if so, only then "normal" actions can be taken.
-
                 if card.rank.isdigit() and card.rank not in ['7', '4']:
                     to_positions = self._calculate_position_to(int(marble.pos), card, self._state.idx_player_active)
 
