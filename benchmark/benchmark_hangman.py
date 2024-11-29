@@ -1,8 +1,9 @@
 import sys
 import string
 from benchmark import Benchmark
-from server.py.hangman import HangmanGameState, GamePhase, GuessLetterAction
-
+import os
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '../server/py')))
+from hangman import Hangman, HangmanGameState, GamePhase, GuessLetterAction
 
 class HangmanBenchmark(Benchmark):
 
