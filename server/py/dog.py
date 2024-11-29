@@ -84,12 +84,37 @@ class GameState(BaseModel):
     list_card_discard: List[Card]      # list of cards discarded
     card_active: Optional[Card]        # active card (for 7 and JKR with sequence of actions)
 
-
 class Dog(Game):
 
     def __init__(self) -> None:
         """ Game initialization (set_state call not necessary, we expect 4 players) """
-        pass
+        self.board = self._initialize_board()  # Initialize the board
+
+    def _initialize_board(self) -> dict:
+        """ Initialize the board representation """
+        # Define the circular path and separate home positions for 4 players
+        board = {
+            "circular_path": [i for i in range(63)],  # 63 positions in a circular path
+            "finish_positions": {
+                0: [68, 69, 70, 71],  # Blue player's finish positions
+                1: [76, 77, 78, 79],  # Yellow player's finish positions
+                2: [84, 85, 86, 87],  # Green player's finish positions
+                3: [92, 93, 94, 95],  # Red player's finish positions
+            },
+            "kennel_positions": {
+                0: [64, 65, 66, 67],  # Blue player's kennel position
+                1: [72, 73, 74, 75],   # Yellow player's kennel position
+                2: [80, 81, 82, 83],  # Green player's kennel position
+                3: [88, 89, 90, 91],  # Red player's kennel position
+            },
+            "start_positions": {
+                0: [0],  # Blue player's starting position
+                1: [16],  # Yellow player's starting position
+                2: [32],  # Green player's starting position
+                3: [48],  # Red player's starting position
+            },
+        }
+        return board
 
     def set_state(self, state: GameState) -> None:
         """ Set the game to a given state """
@@ -114,7 +139,6 @@ class Dog(Game):
     def get_player_view(self, idx_player: int) -> GameState:
         """ Get the masked state for the active player (e.g. the oppontent's cards are face down)"""
         pass
-
 
 class RandomPlayer(Player):
 
