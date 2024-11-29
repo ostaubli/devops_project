@@ -1,7 +1,7 @@
 # -runcmd: cd ../.. & venv\Scripts\python server/py/uno.py
 # runcmd: cd ../.. & venv\Scripts\python benchmark/benchmark_uno.py python uno.Uno
 
-from server.py.game import Game, Player
+from game import Game, Player #from server.py.game import Game, Player
 from typing import List, Optional
 from pydantic import BaseModel
 from enum import Enum
@@ -79,15 +79,16 @@ class Uno(Game):
 
     def __init__(self) -> None:
         """ Important: Game initialization also requires a set_state call to set the number of players """
-        pass
+        self.state = GameState()
 
     def set_state(self, state: GameState) -> None:
         """ Set the game to a given state """
-        pass
+        self.state = state
+        self.state.phase = GamePhase.RUNNING
 
     def get_state(self) -> GameState:
         """ Get the complete, unmasked game state """
-        pass
+        return self.state
 
     def print_state(self) -> None:
         """ Print the current game state """
@@ -120,3 +121,4 @@ if __name__ == '__main__':
     uno = Uno()
     state = GameState(cnt_player=3)
     uno.set_state(state)
+    print("test")
