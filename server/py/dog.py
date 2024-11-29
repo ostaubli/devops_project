@@ -184,30 +184,30 @@ class Dog(Game):
                     to_positions = self._calculate_position_to(int(marble.pos), card, self._state.idx_player_active)
 
                 # TODO LATIN-43 logic for start. you can only move if your marble is not inside the kennel or you have a 5 (and some other cards). for this, check if your marble is in the kernel. if so, only then "normal" actions can be taken.
-                if card.rank.isdigit() and card.rank not in ['7', '4']:
-                    to_positions = self._calculate_position_to(int(marble.pos), card, self._state.idx_player_active)
+                    if card.rank.isdigit() and card.rank not in ['7', '4']:
+                        to_positions = self._calculate_position_to(int(marble.pos) + int(card.rank), card, self._state.idx_player_active)
 
                 # TODO Add more logic for all the other cards LATIN-35
-                if card.rank == '7':
-                    # can be split into multiple marbles. if takes over, reset other marble
-                    # to_positions = ...
-                    # Split the movement between two or more marbles
-                    split_positions = self._split_seven_moves(marble, card)
-                    to_positions.extend(split_positions)
+                    elif card.rank == '7':
+                        # can be split into multiple marbles. if takes over, reset other marble
+                        # to_positions = ...
+                        # Split the movement between two or more marbles
+                        split_positions = self._split_seven_moves(marble, card)
+                        to_positions.extend(split_positions)
 
-                elif card.rank == '4':
-                    # Marble can be moved forward or backward
-                    backward_positions = self._calculate_position_to(int(marble.pos) - 4, card,
-                                                                     self._state.idx_player_active)
-                    forward_positions = self._calculate_position_to(int(marble.pos) + 4, card,
-                                                                     self._state.idx_player_active)
-                    to_positions.extend(backward_positions)
-                    to_positions.extend(forward_positions)
+                    elif card.rank == '4':
+                        # Marble can be moved forward or backward
+                        backward_positions = self._calculate_position_to(int(marble.pos) - 4, card,
+                                                                         self._state.idx_player_active)
+                        forward_positions = self._calculate_position_to(int(marble.pos) + 4, card,
+                                                                         self._state.idx_player_active)
+                        to_positions.extend(backward_positions)
+                        to_positions.extend(forward_positions)
 
-                elif card.rank == 'J':
-                    # Swap positions with an opponent or partner
-                    swap_actions = self._generate_swap_actions(marble, card)
-                    actions.extend(swap_actions)
+                    elif card.rank == 'J':
+                        # Swap positions with an opponent or partner
+                        swap_actions = self._generate_swap_actions(marble, card)
+                        actions.extend(swap_actions)
 
                 # checks for each possible position if the way is blocked. if it is not blocked, we add it to action.
                 for pos_to in to_positions:
