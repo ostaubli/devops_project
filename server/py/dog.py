@@ -6,6 +6,8 @@ from enum import Enum
 import random
 from pprint import pprint
 
+class ActionType(str, Enum):
+    GAME_START = 'game_start'
 
 class Card(BaseModel):
     suit: str  # card suit (color)
@@ -24,10 +26,11 @@ class PlayerState(BaseModel):
 
 
 class Action(BaseModel):
-    card: Card                 # card to play
-    pos_from: Optional[int]    # position to move the marble from
-    pos_to: Optional[int]      # position to move the marble to
-    card_swap: Optional[Card]  # optional card to swap ()
+    action_type: ActionType
+    card: Optional[Card] = None           # Make optional
+    pos_from: Optional[int] = None        # Make optional
+    pos_to: Optional[int] = None          # Make optional
+    card_swap: Optional[Card] = None      # Make optional)
 
 
 class GamePhase(str, Enum):
@@ -118,6 +121,28 @@ class Dog(Game):
             card_active=None
         )
 
+    def start_game(self) -> None:
+        """
+        Start the game by transitioning from setup to running phase.
+        Ensures all preconditions for starting are met.
+        """
+            
+        if self.state.phase != GamePhase.SETUP:
+            print("The game cannot be started because it is not in the setup phase.")
+            return
+
+        # Deal cards to players
+        num_cards_per_player = 6  # Example number of cards per player
+        for player in self.state.list_player:
+            player.list_card = [self.state.list_card_draw.pop() for _ in range(num_cards_per_player)]
+
+        # Transition to the running phase
+        self.state.phase = GamePhase.RUNNING
+        self.state.cnt_round = 1
+        self.state.idx_player_active = self.state.idx_player_started
+        self.state.bool_card_exchanged = False
+        print("The game has started!")
+
     def set_state(self, state: GameState) -> None:
         """ Set the game to a given state """
         self.state = state
@@ -150,11 +175,16 @@ class Dog(Game):
 
     def get_list_action(self) -> List[Action]:
         """ Get a list of possible actions for the active player """
-        return [] 
+        if self.state.phase == GamePhase.SETUP:
+            return [Action(action_type=ActionType.GAME_START)]  # Start game action as an Action object
+        return []  # Return other actions as needed during gameplay 
 
     def apply_action(self, action: Action) -> None:
         """ Apply the given action to the game """
-        pass
+        if action.action_type == ActionType.GAME_START and self.state.phase == GamePhase.SETUP:
+            self.start_game()
+        else:
+            print("Invalid action or phase mismatch.")
 
     def get_player_view(self, idx_player: int) -> GameState:
         """ Get the masked state for the active player (e.g. the oppontent's cards are face down)"""
@@ -174,3 +204,10 @@ if __name__ == '__main__':
 
     game = Dog()
     game.print_state()
+    actions = game.get_list_action()
+    print(actions)
+    start_game_action = next((a for a in actions if a.action_type == ActionType.GAME_START), None)
+    if start_game_action:
+        game.apply_action(start_game_action)
+    game.print_state()
+
