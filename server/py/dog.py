@@ -89,19 +89,42 @@ class Dog(Game):
 
     def __init__(self) -> None:
         """ Game initialization (set_state call not necessary, we expect 4 players) """
-        pass
+        self.state = GameState(
+            cnt_player=4,
+            phase=GamePhase.SETUP,
+            cnt_round=0,
+            bool_card_exchanged=False,
+            idx_player_started=0,
+            idx_player_active=0,
+            list_player=[
+                PlayerState(name=f"Player {i + 1}", list_card=[],
+                            list_marble=[Marble(pos=-1, is_save=False) for _ in range(4)])
+                for i in range(4)
+            ],
+            list_card_draw=random.sample(GameState.LIST_CARD, len(GameState.LIST_CARD)),
+            list_card_discard=[],
+            card_active=None,
+        )
 
     def set_state(self, state: GameState) -> None:
         """ Set the game to a given state """
-        pass
+        self.state = state
 
     def get_state(self) -> GameState:
         """ Get the complete, unmasked game state """
-        pass
+        return self.state
 
     def print_state(self) -> None:
         """ Print the current game state """
-        pass
+        print(f"Round: {self.state.cnt_round}, Phase: {self.state.phase}")
+        for idx, player in enumerate(self.state.list_player):
+            print(f"{player.name}: Cards: {player.list_card}, Marbles: {player.list_marble}")
+
+    def deal_cards(self) -> None:
+        """ Deal cards to all players. """
+        for player in self.state.list_player:
+            player.list_card = self.state.list_card_draw[:6]
+            self.state.list_card_draw = self.state.list_card_draw[6:]
 
     def get_list_action(self) -> List[Action]:
         """ Get a list of possible actions for the active player """
@@ -120,11 +143,29 @@ class RandomPlayer(Player):
 
     def select_action(self, state: GameState, actions: List[Action]) -> Optional[Action]:
         """ Given masked game state and possible actions, select the next action """
-        if len(actions) > 0:
-            return random.choice(actions)
-        return None
+        return random.choice(actions) if actions else None
 
 
 if __name__ == '__main__':
-
+    # Initialize game and players
     game = Dog()
+    players = [RandomPlayer() for i in range(4)]
+
+    # Game setup
+    game.deal_cards()
+    game.print_state()
+
+    # Main game loop
+    while game.state.phase != GamePhase.FINISHED:
+        actions = game.get_list_action()
+        active_player = players[game.state.idx_player_active]
+        selected_action = active_player.select_action(game.get_player_view(game.state.idx_player_active), actions)
+        if selected_action:
+            game.apply_action(selected_action)
+        game.print_state()
+
+        # End condition (example: after 10 rounds)
+        if game.state.cnt_round > 10:
+            game.state.phase = GamePhase.FINISHED
+
+    print("Game Over")
