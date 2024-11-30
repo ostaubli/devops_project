@@ -102,7 +102,15 @@ class Uno(Game):
         active_player = self.state.list_player[self.state.idx_player_active]
         possible_actions = []
 
-        
+        for card in active_player.list_card:
+            # Check for card number, color, wildcard matches
+            if (card.color == self.state.color or 
+                card.number == self.state.list_card_discard[-1].number or
+                card.color.lower() == 'any'): # wildcards
+                action = Action(card=card)
+                possible_actions.append(action)
+
+
 
     def apply_action(self, action: Action) -> None:
         """ Apply the given action to the game """
