@@ -128,15 +128,60 @@ class Dog(Game):
 
     def get_list_action(self) -> List[Action]:
         """ Get a list of possible actions for the active player """
-        pass
+        actions = []
+        player = self.state.list_player[self.state.idx_player_active]
+
+        # Check possible card plays based on player cards and current game state
+        for card in player.list_card:
+            if card.rank == 'JKR':  # Joker can be played as any card
+                actions.append(Action(card=card, pos_from=None, pos_to=None, card_swap=None))
+            elif card.rank == '7':  # For card 7, players can choose to move multiple marbles
+                for marble in player.list_marble:
+                    if marble.is_save:
+                        actions.append(Action(card=card, pos_from=marble.pos, pos_to=None, card_swap=None))
+            else:  # For other cards, move marbles or perform other actions
+                for marble in player.list_marble:
+                    if marble.is_save:
+                        actions.append(Action(card=card, pos_from=marble.pos, pos_to=marble.pos + int(card.rank), card_swap=None))
+                    else:
+                        actions.append(Action(card=card, pos_from=None, pos_to=None, card_swap=None))
+
+        return actions
 
     def apply_action(self, action: Action) -> None:
         """ Apply the given action to the game """
-        pass
+        player = self.state.list_player[self.state.idx_player_active]
+
+        if action.card.rank == 'JKR':  # Joker: use as any card
+            # Action can be anything based on the game rules, e.g., swap a card or move a marble
+            pass
+        elif action.card.rank == '7':  # Special behavior for card '7'
+            for marble in player.list_marble:
+                if marble.pos == action.pos_from and marble.is_save:
+                    marble.pos = action.pos_to
+                    marble.is_save = False
+        else:  # Regular behavior for moving marbles based on card rank
+            for marble in player.list_marble:
+                if marble.pos == action.pos_from and marble.is_save:
+                    marble.pos = action.pos_to
+                    marble.is_save = False
+
+        # Update the cards: if it's a move action, discard the played card
+        player.list_card.remove(action.card)
+        self.state.list_card_discard.append(action.card)
+
+        # Proceed to the next player after applying the action
+        self.state.idx_player_active = (self.state.idx_player_active + 1) % self.state.cnt_player
+        self.state.cnt_round += 1
 
     def get_player_view(self, idx_player: int) -> GameState:
-        """ Get the masked state for the active player (e.g. the oppontent's cards are face down)"""
-        pass
+        """ Get the masked state for the active player (e.g. the opponent's cards are face down) """
+        # Mask the opponent's cards, only showing the player's own cards
+        masked_state = self.state.model_copy()
+        for i, player in enumerate(masked_state.list_player):
+            if i != idx_player:
+                player.list_card = []  # Hide the cards of other players
+        return masked_state
 
 
 class RandomPlayer(Player):
