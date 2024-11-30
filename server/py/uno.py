@@ -110,6 +110,14 @@ class Uno(Game):
                 action = Action(card=card)
                 possible_actions.append(action)
 
+        # if a wild card is played, add actions for choosing colors
+        for action in possible_actions:
+            if action.card.symbol in ['wild', 'wilddraw4']:
+                for color in self.state.LIST_COLOR[:-1]: #excludes 'any'
+                    colored_action = Action(card=action.card, color=color)
+                    possible_actions.append(colored_action)
+
+
 
 
     def apply_action(self, action: Action) -> None:
