@@ -116,6 +116,8 @@ class Dog(Game):
         """ Get the masked state for the active player (e.g. the oppontent's cards are face down)"""
         pass
 
+    def swap_cards(self, player1, player2):
+        pass  # Platzhalter DA-34
 
 class RandomPlayer(Player):
 
