@@ -2,8 +2,8 @@ import string
 from typing import List, Optional
 import random
 from enum import Enum
-from server.py.game import Game, Player
 from pydantic import BaseModel
+from server.py.game import Game, Player
 
 
 class GuessLetterAction(BaseModel):
