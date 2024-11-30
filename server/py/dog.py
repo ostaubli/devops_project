@@ -4,6 +4,7 @@ from typing import List, Optional, ClassVar
 from pydantic import BaseModel
 from enum import Enum
 import random
+from pprint import pprint
 
 
 class Card(BaseModel):
@@ -89,23 +90,67 @@ class Dog(Game):
 
     def __init__(self) -> None:
         """ Game initialization (set_state call not necessary, we expect 4 players) """
-        pass
+        # Shuffle the cards
+        shuffled_cards = random.sample(GameState.LIST_CARD, len(GameState.LIST_CARD))
+
+        # Setup the board with 95 places and initial marble positions
+        blue_marbles = [Marble(pos=str(i), is_save=True) for i in range(64, 68)]
+        green_marbles = [Marble(pos=str(i), is_save=True) for i in range(72, 76)]
+        red_marbles = [Marble(pos=str(i), is_save=True) for i in range(80, 84)]
+        yellow_marbles = [Marble(pos=str(i), is_save=True) for i in range(88, 92)]
+
+        # Initialize players
+        self.state = GameState(
+            cnt_player=4,
+            phase=GamePhase.SETUP,
+            cnt_round=0,
+            bool_card_exchanged=False,
+            idx_player_started=random.randint(0, 3),  # Randomly select start player
+            idx_player_active=0,
+            list_player=[
+                PlayerState(name="Blue", list_card=[], list_marble=blue_marbles),
+                PlayerState(name="Green", list_card=[], list_marble=green_marbles),
+                PlayerState(name="Red", list_card=[], list_marble=red_marbles),
+                PlayerState(name="Yellow", list_card=[], list_marble=yellow_marbles),
+            ],
+            list_card_draw=shuffled_cards,
+            list_card_discard=[],
+            card_active=None
+        )
 
     def set_state(self, state: GameState) -> None:
         """ Set the game to a given state """
-        pass
+        self.state = state
 
     def get_state(self) -> GameState:
         """ Get the complete, unmasked game state """
-        pass
+        return self.state
 
     def print_state(self) -> None:
         """ Print the current game state """
-        pass
+        
+        print("\n=== Brandi Dog Game State ===")
+        print(f"Phase: {self.state.phase}")
+        print(f"Round: {self.state.cnt_round}")
+        print(f"Player to Start: {self.state.list_player[self.state.idx_player_started].name}")
+        print(f"Active Player: {self.state.list_player[self.state.idx_player_active].name}")
+        print(f"Cards Left in Draw Pile: {len(self.state.list_card_draw)}")
+        print(f"Cards in Discard Pile: {len(self.state.list_card_discard)}")
+        print("\n--- Players ---")
+        for player in self.state.list_player:
+            print(f"Player: {player.name}")
+            print(f"  Marbles: {', '.join([f'Pos {m.pos} (Saved: {m.is_save})' for m in player.list_marble])}")
+            print(f"  Cards in Hand: {len(player.list_card)}")
+        print("\n--- Active Card ---")
+        if self.state.card_active:
+            print(f"Active Card: {self.state.card_active.suit}{self.state.card_active.rank}")
+        else:
+            print("No Active Card")
+        print("\n============================\n")
 
     def get_list_action(self) -> List[Action]:
         """ Get a list of possible actions for the active player """
-        pass
+        return [] 
 
     def apply_action(self, action: Action) -> None:
         """ Apply the given action to the game """
@@ -113,7 +158,7 @@ class Dog(Game):
 
     def get_player_view(self, idx_player: int) -> GameState:
         """ Get the masked state for the active player (e.g. the oppontent's cards are face down)"""
-        pass
+        return self.state
 
 
 class RandomPlayer(Player):
@@ -128,3 +173,4 @@ class RandomPlayer(Player):
 if __name__ == '__main__':
 
     game = Dog()
+    game.print_state()
