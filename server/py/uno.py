@@ -96,7 +96,13 @@ class Uno(Game):
 
     def get_list_action(self) -> List[Action]:
         """ Get a list of possible actions for the active player """
-        pass
+        if not self.state:
+            raise ValueError("GameState not initialized")
+
+        active_player = self.state.list_player[self.state.idx_player_active]
+        possible_actions = []
+
+        
 
     def apply_action(self, action: Action) -> None:
         """ Apply the given action to the game """
