@@ -117,6 +117,9 @@ class Uno(Game):
                     colored_action = Action(card=action.card, color=color)
                     possible_actions.append(colored_action)
 
+        # draw a card if no cards can be played
+        if not possible_actions:
+            possible_actions.append(Action(draw=1))
 
 
 
