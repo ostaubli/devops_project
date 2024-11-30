@@ -12,7 +12,8 @@ class Card(BaseModel):
 
 
 class Marble(BaseModel):
-    pos: str       # position on board (0 to 95)
+    # pos: str       # position on board (0 to 95) -- original but in my opinion it should be int
+    pos: int       # position on board (0 to 95)
     is_save: bool  # true if marble was moved out of kennel and was not yet moved
 
 
@@ -87,9 +88,66 @@ class GameState(BaseModel):
 
 class Dog(Game):
 
+    KENNEL_POSITION: ClassVar[int] = -1  # Special position for marbles in the kennel
+
     def __init__(self) -> None:
         """ Game initialization (set_state call not necessary, we expect 4 players) """
-        pass
+        # Initialize the game state
+        self.state: GameState = GameState(
+            cnt_player=4,
+            phase=GamePhase.SETUP,
+            cnt_round=1,
+            bool_card_exchanged=False,
+            idx_player_started=0,
+            idx_player_active=0,
+            list_player=[],
+            list_card_draw=[],
+            list_card_discard=[],
+            card_active=None,
+        )
+
+        # Initialize the deck of cards
+        self.state.list_card_draw = GameState.LIST_CARD.copy()
+        random.shuffle(self.state.list_card_draw)
+
+        # Initialize the players
+        for idx in range(self.state.cnt_player):
+            player_state: PlayerState = PlayerState(
+                name=f"Player {idx + 1}",
+                list_card=[],
+                list_marble=[],
+            )
+            # Initialize player's marbles
+            for _ in range(4):  # Assuming each player has 4 marbles
+                marble: Marble = Marble(
+                    pos=self.KENNEL_POSITION,
+                    is_save=False,
+                )
+                player_state.list_marble.append(marble)
+            self.state.list_player.append(player_state)
+
+        # Randomly select starting player
+        self.state.idx_player_started = random.randint(0, self.state.cnt_player - 1)
+        self.state.idx_player_active = self.state.idx_player_started
+
+        # TODO: deal cards as an action ??
+        # Deal initial cards to players
+        num_cards_per_player = 6  # Number of cards per player in the first round
+        total_cards_to_deal = num_cards_per_player * self.state.cnt_player
+        assert len(self.state.list_card_draw) >= total_cards_to_deal, (
+            f"Not enough cards to deal: required {total_cards_to_deal}, "
+            f"but only {len(self.state.list_card_draw)} available."
+        )
+
+        for _ in range(num_cards_per_player):
+            for player_state in self.state.list_player:
+                # Draw a card for the player
+                card = self.state.list_card_draw.pop()
+                player_state.list_card.append(card)
+
+        # Set the game phase to RUNNING
+        self.state.phase = GamePhase.RUNNING
+
 
     def set_state(self, state: GameState) -> None:
         """ Set the game to a given state """
