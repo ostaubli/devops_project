@@ -26,6 +26,15 @@ class PlayerState(BaseModel):
     name: Optional[str] = None  # name of player
     list_card: List[Card] = []  # list of cards
 
+    def adding_card(self, card: Card):
+        """ Add a card to the player's hand stack, when a the player pulls a card. """
+        self.list_card.append(card)
+
+    def play_card(self, card: Card):
+        """ Remove a card from the player's hand stack, when he plays a card. """
+        if card in self.list_card:
+            self.list_card.remove(card)
+
 
 class GamePhase(str, Enum):
     SETUP = 'setup'            # before the game has started
