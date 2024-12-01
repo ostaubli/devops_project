@@ -78,7 +78,18 @@ class Uno(Game):
 
     def __init__(self) -> None:
         """ Important: Game initialization also requires a set_state call to set the number of players """
-        pass
+        self.state = GameState(
+            list_card_draw=[],
+            list_card_discard=[],
+            list_player=[],
+            phase=GamePhase.SETUP,
+            cnt_player=0,
+            idx_player_active=None,
+            direction=1,
+            color='any',
+            cnt_to_draw=0,
+            has_drawn=False
+        )
 
     def set_state(self, state: GameState) -> None:
         """ Set the game to a given state """
