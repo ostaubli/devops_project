@@ -103,15 +103,17 @@ class Dog(Game):
 
         Each player (i: range 0-3) has 4 marbles (j: range 0-3), initialized from unique positions (pos).
         """
-
-        players = [PlayerState(name=f"Player {i+1}", list_card=[], list_marble=[Marble(pos=i*24 + j, is_save=True) for j in range(4)]) for i in range(4)]
+        # Initialize players with empty card hands and marbles in their starting positions
+        players = [PlayerState(name=f"Player {i+1}", 
+                               list_card=[], 
+                               list_marble=[Marble(pos=i*24 + j, is_save=True) for j in range(4)]) for i in range(4)]
+       
+        #prepare deck
         deck = GameState.LIST_CARD.copy()
         random.shuffle(deck)
-        board_positions = [None] * 96  # Initialize board positions
 
-        # Deal initial cards (6 cards in first round)
-        for player in players:
-            player.list_card = [deck.pop() for _ in range(6)]
+        # Initialize board positions
+        board_positions = [None] * 96  
 
         self.state = GameState(
             cnt_player=4,
@@ -127,6 +129,12 @@ class Dog(Game):
             card_active=None,
             board_positions=board_positions
         )
+
+        # Deal initial cards (6 cards in first round)
+        self.deal_cards()
+
+        print("Game initialized. Cards have been dealt.")
+
 
     def reset(self) -> None:
         """ Reset the game to its initial state """
@@ -190,7 +198,19 @@ class Dog(Game):
         for i in range(0, board_size, 12):
             print(" ".join(board[i:i+12]))
 
+    def validate_total_cards(self) -> None:
+        """Ensure the total number of cards remains consistent."""
+        draw_count = len(self.state.list_card_draw)
+        discard_count = len(self.state.list_card_discard)
+        player_card_count = sum(len(player.list_card) for player in self.state.list_player)
 
+        total_cards = draw_count + discard_count + player_card_count
+
+        print(f"Debug: Draw pile count: {draw_count}, Discard pile count: {discard_count}, Player cards: {player_card_count}")
+        print(f"Debug: Total cards: {total_cards}, Expected: {len(GameState.LIST_CARD)}")
+
+        if total_cards != len(GameState.LIST_CARD):
+            raise ValueError(f"Total cards mismatch: {total_cards} != {len(GameState.LIST_CARD)}")
 
     def get_list_action(self) -> List[Action]:
         """ Get a list of possible actions for the active player """
@@ -206,42 +226,39 @@ class Dog(Game):
         """ Apply the given action to the game """
         if not self.state:
             raise ValueError("Game state is not set.")
-        
-        #adaption with deck management (dealing cards)
+
+        # Handle the case where no action is provided (skip turn)
         if action is None:
-            # Simulate skipping a turn or advancing without a specific action
             print(f"No action provided. Advancing the active player.")
             self.state.idx_player_active = (self.state.idx_player_active + 1) % len(self.state.list_player)
 
-            # Check if the round is complete (all players have played all cards)
-            if all(len(player.list_card) == 0 for player in self.state.list_player):
-                self.next_round()
-            return
-        
-        print(f"Player {self.state.list_player[self.state.idx_player_active].name} plays {action.card.rank} of {action.card.suit}")
-        
-        # Remove the played card from the player's hand
-        self.state.list_player[self.state.idx_player_active].list_card.remove(action.card)
+        else:
+            print(f"Player {self.state.list_player[self.state.idx_player_active].name} plays {action.card.rank} of {action.card.suit}")
+            
+            # Remove the played card from the player's hand
+            self.state.list_player[self.state.idx_player_active].list_card.remove(action.card)
+            
+            # Add the played card to the discard pile
+            self.state.list_card_discard.append(action.card)
 
-        # Add the played card to the discard pile
-        self.state.list_card_discard.append(action.card)
+            # Update marble position if applicable
+            safe_spaces = {
+                0: [92, 93, 94, 95],  # Player 1's safe spaces
+                1: [68, 69, 70, 71],  # Player 2's safe spaces
+                2: [44, 45, 46, 47],  # Player 3's safe spaces
+                3: [20, 21, 22, 23]   # Player 4's safe spaces
+            }
+            for marble in self.state.list_player[self.state.idx_player_active].list_marble:
+                if marble.pos == action.pos_from:
+                    marble.pos = action.pos_to
+                    marble.is_save = marble.pos in safe_spaces[self.state.idx_player_active]
 
-        # Update marble position and check if it is in the safe space
-        safe_spaces = {
-            0: [92, 93, 94, 95],  # Player 1's safe spaces
-            1: [68, 69, 70, 71],  # Player 2's safe spaces
-            2: [44, 45, 46, 47],  # Player 3's safe spaces
-            3: [20, 21, 22, 23]   # Player 4's safe spaces
-        }
-        for marble in self.state.list_player[self.state.idx_player_active].list_marble:
-            if marble.pos == action.pos_from:
-                marble.pos = action.pos_to
-                if marble.pos in safe_spaces[self.state.idx_player_active]:
-                    marble.is_save = True
-                else:
-                    marble.is_save = False
-
+        # Advance to the next active player
         self.state.idx_player_active = (self.state.idx_player_active + 1) % len(self.state.list_player)
+
+        # Check if all players are out of cards
+        if all(len(player.list_card) == 0 for player in self.state.list_player):
+            self.next_round()
 
 
     def get_cards_per_round(self) -> int:
@@ -256,20 +273,27 @@ class Dog(Game):
         self.state.idx_player_started = (self.state.idx_player_started - 1) % self.state.cnt_player
 
     def reshuffle_discard_into_draw(self) -> None:
-        """Shuffle the discard pile back into the draw pile when the draw pile is empty."""
+        """
+        Shuffle the discard pile back into the draw pile when the draw pile is empty.
+        Ensures no cards are lost or duplicated in the process.
+        """
         if not self.state:
             raise ValueError("Game state is not set.")
 
         if not self.state.list_card_discard:
-            raise ValueError("No cards in discard pile to reshuffle.")
+            raise ValueError("Cannot reshuffle: Discard pile is empty.")
 
-        print("Reshuffling discarded cards into the draw pile.")
+        print("Debug: Reshuffling the discard pile into the draw pile.")
+
+        # Add all cards from the discard pile to the draw pile
         self.state.list_card_draw.extend(self.state.list_card_discard)
-        random.shuffle(self.state.list_card_draw)
+
+        # Clear the discard pile
         self.state.list_card_discard.clear()
 
-        # Shuffle the draw pile
+        # Shuffle the draw pile to randomize
         random.shuffle(self.state.list_card_draw)
+        print(f"Debug: Reshuffle complete. Draw pile count: {len(self.state.list_card_draw)}.")
 
     def deal_cards(self) -> None:
         """Deal cards to each player for the current round."""
@@ -374,23 +398,31 @@ class RandomPlayer(Player):
 if __name__ == '__main__':
 
     game = Dog()
-    game.initialize_game()
-    game.draw_board()  # Draw the board
+    game.draw_board()  # Draw the initial board
 
-    # Start the first round and output the number of cards dealt
-    game.deal_cards()
-    print(f"Round {game.state.cnt_round}: Dealt {game.get_cards_per_round()} cards to each player.")
+    game.validate_total_cards()
 
     while game.state.phase != GamePhase.FINISHED:
-        # Simulate actions for the round
-        while any(len(player.list_card) > 0 for player in game.state.list_player):
-            actions = game.get_list_action()
-            selected_action = random.choice(actions) if actions else None
-            game.apply_action(selected_action)
+        game.print_state()
 
-        # Move to the next round
-        game.next_round()
+        # Get the list of possible actions for the active player
+        actions = game.get_list_action()
+        # Display possible actions
+        print("\nPossible Actions:")
+        for idx, action in enumerate(actions):
+            print(f"{idx}: Play {action.card.rank} of {action.card.suit}")
 
-        # Exit after a certain number of rounds for testing
-        if game.state.cnt_round > 6:  # Example limit
+        # Select an action (random in this example)
+        selected_action = random.choice(actions) if actions else None
+
+        # Apply the selected action
+        game.apply_action(selected_action)
+        game.draw_board()  # Update the board after each action
+
+        #debuging for deck management to see how many cards are in different piles
+        game.validate_total_cards()
+
+        # Optionally exit after a certain number of rounds (for testing)
+        if game.state.cnt_round > 10:  # Example limit
+            print(f"Ending game for testing after {game.state.cnt_round} rounds.")
             break
