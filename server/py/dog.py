@@ -160,7 +160,31 @@ class Dog(Game):
 
     def print_state(self) -> None:
         """ Print the current game state """
-        pass
+        if not self.state:
+            print("No state set.")
+            return
+        
+        print("\n--- Game State ---")
+        print(f"Phase: {self.state.phase}")
+        print(f"Round: {self.state.cnt_round}")
+        print(f"Active Player: Player {self.state.idx_player_active + 1}")
+        print(f"Started by: Player {self.state.idx_player_started + 1}")
+        print(f"Cards Exchanged: {self.state.bool_card_exchanged}")
+        print("\nDiscard Pile:")
+        if self.state.list_card_discard:
+            for card in self.state.list_card_discard:
+                print(f"  {card.suit}{card.rank}")
+        else:
+            print("Empty")
+        print("\nPlayers:")
+        for idx, player in enumerate(self.state.list_player):
+            print(f"Player {idx + 1} - {player.name}")
+            print(f"Cards:")
+            for card in player.list_card:
+                print(f"{card.suit}{card.rank}")
+            print(f"Marbles:")
+            for marble in player.list_marble:
+                print(f"Position: {marble.pos}, Safe: {marble.is_save}")
 
     def get_list_action(self) -> List[Action]:
         """ Get a list of possible actions for the active player """
