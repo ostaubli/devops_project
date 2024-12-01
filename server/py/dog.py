@@ -118,8 +118,8 @@ class Dog(Game):
             idx_player_started=random.randint(0, 3),
             idx_player_active=random.randint(0, 3),
             list_player=players,
-            list_id_card_draw=deck,
-            list_id_card_discard=[],
+            list_card_draw=deck,
+            list_card_discard=[],
             card_active=None,
             board_positions=board_positions
         )
@@ -200,7 +200,7 @@ class Dog(Game):
             raise ValueError("Game state is not set.")
         print(f"Player {self.state.list_player[self.state.idx_player_active].name} plays {action.card.rank} of {action.card.suit}")
         self.state.list_player[self.state.idx_player_active].list_card.remove(action.card)
-        self.state.list_id_card_discard.append(action.card)
+        self.state.list_card_discard.append(action.card)
 
         # Update marble position and check if it is in the safe space
         safe_spaces = {
@@ -227,11 +227,11 @@ class Dog(Game):
         """ Draw a card for the active player """
         if not self.state:
             raise ValueError("Game state is not set.")
-        if not self.state.list_id_card_draw:
+        if not self.state.list_card_draw:
             print("No more cards to draw. The game is finished.")
             self.state.phase = GamePhase.FINISHED
             return
-        card = self.state.list_id_card_draw.pop()
+        card = self.state.list_card_draw.pop()
         self.state.list_player[self.state.idx_player_active].list_card.append(card)
 
     def get_player_view(self, idx_player: int) -> GameState:
@@ -253,8 +253,8 @@ class Dog(Game):
             idx_player_started=self.state.idx_player_started,
             idx_player_active=self.state.idx_player_active,
             list_player=masked_players,
-            list_id_card_draw=self.state.list_id_card_draw,
-            list_id_card_discard=self.state.list_id_card_discard,
+            list_card_draw=self.state.list_card_draw,
+            list_card_discard=self.state.list_card_discard,
             card_active=self.state.card_active,
             board_positions=self.state.board_positions
         )
