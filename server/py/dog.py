@@ -123,6 +123,15 @@ class Dog(Game):
                     return  # Only one marble occupies a position, so stop after handling
         print(f"No marble found at position {pos} to send home.")
 
+    def is_in_finish_area(self, marble: Marble, player_index: int) -> bool:
+        """
+        Check if a marble is in the finish area for the given player.
+        Finish areas are unique to each player.
+        """
+        finish_start = 80 + player_index * 4  # Example: Finish starts at position 80 for Player 1
+        finish_end = finish_start + 3  # Each player has 4 finish positions
+        return finish_start <= int(marble.pos) <= finish_end
+
     def set_state(self, state: GameState) -> None:
         """ Set the game to a given state """
         self.state = state
