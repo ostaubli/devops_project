@@ -1,28 +1,32 @@
 # runcmd: cd ../.. & venv\Scripts\python server/py/dog_template.py
-from server.py.game import Game, Player
+import random
+from enum import Enum
 from typing import List, Optional, ClassVar
 from pydantic import BaseModel
-from enum import Enum
-import random
+from server.py.game import Game, Player
 
 
 class Card(BaseModel):
+    """Represents the card charcteristics"""
     suit: str  # card suit (color)
     rank: str  # card rank
 
 
 class Marble(BaseModel):
+    """Represents the marble information"""
     pos: int       # position on board (0 to 95) --> Changed from str to int
     is_save: bool  # true if marble was moved out of kennel and was not yet moved
 
 
 class PlayerState(BaseModel):
+    """Represents the playerstate information"""
     name: str                  # name of player
     list_card: List[Card]      # list of cards
     list_marble: List[Marble]  # list of marbles
 
 
 class Action(BaseModel):
+    """Represents the action information"""
     card: Card                 # card to play
     pos_from: Optional[int]    # position to move the marble from
     pos_to: Optional[int]      # position to move the marble to
@@ -30,12 +34,14 @@ class Action(BaseModel):
 
 
 class GamePhase(str, Enum):
+    """Defines the possible game phases """
     SETUP = 'setup'            # before the game has started
     RUNNING = 'running'        # while the game is running
     FINISHED = 'finished'      # when the game is finished
 
 
 class GameState(BaseModel):
+    """Defines the game state characteristics """
 
     LIST_SUIT: ClassVar[List[str]] = ['♠', '♥', '♦', '♣']  # 4 suits (colors)
     LIST_RANK: ClassVar[List[str]] = [
@@ -80,11 +86,9 @@ class GameState(BaseModel):
     idx_player_started: int            # index of player that started the round
     idx_player_active: int             # index of active player in round
     list_player: List[PlayerState]     # list of players
-    list_card_draw: List[Card]         # list of cards to draw
-    list_card_discard: List[Card]      # list of cards discarded
+    list_id_card_draw: List[Card]      # list of cards to draw
+    list_id_card_discard: List[Card]   # list of cards discarded
     card_active: Optional[Card]        # active card (for 7 and JKR with sequence of actions)
-
-
 
 class Dog(Game):
 
@@ -130,11 +134,15 @@ class Dog(Game):
 
     def set_state(self, state: GameState) -> None:
         """ Set the game to a given state """
-        pass
+        if not isinstance(state, GameState):
+            raise ValueError("Invalid state object provided.")
+        self.state = state
 
     def get_state(self) -> GameState:
         """ Get the complete, unmasked game state """
-        pass
+        if not self.state:
+            raise ValueError("Game state is not set.")
+        return self.state
 
     def print_state(self) -> None:
         """ Print the current game state """
