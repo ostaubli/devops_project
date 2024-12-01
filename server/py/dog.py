@@ -30,7 +30,7 @@ class Action(BaseModel):
     card: Card                 # card to play
     pos_from: Optional[int]    # position to move the marble from
     pos_to: Optional[int]      # position to move the marble to
-    card_swap: Optional[Card]  # optional card to swap ()
+    card_swap: Optional[Card] = None  # optional card to swap (default is None)
 
 
 class GamePhase(str, Enum):
@@ -91,6 +91,10 @@ class GameState(BaseModel):
     card_active: Optional[Card]        # active card (for 7 and JKR with sequence of actions)
 
 class Dog(Game):
+    # Constants
+    STARTING_CARDS = {'A', 'K', 'JKR'}
+    MOVEMENT_CARDS = {'2', '3', '4', '5', '6', '8', '9', '10', 'Q', 'K', 'A', 'JKR'}
+    INVALID_POSITIONS = {'kennel', 'finish'}
 
     def __init__(self) -> None:
         """ Game initialization (set_state call not necessary, we expect 4 players) """
@@ -189,19 +193,96 @@ class Dog(Game):
         print("Board:")
         for i in range(0, board_size, 12):
             print(" ".join(board[i:i+12]))
+    
+    def _get_card_value(self, card: Card) -> int:
+        """Map card rank to its movement value."""
+        if card.rank == 'A':
+            return 1
+        elif card.rank == 'Q':
+            return 12
+        elif card.rank == 'K':
+            return 13
+        elif card.rank.isdigit():
+            return int(card.rank)
+        elif card.rank == 'JKR':
+            return 1
+        elif card.rank == '4':
+            return -4
+        elif card.rank == '7':
+            return 7
+        return 0
 
+    def _calculate_new_position(self, current_pos: int, move_value: int, forward: bool = True) -> int:
+        """Calculate the new position of a marble on the board."""
+        board_size = 96  # Total board positions
+        if forward:
+            return (current_pos + move_value) % board_size
+        else:
+            return (current_pos - move_value) % board_size
 
+    def _generate_split_moves(self, total: int, current_pos: int) -> List[Action]:
+        """Generate all possible split moves for a SEVEN card."""
+        splits = []
+        for i in range(1, total):
+            first_move = self._calculate_new_position(current_pos, i, forward=True)
+            second_move = self._calculate_new_position(first_move, total - i, forward=True)
+            
+            # Ensure `pos_to` is an integer
+            splits.append(Action(
+                card=Card(suit="", rank="7"),
+                pos_from=current_pos,
+                pos_to=int(second_move),  # Ensure integer
+                card_swap=None
+            ))
+        return splits
 
     def get_list_action(self) -> List[Action]:
-        """ Get a list of possible actions for the active player """
+        """Get list of possible actions for active player"""
         if not self.state:
             return []
+
         actions = []
         active_player = self.state.list_player[self.state.idx_player_active]
-        for card in active_player.list_card:
-            actions.append(Action(card=card, pos_from=None, pos_to=None, card_swap=None))
-        return actions
 
+        # Check if in first round (cnt_round = 0)
+        if self.state.cnt_round == 0:
+            # Only allow moves with start cards (A, K, JKR)
+            for card in active_player.list_card:
+                if card.rank in ['A', 'K', 'JKR']:
+                    # Add action to move from kennel to start
+                    actions.append(Action(
+                        card=card,
+                        pos_from=64,  # Kennel position
+                        pos_to=0,     # Start position
+                        card_swap=None
+                    ))
+            return actions
+
+        # Regular game moves
+        for card in active_player.list_card:
+            if card.rank in self.MOVEMENT_CARDS:
+                move_value = self._get_card_value(card)
+                for marble in active_player.list_marble:
+                    if marble.pos not in self.INVALID_POSITIONS:
+                        pos_to = self._calculate_new_position(marble.pos, move_value)
+                        actions.append(Action(
+                            card=card,
+                            pos_from=marble.pos,
+                            pos_to=pos_to,
+                            card_swap=None
+                        ))
+
+            # Handle specific rules for SEVEN (split moves)
+            if card.rank == '7':
+                # Generate all possible split combinations
+                for marble in active_player.list_marble:
+                    if marble.pos not in self.INVALID_POSITIONS:
+                        splits = self._generate_split_moves(7, marble.pos)
+                        for split_action in splits:
+                            actions.append(split_action)
+
+        return actions
+ 
     def apply_action(self, action: Action) -> None:
         """ Apply the given action to the game """
         if not self.state:
