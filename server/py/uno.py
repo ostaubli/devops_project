@@ -28,6 +28,7 @@ class PlayerState(BaseModel):
 
     @staticmethod
     def _display_deco(function):
+        """ Decorator to format the output of the display method, created within this class. """
         def inner(*args, **kwargs):
             print("---- Player State ----")
             result = function(*args, **kwargs)
@@ -35,17 +36,17 @@ class PlayerState(BaseModel):
             return result
         return inner 
 
-    def adding_card(self, card: Card):
-        """ Add a card to the player's hand stack, when a the player pulls a card. """
+    def add_card(self, card: Card):
+        """ Add a card to the player's hand card-stack, when the player pulls a card. """
         self.list_card.append(card)
 
     def play_card(self, card: Card):
-        """ Remove a card from the player's hand stack, when he plays a card. """
+        """ Remove a card from the player's hand stack, when the player plays a card. """
         if card in self.list_card:
             self.list_card.remove(card)
 
     def check_uno(self) -> bool:
-        """ Cehck whether the player has only one card left to play. """
+        """ Check whether the player has only one card left to play. """
         uno_card = len(self.list_card) == 1
         return uno_card
     
