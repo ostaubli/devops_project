@@ -1,4 +1,4 @@
-[Game Initialization] ---> [Game Loop]
+[Game Initialization] ---> [Game Loop] # Remark: The game loop is usually simulated by Oliver/the game engine/the test suite.
                              |
                              v
                 [Game Round (All Players)]
