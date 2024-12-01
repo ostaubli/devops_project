@@ -1,0 +1,23 @@
+[Game Initialization] ---> [Game Loop]
+                             |
+                             v
+                [Game Round (All Players)]
+                             |
+                 +-----------+------------+
+                 |                        |
+    [Player 1's Turn]       [Player 2's Turn] ...
+                 |                        |
+   [Determine Actions]       [Determine Actions]
+                 |                        |
+   [Execute Actions]         [Execute Actions]
+                 |                        |
+                [Validate]   ...         [Validate]
+                 +-----------+------------+
+                             |
+                             v
+                    [Update Game State]
+                             |
+         [Check Win Conditions] ---> [Game End]
+                             |
+                             v
+                         [Next Round]
