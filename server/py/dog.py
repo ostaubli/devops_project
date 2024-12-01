@@ -206,8 +206,24 @@ class Dog(Game):
         """ Apply the given action to the game """
         if not self.state:
             raise ValueError("Game state is not set.")
+        
+        #adaption with deck management (dealing cards)
+        if action is None:
+            # Simulate skipping a turn or advancing without a specific action
+            print(f"No action provided. Advancing the active player.")
+            self.state.idx_player_active = (self.state.idx_player_active + 1) % len(self.state.list_player)
+
+            # Check if the round is complete (all players have played all cards)
+            if all(len(player.list_card) == 0 for player in self.state.list_player):
+                self.next_round()
+            return
+        
         print(f"Player {self.state.list_player[self.state.idx_player_active].name} plays {action.card.rank} of {action.card.suit}")
+        
+        # Remove the played card from the player's hand
         self.state.list_player[self.state.idx_player_active].list_card.remove(action.card)
+
+        # Add the played card to the discard pile
         self.state.list_card_discard.append(action.card)
 
         # Update marble position and check if it is in the safe space
@@ -227,20 +243,98 @@ class Dog(Game):
 
         self.state.idx_player_active = (self.state.idx_player_active + 1) % len(self.state.list_player)
 
-        # Check if the round is complete (all players have played)
-        if self.state.idx_player_active == self.state.idx_player_started:
-            self.state.cnt_round += 1  # Increment the round number
 
-    def draw_card(self) -> None:
-        """ Draw a card for the active player """
+    def get_cards_per_round(self) -> int:
+        """Determine the number of cards to be dealt based on the round."""
+        # Round numbers repeat in cycles of 5: 6, 5, 4, 3, 2
+        return 6 - ((self.state.cnt_round - 1) % 5)
+    
+    def update_starting_player(self) -> None:
+        """Update the starting player index for the next round (anti-clockwise)."""
         if not self.state:
             raise ValueError("Game state is not set.")
-        if not self.state.list_card_draw:
-            print("No more cards to draw. The game is finished.")
-            self.state.phase = GamePhase.FINISHED
-            return
-        card = self.state.list_card_draw.pop()
-        self.state.list_player[self.state.idx_player_active].list_card.append(card)
+        self.state.idx_player_started = (self.state.idx_player_started - 1) % self.state.cnt_player
+
+    def reshuffle_discard_into_draw(self) -> None:
+        """Shuffle the discard pile back into the draw pile when the draw pile is empty."""
+        if not self.state:
+            raise ValueError("Game state is not set.")
+
+        if not self.state.list_card_discard:
+            raise ValueError("No cards in discard pile to reshuffle.")
+
+        print("Reshuffling discarded cards into the draw pile.")
+        self.state.list_card_draw.extend(self.state.list_card_discard)
+        random.shuffle(self.state.list_card_draw)
+        self.state.list_card_discard.clear()
+
+        # Shuffle the draw pile
+        random.shuffle(self.state.list_card_draw)
+
+    def deal_cards(self) -> None:
+        """Deal cards to each player for the current round."""
+        if not self.state:
+            raise ValueError("Game state is not set.")
+
+        num_cards = self.get_cards_per_round()
+        total_needed = num_cards * self.state.cnt_player
+
+        # Reshuffle if necessary
+        while len(self.state.list_card_draw) < total_needed:
+            if not self.state.list_card_discard:
+                raise ValueError("Not enough cards to reshuffle and deal.")
+            self.reshuffle_discard_into_draw()
+
+        # Shuffle the draw pile
+        random.shuffle(self.state.list_card_draw)
+
+        # Deal cards to players
+        starting_player_idx = self.state.idx_player_started
+        for i in range(self.state.cnt_player):
+            current_player_idx = (starting_player_idx + i) % self.state.cnt_player
+            current_player = self.state.list_player[current_player_idx]
+            current_player.list_card = [self.state.list_card_draw.pop() for _ in range(num_cards)]
+
+
+    def validate_game_state(self) -> None:
+        """Validate the game state for consistency."""
+        if not self.state:
+            raise ValueError("Game state is not set.")
+
+        # Ensure the number of cards matches the round logic
+        expected_cards = self.get_cards_per_round()
+        for player in self.state.list_player:
+            if len(player.list_card) > expected_cards:
+                raise ValueError(f"Player {player.name} has more cards than allowed in round {self.state.cnt_round}.")
+
+        # Ensure the deck and discard piles are consistent
+        total_cards = len(self.state.list_card_draw) + len(self.state.list_card_discard)
+        for player in self.state.list_player:
+            total_cards += len(player.list_card)
+        if total_cards != len(GameState.LIST_CARD):
+            raise ValueError("Total number of cards in the game is inconsistent.")
+
+
+    def next_round(self) -> None:
+        """Advance to the next round."""
+        if not self.state:
+            raise ValueError("Game state is not set.")
+
+        print(f"Advancing to round {self.state.cnt_round + 1}.")
+        self.state.cnt_round += 1
+
+        # Update the starting player for the next round
+        self.update_starting_player()
+
+        # Clear player cards to prepare for new distribution
+        for player in self.state.list_player:
+            player.list_card = []
+
+        # Deal cards for the new round
+        self.deal_cards()
+
+        print(f"\nRound {self.state.cnt_round} begins. Player {self.state.list_player[self.state.idx_player_started].name} starts.")
+
 
     def get_player_view(self, idx_player: int) -> GameState:
         """ Get the masked state for the active player (e.g. the oppontent's cards are face down)"""
@@ -283,17 +377,20 @@ if __name__ == '__main__':
     game.initialize_game()
     game.draw_board()  # Draw the board
 
+    # Start the first round and output the number of cards dealt
+    game.deal_cards()
+    print(f"Round {game.state.cnt_round}: Dealt {game.get_cards_per_round()} cards to each player.")
+
     while game.state.phase != GamePhase.FINISHED:
-        game.print_state()
-        game.draw_card()  # Draw a card for the active player
-        actions = game.get_list_action()
+        # Simulate actions for the round
+        while any(len(player.list_card) > 0 for player in game.state.list_player):
+            actions = game.get_list_action()
+            selected_action = random.choice(actions) if actions else None
+            game.apply_action(selected_action)
 
-        # Display possible actions
-        print("\nPossible Actions:")
-        for idx, action in enumerate(actions):
-            print(f"{idx}: Play {action.card.rank} of {action.card.suit}")
+        # Move to the next round
+        game.next_round()
 
-        # Randomly select an action for the active player
-        selected_action = random.choice(actions)
-        game.apply_action(selected_action)
-        game.draw_board()  # Update the board after each action
+        # Exit after a certain number of rounds for testing
+        if game.state.cnt_round > 6:  # Example limit
+            break
