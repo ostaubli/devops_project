@@ -8,7 +8,6 @@ from enum import Enum
 import random
 
 
-
 class Card(BaseModel):
     color: Optional[str] = None   # color of the card (see LIST_COLOR)
     number: Optional[int] = None  # number of the card (if not a symbol card)
@@ -25,6 +24,15 @@ class Action(BaseModel):
 class PlayerState(BaseModel):
     name: Optional[str] = None  # name of player
     list_card: List[Card] = []  # list of cards
+
+    @staticmethod
+    def _display_deco(function):
+        def inner(*args, **kwargs):
+            print("---- Player State ----")
+            result = function(*args, **kwargs)
+            print("-----------------------")
+            return result
+        return inner 
 
     def adding_card(self, card: Card):
         """ Add a card to the player's hand stack, when a the player pulls a card. """
@@ -44,6 +52,7 @@ class PlayerState(BaseModel):
         """ Check whether the player has no cards to play anymore. Then the player won the game. """
         no_card = len(self.list_card) == 0
         return no_card
+    
     
 
 class GamePhase(str, Enum):
