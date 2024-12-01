@@ -35,6 +35,16 @@ class PlayerState(BaseModel):
         if card in self.list_card:
             self.list_card.remove(card)
 
+    def check_uno(self) -> bool:
+        """ Cehck whether the player has only one card left to play. """
+        uno_card = len(self.list_card) == 1
+        return uno_card
+    
+    def check_no_cards(self) -> bool:
+        """ Check whether the player has no cards to play anymore. Then the player won the game. """
+        no_card = len(self.list_card) == 0
+        return no_card
+    
 
 class GamePhase(str, Enum):
     SETUP = 'setup'            # before the game has started
