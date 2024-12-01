@@ -106,6 +106,23 @@ class Dog(Game):
             card_active=None,
         )
 
+    def send_home(self, pos: int) -> None:
+        """Send the marble at the given position back to the kennel, if not in finish area."""
+        for i, player in enumerate(self.state.list_player):
+            for marble in player.list_marble:
+                if marble.pos == pos:
+                    # Check if the marble is in the finish area
+                    if self.is_in_finish_area(marble, i):
+                        print(f"{player.name}'s marble at position {pos} is in the finish and cannot be sent home.")
+                        return
+
+                    # Send marble back to the kennel
+                    marble.pos = -1  # Reset marble position to kennel
+                    marble.is_save = False
+                    print(f"{player.name}'s marble at position {pos} sent back to the kennel.")
+                    return  # Only one marble occupies a position, so stop after handling
+        print(f"No marble found at position {pos} to send home.")
+
     def set_state(self, state: GameState) -> None:
         """ Set the game to a given state """
         self.state = state
