@@ -184,11 +184,17 @@ class Dog(Game):
         elif action.card.rank == '7':  # Special behavior for card '7'
             for marble in player.list_marble:
                 if marble.pos == action.pos_from and marble.is_save:
+                    if action.pos_to is not None:
+                        # Check for collisions before moving the marble
+                        self.send_home(action.pos_to)
                     marble.pos = action.pos_to
                     marble.is_save = False
         else:  # Regular behavior for moving marbles based on card rank
             for marble in player.list_marble:
                 if marble.pos == action.pos_from and marble.is_save:
+                    if action.pos_to is not None:
+                        # Check for collisions before moving the marble
+                        self.send_home(action.pos_to)
                     marble.pos = action.pos_to
                     marble.is_save = False
 
