@@ -8,6 +8,7 @@ from enum import Enum
 import random
 
 
+
 class Card(BaseModel):
     color: Optional[str] = None   # color of the card (see LIST_COLOR)
     number: Optional[int] = None  # number of the card (if not a symbol card)
@@ -53,6 +54,11 @@ class PlayerState(BaseModel):
         no_card = len(self.list_card) == 0
         return no_card
     
+    @_display_deco
+    def display_player_state(self):
+        """ Display the player's current state and hand card stack. """
+        print(f"Player: {self.name}")
+        print("Current cards in hand: ", [str(card) for card in self.list_card])
     
 
 class GamePhase(str, Enum):
