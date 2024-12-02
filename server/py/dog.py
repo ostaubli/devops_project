@@ -14,7 +14,7 @@ class Card(BaseModel):
 
 
 class Marble(BaseModel):
-    pos: str       # position on board (0 to 95)
+    pos: int       # position on board (0 to 95)
     is_save: bool  # true if marble was moved out of kennel and was not yet moved
 
 
@@ -28,7 +28,7 @@ class Action(BaseModel):
     card: Card                 # card to play
     pos_from: Optional[int]    # position to move the marble from
     pos_to: Optional[int]      # position to move the marble to
-    card_swap: Optional[Card]  # optional card to swap ()
+    card_swap: Optional[Card] = None  # optional card to swap ()
 
 
 class GamePhase(str, Enum):
@@ -150,50 +150,92 @@ class Dog(Game):
         actions = []
         to_positions = []
         active_player = self._state.list_player[self._state.idx_player_active]
+        marbles_in_kennel = self._count_marbles_in_kennel()
         for card in active_player.list_card:
             for marble in active_player.list_marble:
                 # TODO Go through all cards and marbles and return the possible positions.
 
-                # TODO LATIN-43 logic for start. you can only move if your marble is not inside the kennel or you have a 5 (and some other cards). for this, check if your marble is in the kernel. if so, only then "normal" actions can be taken.
+                # if marble is in kennel
+                queue_start = self.PLAYER_POSITIONS[self._state.idx_player_active]['queue_start']
+                if marble.pos in range(queue_start,
+                                            queue_start + 4):
 
-                if card.rank.isdigit() and card.rank not in ['7', '4']:
-                    to_positions = self._calculate_position_to(int(marble.pos), card, self._state.idx_player_active)
+                    # only allow actions for ACE, KING or JOKER
+                    if card.rank in ['A', 'JKR', 'K']:
+                        start_position = self.PLAYER_POSITIONS[self._state.idx_player_active]['start']
 
-                # TODO Add more logic for all the other cards LATIN-35
-                if card.rank == '7':
-                    # can be split into multiple marbles. if takes over, reset other marble
-                    # to_positions = ...
-                    pass
+                        # allow only if the current player does not have a marble on start
+                        if all(m.pos != start_position for m in active_player.list_marble):
+                            # if 4 in kennel, start_position + 3 - #in kennel-1
+                            if marble.pos == queue_start + 4 - marbles_in_kennel:
+                                actions.append(Action(card=card, pos_from=marble.pos, pos_to=start_position,
+                                                      card_swap=None))
+                else:
+                    if card.rank.isdigit() and card.rank not in ['7', '4']:
+                        to_positions = self._calculate_position_to(marble.pos, card, self._state.idx_player_active)
 
-                # checks for each possible position if the way is blocked. if it is not blocked, we add it to action.
-                for pos_to in to_positions:
-                    if not self._is_way_blocked(
-                            pos_to, int(marble.pos), self._get_all_safe_marbles()):
-                        actions.append(Action(card=card, pos_from=marble.pos, pos_to=pos_to,
-                                              card_swap=None))  # TODO add logic for card_swap (once we know what this is used for) LATIN-37
+                    # TODO Add more logic for all the other cards LATIN-35
+                    if card.rank == '7':
+                        # can be split into multiple marbles. if takes over, reset other marble
+                        # to_positions = ...
+                        pass
+
+                    # checks for each possible position if the way is blocked. if it is not blocked, we add it to action.
+                    for pos_to in to_positions:
+                        if not self._is_way_blocked(
+                                pos_to, marble.pos, self._get_all_safe_marbles()):
+                            actions.append(Action(card=card, pos_from=marble.pos, pos_to=pos_to,
+                                                  card_swap=None))  # TODO add logic for card_swap (once we know what this is used for) LATIN-37
 
         return actions
 
+    def _count_marbles_in_kennel(self) -> int:
+        active_player = self._state.list_player[self._state.idx_player_active]
+        queue_start = self.PLAYER_POSITIONS[self._state.idx_player_active]['queue_start']
+        queue_end = queue_start + 4
+        marbles_in_kennel = [marble for marble in active_player.list_marble if
+                             queue_start <= int(marble.pos) < queue_end]
+        return len(marbles_in_kennel)
+
     # TODO LATIN-27
     def apply_action(self, action: Action) -> None:
+        if action == None:
+            return
         """ Apply the given action to the game """
         active_player = self._state.list_player[self._state.idx_player_active]
+
         if action.card in active_player.list_card:
             # removing card from players hand and putting it to discarded stack
             active_player.list_card.remove(action.card)
             self._state.list_card_discard.append(action.card)
+            marble_to_move = next(
+                (marble for marble in active_player.list_marble if int(marble.pos) == int(action.pos_from)),
+                None
+            )
+            self._move_marble_logic(marble_to_move, action.pos_to, action.card)
 
-            # Example logic to update the game state based on the action
-            if action.pos_from is not None and action.pos_to is not None:
-                # TODO Move marble logic LATIN-38
-                pass
+            # TODO LATIN -46 check for collision
+            #if self._is_collision :
+            #self.handle_collision(....)
             # TODO Add more logic for other actions like sending marble home
-
-            ## TODO LATIN-42 logic for check if game is over (define winners)
+            ## TODO LATIN -42 logic for check if game is over (define winners)
 
         # calculate the next player (after 4, comes 1 again). not sure if needed here or somewhere else
         # example: (4+1)%4=1 -> after player 4, it's player 1's turn again
         self._state.idx_player_active = (self._state.idx_player_active + 1) % self._state.cnt_player
+
+    def _move_marble_logic(self, marble: Marble, pos_to: int, card: Card) -> None:
+        """
+        Core logic for moving a marble to a new position.
+        """
+        pos_to = int(pos_to)  # Ensure the target position is an integer
+
+        # Update marble position
+        marble.pos = pos_to
+
+# Def is_collision()
+# self._handle_collision(marble, pos_to) #TODO LATIN -45 create handle collision
+
 
     # TODO LATIN-28 check if logic is actually what we need it to be
     def get_player_view(self, idx_player: int) -> GameState:
