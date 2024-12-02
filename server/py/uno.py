@@ -176,11 +176,11 @@ class RandomPlayer(Player):
         if not actions:
             print(f"{self.state.name} hase no valid actions to undertake and must wither draw or skip.")
 
-        action = random.choice(actions) # randomly choses an action
+        action = random.choice(actions) # randomly chooses an action
 
         # wildcard case action
         if action.card and action.card.symbol in ["wild", "wildcard4"]:
-            action.color = random.choice(state.LIST_COLOR[:-1]) # choses a color but not 'any'
+            action.color = random.choice(state.LIST_COLOR[:-1]) # chooses a color not 'any'
 
         # UNO case action
         if len(self.state.list_card)==1:
