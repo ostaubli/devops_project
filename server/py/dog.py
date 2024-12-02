@@ -127,7 +127,9 @@ class Dog(Game):
             self.state.list_card_draw = self.state.list_card_draw[6:]
 
     def get_list_action(self) -> List[Action]:
-        """ Get a list of possible actions for the active player """
+        """
+        Get a list of possible actions for the active player.
+        """
         actions = []
         player = self.state.list_player[self.state.idx_player_active]
 
@@ -136,9 +138,7 @@ class Dog(Game):
             if card.rank == 'JKR':  # Joker can be played as any card
                 actions.append(Action(card=card, pos_from=None, pos_to=None, card_swap=None))
             elif card.rank == '7':  # For card 7, players can choose to move multiple marbles
-                for marble in player.list_marble:
-                    if marble.is_save:
-                        actions.append(Action(card=card, pos_from=marble.pos, pos_to=None, card_swap=None))
+                actions.append(get_actions_for_7(player))
             else:  # For other cards, move marbles or perform other actions
                 for marble in player.list_marble:
                     if marble.is_save:
@@ -147,6 +147,9 @@ class Dog(Game):
                         actions.append(Action(card=card, pos_from=None, pos_to=None, card_swap=None))
 
         return actions
+
+    def get_actions_for_7(self, player: PlayerState) -> List[Action]:
+        pass
 
     def apply_action(self, action: Action) -> None:
         """ Apply the given action to the game """
