@@ -88,7 +88,24 @@ class Dog(Game):
 
     def __init__(self) -> None:
         """ Game initialization (set_state call not necessary, we expect 4 players) """
+
         self.board = self._initialize_board()  # Initialize the board
+        self.state = GameState(
+            cnt_player=4,
+            phase=GamePhase.SETUP,
+            cnt_round=0,
+            bool_card_exchanged=False,
+            idx_player_started=0,
+            idx_player_active=0,
+            list_player=[
+                PlayerState(name=f"Player {i + 1}", list_card=[],
+                            list_marble=[Marble(pos=-1, is_save=False) for _ in range(4)])
+                for i in range(4)
+            ],
+            list_card_draw=random.sample(GameState.LIST_CARD, len(GameState.LIST_CARD)),
+            list_card_discard=[],
+            card_active=None,
+        )
 
     def _initialize_board(self) -> dict:
         """ Initialize the board representation """
@@ -115,40 +132,111 @@ class Dog(Game):
             },
         }
         return board
-
+        
     def set_state(self, state: GameState) -> None:
         """ Set the game to a given state """
-        pass
+        self.state = state
 
     def get_state(self) -> GameState:
         """ Get the complete, unmasked game state """
-        pass
+        return self.state
 
     def print_state(self) -> None:
         """ Print the current game state """
-        pass
+        print(f"Round: {self.state.cnt_round}, Phase: {self.state.phase}")
+        for idx, player in enumerate(self.state.list_player):
+            print(f"{player.name}: Cards: {player.list_card}, Marbles: {player.list_marble}")
+
+    def deal_cards(self) -> None:
+        """ Deal cards to all players. """
+        for player in self.state.list_player:
+            player.list_card = self.state.list_card_draw[:6]
+            self.state.list_card_draw = self.state.list_card_draw[6:]
 
     def get_list_action(self) -> List[Action]:
         """ Get a list of possible actions for the active player """
-        pass
+        actions = []
+        player = self.state.list_player[self.state.idx_player_active]
+
+        # Check possible card plays based on player cards and current game state
+        for card in player.list_card:
+            if card.rank == 'JKR':  # Joker can be played as any card
+                actions.append(Action(card=card, pos_from=None, pos_to=None, card_swap=None))
+            elif card.rank == '7':  # For card 7, players can choose to move multiple marbles
+                for marble in player.list_marble:
+                    if marble.is_save:
+                        actions.append(Action(card=card, pos_from=marble.pos, pos_to=None, card_swap=None))
+            else:  # For other cards, move marbles or perform other actions
+                for marble in player.list_marble:
+                    if marble.is_save:
+                        actions.append(Action(card=card, pos_from=marble.pos, pos_to=marble.pos + int(card.rank), card_swap=None))
+                    else:
+                        actions.append(Action(card=card, pos_from=None, pos_to=None, card_swap=None))
+
+        return actions
 
     def apply_action(self, action: Action) -> None:
         """ Apply the given action to the game """
-        pass
+        player = self.state.list_player[self.state.idx_player_active]
+
+        if action.card.rank == 'JKR':  # Joker: use as any card
+            # Action can be anything based on the game rules, e.g., swap a card or move a marble
+            pass
+        elif action.card.rank == '7':  # Special behavior for card '7'
+            for marble in player.list_marble:
+                if marble.pos == action.pos_from and marble.is_save:
+                    marble.pos = action.pos_to
+                    marble.is_save = False
+        else:  # Regular behavior for moving marbles based on card rank
+            for marble in player.list_marble:
+                if marble.pos == action.pos_from and marble.is_save:
+                    marble.pos = action.pos_to
+                    marble.is_save = False
+
+        # Update the cards: if it's a move action, discard the played card
+        player.list_card.remove(action.card)
+        self.state.list_card_discard.append(action.card)
+
+        # Proceed to the next player after applying the action
+        self.state.idx_player_active = (self.state.idx_player_active + 1) % self.state.cnt_player
+        self.state.cnt_round += 1
 
     def get_player_view(self, idx_player: int) -> GameState:
-        """ Get the masked state for the active player (e.g. the oppontent's cards are face down)"""
-        pass
+        """ Get the masked state for the active player (e.g. the opponent's cards are face down) """
+        # Mask the opponent's cards, only showing the player's own cards
+        masked_state = self.state.model_copy()
+        for i, player in enumerate(masked_state.list_player):
+            if i != idx_player:
+                player.list_card = []  # Hide the cards of other players
+        return masked_state
 
 class RandomPlayer(Player):
 
     def select_action(self, state: GameState, actions: List[Action]) -> Optional[Action]:
         """ Given masked game state and possible actions, select the next action """
-        if len(actions) > 0:
-            return random.choice(actions)
-        return None
+        return random.choice(actions) if actions else None
 
 
 if __name__ == '__main__':
-
+    # Initialize game and players
     game = Dog()
+    players = [RandomPlayer() for i in range(4)]
+
+    # Game setup
+    game.deal_cards()
+    game.print_state()
+
+    # Main game loop
+    while game.state.phase != GamePhase.FINISHED:
+        actions = game.get_list_action()
+        active_player = players[game.state.idx_player_active]
+        selected_action = active_player.select_action(game.get_player_view(game.state.idx_player_active), actions)
+        if selected_action:
+            game.apply_action(selected_action)
+        game.print_state()
+
+        # End condition (example: after 10 rounds)
+        if game.state.cnt_round > 10:
+            game.state.phase = GamePhase.FINISHED
+
+    print("Game Over")
