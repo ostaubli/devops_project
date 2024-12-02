@@ -168,6 +168,8 @@ class Uno(Game):
 
 
 class RandomPlayer(Player):
+    def __init__(self, name=str):
+        self.state=PlayerState(name= name)
 
     def select_action(self, state: GameState, actions: List[Action]) -> Optional[Action]:
         """ Given masked game state and possible actions, select the next action """
