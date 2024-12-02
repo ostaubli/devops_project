@@ -46,33 +46,47 @@ class GameState(BaseModel):
     ]
     LIST_CARD: ClassVar[List[Card]] = [
         # 2: Move 2 spots forward
-        Card(suit='♠', rank='2'), Card(suit='♥', rank='2'), Card(suit='♦', rank='2'), Card(suit='♣', rank='2'),
+        Card(suit='♠', rank='2'), Card(suit='♥', rank='2'), Card(
+            suit='♦', rank='2'), Card(suit='♣', rank='2'),
         # 3: Move 3 spots forward
-        Card(suit='♠', rank='3'), Card(suit='♥', rank='3'), Card(suit='♦', rank='3'), Card(suit='♣', rank='3'),
+        Card(suit='♠', rank='3'), Card(suit='♥', rank='3'), Card(
+            suit='♦', rank='3'), Card(suit='♣', rank='3'),
         # 4: Move 4 spots forward or back
-        Card(suit='♠', rank='4'), Card(suit='♥', rank='4'), Card(suit='♦', rank='4'), Card(suit='♣', rank='4'),
+        Card(suit='♠', rank='4'), Card(suit='♥', rank='4'), Card(
+            suit='♦', rank='4'), Card(suit='♣', rank='4'),
         # 5: Move 5 spots forward
-        Card(suit='♠', rank='5'), Card(suit='♥', rank='5'), Card(suit='♦', rank='5'), Card(suit='♣', rank='5'),
+        Card(suit='♠', rank='5'), Card(suit='♥', rank='5'), Card(
+            suit='♦', rank='5'), Card(suit='♣', rank='5'),
         # 6: Move 6 spots forward
-        Card(suit='♠', rank='6'), Card(suit='♥', rank='6'), Card(suit='♦', rank='6'), Card(suit='♣', rank='6'),
+        Card(suit='♠', rank='6'), Card(suit='♥', rank='6'), Card(
+            suit='♦', rank='6'), Card(suit='♣', rank='6'),
         # 7: Move 7 single steps forward
-        Card(suit='♠', rank='7'), Card(suit='♥', rank='7'), Card(suit='♦', rank='7'), Card(suit='♣', rank='7'),
+        Card(suit='♠', rank='7'), Card(suit='♥', rank='7'), Card(
+            suit='♦', rank='7'), Card(suit='♣', rank='7'),
         # 8: Move 8 spots forward
-        Card(suit='♠', rank='8'), Card(suit='♥', rank='8'), Card(suit='♦', rank='8'), Card(suit='♣', rank='8'),
+        Card(suit='♠', rank='8'), Card(suit='♥', rank='8'), Card(
+            suit='♦', rank='8'), Card(suit='♣', rank='8'),
         # 9: Move 9 spots forward
-        Card(suit='♠', rank='9'), Card(suit='♥', rank='9'), Card(suit='♦', rank='9'), Card(suit='♣', rank='9'),
+        Card(suit='♠', rank='9'), Card(suit='♥', rank='9'), Card(
+            suit='♦', rank='9'), Card(suit='♣', rank='9'),
         # 10: Move 10 spots forward
-        Card(suit='♠', rank='10'), Card(suit='♥', rank='10'), Card(suit='♦', rank='10'), Card(suit='♣', rank='10'),
+        Card(suit='♠', rank='10'), Card(suit='♥', rank='10'), Card(
+            suit='♦', rank='10'), Card(suit='♣', rank='10'),
         # Jake: A marble must be exchanged
-        Card(suit='♠', rank='J'), Card(suit='♥', rank='J'), Card(suit='♦', rank='J'), Card(suit='♣', rank='J'),
+        Card(suit='♠', rank='J'), Card(suit='♥', rank='J'), Card(
+            suit='♦', rank='J'), Card(suit='♣', rank='J'),
         # Queen: Move 12 spots forward
-        Card(suit='♠', rank='Q'), Card(suit='♥', rank='Q'), Card(suit='♦', rank='Q'), Card(suit='♣', rank='Q'),
+        Card(suit='♠', rank='Q'), Card(suit='♥', rank='Q'), Card(
+            suit='♦', rank='Q'), Card(suit='♣', rank='Q'),
         # King: Start or move 13 spots forward
-        Card(suit='♠', rank='K'), Card(suit='♥', rank='K'), Card(suit='♦', rank='K'), Card(suit='♣', rank='K'),
+        Card(suit='♠', rank='K'), Card(suit='♥', rank='K'), Card(
+            suit='♦', rank='K'), Card(suit='♣', rank='K'),
         # Ass: Start or move 1 or 11 spots forward
-        Card(suit='♠', rank='A'), Card(suit='♥', rank='A'), Card(suit='♦', rank='A'), Card(suit='♣', rank='A'),
+        Card(suit='♠', rank='A'), Card(suit='♥', rank='A'), Card(
+            suit='♦', rank='A'), Card(suit='♣', rank='A'),
         # Joker: Use as any other card you want
-        Card(suit='', rank='JKR'), Card(suit='', rank='JKR'), Card(suit='', rank='JKR')
+        Card(suit='', rank='JKR'), Card(
+            suit='', rank='JKR'), Card(suit='', rank='JKR')
     ] * 2
 
     cnt_player: int = 4                # number of players (must be 4)
@@ -84,7 +98,8 @@ class GameState(BaseModel):
     list_player: List[PlayerState]     # list of players
     list_card_draw: List[Card]         # list of cards to draw
     list_card_discard: List[Card]      # list of cards discarded
-    card_active: Optional[Card]        # active card (for 7 and JKR with sequence of actions)
+    # active card (for 7 and JKR with sequence of actions)
+    card_active: Optional[Card]
 
     def __str__(self) -> str:
         player_states = "\n".join(
@@ -124,7 +139,8 @@ class Dog(Game):
             bool_card_exchanged=False,
             idx_player_started=0,
             idx_player_active=0,
-            list_player=[PlayerState(name=f"Player {i + 1}", list_card=[], list_marble=[]) for i in range(4)],
+            list_player=[PlayerState(
+                name=f"Player {i + 1}", list_card=[], list_marble=[]) for i in range(4)],
             list_card_draw=GameState.LIST_CARD.copy(),
             list_card_discard=[],
             card_active=None
@@ -158,7 +174,7 @@ class Dog(Game):
                 # if marble is in kennel
                 queue_start = self.PLAYER_POSITIONS[self._state.idx_player_active]['queue_start']
                 if marble.pos in range(queue_start,
-                                            queue_start + 4):
+                                       queue_start + 4):
 
                     # only allow actions for ACE, KING or JOKER
                     if card.rank in ['A', 'JKR', 'K']:
@@ -172,7 +188,8 @@ class Dog(Game):
                                                       card_swap=None))
                 else:
                     if card.rank.isdigit() and card.rank not in ['7', '4']:
-                        to_positions = self._calculate_position_to(marble.pos, card, self._state.idx_player_active)
+                        to_positions = self._calculate_position_to(
+                            marble.pos, card, self._state.idx_player_active)
 
                     # TODO Add more logic for all the other cards LATIN-35
                     if card.rank == '7':
@@ -197,6 +214,23 @@ class Dog(Game):
                              queue_start <= int(marble.pos) < queue_end]
         return len(marbles_in_kennel)
 
+    def _check_finish_game(self):
+        """
+        Check if the game is finished, i.e., any player has all their marbles in the final area.
+        If the game is finished, set the game phase to FINISHED.
+        """
+        for idx_player, player in enumerate(self._state.list_player):
+            final_start = self.PLAYER_POSITIONS[idx_player]['final_start']
+            # Final area positions
+            final_positions = range(final_start, final_start + 4)
+            if all(marble.pos in final_positions for marble in player.list_marble):
+                # All marbles of this player are in their final positions
+                self._state.phase = GamePhase.FINISHED
+                print(
+                    f"Player {idx_player + 1} ({player.name}) has won the game!")
+                return True
+        return False
+
     # TODO LATIN-27
     def apply_action(self, action: Action) -> None:
         if action == None:
@@ -209,20 +243,24 @@ class Dog(Game):
             active_player.list_card.remove(action.card)
             self._state.list_card_discard.append(action.card)
             marble_to_move = next(
-                (marble for marble in active_player.list_marble if int(marble.pos) == int(action.pos_from)),
+                (marble for marble in active_player.list_marble if int(
+                    marble.pos) == int(action.pos_from)),
                 None
             )
             self._move_marble_logic(marble_to_move, action.pos_to, action.card)
-
+            # Check if the game is finished
+            if self._check_finish_game():
+                return  # Exit if the game is finished
             # TODO LATIN -46 check for collision
-            #if self._is_collision :
-            #self.handle_collision(....)
+            # if self._is_collision :
+            # self.handle_collision(....)
             # TODO Add more logic for other actions like sending marble home
-            ## TODO LATIN -42 logic for check if game is over (define winners)
+            # TODO LATIN -42 logic for check if game is over (define winners)
 
         # calculate the next player (after 4, comes 1 again). not sure if needed here or somewhere else
         # example: (4+1)%4=1 -> after player 4, it's player 1's turn again
-        self._state.idx_player_active = (self._state.idx_player_active + 1) % self._state.cnt_player
+        self._state.idx_player_active = (
+            self._state.idx_player_active + 1) % self._state.cnt_player
 
     def _move_marble_logic(self, marble: Marble, pos_to: int, card: Card) -> None:
         """
@@ -236,14 +274,15 @@ class Dog(Game):
 # Def is_collision()
 # self._handle_collision(marble, pos_to) #TODO LATIN -45 create handle collision
 
-
     # TODO LATIN-28 check if logic is actually what we need it to be
+
     def get_player_view(self, idx_player: int) -> GameState:
         """ Get the masked state for the active player (e.g. the opponent's cards are face down) """
         masked_state: GameState = self._state.copy()
         for i, player in enumerate(masked_state.list_player):
             if i != idx_player:
-                player.list_card = [Card(suit='?', rank='?')] * len(player.list_card)
+                player.list_card = [
+                    Card(suit='?', rank='?')] * len(player.list_card)
         return masked_state
 
     ##################################################### PRIVATE METHODS #############################################
@@ -273,7 +312,6 @@ class Dog(Game):
 
             possible_positions.append(next_position)
 
-
         elif card.rank == '4':
             # TODO refactor this logic. deals just as an example (it works probably, but still, refactor it maybe)
 
@@ -286,7 +324,7 @@ class Dog(Game):
 
             possible_positions.append(next_position)
 
-            ####################################################### separator of logic for +4 & -4
+            # separator of logic for +4 & -4
 
             # Calculate next position
             if pos_from == 0:
@@ -338,7 +376,8 @@ class Dog(Game):
             for marble_index in range(4):
                 self._state.list_player[player_index].list_marble.append(
                     Marble(
-                        pos=str(int(self.PLAYER_POSITIONS[player_index]['queue_start'] + marble_index)),
+                        pos=str(
+                            int(self.PLAYER_POSITIONS[player_index]['queue_start'] + marble_index)),
                         is_save=True)
                 )
 
@@ -378,6 +417,5 @@ if __name__ == '__main__':
                 game.apply_action(action)
                 game.print_state()
 
-        print(f"\n --------------- ROUND {game.get_state().cnt_round} finished -----------------")
-
-
+        print(
+            f"\n --------------- ROUND {game.get_state().cnt_round} finished -----------------")
