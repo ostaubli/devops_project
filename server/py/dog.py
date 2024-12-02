@@ -12,7 +12,7 @@ class Card(BaseModel):
 
 
 class Marble(BaseModel):
-    pos: str       # position on board (0 to 95)
+    pos: int       # position on board (0 to 95)
     is_save: bool  # true if marble was moved out of kennel and was not yet moved
 
 
@@ -86,34 +86,60 @@ class GameState(BaseModel):
 
 
 class Dog(Game):
-
     def __init__(self) -> None:
-        """ Game initialization (set_state call not necessary, we expect 4 players) """
-        pass
+        self.reset()
+
+    def reset(self) -> None:
+        # Create a fresh draw pile
+        draw_pile = list(GameState.LIST_CARD)
+        random.shuffle(draw_pile)  # Shuffle the cards
+    
+        players = []
+        for i in range(4):
+            # Create marbles for each player
+            marbles = []
+            for j in range(4):
+                marbles.append(Marble(pos=64 + i * 8 + j, is_save=False))
+        
+            # Deal 6 cards to each player
+            player_cards = draw_pile[:6]
+            draw_pile = draw_pile[6:]  # Remove dealt cards from draw pile
+        
+            players.append(PlayerState(
+                name=f"Player {i+1}",
+                list_card=player_cards,
+                list_marble=marbles
+            ))
+
+        self.state = GameState(
+            phase=GamePhase.RUNNING,
+            cnt_round=1,
+            bool_card_exchanged=False,
+            idx_player_started=0,
+            idx_player_active=0,
+            list_player=players,
+            list_card_draw=draw_pile,  # Only undealt cards remain in draw pile
+            list_card_discard=[],
+            card_active=None
+        )
 
     def set_state(self, state: GameState) -> None:
-        """ Set the game to a given state """
-        pass
+        self.state = state
 
     def get_state(self) -> GameState:
-        """ Get the complete, unmasked game state """
-        pass
+        return self.state
 
     def print_state(self) -> None:
-        """ Print the current game state """
         pass
 
     def get_list_action(self) -> List[Action]:
-        """ Get a list of possible actions for the active player """
-        pass
+        return []
 
     def apply_action(self, action: Action) -> None:
-        """ Apply the given action to the game """
         pass
 
     def get_player_view(self, idx_player: int) -> GameState:
-        """ Get the masked state for the active player (e.g. the oppontent's cards are face down)"""
-        pass
+        return self.state
 
 
 class RandomPlayer(Player):
