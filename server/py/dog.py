@@ -85,12 +85,12 @@ class GameState(BaseModel):
     card_active: Optional[Card]        # active card (for 7 and JKR with sequence of actions)
 
 
-    def draw_cards(self) -> None:
-        '''
-        logic number of cards (cnt_round)
-        logic list_id_card_draw to low
-       
-        '''
+    def deal_cards(self) -> bool:
+        # TODO: Check if all players are out of cards.
+        # TODO: Increase the current round.
+        # TODO: Calculate how many cards are needed.
+        # TODO: Check if there are enough cards in the draw deck; if not, add a new card deck.
+        # TODO: Randomly select cards for players.
         pass
 
 
