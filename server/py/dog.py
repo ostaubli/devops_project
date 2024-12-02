@@ -112,9 +112,6 @@ class Dog(Game):
         deck = GameState.LIST_CARD.copy()
         random.shuffle(deck)
 
-        # Initialize board positions
-        board_positions = [None] * 96  
-
         self.state = GameState(
             cnt_player=4,
             phase=GamePhase.RUNNING,
@@ -127,7 +124,7 @@ class Dog(Game):
             list_card_draw=deck,
             list_card_discard=[],
             card_active=None,
-            board_positions=board_positions
+            board_positions=[None] * 96  # Initialize board positions
         )
 
         # Deal initial cards (6 cards in first round)
