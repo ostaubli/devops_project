@@ -2,7 +2,7 @@
 
 
 import pytest
-from server.py.dog_template import Dog, GamePhase
+from server.py.dog import Dog, GamePhase
 
 
 def test_dog_initialization():
