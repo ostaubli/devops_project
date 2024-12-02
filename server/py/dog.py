@@ -12,7 +12,7 @@ class Card(BaseModel):
 
 
 class Marble(BaseModel):
-    pos: str       # position on board (0 to 95)
+    pos: int       # position on board (0 to 95)
     is_save: bool  # true if marble was moved out of kennel and was not yet moved
 
 
@@ -84,11 +84,12 @@ class GameState(BaseModel):
     list_card_discard: List[Card]      # list of cards discarded
     card_active: Optional[Card]        # active card (for 7 and JKR with sequence of actions)
 
-
 class Dog(Game):
 
     def __init__(self) -> None:
         """ Game initialization (set_state call not necessary, we expect 4 players) """
+
+        self.board = self._initialize_board()  # Initialize the board
         self.state = GameState(
             cnt_player=4,
             phase=GamePhase.SETUP,
@@ -105,6 +106,58 @@ class Dog(Game):
             list_card_discard=[],
             card_active=None,
         )
+        
+    def _initialize_board(self) -> dict:
+        """ Initialize the board representation """
+        # Define the circular path and separate home positions for 4 players
+        board = {
+            "circular_path": [i for i in range(63)],  # 63 positions in a circular path
+            "finish_positions": {
+                0: [68, 69, 70, 71],  # Blue player's finish positions
+                1: [76, 77, 78, 79],  # Yellow player's finish positions
+                2: [84, 85, 86, 87],  # Green player's finish positions
+                3: [92, 93, 94, 95],  # Red player's finish positions
+            },
+            "kennel_positions": {
+                0: [64, 65, 66, 67],  # Blue player's kennel position
+                1: [72, 73, 74, 75],   # Yellow player's kennel position
+                2: [80, 81, 82, 83],  # Green player's kennel position
+                3: [88, 89, 90, 91],  # Red player's kennel position
+            },
+            "start_positions": {
+                0: [0],  # Blue player's starting position
+                1: [16],  # Yellow player's starting position
+                2: [32],  # Green player's starting position
+                3: [48],  # Red player's starting position
+            },
+        }
+        return board
+
+    def send_home(self, pos: int) -> None:
+        """Send the marble at the given position back to the kennel, if not in finish area."""
+        for i, player in enumerate(self.state.list_player):
+            for marble in player.list_marble:
+                if marble.pos == pos:
+                    # Check if the marble is in the finish area
+                    if self.is_in_finish_area(marble, i):
+                        print(f"{player.name}'s marble at position {pos} is in the finish and cannot be sent home.")
+                        return
+
+                    # Send marble back to the kennel
+                    marble.pos = -1  # Reset marble position to kennel
+                    marble.is_save = False
+                    print(f"{player.name}'s marble at position {pos} sent back to the kennel.")
+                    return  # Only one marble occupies a position, so stop after handling
+        print(f"No marble found at position {pos} to send home.")
+
+    def is_in_finish_area(self, marble: Marble, player_index: int) -> bool:
+        """
+        Check if a marble is in the finish area for the given player.
+        Finish areas are unique to each player.
+        """
+        finish_start = 80 + player_index * 4  # Example: Finish starts at position 80 for Player 1
+        finish_end = finish_start + 3  # Each player has 4 finish positions
+        return finish_start <= int(marble.pos) <= finish_end
 
     def set_state(self, state: GameState) -> None:
         """ Set the game to a given state """
@@ -161,11 +214,17 @@ class Dog(Game):
         elif action.card.rank == '7':  # Special behavior for card '7'
             for marble in player.list_marble:
                 if marble.pos == action.pos_from and marble.is_save:
+                    if action.pos_to is not None:
+                        # Check for collisions before moving the marble
+                        self.send_home(action.pos_to)
                     marble.pos = action.pos_to
                     marble.is_save = False
         else:  # Regular behavior for moving marbles based on card rank
             for marble in player.list_marble:
                 if marble.pos == action.pos_from and marble.is_save:
+                    if action.pos_to is not None:
+                        # Check for collisions before moving the marble
+                        self.send_home(action.pos_to)
                     marble.pos = action.pos_to
                     marble.is_save = False
 
@@ -185,7 +244,6 @@ class Dog(Game):
             if i != idx_player:
                 player.list_card = []  # Hide the cards of other players
         return masked_state
-
 
 class RandomPlayer(Player):
 
