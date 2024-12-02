@@ -1,0 +1,737 @@
+sh: color: command not found
+--- Benchmark ---
+Mode:   python
+Script: dog.Dog
+
+[92mTest 001[0m: Validate values of initial game state (cnt_round=1) [5 points]
+
+[91mTest 002[0m: Validate values of later game state (cnt_round=2) [5 points]
+cnt_player=4 phase=<GamePhase.RUNNING: 'running'> cnt_round=1 bool_card_exchanged=True idx_player_started=0 idx_player_active=0 list_player=[PlayerState(name='Player 1', list_card=[], list_marble=[Marble(pos=64, is_save=False), Marble(pos=65, is_save=False), Marble(pos=66, is_save=False), Marble(pos=67, is_save=False)]), PlayerState(name='Player 2', list_card=[], list_marble=[Marble(pos=72, is_save=False), Marble(pos=73, is_save=False), Marble(pos=74, is_save=False), Marble(pos=75, is_save=False)]), PlayerState(name='Player 3', list_card=[], list_marble=[Marble(pos=80, is_save=False), Marble(pos=81, is_save=False), Marble(pos=82, is_save=False), Marble(pos=83, is_save=False)]), PlayerState(name='Player 4', list_card=[], list_marble=[Marble(pos=88, is_save=False), Marble(pos=89, is_save=False), Marble(pos=90, is_save=False), Marble(pos=91, is_save=False)])] list_card_draw=[Card(suit='♠', rank='2'), Card(suit='♦', rank='8'), Card(suit='♥', rank='6'), Card(suit='♥', rank='4'), Card(suit='♠', rank='6'), Card(suit='♥', rank='K'), Card(suit='♥', rank='8'), Card(suit='♣', rank='9'), Card(suit='♠', rank='A'), Card(suit='♠', rank='K'), Card(suit='♣', rank='8'), Card(suit='♥', rank='4'), Card(suit='♦', rank='K'), Card(suit='♣', rank='6'), Card(suit='♣', rank='10'), Card(suit='♥', rank='A'), Card(suit='♣', rank='A'), Card(suit='♥', rank='A'), Card(suit='♠', rank='4'), Card(suit='♦', rank='J'), Card(suit='♥', rank='3'), Card(suit='♠', rank='A'), Card(suit='♦', rank='6'), Card(suit='♣', rank='K'), Card(suit='♦', rank='9'), Card(suit='♥', rank='5'), Card(suit='♣', rank='7'), Card(suit='♣', rank='4'), Card(suit='♣', rank='Q'), Card(suit='♥', rank='8'), Card(suit='♥', rank='J'), Card(suit='♦', rank='8'), Card(suit='♥', rank='K'), Card(suit='♠', rank='J'), Card(suit='♠', rank='7'), Card(suit='♦', rank='5'), Card(suit='♠', rank='10'), Card(suit='♣', rank='3'), Card(suit='♠', rank='6'), Card(suit='♥', rank='10'), Card(suit='♦', rank='3'), Card(suit='♠', rank='8'), Card(suit='♦', rank='7'), Card(suit='♠', rank='J'), Card(suit='♦', rank='9'), Card(suit='', rank='JKR'), Card(suit='♠', rank='4'), Card(suit='♥', rank='5'), Card(suit='♣', rank='7'), Card(suit='♦', rank='A'), Card(suit='', rank='JKR'), Card(suit='♣', rank='A'), Card(suit='♣', rank='9'), Card(suit='♦', rank='10'), Card(suit='♦', rank='3'), Card(suit='♣', rank='2'), Card(suit='♠', rank='Q'), Card(suit='♦', rank='Q'), Card(suit='♥', rank='Q'), Card(suit='♠', rank='3'), Card(suit='♠', rank='K'), Card(suit='♠', rank='9'), Card(suit='♣', rank='4'), Card(suit='♦', rank='4'), Card(suit='♦', rank='A'), Card(suit='♣', rank='2'), Card(suit='♠', rank='10'), Card(suit='', rank='JKR'), Card(suit='♣', rank='10'), Card(suit='♣', rank='5'), Card(suit='', rank='JKR'), Card(suit='♥', rank='6'), Card(suit='♦', rank='4'), Card(suit='♣', rank='6'), Card(suit='♦', rank='2'), Card(suit='♦', rank='6'), Card(suit='♠', rank='Q'), Card(suit='♣', rank='5'), Card(suit='♦', rank='2'), Card(suit='♠', rank='2'), Card(suit='♦', rank='Q'), Card(suit='♦', rank='5'), Card(suit='♥', rank='2'), Card(suit='♦', rank='J'), Card(suit='♥', rank='J'), Card(suit='♣', rank='J')] list_card_discard=[] card_active=NoneError: len("list_card_draw") must be < 86
+
+[92mTest 003[0m: Test get_list_action without start-cards [1 point]
+
+[91mTest 004[0m: Test get_list_action with one start-card [1 point]
+Traceback (most recent call last):
+  File "/Users/daniellelott/Documents/Masters/devops/devops_git/devops_project/benchmark/benchmark.py", line 51, in run_tests
+    function()
+  File "/Users/daniellelott/Documents/Masters/devops/devops_git/devops_project/benchmark/benchmark_dog.py", line 106, in test_get_list_action_with_one_start_card
+    action = Action(card=card, pos_from=64, pos_to=0)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/daniellelott/Documents/Masters/devops/.venv/lib/python3.11/site-packages/pydantic/main.py", line 212, in __init__
+    validated_self = self.__pydantic_validator__.validate_python(data, self_instance=self)
+                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+pydantic_core._pydantic_core.ValidationError: 1 validation error for Action
+card_swap
+  Field required [type=missing, input_value={'card': Card(suit='♦',..._from': 64, 'pos_to': 0}, input_type=dict]
+    For further information visit https://errors.pydantic.dev/2.9/v/missing
+
+
+[91mTest 005[0m: Test get_list_action with three start-cards [1 point]
+Traceback (most recent call last):
+  File "/Users/daniellelott/Documents/Masters/devops/devops_git/devops_project/benchmark/benchmark.py", line 51, in run_tests
+    function()
+  File "/Users/daniellelott/Documents/Masters/devops/devops_git/devops_project/benchmark/benchmark_dog.py", line 133, in test_get_list_action_with_three_start_cards
+    Action(card=Card(suit='♦', rank='A'), pos_from=64, pos_to=0),
+    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/daniellelott/Documents/Masters/devops/.venv/lib/python3.11/site-packages/pydantic/main.py", line 212, in __init__
+    validated_self = self.__pydantic_validator__.validate_python(data, self_instance=self)
+                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+pydantic_core._pydantic_core.ValidationError: 1 validation error for Action
+card_swap
+  Field required [type=missing, input_value={'card': Card(suit='♦',..._from': 64, 'pos_to': 0}, input_type=dict]
+    For further information visit https://errors.pydantic.dev/2.9/v/missing
+
+
+[91mTest 006[0m: Test move out of kennel without marble on start [1 point]
+Traceback (most recent call last):
+  File "/Users/daniellelott/Documents/Masters/devops/devops_git/devops_project/benchmark/benchmark.py", line 51, in run_tests
+    function()
+  File "/Users/daniellelott/Documents/Masters/devops/devops_git/devops_project/benchmark/benchmark_dog.py", line 166, in test_move_out_of_kennel_1
+    action = Action(card=Card(suit='♦', rank='A'), pos_from=64, pos_to=0)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/daniellelott/Documents/Masters/devops/.venv/lib/python3.11/site-packages/pydantic/main.py", line 212, in __init__
+    validated_self = self.__pydantic_validator__.validate_python(data, self_instance=self)
+                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+pydantic_core._pydantic_core.ValidationError: 1 validation error for Action
+card_swap
+  Field required [type=missing, input_value={'card': Card(suit='♦',..._from': 64, 'pos_to': 0}, input_type=dict]
+    For further information visit https://errors.pydantic.dev/2.9/v/missing
+
+
+[92mTest 007[0m: Test move out of kennel with self-blocking on start [1 point]
+
+[91mTest 008[0m: Test move out of kennel with oponent on start [1 point]
+Traceback (most recent call last):
+  File "/Users/daniellelott/Documents/Masters/devops/devops_git/devops_project/benchmark/benchmark.py", line 51, in run_tests
+    function()
+  File "/Users/daniellelott/Documents/Masters/devops/devops_git/devops_project/benchmark/benchmark_dog.py", line 236, in test_move_out_of_kennel_3
+    action = Action(card=Card(suit='♦', rank='A'), pos_from=64, pos_to=0)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/daniellelott/Documents/Masters/devops/.venv/lib/python3.11/site-packages/pydantic/main.py", line 212, in __init__
+    validated_self = self.__pydantic_validator__.validate_python(data, self_instance=self)
+                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+pydantic_core._pydantic_core.ValidationError: 1 validation error for Action
+card_swap
+  Field required [type=missing, input_value={'card': Card(suit='♦',..._from': 64, 'pos_to': 0}, input_type=dict]
+    For further information visit https://errors.pydantic.dev/2.9/v/missing
+
+
+[91mTest 009[0m: Test move with card ACE from start [1 point]
+Traceback (most recent call last):
+  File "/Users/daniellelott/Documents/Masters/devops/devops_git/devops_project/benchmark/benchmark.py", line 51, in run_tests
+    function()
+  File "/Users/daniellelott/Documents/Masters/devops/devops_git/devops_project/benchmark/benchmark_dog.py", line 270, in test_move_with_ACE_from_start
+    self.move_test(pos_from=0, list_test=list_test)
+  File "/Users/daniellelott/Documents/Masters/devops/devops_git/devops_project/benchmark/benchmark_dog.py", line 2120, in move_test
+    self.move_marble(card=card, pos_from=pos_from, pos_to=pos_to)
+  File "/Users/daniellelott/Documents/Masters/devops/devops_git/devops_project/benchmark/benchmark_dog.py", line 1944, in move_marble
+    action = Action(card=card, pos_from=pos_from, pos_to=pos_to)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/daniellelott/Documents/Masters/devops/.venv/lib/python3.11/site-packages/pydantic/main.py", line 212, in __init__
+    validated_self = self.__pydantic_validator__.validate_python(data, self_instance=self)
+                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+pydantic_core._pydantic_core.ValidationError: 1 validation error for Action
+card_swap
+  Field required [type=missing, input_value={'card': Card(suit='♣',...s_from': 0, 'pos_to': 1}, input_type=dict]
+    For further information visit https://errors.pydantic.dev/2.9/v/missing
+
+
+[91mTest 010[0m: Test move with card TWO from start [1 point]
+Traceback (most recent call last):
+  File "/Users/daniellelott/Documents/Masters/devops/devops_git/devops_project/benchmark/benchmark.py", line 51, in run_tests
+    function()
+  File "/Users/daniellelott/Documents/Masters/devops/devops_git/devops_project/benchmark/benchmark_dog.py", line 281, in test_move_with_TWO_from_start
+    self.move_test(pos_from=0, list_test=list_test)
+  File "/Users/daniellelott/Documents/Masters/devops/devops_git/devops_project/benchmark/benchmark_dog.py", line 2120, in move_test
+    self.move_marble(card=card, pos_from=pos_from, pos_to=pos_to)
+  File "/Users/daniellelott/Documents/Masters/devops/devops_git/devops_project/benchmark/benchmark_dog.py", line 1944, in move_marble
+    action = Action(card=card, pos_from=pos_from, pos_to=pos_to)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/daniellelott/Documents/Masters/devops/.venv/lib/python3.11/site-packages/pydantic/main.py", line 212, in __init__
+    validated_self = self.__pydantic_validator__.validate_python(data, self_instance=self)
+                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+pydantic_core._pydantic_core.ValidationError: 1 validation error for Action
+card_swap
+  Field required [type=missing, input_value={'card': Card(suit='♣',...s_from': 0, 'pos_to': 2}, input_type=dict]
+    For further information visit https://errors.pydantic.dev/2.9/v/missing
+
+
+[91mTest 011[0m: Test move with card THREE from start [1 point]
+Traceback (most recent call last):
+  File "/Users/daniellelott/Documents/Masters/devops/devops_git/devops_project/benchmark/benchmark.py", line 51, in run_tests
+    function()
+  File "/Users/daniellelott/Documents/Masters/devops/devops_git/devops_project/benchmark/benchmark_dog.py", line 292, in test_move_with_THREE_from_start
+    self.move_test(pos_from=0, list_test=list_test)
+  File "/Users/daniellelott/Documents/Masters/devops/devops_git/devops_project/benchmark/benchmark_dog.py", line 2120, in move_test
+    self.move_marble(card=card, pos_from=pos_from, pos_to=pos_to)
+  File "/Users/daniellelott/Documents/Masters/devops/devops_git/devops_project/benchmark/benchmark_dog.py", line 1944, in move_marble
+    action = Action(card=card, pos_from=pos_from, pos_to=pos_to)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/daniellelott/Documents/Masters/devops/.venv/lib/python3.11/site-packages/pydantic/main.py", line 212, in __init__
+    validated_self = self.__pydantic_validator__.validate_python(data, self_instance=self)
+                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+pydantic_core._pydantic_core.ValidationError: 1 validation error for Action
+card_swap
+  Field required [type=missing, input_value={'card': Card(suit='♣',...s_from': 0, 'pos_to': 3}, input_type=dict]
+    For further information visit https://errors.pydantic.dev/2.9/v/missing
+
+
+[91mTest 012[0m: Test move with card FOUR from start [1 point]
+Traceback (most recent call last):
+  File "/Users/daniellelott/Documents/Masters/devops/devops_git/devops_project/benchmark/benchmark.py", line 51, in run_tests
+    function()
+  File "/Users/daniellelott/Documents/Masters/devops/devops_git/devops_project/benchmark/benchmark_dog.py", line 303, in test_move_with_FOUR_from_start
+    self.move_test(pos_from=0, list_test=list_test)
+  File "/Users/daniellelott/Documents/Masters/devops/devops_git/devops_project/benchmark/benchmark_dog.py", line 2120, in move_test
+    self.move_marble(card=card, pos_from=pos_from, pos_to=pos_to)
+  File "/Users/daniellelott/Documents/Masters/devops/devops_git/devops_project/benchmark/benchmark_dog.py", line 1944, in move_marble
+    action = Action(card=card, pos_from=pos_from, pos_to=pos_to)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/daniellelott/Documents/Masters/devops/.venv/lib/python3.11/site-packages/pydantic/main.py", line 212, in __init__
+    validated_self = self.__pydantic_validator__.validate_python(data, self_instance=self)
+                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+pydantic_core._pydantic_core.ValidationError: 1 validation error for Action
+card_swap
+  Field required [type=missing, input_value={'card': Card(suit='♣',...s_from': 0, 'pos_to': 4}, input_type=dict]
+    For further information visit https://errors.pydantic.dev/2.9/v/missing
+
+
+[91mTest 013[0m: Test move with card FIVE from start [1 point]
+Traceback (most recent call last):
+  File "/Users/daniellelott/Documents/Masters/devops/devops_git/devops_project/benchmark/benchmark.py", line 51, in run_tests
+    function()
+  File "/Users/daniellelott/Documents/Masters/devops/devops_git/devops_project/benchmark/benchmark_dog.py", line 314, in test_move_with_FIVE_from_start
+    self.move_test(pos_from=0, list_test=list_test)
+  File "/Users/daniellelott/Documents/Masters/devops/devops_git/devops_project/benchmark/benchmark_dog.py", line 2120, in move_test
+    self.move_marble(card=card, pos_from=pos_from, pos_to=pos_to)
+  File "/Users/daniellelott/Documents/Masters/devops/devops_git/devops_project/benchmark/benchmark_dog.py", line 1944, in move_marble
+    action = Action(card=card, pos_from=pos_from, pos_to=pos_to)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/daniellelott/Documents/Masters/devops/.venv/lib/python3.11/site-packages/pydantic/main.py", line 212, in __init__
+    validated_self = self.__pydantic_validator__.validate_python(data, self_instance=self)
+                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+pydantic_core._pydantic_core.ValidationError: 1 validation error for Action
+card_swap
+  Field required [type=missing, input_value={'card': Card(suit='♣',...s_from': 0, 'pos_to': 5}, input_type=dict]
+    For further information visit https://errors.pydantic.dev/2.9/v/missing
+
+
+[91mTest 014[0m: Test move with card SIX from start [1 point]
+Traceback (most recent call last):
+  File "/Users/daniellelott/Documents/Masters/devops/devops_git/devops_project/benchmark/benchmark.py", line 51, in run_tests
+    function()
+  File "/Users/daniellelott/Documents/Masters/devops/devops_git/devops_project/benchmark/benchmark_dog.py", line 325, in test_move_with_SIX_from_start
+    self.move_test(pos_from=0, list_test=list_test)
+  File "/Users/daniellelott/Documents/Masters/devops/devops_git/devops_project/benchmark/benchmark_dog.py", line 2120, in move_test
+    self.move_marble(card=card, pos_from=pos_from, pos_to=pos_to)
+  File "/Users/daniellelott/Documents/Masters/devops/devops_git/devops_project/benchmark/benchmark_dog.py", line 1944, in move_marble
+    action = Action(card=card, pos_from=pos_from, pos_to=pos_to)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/daniellelott/Documents/Masters/devops/.venv/lib/python3.11/site-packages/pydantic/main.py", line 212, in __init__
+    validated_self = self.__pydantic_validator__.validate_python(data, self_instance=self)
+                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+pydantic_core._pydantic_core.ValidationError: 1 validation error for Action
+card_swap
+  Field required [type=missing, input_value={'card': Card(suit='♣',...s_from': 0, 'pos_to': 6}, input_type=dict]
+    For further information visit https://errors.pydantic.dev/2.9/v/missing
+
+
+[91mTest 015[0m: Test move with card SEVEN from start [1 point]
+Traceback (most recent call last):
+  File "/Users/daniellelott/Documents/Masters/devops/devops_git/devops_project/benchmark/benchmark.py", line 51, in run_tests
+    function()
+  File "/Users/daniellelott/Documents/Masters/devops/devops_git/devops_project/benchmark/benchmark_dog.py", line 336, in test_move_with_SEVEN_from_start
+    self.move_test(pos_from=0, list_test=list_test)
+  File "/Users/daniellelott/Documents/Masters/devops/devops_git/devops_project/benchmark/benchmark_dog.py", line 2120, in move_test
+    self.move_marble(card=card, pos_from=pos_from, pos_to=pos_to)
+  File "/Users/daniellelott/Documents/Masters/devops/devops_git/devops_project/benchmark/benchmark_dog.py", line 1944, in move_marble
+    action = Action(card=card, pos_from=pos_from, pos_to=pos_to)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/daniellelott/Documents/Masters/devops/.venv/lib/python3.11/site-packages/pydantic/main.py", line 212, in __init__
+    validated_self = self.__pydantic_validator__.validate_python(data, self_instance=self)
+                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+pydantic_core._pydantic_core.ValidationError: 1 validation error for Action
+card_swap
+  Field required [type=missing, input_value={'card': Card(suit='♣',...s_from': 0, 'pos_to': 1}, input_type=dict]
+    For further information visit https://errors.pydantic.dev/2.9/v/missing
+
+
+[91mTest 016[0m: Test move with card EIGHT from start [1 point]
+Traceback (most recent call last):
+  File "/Users/daniellelott/Documents/Masters/devops/devops_git/devops_project/benchmark/benchmark.py", line 51, in run_tests
+    function()
+  File "/Users/daniellelott/Documents/Masters/devops/devops_git/devops_project/benchmark/benchmark_dog.py", line 347, in test_move_with_EIGHT_from_start
+    self.move_test(pos_from=0, list_test=list_test)
+  File "/Users/daniellelott/Documents/Masters/devops/devops_git/devops_project/benchmark/benchmark_dog.py", line 2120, in move_test
+    self.move_marble(card=card, pos_from=pos_from, pos_to=pos_to)
+  File "/Users/daniellelott/Documents/Masters/devops/devops_git/devops_project/benchmark/benchmark_dog.py", line 1944, in move_marble
+    action = Action(card=card, pos_from=pos_from, pos_to=pos_to)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/daniellelott/Documents/Masters/devops/.venv/lib/python3.11/site-packages/pydantic/main.py", line 212, in __init__
+    validated_self = self.__pydantic_validator__.validate_python(data, self_instance=self)
+                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+pydantic_core._pydantic_core.ValidationError: 1 validation error for Action
+card_swap
+  Field required [type=missing, input_value={'card': Card(suit='♣',...s_from': 0, 'pos_to': 8}, input_type=dict]
+    For further information visit https://errors.pydantic.dev/2.9/v/missing
+
+
+[91mTest 017[0m: Test move with card NINE from start [1 point]
+Traceback (most recent call last):
+  File "/Users/daniellelott/Documents/Masters/devops/devops_git/devops_project/benchmark/benchmark.py", line 51, in run_tests
+    function()
+  File "/Users/daniellelott/Documents/Masters/devops/devops_git/devops_project/benchmark/benchmark_dog.py", line 358, in test_move_with_NINE_from_start
+    self.move_test(pos_from=0, list_test=list_test)
+  File "/Users/daniellelott/Documents/Masters/devops/devops_git/devops_project/benchmark/benchmark_dog.py", line 2120, in move_test
+    self.move_marble(card=card, pos_from=pos_from, pos_to=pos_to)
+  File "/Users/daniellelott/Documents/Masters/devops/devops_git/devops_project/benchmark/benchmark_dog.py", line 1944, in move_marble
+    action = Action(card=card, pos_from=pos_from, pos_to=pos_to)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/daniellelott/Documents/Masters/devops/.venv/lib/python3.11/site-packages/pydantic/main.py", line 212, in __init__
+    validated_self = self.__pydantic_validator__.validate_python(data, self_instance=self)
+                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+pydantic_core._pydantic_core.ValidationError: 1 validation error for Action
+card_swap
+  Field required [type=missing, input_value={'card': Card(suit='♣',...s_from': 0, 'pos_to': 9}, input_type=dict]
+    For further information visit https://errors.pydantic.dev/2.9/v/missing
+
+
+[91mTest 018[0m: Test move with card TEN from start [1 point]
+Traceback (most recent call last):
+  File "/Users/daniellelott/Documents/Masters/devops/devops_git/devops_project/benchmark/benchmark.py", line 51, in run_tests
+    function()
+  File "/Users/daniellelott/Documents/Masters/devops/devops_git/devops_project/benchmark/benchmark_dog.py", line 369, in test_move_with_TEN_from_start
+    self.move_test(pos_from=0, list_test=list_test)
+  File "/Users/daniellelott/Documents/Masters/devops/devops_git/devops_project/benchmark/benchmark_dog.py", line 2120, in move_test
+    self.move_marble(card=card, pos_from=pos_from, pos_to=pos_to)
+  File "/Users/daniellelott/Documents/Masters/devops/devops_git/devops_project/benchmark/benchmark_dog.py", line 1944, in move_marble
+    action = Action(card=card, pos_from=pos_from, pos_to=pos_to)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/daniellelott/Documents/Masters/devops/.venv/lib/python3.11/site-packages/pydantic/main.py", line 212, in __init__
+    validated_self = self.__pydantic_validator__.validate_python(data, self_instance=self)
+                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+pydantic_core._pydantic_core.ValidationError: 1 validation error for Action
+card_swap
+  Field required [type=missing, input_value={'card': Card(suit='♣',..._from': 0, 'pos_to': 10}, input_type=dict]
+    For further information visit https://errors.pydantic.dev/2.9/v/missing
+
+
+[91mTest 019[0m: Test move with card QUEEN from start [1 point]
+Traceback (most recent call last):
+  File "/Users/daniellelott/Documents/Masters/devops/devops_git/devops_project/benchmark/benchmark.py", line 51, in run_tests
+    function()
+  File "/Users/daniellelott/Documents/Masters/devops/devops_git/devops_project/benchmark/benchmark_dog.py", line 380, in test_move_with_QUEEN_from_start
+    self.move_test(pos_from=0, list_test=list_test)
+  File "/Users/daniellelott/Documents/Masters/devops/devops_git/devops_project/benchmark/benchmark_dog.py", line 2120, in move_test
+    self.move_marble(card=card, pos_from=pos_from, pos_to=pos_to)
+  File "/Users/daniellelott/Documents/Masters/devops/devops_git/devops_project/benchmark/benchmark_dog.py", line 1944, in move_marble
+    action = Action(card=card, pos_from=pos_from, pos_to=pos_to)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/daniellelott/Documents/Masters/devops/.venv/lib/python3.11/site-packages/pydantic/main.py", line 212, in __init__
+    validated_self = self.__pydantic_validator__.validate_python(data, self_instance=self)
+                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+pydantic_core._pydantic_core.ValidationError: 1 validation error for Action
+card_swap
+  Field required [type=missing, input_value={'card': Card(suit='♣',..._from': 0, 'pos_to': 12}, input_type=dict]
+    For further information visit https://errors.pydantic.dev/2.9/v/missing
+
+
+[91mTest 020[0m: Test move with card KING from start [1 point]
+Traceback (most recent call last):
+  File "/Users/daniellelott/Documents/Masters/devops/devops_git/devops_project/benchmark/benchmark.py", line 51, in run_tests
+    function()
+  File "/Users/daniellelott/Documents/Masters/devops/devops_git/devops_project/benchmark/benchmark_dog.py", line 391, in test_move_with_KING_from_start
+    self.move_test(pos_from=0, list_test=list_test)
+  File "/Users/daniellelott/Documents/Masters/devops/devops_git/devops_project/benchmark/benchmark_dog.py", line 2120, in move_test
+    self.move_marble(card=card, pos_from=pos_from, pos_to=pos_to)
+  File "/Users/daniellelott/Documents/Masters/devops/devops_git/devops_project/benchmark/benchmark_dog.py", line 1944, in move_marble
+    action = Action(card=card, pos_from=pos_from, pos_to=pos_to)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/daniellelott/Documents/Masters/devops/.venv/lib/python3.11/site-packages/pydantic/main.py", line 212, in __init__
+    validated_self = self.__pydantic_validator__.validate_python(data, self_instance=self)
+                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+pydantic_core._pydantic_core.ValidationError: 1 validation error for Action
+card_swap
+  Field required [type=missing, input_value={'card': Card(suit='♣',..._from': 0, 'pos_to': 13}, input_type=dict]
+    For further information visit https://errors.pydantic.dev/2.9/v/missing
+
+
+[91mTest 021[0m: Test swap list_actions with card JAKE and oponents [1 point]
+Traceback (most recent call last):
+  File "/Users/daniellelott/Documents/Masters/devops/devops_git/devops_project/benchmark/benchmark.py", line 51, in run_tests
+    function()
+  File "/Users/daniellelott/Documents/Masters/devops/devops_git/devops_project/benchmark/benchmark_dog.py", line 422, in test_swap_with_JAKE_1
+    Action(card=card, pos_from=0, pos_to=17),
+    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/daniellelott/Documents/Masters/devops/.venv/lib/python3.11/site-packages/pydantic/main.py", line 212, in __init__
+    validated_self = self.__pydantic_validator__.validate_python(data, self_instance=self)
+                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+pydantic_core._pydantic_core.ValidationError: 1 validation error for Action
+card_swap
+  Field required [type=missing, input_value={'card': Card(suit='♣',..._from': 0, 'pos_to': 17}, input_type=dict]
+    For further information visit https://errors.pydantic.dev/2.9/v/missing
+
+
+[91mTest 022[0m: Test swap list_actions with card JAKE no oponents an no other actions [1 point]
+Traceback (most recent call last):
+  File "/Users/daniellelott/Documents/Masters/devops/devops_git/devops_project/benchmark/benchmark.py", line 51, in run_tests
+    function()
+  File "/Users/daniellelott/Documents/Masters/devops/devops_git/devops_project/benchmark/benchmark_dog.py", line 472, in test_swap_with_JAKE_2
+    Action(card=card, pos_from=0, pos_to=1),
+    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/daniellelott/Documents/Masters/devops/.venv/lib/python3.11/site-packages/pydantic/main.py", line 212, in __init__
+    validated_self = self.__pydantic_validator__.validate_python(data, self_instance=self)
+                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+pydantic_core._pydantic_core.ValidationError: 1 validation error for Action
+card_swap
+  Field required [type=missing, input_value={'card': Card(suit='♣',...s_from': 0, 'pos_to': 1}, input_type=dict]
+    For further information visit https://errors.pydantic.dev/2.9/v/missing
+
+
+[91mTest 023[0m: Test swap action with card JAKE and oponents [1 point]
+Traceback (most recent call last):
+  File "/Users/daniellelott/Documents/Masters/devops/devops_git/devops_project/benchmark/benchmark.py", line 51, in run_tests
+    function()
+  File "/Users/daniellelott/Documents/Masters/devops/devops_git/devops_project/benchmark/benchmark_dog.py", line 516, in test_swap_with_JAKE_3
+    action = Action(card=card, pos_from=0, pos_to=17)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/daniellelott/Documents/Masters/devops/.venv/lib/python3.11/site-packages/pydantic/main.py", line 212, in __init__
+    validated_self = self.__pydantic_validator__.validate_python(data, self_instance=self)
+                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+pydantic_core._pydantic_core.ValidationError: 1 validation error for Action
+card_swap
+  Field required [type=missing, input_value={'card': Card(suit='♣',..._from': 0, 'pos_to': 17}, input_type=dict]
+    For further information visit https://errors.pydantic.dev/2.9/v/missing
+
+
+[91mTest 024[0m: Test swap action with card JAKE and no oponent and no other actions [1 point]
+Traceback (most recent call last):
+  File "/Users/daniellelott/Documents/Masters/devops/devops_git/devops_project/benchmark/benchmark.py", line 51, in run_tests
+    function()
+  File "/Users/daniellelott/Documents/Masters/devops/devops_git/devops_project/benchmark/benchmark_dog.py", line 560, in test_swap_with_JAKE_4
+    action = Action(card=card, pos_from=0, pos_to=1)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/daniellelott/Documents/Masters/devops/.venv/lib/python3.11/site-packages/pydantic/main.py", line 212, in __init__
+    validated_self = self.__pydantic_validator__.validate_python(data, self_instance=self)
+                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+pydantic_core._pydantic_core.ValidationError: 1 validation error for Action
+card_swap
+  Field required [type=missing, input_value={'card': Card(suit='♣',...s_from': 0, 'pos_to': 1}, input_type=dict]
+    For further information visit https://errors.pydantic.dev/2.9/v/missing
+
+
+[91mTest 025[0m: Test JOKER card at beginning [5 point]
+Traceback (most recent call last):
+  File "/Users/daniellelott/Documents/Masters/devops/devops_git/devops_project/benchmark/benchmark.py", line 51, in run_tests
+    function()
+  File "/Users/daniellelott/Documents/Masters/devops/devops_git/devops_project/benchmark/benchmark_dog.py", line 587, in test_chose_card_with_JOKER_1
+    Action(card=Card(suit='', rank='JKR'), pos_from=64, pos_to=0),
+    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/daniellelott/Documents/Masters/devops/.venv/lib/python3.11/site-packages/pydantic/main.py", line 212, in __init__
+    validated_self = self.__pydantic_validator__.validate_python(data, self_instance=self)
+                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+pydantic_core._pydantic_core.ValidationError: 1 validation error for Action
+card_swap
+  Field required [type=missing, input_value={'card': Card(suit='', ra..._from': 64, 'pos_to': 0}, input_type=dict]
+    For further information visit https://errors.pydantic.dev/2.9/v/missing
+
+
+[91mTest 026[0m: Test JOKER card in later game [5 point]
+cnt_player=4 phase=<GamePhase.RUNNING: 'running'> cnt_round=0 bool_card_exchanged=True idx_player_started=0 idx_player_active=0 list_player=[PlayerState(name='Player 1', list_card=[Card(suit='', rank='JKR')], list_marble=[Marble(pos=0, is_save=True), Marble(pos=1, is_save=False), Marble(pos=66, is_save=False), Marble(pos=67, is_save=False)]), PlayerState(name='Player 2', list_card=[Card(suit='♠', rank='4'), Card(suit='♠', rank='9'), Card(suit='♣', rank='10'), Card(suit='♦', rank='9'), Card(suit='♦', rank='4'), Card(suit='♠', rank='Q')], list_marble=[Marble(pos=16, is_save=True), Marble(pos=17, is_save=False), Marble(pos=74, is_save=False), Marble(pos=75, is_save=False)]), PlayerState(name='Player 3', list_card=[Card(suit='♥', rank='Q'), Card(suit='♠', rank='10'), Card(suit='♥', rank='3'), Card(suit='♣', rank='Q'), Card(suit='♦', rank='Q'), Card(suit='♥', rank='10')], list_marble=[Marble(pos=32, is_save=True), Marble(pos=33, is_save=False), Marble(pos=82, is_save=False), Marble(pos=83, is_save=False)]), PlayerState(name='Player 4', list_card=[Card(suit='♠', rank='9'), Card(suit='', rank='JKR'), Card(suit='♦', rank='2'), Card(suit='♦', rank='5'), Card(suit='♥', rank='2'), Card(suit='♣', rank='4')], list_marble=[Marble(pos=48, is_save=True), Marble(pos=49, is_save=False), Marble(pos=90, is_save=False), Marble(pos=91, is_save=False)])] list_card_draw=[Card(suit='♠', rank='10'), Card(suit='♦', rank='K'), Card(suit='♦', rank='6'), Card(suit='♣', rank='J'), Card(suit='♦', rank='A'), Card(suit='♥', rank='A'), Card(suit='♥', rank='J'), Card(suit='♥', rank='4'), Card(suit='♣', rank='9'), Card(suit='♣', rank='9'), Card(suit='♥', rank='9'), Card(suit='♠', rank='A'), Card(suit='♦', rank='Q'), Card(suit='♣', rank='6'), Card(suit='♠', rank='5'), Card(suit='♥', rank='7'), Card(suit='♣', rank='2'), Card(suit='♥', rank='8'), Card(suit='♠', rank='J'), Card(suit='♣', rank='7'), Card(suit='♠', rank='Q'), Card(suit='♥', rank='9'), Card(suit='♣', rank='K'), Card(suit='♣', rank='8'), Card(suit='♥', rank='2'), Card(suit='♥', rank='5'), Card(suit='♠', rank='2'), Card(suit='♠', rank='J'), Card(suit='', rank='JKR'), Card(suit='♦', rank='8'), Card(suit='♣', rank='3'), Card(suit='♠', rank='2'), Card(suit='♣', rank='A'), Card(suit='♦', rank='3'), Card(suit='♥', rank='6'), Card(suit='', rank='JKR'), Card(suit='♠', rank='5'), Card(suit='♠', rank='6'), Card(suit='', rank='JKR'), Card(suit='', rank='JKR'), Card(suit='♠', rank='8'), Card(suit='♦', rank='2'), Card(suit='♣', rank='7'), Card(suit='♠', rank='K'), Card(suit='♣', rank='5'), Card(suit='♣', rank='5'), Card(suit='♦', rank='10'), Card(suit='♥', rank='10'), Card(suit='♥', rank='4'), Card(suit='♦', rank='5'), Card(suit='♥', rank='J'), Card(suit='♠', rank='7'), Card(suit='♠', rank='6'), Card(suit='♦', rank='6'), Card(suit='♦', rank='J'), Card(suit='♥', rank='7'), Card(suit='', rank='JKR'), Card(suit='♦', rank='A'), Card(suit='♥', rank='Q'), Card(suit='♥', rank='5'), Card(suit='♥', rank='K'), Card(suit='♦', rank='7'), Card(suit='♣', rank='J'), Card(suit='♦', rank='9'), Card(suit='♦', rank='J'), Card(suit='♠', rank='7'), Card(suit='♥', rank='6'), Card(suit='♣', rank='6'), Card(suit='♥', rank='3'), Card(suit='♦', rank='4'), Card(suit='♠', rank='K'), Card(suit='♣', rank='2'), Card(suit='♠', rank='3'), Card(suit='♥', rank='A'), Card(suit='♣', rank='8'), Card(suit='♠', rank='A'), Card(suit='♣', rank='3'), Card(suit='♦', rank='10'), Card(suit='♥', rank='8'), Card(suit='♠', rank='4'), Card(suit='♠', rank='3'), Card(suit='♦', rank='7'), Card(suit='♦', rank='3'), Card(suit='♣', rank='A'), Card(suit='♦', rank='K'), Card(suit='♥', rank='K')] list_card_discard=[] card_active=NoneError 1: "get_list_action" must return 13 not 0 actions
+
+[91mTest 027[0m: Test JOKER card with swap action [3 point]
+cnt_player=4 phase=<GamePhase.RUNNING: 'running'> cnt_round=0 bool_card_exchanged=True idx_player_started=0 idx_player_active=0 list_player=[PlayerState(name='Player 1', list_card=[Card(suit='', rank='JKR'), Card(suit='♠', rank='K')], list_marble=[Marble(pos=64, is_save=False), Marble(pos=65, is_save=False), Marble(pos=66, is_save=False), Marble(pos=67, is_save=False)]), PlayerState(name='Player 2', list_card=[Card(suit='♠', rank='7'), Card(suit='♦', rank='10'), Card(suit='♣', rank='3'), Card(suit='♠', rank='9'), Card(suit='♠', rank='2'), Card(suit='♣', rank='5')], list_marble=[Marble(pos=72, is_save=False), Marble(pos=73, is_save=False), Marble(pos=74, is_save=False), Marble(pos=75, is_save=False)]), PlayerState(name='Player 3', list_card=[Card(suit='♥', rank='8'), Card(suit='♠', rank='2'), Card(suit='♣', rank='6'), Card(suit='♦', rank='K'), Card(suit='♥', rank='5'), Card(suit='♣', rank='2')], list_marble=[Marble(pos=80, is_save=False), Marble(pos=81, is_save=False), Marble(pos=82, is_save=False), Marble(pos=83, is_save=False)]), PlayerState(name='Player 4', list_card=[Card(suit='♠', rank='10'), Card(suit='♦', rank='J'), Card(suit='♣', rank='8'), Card(suit='♠', rank='8'), Card(suit='♠', rank='A'), Card(suit='♣', rank='2')], list_marble=[Marble(pos=88, is_save=False), Marble(pos=89, is_save=False), Marble(pos=90, is_save=False), Marble(pos=91, is_save=False)])] list_card_draw=[Card(suit='♦', rank='8'), Card(suit='♥', rank='4'), Card(suit='♣', rank='Q'), Card(suit='♥', rank='7'), Card(suit='♠', rank='4'), Card(suit='♣', rank='Q'), Card(suit='♥', rank='7'), Card(suit='♥', rank='J'), Card(suit='♦', rank='7'), Card(suit='♠', rank='10'), Card(suit='♣', rank='4'), Card(suit='♥', rank='9'), Card(suit='♠', rank='5'), Card(suit='♣', rank='A'), Card(suit='♦', rank='Q'), Card(suit='♦', rank='4'), Card(suit='♥', rank='J'), Card(suit='♥', rank='3'), Card(suit='', rank='JKR'), Card(suit='♦', rank='3'), Card(suit='♥', rank='10'), Card(suit='♣', rank='7'), Card(suit='♣', rank='10'), Card(suit='♥', rank='8'), Card(suit='♥', rank='Q'), Card(suit='♠', rank='A'), Card(suit='♥', rank='K'), Card(suit='♥', rank='2'), Card(suit='♠', rank='Q'), Card(suit='♥', rank='2'), Card(suit='♥', rank='10'), Card(suit='♠', rank='7'), Card(suit='♦', rank='J'), Card(suit='♠', rank='5'), Card(suit='♣', rank='J'), Card(suit='♥', rank='4'), Card(suit='♦', rank='6'), Card(suit='♣', rank='A'), Card(suit='♦', rank='9'), Card(suit='♠', rank='3'), Card(suit='♥', rank='6'), Card(suit='♦', rank='2'), Card(suit='♣', rank='6'), Card(suit='♠', rank='K'), Card(suit='♠', rank='6'), Card(suit='♠', rank='9'), Card(suit='♦', rank='K'), Card(suit='♦', rank='A'), Card(suit='♠', rank='8'), Card(suit='♣', rank='K'), Card(suit='♥', rank='6'), Card(suit='♦', rank='5'), Card(suit='♣', rank='10'), Card(suit='♦', rank='2'), Card(suit='', rank='JKR'), Card(suit='♠', rank='K'), Card(suit='', rank='JKR'), Card(suit='♦', rank='4'), Card(suit='♣', rank='4'), Card(suit='♣', rank='3'), Card(suit='♦', rank='10'), Card(suit='♦', rank='Q'), Card(suit='♥', rank='A'), Card(suit='♥', rank='K'), Card(suit='♦', rank='8'), Card(suit='♠', rank='6'), Card(suit='♦', rank='7'), Card(suit='♠', rank='J'), Card(suit='♠', rank='J'), Card(suit='', rank='JKR'), Card(suit='♣', rank='5'), Card(suit='♦', rank='9'), Card(suit='', rank='JKR'), Card(suit='♥', rank='5'), Card(suit='♠', rank='Q'), Card(suit='♥', rank='3'), Card(suit='♥', rank='9'), Card(suit='♦', rank='3'), Card(suit='♦', rank='A'), Card(suit='♥', rank='Q'), Card(suit='♣', rank='K'), Card(suit='♦', rank='5'), Card(suit='♦', rank='6'), Card(suit='♥', rank='A'), Card(suit='♠', rank='4'), Card(suit='♣', rank='9')] list_card_discard=[] card_active=NoneAction: card=Card(suit='', rank='JKR') pos_from=-1 pos_to=-1 card_swap=Card(suit='♥', rank='A')
+cnt_player=4 phase=<GamePhase.RUNNING: 'running'> cnt_round=0 bool_card_exchanged=True idx_player_started=0 idx_player_active=0 list_player=[PlayerState(name='Player 1', list_card=[Card(suit='', rank='JKR'), Card(suit='♠', rank='K')], list_marble=[Marble(pos=64, is_save=False), Marble(pos=65, is_save=False), Marble(pos=66, is_save=False), Marble(pos=67, is_save=False)]), PlayerState(name='Player 2', list_card=[Card(suit='♠', rank='7'), Card(suit='♦', rank='10'), Card(suit='♣', rank='3'), Card(suit='♠', rank='9'), Card(suit='♠', rank='2'), Card(suit='♣', rank='5')], list_marble=[Marble(pos=72, is_save=False), Marble(pos=73, is_save=False), Marble(pos=74, is_save=False), Marble(pos=75, is_save=False)]), PlayerState(name='Player 3', list_card=[Card(suit='♥', rank='8'), Card(suit='♠', rank='2'), Card(suit='♣', rank='6'), Card(suit='♦', rank='K'), Card(suit='♥', rank='5'), Card(suit='♣', rank='2')], list_marble=[Marble(pos=80, is_save=False), Marble(pos=81, is_save=False), Marble(pos=82, is_save=False), Marble(pos=83, is_save=False)]), PlayerState(name='Player 4', list_card=[Card(suit='♠', rank='10'), Card(suit='♦', rank='J'), Card(suit='♣', rank='8'), Card(suit='♠', rank='8'), Card(suit='♠', rank='A'), Card(suit='♣', rank='2')], list_marble=[Marble(pos=88, is_save=False), Marble(pos=89, is_save=False), Marble(pos=90, is_save=False), Marble(pos=91, is_save=False)])] list_card_draw=[Card(suit='♦', rank='8'), Card(suit='♥', rank='4'), Card(suit='♣', rank='Q'), Card(suit='♥', rank='7'), Card(suit='♠', rank='4'), Card(suit='♣', rank='Q'), Card(suit='♥', rank='7'), Card(suit='♥', rank='J'), Card(suit='♦', rank='7'), Card(suit='♠', rank='10'), Card(suit='♣', rank='4'), Card(suit='♥', rank='9'), Card(suit='♠', rank='5'), Card(suit='♣', rank='A'), Card(suit='♦', rank='Q'), Card(suit='♦', rank='4'), Card(suit='♥', rank='J'), Card(suit='♥', rank='3'), Card(suit='', rank='JKR'), Card(suit='♦', rank='3'), Card(suit='♥', rank='10'), Card(suit='♣', rank='7'), Card(suit='♣', rank='10'), Card(suit='♥', rank='8'), Card(suit='♥', rank='Q'), Card(suit='♠', rank='A'), Card(suit='♥', rank='K'), Card(suit='♥', rank='2'), Card(suit='♠', rank='Q'), Card(suit='♥', rank='2'), Card(suit='♥', rank='10'), Card(suit='♠', rank='7'), Card(suit='♦', rank='J'), Card(suit='♠', rank='5'), Card(suit='♣', rank='J'), Card(suit='♥', rank='4'), Card(suit='♦', rank='6'), Card(suit='♣', rank='A'), Card(suit='♦', rank='9'), Card(suit='♠', rank='3'), Card(suit='♥', rank='6'), Card(suit='♦', rank='2'), Card(suit='♣', rank='6'), Card(suit='♠', rank='K'), Card(suit='♠', rank='6'), Card(suit='♠', rank='9'), Card(suit='♦', rank='K'), Card(suit='♦', rank='A'), Card(suit='♠', rank='8'), Card(suit='♣', rank='K'), Card(suit='♥', rank='6'), Card(suit='♦', rank='5'), Card(suit='♣', rank='10'), Card(suit='♦', rank='2'), Card(suit='', rank='JKR'), Card(suit='♠', rank='K'), Card(suit='', rank='JKR'), Card(suit='♦', rank='4'), Card(suit='♣', rank='4'), Card(suit='♣', rank='3'), Card(suit='♦', rank='10'), Card(suit='♦', rank='Q'), Card(suit='♥', rank='A'), Card(suit='♥', rank='K'), Card(suit='♦', rank='8'), Card(suit='♠', rank='6'), Card(suit='♦', rank='7'), Card(suit='♠', rank='J'), Card(suit='♠', rank='J'), Card(suit='', rank='JKR'), Card(suit='♣', rank='5'), Card(suit='♦', rank='9'), Card(suit='', rank='JKR'), Card(suit='♥', rank='5'), Card(suit='♠', rank='Q'), Card(suit='♥', rank='3'), Card(suit='♥', rank='9'), Card(suit='♦', rank='3'), Card(suit='♦', rank='A'), Card(suit='♥', rank='Q'), Card(suit='♣', rank='K'), Card(suit='♦', rank='5'), Card(suit='♦', rank='6'), Card(suit='♥', rank='A'), Card(suit='♠', rank='4'), Card(suit='♣', rank='9')] list_card_discard=[] card_active=NoneError 1: "card_active" must be set to "suit='♥' rank='A'" after JKR was played for other card.
+
+[91mTest 028[0m: Test with two JOKER cards [1 point]
+cnt_player=4 phase=<GamePhase.RUNNING: 'running'> cnt_round=0 bool_card_exchanged=True idx_player_started=0 idx_player_active=0 list_player=[PlayerState(name='Player 1', list_card=[Card(suit='', rank='JKR'), Card(suit='', rank='JKR')], list_marble=[Marble(pos=64, is_save=False), Marble(pos=65, is_save=False), Marble(pos=66, is_save=False), Marble(pos=67, is_save=False)]), PlayerState(name='Player 2', list_card=[Card(suit='♦', rank='2'), Card(suit='♣', rank='7'), Card(suit='♣', rank='2'), Card(suit='♥', rank='2'), Card(suit='♣', rank='5'), Card(suit='♦', rank='10')], list_marble=[Marble(pos=72, is_save=False), Marble(pos=73, is_save=False), Marble(pos=74, is_save=False), Marble(pos=75, is_save=False)]), PlayerState(name='Player 3', list_card=[Card(suit='♣', rank='10'), Card(suit='♦', rank='A'), Card(suit='♠', rank='3'), Card(suit='♠', rank='5'), Card(suit='♥', rank='Q'), Card(suit='♣', rank='6')], list_marble=[Marble(pos=80, is_save=False), Marble(pos=81, is_save=False), Marble(pos=82, is_save=False), Marble(pos=83, is_save=False)]), PlayerState(name='Player 4', list_card=[Card(suit='♦', rank='4'), Card(suit='♣', rank='4'), Card(suit='♣', rank='5'), Card(suit='♠', rank='Q'), Card(suit='♥', rank='8'), Card(suit='♠', rank='9')], list_marble=[Marble(pos=88, is_save=False), Marble(pos=89, is_save=False), Marble(pos=90, is_save=False), Marble(pos=91, is_save=False)])] list_card_draw=[Card(suit='♠', rank='3'), Card(suit='♠', rank='2'), Card(suit='♣', rank='A'), Card(suit='♥', rank='9'), Card(suit='♥', rank='K'), Card(suit='♠', rank='9'), Card(suit='♦', rank='8'), Card(suit='♠', rank='A'), Card(suit='♥', rank='3'), Card(suit='♠', rank='Q'), Card(suit='♥', rank='5'), Card(suit='♣', rank='J'), Card(suit='', rank='JKR'), Card(suit='♣', rank='2'), Card(suit='♦', rank='6'), Card(suit='♣', rank='3'), Card(suit='♦', rank='4'), Card(suit='♥', rank='Q'), Card(suit='♥', rank='5'), Card(suit='♥', rank='K'), Card(suit='♦', rank='3'), Card(suit='♠', rank='J'), Card(suit='♣', rank='3'), Card(suit='', rank='JKR'), Card(suit='♥', rank='J'), Card(suit='♦', rank='9'), Card(suit='♦', rank='Q'), Card(suit='♣', rank='J'), Card(suit='♠', rank='7'), Card(suit='♥', rank='4'), Card(suit='♥', rank='J'), Card(suit='♦', rank='K'), Card(suit='♣', rank='7'), Card(suit='♦', rank='5'), Card(suit='♠', rank='K'), Card(suit='♦', rank='6'), Card(suit='♠', rank='A'), Card(suit='♥', rank='3'), Card(suit='♠', rank='8'), Card(suit='♦', rank='10'), Card(suit='♣', rank='K'), Card(suit='♦', rank='K'), Card(suit='♠', rank='4'), Card(suit='♦', rank='8'), Card(suit='♦', rank='Q'), Card(suit='♣', rank='8'), Card(suit='♣', rank='9'), Card(suit='♠', rank='6'), Card(suit='♦', rank='5'), Card(suit='♥', rank='10'), Card(suit='♥', rank='2'), Card(suit='♥', rank='4'), Card(suit='', rank='JKR'), Card(suit='♣', rank='Q'), Card(suit='♥', rank='8'), Card(suit='♣', rank='A'), Card(suit='♣', rank='4'), Card(suit='♦', rank='J'), Card(suit='♠', rank='5'), Card(suit='♥', rank='9'), Card(suit='♣', rank='6'), Card(suit='♥', rank='A'), Card(suit='♥', rank='6'), Card(suit='♣', rank='9'), Card(suit='♠', rank='10'), Card(suit='♠', rank='10'), Card(suit='♠', rank='4'), Card(suit='♠', rank='6'), Card(suit='♥', rank='7'), Card(suit='', rank='JKR'), Card(suit='♦', rank='3'), Card(suit='♦', rank='2'), Card(suit='♣', rank='K'), Card(suit='♦', rank='7'), Card(suit='♠', rank='J'), Card(suit='♠', rank='7'), Card(suit='♥', rank='10'), Card(suit='♥', rank='6'), Card(suit='', rank='JKR'), Card(suit='♦', rank='J'), Card(suit='♦', rank='9'), Card(suit='♠', rank='8'), Card(suit='♠', rank='2'), Card(suit='♣', rank='8'), Card(suit='', rank='JKR'), Card(suit='♠', rank='K')] list_card_discard=[] card_active=NoneAction: card=Card(suit='', rank='JKR') pos_from=-1 pos_to=-1 card_swap=Card(suit='♥', rank='A')
+cnt_player=4 phase=<GamePhase.RUNNING: 'running'> cnt_round=0 bool_card_exchanged=True idx_player_started=0 idx_player_active=0 list_player=[PlayerState(name='Player 1', list_card=[Card(suit='', rank='JKR'), Card(suit='', rank='JKR')], list_marble=[Marble(pos=64, is_save=False), Marble(pos=65, is_save=False), Marble(pos=66, is_save=False), Marble(pos=67, is_save=False)]), PlayerState(name='Player 2', list_card=[Card(suit='♦', rank='2'), Card(suit='♣', rank='7'), Card(suit='♣', rank='2'), Card(suit='♥', rank='2'), Card(suit='♣', rank='5'), Card(suit='♦', rank='10')], list_marble=[Marble(pos=72, is_save=False), Marble(pos=73, is_save=False), Marble(pos=74, is_save=False), Marble(pos=75, is_save=False)]), PlayerState(name='Player 3', list_card=[Card(suit='♣', rank='10'), Card(suit='♦', rank='A'), Card(suit='♠', rank='3'), Card(suit='♠', rank='5'), Card(suit='♥', rank='Q'), Card(suit='♣', rank='6')], list_marble=[Marble(pos=80, is_save=False), Marble(pos=81, is_save=False), Marble(pos=82, is_save=False), Marble(pos=83, is_save=False)]), PlayerState(name='Player 4', list_card=[Card(suit='♦', rank='4'), Card(suit='♣', rank='4'), Card(suit='♣', rank='5'), Card(suit='♠', rank='Q'), Card(suit='♥', rank='8'), Card(suit='♠', rank='9')], list_marble=[Marble(pos=88, is_save=False), Marble(pos=89, is_save=False), Marble(pos=90, is_save=False), Marble(pos=91, is_save=False)])] list_card_draw=[Card(suit='♠', rank='3'), Card(suit='♠', rank='2'), Card(suit='♣', rank='A'), Card(suit='♥', rank='9'), Card(suit='♥', rank='K'), Card(suit='♠', rank='9'), Card(suit='♦', rank='8'), Card(suit='♠', rank='A'), Card(suit='♥', rank='3'), Card(suit='♠', rank='Q'), Card(suit='♥', rank='5'), Card(suit='♣', rank='J'), Card(suit='', rank='JKR'), Card(suit='♣', rank='2'), Card(suit='♦', rank='6'), Card(suit='♣', rank='3'), Card(suit='♦', rank='4'), Card(suit='♥', rank='Q'), Card(suit='♥', rank='5'), Card(suit='♥', rank='K'), Card(suit='♦', rank='3'), Card(suit='♠', rank='J'), Card(suit='♣', rank='3'), Card(suit='', rank='JKR'), Card(suit='♥', rank='J'), Card(suit='♦', rank='9'), Card(suit='♦', rank='Q'), Card(suit='♣', rank='J'), Card(suit='♠', rank='7'), Card(suit='♥', rank='4'), Card(suit='♥', rank='J'), Card(suit='♦', rank='K'), Card(suit='♣', rank='7'), Card(suit='♦', rank='5'), Card(suit='♠', rank='K'), Card(suit='♦', rank='6'), Card(suit='♠', rank='A'), Card(suit='♥', rank='3'), Card(suit='♠', rank='8'), Card(suit='♦', rank='10'), Card(suit='♣', rank='K'), Card(suit='♦', rank='K'), Card(suit='♠', rank='4'), Card(suit='♦', rank='8'), Card(suit='♦', rank='Q'), Card(suit='♣', rank='8'), Card(suit='♣', rank='9'), Card(suit='♠', rank='6'), Card(suit='♦', rank='5'), Card(suit='♥', rank='10'), Card(suit='♥', rank='2'), Card(suit='♥', rank='4'), Card(suit='', rank='JKR'), Card(suit='♣', rank='Q'), Card(suit='♥', rank='8'), Card(suit='♣', rank='A'), Card(suit='♣', rank='4'), Card(suit='♦', rank='J'), Card(suit='♠', rank='5'), Card(suit='♥', rank='9'), Card(suit='♣', rank='6'), Card(suit='♥', rank='A'), Card(suit='♥', rank='6'), Card(suit='♣', rank='9'), Card(suit='♠', rank='10'), Card(suit='♠', rank='10'), Card(suit='♠', rank='4'), Card(suit='♠', rank='6'), Card(suit='♥', rank='7'), Card(suit='', rank='JKR'), Card(suit='♦', rank='3'), Card(suit='♦', rank='2'), Card(suit='♣', rank='K'), Card(suit='♦', rank='7'), Card(suit='♠', rank='J'), Card(suit='♠', rank='7'), Card(suit='♥', rank='10'), Card(suit='♥', rank='6'), Card(suit='', rank='JKR'), Card(suit='♦', rank='J'), Card(suit='♦', rank='9'), Card(suit='♠', rank='8'), Card(suit='♠', rank='2'), Card(suit='♣', rank='8'), Card(suit='', rank='JKR'), Card(suit='♠', rank='K')] list_card_discard=[] card_active=NoneError: Only one JOKER card should be replaced.
+
+[91mTest 029[0m: Test move with card SEVEN from start [5 point]
+Traceback (most recent call last):
+  File "/Users/daniellelott/Documents/Masters/devops/devops_git/devops_project/benchmark/benchmark.py", line 51, in run_tests
+    function()
+  File "/Users/daniellelott/Documents/Masters/devops/devops_git/devops_project/benchmark/benchmark_dog.py", line 807, in test_move_with_SEVEN_multiple_steps_1
+    action = Action(card=card, pos_from=pos_from, pos_to=pos_to)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/daniellelott/Documents/Masters/devops/.venv/lib/python3.11/site-packages/pydantic/main.py", line 212, in __init__
+    validated_self = self.__pydantic_validator__.validate_python(data, self_instance=self)
+                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+pydantic_core._pydantic_core.ValidationError: 1 validation error for Action
+card_swap
+  Field required [type=missing, input_value={'card': Card(suit='♣',...s_from': 0, 'pos_to': 1}, input_type=dict]
+    For further information visit https://errors.pydantic.dev/2.9/v/missing
+
+
+[91mTest 030[0m: Test move with card SEVEN with multiple marbles [5 point]
+Traceback (most recent call last):
+  File "/Users/daniellelott/Documents/Masters/devops/devops_git/devops_project/benchmark/benchmark.py", line 51, in run_tests
+    function()
+  File "/Users/daniellelott/Documents/Masters/devops/devops_git/devops_project/benchmark/benchmark_dog.py", line 887, in test_move_with_SEVEN_multiple_steps_2
+    action = Action(card=card, pos_from=pos_from, pos_to=pos_to)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/daniellelott/Documents/Masters/devops/.venv/lib/python3.11/site-packages/pydantic/main.py", line 212, in __init__
+    validated_self = self.__pydantic_validator__.validate_python(data, self_instance=self)
+                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+pydantic_core._pydantic_core.ValidationError: 1 validation error for Action
+card_swap
+  Field required [type=missing, input_value={'card': Card(suit='♣',...s_from': 0, 'pos_to': 1}, input_type=dict]
+    For further information visit https://errors.pydantic.dev/2.9/v/missing
+
+
+[91mTest 031[0m: Test move with card SEVEN and kick out oponents [1 point]
+Traceback (most recent call last):
+  File "/Users/daniellelott/Documents/Masters/devops/devops_git/devops_project/benchmark/benchmark.py", line 51, in run_tests
+    function()
+  File "/Users/daniellelott/Documents/Masters/devops/devops_git/devops_project/benchmark/benchmark_dog.py", line 949, in test_move_with_SEVEN_multiple_steps_3
+    action = Action(card=card, pos_from=pos_from, pos_to=pos_to)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/daniellelott/Documents/Masters/devops/.venv/lib/python3.11/site-packages/pydantic/main.py", line 212, in __init__
+    validated_self = self.__pydantic_validator__.validate_python(data, self_instance=self)
+                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+pydantic_core._pydantic_core.ValidationError: 1 validation error for Action
+card_swap
+  Field required [type=missing, input_value={'card': Card(suit='♣',...s_from': 0, 'pos_to': 1}, input_type=dict]
+    For further information visit https://errors.pydantic.dev/2.9/v/missing
+
+
+[91mTest 032[0m: Test move with card SEVEN and kick out own marbles [1 point]
+Traceback (most recent call last):
+  File "/Users/daniellelott/Documents/Masters/devops/devops_git/devops_project/benchmark/benchmark.py", line 51, in run_tests
+    function()
+  File "/Users/daniellelott/Documents/Masters/devops/devops_git/devops_project/benchmark/benchmark_dog.py", line 1003, in test_move_with_SEVEN_multiple_steps_4
+    action = Action(card=card, pos_from=pos_from, pos_to=pos_to)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/daniellelott/Documents/Masters/devops/.venv/lib/python3.11/site-packages/pydantic/main.py", line 212, in __init__
+    validated_self = self.__pydantic_validator__.validate_python(data, self_instance=self)
+                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+pydantic_core._pydantic_core.ValidationError: 1 validation error for Action
+card_swap
+  Field required [type=missing, input_value={'card': Card(suit='♣',...s_from': 0, 'pos_to': 1}, input_type=dict]
+    For further information visit https://errors.pydantic.dev/2.9/v/missing
+
+
+[91mTest 033[0m: Test move with card SEVEN and can not play all steps [10 point]
+Traceback (most recent call last):
+  File "/Users/daniellelott/Documents/Masters/devops/devops_git/devops_project/benchmark/benchmark.py", line 51, in run_tests
+    function()
+  File "/Users/daniellelott/Documents/Masters/devops/devops_git/devops_project/benchmark/benchmark_dog.py", line 1064, in test_move_with_SEVEN_multiple_steps_5
+    action = Action(card=card, pos_from=pos_from, pos_to=pos_to)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/daniellelott/Documents/Masters/devops/.venv/lib/python3.11/site-packages/pydantic/main.py", line 212, in __init__
+    validated_self = self.__pydantic_validator__.validate_python(data, self_instance=self)
+                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+pydantic_core._pydantic_core.ValidationError: 1 validation error for Action
+card_swap
+  Field required [type=missing, input_value={'card': Card(suit='♣',...from': 12, 'pos_to': 13}, input_type=dict]
+    For further information visit https://errors.pydantic.dev/2.9/v/missing
+
+
+[91mTest 034[0m: Test move with card SEVEN into finish [5 point]
+Traceback (most recent call last):
+  File "/Users/daniellelott/Documents/Masters/devops/devops_git/devops_project/benchmark/benchmark.py", line 51, in run_tests
+    function()
+  File "/Users/daniellelott/Documents/Masters/devops/devops_git/devops_project/benchmark/benchmark_dog.py", line 1142, in test_move_with_SEVEN_multiple_steps_6
+    action = Action(card=card, pos_from=pos_from, pos_to=pos_to)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/daniellelott/Documents/Masters/devops/.venv/lib/python3.11/site-packages/pydantic/main.py", line 212, in __init__
+    validated_self = self.__pydantic_validator__.validate_python(data, self_instance=self)
+                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+pydantic_core._pydantic_core.ValidationError: 1 validation error for Action
+card_swap
+  Field required [type=missing, input_value={'card': Card(suit='♣',...from': 13, 'pos_to': 77}, input_type=dict]
+    For further information visit https://errors.pydantic.dev/2.9/v/missing
+
+
+[91mTest 035[0m: Test move with card SEVEN into finish [5 point]
+Traceback (most recent call last):
+  File "/Users/daniellelott/Documents/Masters/devops/devops_git/devops_project/benchmark/benchmark.py", line 51, in run_tests
+    function()
+  File "/Users/daniellelott/Documents/Masters/devops/devops_git/devops_project/benchmark/benchmark_dog.py", line 1207, in test_move_with_SEVEN_multiple_steps_7
+    action = Action(card=card, pos_from=pos_from, pos_to=pos_to)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/daniellelott/Documents/Masters/devops/.venv/lib/python3.11/site-packages/pydantic/main.py", line 212, in __init__
+    validated_self = self.__pydantic_validator__.validate_python(data, self_instance=self)
+                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+pydantic_core._pydantic_core.ValidationError: 1 validation error for Action
+card_swap
+  Field required [type=missing, input_value={'card': Card(suit='♣',...from': 12, 'pos_to': 76}, input_type=dict]
+    For further information visit https://errors.pydantic.dev/2.9/v/missing
+
+
+[91mTest 036[0m: Test to overtake own marble on save start [1 point]
+Traceback (most recent call last):
+  File "/Users/daniellelott/Documents/Masters/devops/devops_git/devops_project/benchmark/benchmark.py", line 51, in run_tests
+    function()
+  File "/Users/daniellelott/Documents/Masters/devops/devops_git/devops_project/benchmark/benchmark_dog.py", line 1241, in test_overtake_save_marble_1
+    Action(card=Card(suit='♣', rank='5'), pos_from=0, pos_to=5)
+  File "/Users/daniellelott/Documents/Masters/devops/.venv/lib/python3.11/site-packages/pydantic/main.py", line 212, in __init__
+    validated_self = self.__pydantic_validator__.validate_python(data, self_instance=self)
+                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+pydantic_core._pydantic_core.ValidationError: 1 validation error for Action
+card_swap
+  Field required [type=missing, input_value={'card': Card(suit='♣',...s_from': 0, 'pos_to': 5}, input_type=dict]
+    For further information visit https://errors.pydantic.dev/2.9/v/missing
+
+
+[92mTest 037[0m: Test to overtake oponents marble on save start [1 point]
+
+[91mTest 038[0m: Test send home with simple cards from start [1 point]
+Traceback (most recent call last):
+  File "/Users/daniellelott/Documents/Masters/devops/devops_git/devops_project/benchmark/benchmark.py", line 51, in run_tests
+    function()
+  File "/Users/daniellelott/Documents/Masters/devops/devops_git/devops_project/benchmark/benchmark_dog.py", line 1336, in test_send_home_with_simple_cards
+    self.send_home_test(pos_from=0, list_test=list_test)
+  File "/Users/daniellelott/Documents/Masters/devops/devops_git/devops_project/benchmark/benchmark_dog.py", line 2135, in send_home_test
+    self.send_home_marble(card=card, pos_from=pos_from, pos_to=pos_to, is_own_marble=is_own_marble)
+  File "/Users/daniellelott/Documents/Masters/devops/devops_git/devops_project/benchmark/benchmark_dog.py", line 2098, in send_home_marble
+    action = Action(card=card, pos_from=pos_from, pos_to=pos_to)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/daniellelott/Documents/Masters/devops/.venv/lib/python3.11/site-packages/pydantic/main.py", line 212, in __init__
+    validated_self = self.__pydantic_validator__.validate_python(data, self_instance=self)
+                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+pydantic_core._pydantic_core.ValidationError: 1 validation error for Action
+card_swap
+  Field required [type=missing, input_value={'card': Card(suit='♣',...s_from': 0, 'pos_to': 1}, input_type=dict]
+    For further information visit https://errors.pydantic.dev/2.9/v/missing
+
+
+[91mTest 039[0m: Test send home with card SEVEN from start [1 point]
+Traceback (most recent call last):
+  File "/Users/daniellelott/Documents/Masters/devops/devops_git/devops_project/benchmark/benchmark.py", line 51, in run_tests
+    function()
+  File "/Users/daniellelott/Documents/Masters/devops/devops_git/devops_project/benchmark/benchmark_dog.py", line 1347, in test_send_home_with_SEVEN_from_start
+    self.send_home_test(pos_from=0, list_test=list_test)
+  File "/Users/daniellelott/Documents/Masters/devops/devops_git/devops_project/benchmark/benchmark_dog.py", line 2135, in send_home_test
+    self.send_home_marble(card=card, pos_from=pos_from, pos_to=pos_to, is_own_marble=is_own_marble)
+  File "/Users/daniellelott/Documents/Masters/devops/devops_git/devops_project/benchmark/benchmark_dog.py", line 2098, in send_home_marble
+    action = Action(card=card, pos_from=pos_from, pos_to=pos_to)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/daniellelott/Documents/Masters/devops/.venv/lib/python3.11/site-packages/pydantic/main.py", line 212, in __init__
+    validated_self = self.__pydantic_validator__.validate_python(data, self_instance=self)
+                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+pydantic_core._pydantic_core.ValidationError: 1 validation error for Action
+card_swap
+  Field required [type=missing, input_value={'card': Card(suit='♣',...s_from': 0, 'pos_to': 1}, input_type=dict]
+    For further information visit https://errors.pydantic.dev/2.9/v/missing
+
+
+[91mTest 040[0m: Test overtake with simple cards from start [1 point]
+Traceback (most recent call last):
+  File "/Users/daniellelott/Documents/Masters/devops/devops_git/devops_project/benchmark/benchmark.py", line 51, in run_tests
+    function()
+  File "/Users/daniellelott/Documents/Masters/devops/devops_git/devops_project/benchmark/benchmark_dog.py", line 1398, in test_overtake_with_simple_cards
+    self.overtake_test(pos_from=0, list_test=list_test)
+  File "/Users/daniellelott/Documents/Masters/devops/devops_git/devops_project/benchmark/benchmark_dog.py", line 2127, in overtake_test
+    self.overtake_marble(card=card, pos_from=pos_from, pos_to=pos_to)
+  File "/Users/daniellelott/Documents/Masters/devops/devops_git/devops_project/benchmark/benchmark_dog.py", line 2063, in overtake_marble
+    action = Action(card=card, pos_from=pos_from, pos_to=pos_to)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/daniellelott/Documents/Masters/devops/.venv/lib/python3.11/site-packages/pydantic/main.py", line 212, in __init__
+    validated_self = self.__pydantic_validator__.validate_python(data, self_instance=self)
+                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+pydantic_core._pydantic_core.ValidationError: 1 validation error for Action
+card_swap
+  Field required [type=missing, input_value={'card': Card(suit='♣',..._from': 0, 'pos_to': 11}, input_type=dict]
+    For further information visit https://errors.pydantic.dev/2.9/v/missing
+
+
+[91mTest 041[0m: Test move to finish with simple cards [5 point]
+Traceback (most recent call last):
+  File "/Users/daniellelott/Documents/Masters/devops/devops_git/devops_project/benchmark/benchmark.py", line 51, in run_tests
+    function()
+  File "/Users/daniellelott/Documents/Masters/devops/devops_git/devops_project/benchmark/benchmark_dog.py", line 1465, in test_move_to_empty_finish_with_simple_cards
+    self.move_marble_to_finish(card=card, pos_from=pos_from, pos_to=pos_to, idx_player=idx_player, steps=steps)
+  File "/Users/daniellelott/Documents/Masters/devops/devops_git/devops_project/benchmark/benchmark_dog.py", line 1979, in move_marble_to_finish
+    action = Action(card=card, pos_from=pos_from, pos_to=pos_to)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/daniellelott/Documents/Masters/devops/.venv/lib/python3.11/site-packages/pydantic/main.py", line 212, in __init__
+    validated_self = self.__pydantic_validator__.validate_python(data, self_instance=self)
+                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+pydantic_core._pydantic_core.ValidationError: 1 validation error for Action
+card_swap
+  Field required [type=missing, input_value={'card': Card(suit='♣',..._from': 0, 'pos_to': 68}, input_type=dict]
+    For further information visit https://errors.pydantic.dev/2.9/v/missing
+
+
+[91mTest 042[0m: Test that can not move to finish with negative steps [1 point]
+Traceback (most recent call last):
+  File "/Users/daniellelott/Documents/Masters/devops/devops_git/devops_project/benchmark/benchmark.py", line 51, in run_tests
+    function()
+  File "/Users/daniellelott/Documents/Masters/devops/devops_git/devops_project/benchmark/benchmark_dog.py", line 1488, in test_move_to_empty_finish_with_negative_steps
+    self.move_marble_to_finish(card=card, pos_from=pos_from, pos_to=pos_to, idx_player=idx_player, steps=steps)
+  File "/Users/daniellelott/Documents/Masters/devops/devops_git/devops_project/benchmark/benchmark_dog.py", line 1979, in move_marble_to_finish
+    action = Action(card=card, pos_from=pos_from, pos_to=pos_to)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/daniellelott/Documents/Masters/devops/.venv/lib/python3.11/site-packages/pydantic/main.py", line 212, in __init__
+    validated_self = self.__pydantic_validator__.validate_python(data, self_instance=self)
+                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+pydantic_core._pydantic_core.ValidationError: 1 validation error for Action
+card_swap
+  Field required [type=missing, input_value={'card': Card(suit='♣',..._from': 3, 'pos_to': 68}, input_type=dict]
+    For further information visit https://errors.pydantic.dev/2.9/v/missing
+
+
+[91mTest 043[0m: Test not overtaking in finish [5 point]
+Traceback (most recent call last):
+  File "/Users/daniellelott/Documents/Masters/devops/devops_git/devops_project/benchmark/benchmark.py", line 51, in run_tests
+    function()
+  File "/Users/daniellelott/Documents/Masters/devops/devops_git/devops_project/benchmark/benchmark_dog.py", line 1559, in test_not_overtaking_in_finish
+    self.move_marble_to_blocked_finish(card=card, pos_from=pos_from, pos_to=pos_to, idx_player=idx_player)
+  File "/Users/daniellelott/Documents/Masters/devops/devops_git/devops_project/benchmark/benchmark_dog.py", line 2033, in move_marble_to_blocked_finish
+    action = Action(card=card, pos_from=pos_from, pos_to=pos_to - offset)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/daniellelott/Documents/Masters/devops/.venv/lib/python3.11/site-packages/pydantic/main.py", line 212, in __init__
+    validated_self = self.__pydantic_validator__.validate_python(data, self_instance=self)
+                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+pydantic_core._pydantic_core.ValidationError: 1 validation error for Action
+card_swap
+  Field required [type=missing, input_value={'card': Card(suit='♣',...from': 68, 'pos_to': 69}, input_type=dict]
+    For further information visit https://errors.pydantic.dev/2.9/v/missing
+
+
+[91mTest 044[0m: Test card exchange actions at beginning of round [1 point]
+Traceback (most recent call last):
+  File "/Users/daniellelott/Documents/Masters/devops/devops_git/devops_project/benchmark/benchmark.py", line 51, in run_tests
+    function()
+  File "/Users/daniellelott/Documents/Masters/devops/devops_git/devops_project/benchmark/benchmark_dog.py", line 1579, in test_card_exchange_at_beginning_of_round_1
+    action = Action(card=card, pos_from=-1, pos_to=-1)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/daniellelott/Documents/Masters/devops/.venv/lib/python3.11/site-packages/pydantic/main.py", line 212, in __init__
+    validated_self = self.__pydantic_validator__.validate_python(data, self_instance=self)
+                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+pydantic_core._pydantic_core.ValidationError: 1 validation error for Action
+card_swap
+  Field required [type=missing, input_value={'card': Card(suit='♠',...from': -1, 'pos_to': -1}, input_type=dict]
+    For further information visit https://errors.pydantic.dev/2.9/v/missing
+
+
+[91mTest 045[0m: Test card exchange result at beginning of round [1 point]
+Traceback (most recent call last):
+  File "/Users/daniellelott/Documents/Masters/devops/devops_git/devops_project/benchmark/benchmark.py", line 51, in run_tests
+    function()
+  File "/Users/daniellelott/Documents/Masters/devops/devops_git/devops_project/benchmark/benchmark_dog.py", line 1608, in test_card_exchange_at_beginning_of_round_2
+    action = Action(card=card, pos_from=-1, pos_to=-1)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/daniellelott/Documents/Masters/devops/.venv/lib/python3.11/site-packages/pydantic/main.py", line 212, in __init__
+    validated_self = self.__pydantic_validator__.validate_python(data, self_instance=self)
+                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+pydantic_core._pydantic_core.ValidationError: 1 validation error for Action
+card_swap
+  Field required [type=missing, input_value={'card': Card(suit='♣',...from': -1, 'pos_to': -1}, input_type=dict]
+    For further information visit https://errors.pydantic.dev/2.9/v/missing
+
+
+[92mTest 046[0m: Test number of cards dealt in round 1 [1 point]
+
+[91mTest 047[0m: Test number of cards dealt in round 2 [1 point]
+cnt_player=4 phase=<GamePhase.RUNNING: 'running'> cnt_round=1 bool_card_exchanged=True idx_player_started=0 idx_player_active=0 list_player=[PlayerState(name='Player 1', list_card=[], list_marble=[Marble(pos=64, is_save=False), Marble(pos=65, is_save=False), Marble(pos=66, is_save=False), Marble(pos=67, is_save=False)]), PlayerState(name='Player 2', list_card=[], list_marble=[Marble(pos=72, is_save=False), Marble(pos=73, is_save=False), Marble(pos=74, is_save=False), Marble(pos=75, is_save=False)]), PlayerState(name='Player 3', list_card=[], list_marble=[Marble(pos=80, is_save=False), Marble(pos=81, is_save=False), Marble(pos=82, is_save=False), Marble(pos=83, is_save=False)]), PlayerState(name='Player 4', list_card=[], list_marble=[Marble(pos=88, is_save=False), Marble(pos=89, is_save=False), Marble(pos=90, is_save=False), Marble(pos=91, is_save=False)])] list_card_draw=[Card(suit='', rank='JKR'), Card(suit='♣', rank='8'), Card(suit='♥', rank='6'), Card(suit='♥', rank='8'), Card(suit='♣', rank='6'), Card(suit='♣', rank='Q'), Card(suit='♣', rank='J'), Card(suit='♣', rank='10'), Card(suit='♣', rank='Q'), Card(suit='♦', rank='4'), Card(suit='♥', rank='6'), Card(suit='♦', rank='3'), Card(suit='♠', rank='8'), Card(suit='♣', rank='A'), Card(suit='♣', rank='6'), Card(suit='♣', rank='2'), Card(suit='♥', rank='K'), Card(suit='♥', rank='A'), Card(suit='♠', rank='7'), Card(suit='♥', rank='2'), Card(suit='♠', rank='7'), Card(suit='♥', rank='5'), Card(suit='♦', rank='8'), Card(suit='♣', rank='5'), Card(suit='♦', rank='2'), Card(suit='♦', rank='6'), Card(suit='♠', rank='K'), Card(suit='♣', rank='J'), Card(suit='♥', rank='K'), Card(suit='♠', rank='Q'), Card(suit='♠', rank='J'), Card(suit='♣', rank='5'), Card(suit='♠', rank='J'), Card(suit='♠', rank='10'), Card(suit='♣', rank='2'), Card(suit='', rank='JKR'), Card(suit='♥', rank='10'), Card(suit='♣', rank='7'), Card(suit='♥', rank='J'), Card(suit='♠', rank='A'), Card(suit='♦', rank='4'), Card(suit='♣', rank='9'), Card(suit='♦', rank='J'), Card(suit='♥', rank='10'), Card(suit='♥', rank='5'), Card(suit='♠', rank='4'), Card(suit='♥', rank='9'), Card(suit='♠', rank='Q'), Card(suit='♠', rank='8'), Card(suit='♥', rank='3'), Card(suit='♠', rank='9'), Card(suit='♥', rank='J'), Card(suit='♦', rank='8'), Card(suit='', rank='JKR'), Card(suit='♥', rank='2'), Card(suit='♠', rank='K'), Card(suit='♣', rank='K'), Card(suit='♥', rank='7'), Card(suit='♠', rank='5'), Card(suit='♦', rank='Q'), Card(suit='♦', rank='5'), Card(suit='♣', rank='4'), Card(suit='♦', rank='7'), Card(suit='♣', rank='7'), Card(suit='♥', rank='4'), Card(suit='♠', rank='3'), Card(suit='♦', rank='A'), Card(suit='♥', rank='3'), Card(suit='♠', rank='6'), Card(suit='♦', rank='K'), Card(suit='', rank='JKR'), Card(suit='♣', rank='3'), Card(suit='♠', rank='A'), Card(suit='♣', rank='A'), Card(suit='♣', rank='K'), Card(suit='♦', rank='Q'), Card(suit='♦', rank='10'), Card(suit='♦', rank='3'), Card(suit='♣', rank='10'), Card(suit='♥', rank='A'), Card(suit='♥', rank='8'), Card(suit='♠', rank='2'), Card(suit='', rank='JKR'), Card(suit='♠', rank='4'), Card(suit='♦', rank='K'), Card(suit='♣', rank='8')] list_card_discard=[] card_active=NoneError: Expected 5 cards, found 0 cards.
+
+[91mTest 048[0m: Test number of cards dealt in round 5 [1 point]
+cnt_player=4 phase=<GamePhase.RUNNING: 'running'> cnt_round=4 bool_card_exchanged=True idx_player_started=0 idx_player_active=0 list_player=[PlayerState(name='Player 1', list_card=[], list_marble=[Marble(pos=64, is_save=False), Marble(pos=65, is_save=False), Marble(pos=66, is_save=False), Marble(pos=67, is_save=False)]), PlayerState(name='Player 2', list_card=[], list_marble=[Marble(pos=72, is_save=False), Marble(pos=73, is_save=False), Marble(pos=74, is_save=False), Marble(pos=75, is_save=False)]), PlayerState(name='Player 3', list_card=[], list_marble=[Marble(pos=80, is_save=False), Marble(pos=81, is_save=False), Marble(pos=82, is_save=False), Marble(pos=83, is_save=False)]), PlayerState(name='Player 4', list_card=[], list_marble=[Marble(pos=88, is_save=False), Marble(pos=89, is_save=False), Marble(pos=90, is_save=False), Marble(pos=91, is_save=False)])] list_card_draw=[Card(suit='♥', rank='4'), Card(suit='♦', rank='10'), Card(suit='', rank='JKR'), Card(suit='♦', rank='8'), Card(suit='♠', rank='5'), Card(suit='♣', rank='A'), Card(suit='♥', rank='6'), Card(suit='♣', rank='10'), Card(suit='♦', rank='A'), Card(suit='♥', rank='5'), Card(suit='♠', rank='J'), Card(suit='♠', rank='K'), Card(suit='♠', rank='A'), Card(suit='♥', rank='K'), Card(suit='', rank='JKR'), Card(suit='♣', rank='4'), Card(suit='♠', rank='J'), Card(suit='♥', rank='3'), Card(suit='♠', rank='5'), Card(suit='♥', rank='J'), Card(suit='♦', rank='5'), Card(suit='♦', rank='2'), Card(suit='♣', rank='J'), Card(suit='♦', rank='8'), Card(suit='♠', rank='4'), Card(suit='♠', rank='4'), Card(suit='♠', rank='9'), Card(suit='♥', rank='7'), Card(suit='♠', rank='7'), Card(suit='♥', rank='9'), Card(suit='', rank='JKR'), Card(suit='♠', rank='8'), Card(suit='♥', rank='5'), Card(suit='♦', rank='4'), Card(suit='♣', rank='10'), Card(suit='', rank='JKR'), Card(suit='♣', rank='Q'), Card(suit='♠', rank='6'), Card(suit='♦', rank='K'), Card(suit='♥', rank='6'), Card(suit='♠', rank='A'), Card(suit='♥', rank='10'), Card(suit='♥', rank='J'), Card(suit='♦', rank='6'), Card(suit='♦', rank='3'), Card(suit='♦', rank='9'), Card(suit='♠', rank='3'), Card(suit='♣', rank='2'), Card(suit='♠', rank='K'), Card(suit='♣', rank='8'), Card(suit='♣', rank='7'), Card(suit='♣', rank='9'), Card(suit='♣', rank='7'), Card(suit='♣', rank='J'), Card(suit='♦', rank='4'), Card(suit='♥', rank='Q'), Card(suit='♣', rank='Q'), Card(suit='♥', rank='4'), Card(suit='♦', rank='9'), Card(suit='♣', rank='5'), Card(suit='♣', rank='9'), Card(suit='♣', rank='3'), Card(suit='♦', rank='2'), Card(suit='♣', rank='3'), Card(suit='♣', rank='2'), Card(suit='♥', rank='A'), Card(suit='♦', rank='5'), Card(suit='♣', rank='6'), Card(suit='♥', rank='3'), Card(suit='♥', rank='K'), Card(suit='♠', rank='2'), Card(suit='♥', rank='2'), Card(suit='♥', rank='Q'), Card(suit='♥', rank='8'), Card(suit='♠', rank='2'), Card(suit='♥', rank='2'), Card(suit='♣', rank='K'), Card(suit='♠', rank='9'), Card(suit='♣', rank='5'), Card(suit='♠', rank='6'), Card(suit='♥', rank='7'), Card(suit='♦', rank='10'), Card(suit='♣', rank='8'), Card(suit='♠', rank='8'), Card(suit='♠', rank='3'), Card(suit='♣', rank='6')] list_card_discard=[] card_active=NoneError: Expected 2 cards, found 0 cards.
+
+[91mTest 049[0m: Test number of cards dealt in round 6 [1 point]
+cnt_player=4 phase=<GamePhase.RUNNING: 'running'> cnt_round=5 bool_card_exchanged=True idx_player_started=0 idx_player_active=0 list_player=[PlayerState(name='Player 1', list_card=[], list_marble=[Marble(pos=64, is_save=False), Marble(pos=65, is_save=False), Marble(pos=66, is_save=False), Marble(pos=67, is_save=False)]), PlayerState(name='Player 2', list_card=[], list_marble=[Marble(pos=72, is_save=False), Marble(pos=73, is_save=False), Marble(pos=74, is_save=False), Marble(pos=75, is_save=False)]), PlayerState(name='Player 3', list_card=[], list_marble=[Marble(pos=80, is_save=False), Marble(pos=81, is_save=False), Marble(pos=82, is_save=False), Marble(pos=83, is_save=False)]), PlayerState(name='Player 4', list_card=[], list_marble=[Marble(pos=88, is_save=False), Marble(pos=89, is_save=False), Marble(pos=90, is_save=False), Marble(pos=91, is_save=False)])] list_card_draw=[Card(suit='♦', rank='3'), Card(suit='', rank='JKR'), Card(suit='♦', rank='5'), Card(suit='♣', rank='10'), Card(suit='♥', rank='K'), Card(suit='♦', rank='2'), Card(suit='♣', rank='Q'), Card(suit='♠', rank='5'), Card(suit='♦', rank='9'), Card(suit='♣', rank='2'), Card(suit='♦', rank='7'), Card(suit='♣', rank='9'), Card(suit='♥', rank='2'), Card(suit='♣', rank='4'), Card(suit='♥', rank='A'), Card(suit='♣', rank='3'), Card(suit='♦', rank='6'), Card(suit='♠', rank='J'), Card(suit='♣', rank='5'), Card(suit='♥', rank='10'), Card(suit='♥', rank='3'), Card(suit='♠', rank='K'), Card(suit='♥', rank='8'), Card(suit='♣', rank='4'), Card(suit='♣', rank='7'), Card(suit='♠', rank='4'), Card(suit='♦', rank='4'), Card(suit='♦', rank='K'), Card(suit='♣', rank='10'), Card(suit='♠', rank='8'), Card(suit='♥', rank='7'), Card(suit='♣', rank='K'), Card(suit='♠', rank='Q'), Card(suit='♥', rank='9'), Card(suit='♠', rank='A'), Card(suit='♣', rank='8'), Card(suit='♠', rank='3'), Card(suit='♠', rank='10'), Card(suit='♠', rank='8'), Card(suit='♦', rank='10'), Card(suit='♦', rank='J'), Card(suit='♦', rank='7'), Card(suit='', rank='JKR'), Card(suit='♣', rank='A'), Card(suit='♥', rank='8'), Card(suit='♣', rank='K'), Card(suit='♦', rank='Q'), Card(suit='♥', rank='6'), Card(suit='♦', rank='A'), Card(suit='♥', rank='4'), Card(suit='♦', rank='K'), Card(suit='♠', rank='9'), Card(suit='♣', rank='J'), Card(suit='♣', rank='8'), Card(suit='♣', rank='7'), Card(suit='♥', rank='J'), Card(suit='♦', rank='9'), Card(suit='', rank='JKR'), Card(suit='♥', rank='J'), Card(suit='♥', rank='5'), Card(suit='♥', rank='Q'), Card(suit='♦', rank='4'), Card(suit='♥', rank='2'), Card(suit='♦', rank='3'), Card(suit='♠', rank='6'), Card(suit='', rank='JKR'), Card(suit='♥', rank='3'), Card(suit='♥', rank='5'), Card(suit='♣', rank='A'), Card(suit='♥', rank='Q'), Card(suit='♥', rank='9'), Card(suit='♠', rank='Q'), Card(suit='♣', rank='J'), Card(suit='♦', rank='8'), Card(suit='♠', rank='2'), Card(suit='♠', rank='A'), Card(suit='♥', rank='4'), Card(suit='♦', rank='A'), Card(suit='♠', rank='K'), Card(suit='♠', rank='3'), Card(suit='', rank='JKR'), Card(suit='♥', rank='7'), Card(suit='♦', rank='6'), Card(suit='♠', rank='6'), Card(suit='♣', rank='9'), Card(suit='♦', rank='10')] list_card_discard=[] card_active=NoneError: Expected 6 cards, found 0 cards.
+
+[91mTest 050[0m: Test re-shuffle if stock out of cards [1 point]
+cnt_player=4 phase=<GamePhase.RUNNING: 'running'> cnt_round=1 bool_card_exchanged=False idx_player_started=0 idx_player_active=0 list_player=[PlayerState(name='Player 1', list_card=[Card(suit='', rank='JKR'), Card(suit='♥', rank='J'), Card(suit='♦', rank='2'), Card(suit='♠', rank='2'), Card(suit='♣', rank='K'), Card(suit='♣', rank='6')], list_marble=[Marble(pos=64, is_save=False), Marble(pos=65, is_save=False), Marble(pos=66, is_save=False), Marble(pos=67, is_save=False)]), PlayerState(name='Player 2', list_card=[Card(suit='♣', rank='9'), Card(suit='♥', rank='8'), Card(suit='♣', rank='7'), Card(suit='♥', rank='3'), Card(suit='♣', rank='10'), Card(suit='♠', rank='9')], list_marble=[Marble(pos=72, is_save=False), Marble(pos=73, is_save=False), Marble(pos=74, is_save=False), Marble(pos=75, is_save=False)]), PlayerState(name='Player 3', list_card=[Card(suit='♥', rank='9'), Card(suit='♣', rank='J'), Card(suit='♠', rank='A'), Card(suit='♦', rank='7'), Card(suit='♦', rank='3'), Card(suit='♦', rank='10')], list_marble=[Marble(pos=80, is_save=False), Marble(pos=81, is_save=False), Marble(pos=82, is_save=False), Marble(pos=83, is_save=False)]), PlayerState(name='Player 4', list_card=[Card(suit='♥', rank='5'), Card(suit='♠', rank='8'), Card(suit='♦', rank='6'), Card(suit='♥', rank='5'), Card(suit='♥', rank='A'), Card(suit='♦', rank='J')], list_marble=[Marble(pos=88, is_save=False), Marble(pos=89, is_save=False), Marble(pos=90, is_save=False), Marble(pos=91, is_save=False)])] list_card_draw=[] list_card_discard=[Card(suit='♣', rank='4'), Card(suit='♣', rank='7'), Card(suit='♥', rank='A'), Card(suit='♣', rank='8'), Card(suit='♠', rank='J'), Card(suit='♦', rank='Q'), Card(suit='♣', rank='K'), Card(suit='♦', rank='4'), Card(suit='♦', rank='9'), Card(suit='♣', rank='J'), Card(suit='♠', rank='7'), Card(suit='♦', rank='A'), Card(suit='♣', rank='2'), Card(suit='♠', rank='8'), Card(suit='', rank='JKR'), Card(suit='♣', rank='9'), Card(suit='♠', rank='K'), Card(suit='♣', rank='10'), Card(suit='♦', rank='8'), Card(suit='♠', rank='6'), Card(suit='♥', rank='4'), Card(suit='♥', rank='6'), Card(suit='♥', rank='2'), Card(suit='♣', rank='8'), Card(suit='♦', rank='J'), Card(suit='♣', rank='4'), Card(suit='♣', rank='5'), Card(suit='♠', rank='10'), Card(suit='♠', rank='5'), Card(suit='♣', rank='6'), Card(suit='♥', rank='8'), Card(suit='♦', rank='3'), Card(suit='♠', rank='3'), Card(suit='♠', rank='4'), Card(suit='♥', rank='10'), Card(suit='♦', rank='9'), Card(suit='♣', rank='A'), Card(suit='♠', rank='9'), Card(suit='♦', rank='4'), Card(suit='♣', rank='3'), Card(suit='♦', rank='5'), Card(suit='♣', rank='Q'), Card(suit='♠', rank='10'), Card(suit='♠', rank='4'), Card(suit='♦', rank='5'), Card(suit='♥', rank='4'), Card(suit='♠', rank='2'), Card(suit='♥', rank='10'), Card(suit='♦', rank='8'), Card(suit='♦', rank='2'), Card(suit='♦', rank='10'), Card(suit='♥', rank='K'), Card(suit='♦', rank='K'), Card(suit='♥', rank='Q'), Card(suit='♥', rank='7'), Card(suit='♥', rank='K'), Card(suit='♦', rank='K'), Card(suit='♣', rank='5'), Card(suit='', rank='JKR'), Card(suit='', rank='JKR'), Card(suit='♥', rank='3'), Card(suit='♠', rank='6'), Card(suit='♠', rank='A'), Card(suit='♣', rank='2'), Card(suit='♠', rank='3'), Card(suit='♦', rank='7'), Card(suit='♥', rank='J'), Card(suit='♥', rank='6'), Card(suit='♥', rank='9'), Card(suit='♥', rank='7'), Card(suit='♠', rank='K'), Card(suit='♣', rank='3'), Card(suit='♣', rank='A'), Card(suit='♦', rank='6'), Card(suit='♥', rank='Q'), Card(suit='♣', rank='Q'), Card(suit='', rank='JKR'), Card(suit='♥', rank='2'), Card(suit='♠', rank='Q'), Card(suit='♦', rank='A'), Card(suit='♠', rank='5'), Card(suit='', rank='JKR'), Card(suit='♦', rank='Q'), Card(suit='♠', rank='Q'), Card(suit='♠', rank='J'), Card(suit='♠', rank='7'), Card(suit='♥', rank='A')] card_active=NoneError 1: Sum of cards must remain 110 after re-shuffle.
+
+[91mTest 051[0m: Test folding cards when no action possible [1 point]
+cnt_player=4 phase=<GamePhase.RUNNING: 'running'> cnt_round=0 bool_card_exchanged=True idx_player_started=0 idx_player_active=0 list_player=[PlayerState(name='Player 1', list_card=[Card(suit='♥', rank='2'), Card(suit='♠', rank='10'), Card(suit='♦', rank='4')], list_marble=[Marble(pos=64, is_save=False), Marble(pos=65, is_save=False), Marble(pos=66, is_save=False), Marble(pos=67, is_save=False)]), PlayerState(name='Player 2', list_card=[Card(suit='♥', rank='A')], list_marble=[Marble(pos=72, is_save=False), Marble(pos=73, is_save=False), Marble(pos=74, is_save=False), Marble(pos=75, is_save=False)]), PlayerState(name='Player 3', list_card=[Card(suit='♣', rank='2'), Card(suit='', rank='JKR'), Card(suit='♦', rank='5'), Card(suit='♥', rank='2'), Card(suit='♠', rank='K'), Card(suit='♠', rank='7')], list_marble=[Marble(pos=80, is_save=False), Marble(pos=81, is_save=False), Marble(pos=82, is_save=False), Marble(pos=83, is_save=False)]), PlayerState(name='Player 4', list_card=[Card(suit='♥', rank='J'), Card(suit='♦', rank='9'), Card(suit='♥', rank='9'), Card(suit='♣', rank='8'), Card(suit='♥', rank='A'), Card(suit='♦', rank='8')], list_marble=[Marble(pos=88, is_save=False), Marble(pos=89, is_save=False), Marble(pos=90, is_save=False), Marble(pos=91, is_save=False)])] list_card_draw=[Card(suit='♦', rank='A'), Card(suit='♣', rank='10'), Card(suit='♥', rank='2'), Card(suit='♠', rank='4'), Card(suit='♣', rank='8'), Card(suit='♠', rank='A'), Card(suit='♦', rank='3'), Card(suit='♠', rank='Q'), Card(suit='♣', rank='K'), Card(suit='♦', rank='7'), Card(suit='', rank='JKR'), Card(suit='♦', rank='9'), Card(suit='♦', rank='2'), Card(suit='♠', rank='7'), Card(suit='♠', rank='J'), Card(suit='♦', rank='2'), Card(suit='♠', rank='6'), Card(suit='♥', rank='Q'), Card(suit='♠', rank='J'), Card(suit='♠', rank='5'), Card(suit='♦', rank='5'), Card(suit='♥', rank='7'), Card(suit='♦', rank='10'), Card(suit='♦', rank='K'), Card(suit='♣', rank='6'), Card(suit='♦', rank='7'), Card(suit='♦', rank='8'), Card(suit='♠', rank='4'), Card(suit='♠', rank='9'), Card(suit='♦', rank='J'), Card(suit='♣', rank='Q'), Card(suit='♥', rank='Q'), Card(suit='♠', rank='Q'), Card(suit='♣', rank='7'), Card(suit='♥', rank='8'), Card(suit='♥', rank='5'), Card(suit='♥', rank='10'), Card(suit='♦', rank='4'), Card(suit='♥', rank='A'), Card(suit='♦', rank='6'), Card(suit='♣', rank='7'), Card(suit='♥', rank='K'), Card(suit='♦', rank='3'), Card(suit='♣', rank='9'), Card(suit='♦', rank='K'), Card(suit='♥', rank='3'), Card(suit='♠', rank='8'), Card(suit='♥', rank='4'), Card(suit='♣', rank='J'), Card(suit='♣', rank='9'), Card(suit='♦', rank='4'), Card(suit='♠', rank='2'), Card(suit='♠', rank='5'), Card(suit='♠', rank='6'), Card(suit='♠', rank='2'), Card(suit='♣', rank='10'), Card(suit='', rank='JKR'), Card(suit='♠', rank='K'), Card(suit='♠', rank='A'), Card(suit='', rank='JKR'), Card(suit='♥', rank='10'), Card(suit='♦', rank='Q'), Card(suit='', rank='JKR'), Card(suit='♠', rank='3'), Card(suit='♠', rank='9'), Card(suit='♠', rank='10'), Card(suit='♣', rank='3'), Card(suit='♥', rank='3'), Card(suit='♣', rank='3'), Card(suit='♠', rank='3'), Card(suit='♥', rank='6'), Card(suit='♦', rank='J'), Card(suit='', rank='JKR'), Card(suit='♥', rank='5'), Card(suit='♣', rank='Q'), Card(suit='♣', rank='A'), Card(suit='♥', rank='7'), Card(suit='♠', rank='8'), Card(suit='♥', rank='8'), Card(suit='♣', rank='A'), Card(suit='♥', rank='K'), Card(suit='♣', rank='6'), Card(suit='♥', rank='4'), Card(suit='♣', rank='2'), Card(suit='♣', rank='K'), Card(suit='♦', rank='6')] list_card_discard=[] card_active=NoneAction: None
+cnt_player=4 phase=<GamePhase.RUNNING: 'running'> cnt_round=0 bool_card_exchanged=True idx_player_started=0 idx_player_active=0 list_player=[PlayerState(name='Player 1', list_card=[Card(suit='♥', rank='2'), Card(suit='♠', rank='10'), Card(suit='♦', rank='4')], list_marble=[Marble(pos=64, is_save=False), Marble(pos=65, is_save=False), Marble(pos=66, is_save=False), Marble(pos=67, is_save=False)]), PlayerState(name='Player 2', list_card=[Card(suit='♥', rank='A')], list_marble=[Marble(pos=72, is_save=False), Marble(pos=73, is_save=False), Marble(pos=74, is_save=False), Marble(pos=75, is_save=False)]), PlayerState(name='Player 3', list_card=[Card(suit='♣', rank='2'), Card(suit='', rank='JKR'), Card(suit='♦', rank='5'), Card(suit='♥', rank='2'), Card(suit='♠', rank='K'), Card(suit='♠', rank='7')], list_marble=[Marble(pos=80, is_save=False), Marble(pos=81, is_save=False), Marble(pos=82, is_save=False), Marble(pos=83, is_save=False)]), PlayerState(name='Player 4', list_card=[Card(suit='♥', rank='J'), Card(suit='♦', rank='9'), Card(suit='♥', rank='9'), Card(suit='♣', rank='8'), Card(suit='♥', rank='A'), Card(suit='♦', rank='8')], list_marble=[Marble(pos=88, is_save=False), Marble(pos=89, is_save=False), Marble(pos=90, is_save=False), Marble(pos=91, is_save=False)])] list_card_draw=[Card(suit='♦', rank='A'), Card(suit='♣', rank='10'), Card(suit='♥', rank='2'), Card(suit='♠', rank='4'), Card(suit='♣', rank='8'), Card(suit='♠', rank='A'), Card(suit='♦', rank='3'), Card(suit='♠', rank='Q'), Card(suit='♣', rank='K'), Card(suit='♦', rank='7'), Card(suit='', rank='JKR'), Card(suit='♦', rank='9'), Card(suit='♦', rank='2'), Card(suit='♠', rank='7'), Card(suit='♠', rank='J'), Card(suit='♦', rank='2'), Card(suit='♠', rank='6'), Card(suit='♥', rank='Q'), Card(suit='♠', rank='J'), Card(suit='♠', rank='5'), Card(suit='♦', rank='5'), Card(suit='♥', rank='7'), Card(suit='♦', rank='10'), Card(suit='♦', rank='K'), Card(suit='♣', rank='6'), Card(suit='♦', rank='7'), Card(suit='♦', rank='8'), Card(suit='♠', rank='4'), Card(suit='♠', rank='9'), Card(suit='♦', rank='J'), Card(suit='♣', rank='Q'), Card(suit='♥', rank='Q'), Card(suit='♠', rank='Q'), Card(suit='♣', rank='7'), Card(suit='♥', rank='8'), Card(suit='♥', rank='5'), Card(suit='♥', rank='10'), Card(suit='♦', rank='4'), Card(suit='♥', rank='A'), Card(suit='♦', rank='6'), Card(suit='♣', rank='7'), Card(suit='♥', rank='K'), Card(suit='♦', rank='3'), Card(suit='♣', rank='9'), Card(suit='♦', rank='K'), Card(suit='♥', rank='3'), Card(suit='♠', rank='8'), Card(suit='♥', rank='4'), Card(suit='♣', rank='J'), Card(suit='♣', rank='9'), Card(suit='♦', rank='4'), Card(suit='♠', rank='2'), Card(suit='♠', rank='5'), Card(suit='♠', rank='6'), Card(suit='♠', rank='2'), Card(suit='♣', rank='10'), Card(suit='', rank='JKR'), Card(suit='♠', rank='K'), Card(suit='♠', rank='A'), Card(suit='', rank='JKR'), Card(suit='♥', rank='10'), Card(suit='♦', rank='Q'), Card(suit='', rank='JKR'), Card(suit='♠', rank='3'), Card(suit='♠', rank='9'), Card(suit='♠', rank='10'), Card(suit='♣', rank='3'), Card(suit='♥', rank='3'), Card(suit='♣', rank='3'), Card(suit='♠', rank='3'), Card(suit='♥', rank='6'), Card(suit='♦', rank='J'), Card(suit='', rank='JKR'), Card(suit='♥', rank='5'), Card(suit='♣', rank='Q'), Card(suit='♣', rank='A'), Card(suit='♥', rank='7'), Card(suit='♠', rank='8'), Card(suit='♥', rank='8'), Card(suit='♣', rank='A'), Card(suit='♥', rank='K'), Card(suit='♣', rank='6'), Card(suit='♥', rank='4'), Card(suit='♣', rank='2'), Card(suit='♣', rank='K'), Card(suit='♦', rank='6')] list_card_discard=[] card_active=NoneError: Player 1 must fold cards without actions.
+
+[91mTest 052[0m: Test support partner at the end [1 point]
+cnt_player=4 phase=<GamePhase.RUNNING: 'running'> cnt_round=1 bool_card_exchanged=True idx_player_started=0 idx_player_active=0 list_player=[PlayerState(name='Player 1', list_card=[Card(suit='♣', rank='5')], list_marble=[Marble(pos=68, is_save=False), Marble(pos=69, is_save=False), Marble(pos=70, is_save=False), Marble(pos=71, is_save=False)]), PlayerState(name='Player 2', list_card=[Card(suit='', rank='JKR'), Card(suit='♣', rank='10'), Card(suit='♣', rank='8'), Card(suit='♣', rank='Q'), Card(suit='♣', rank='7'), Card(suit='♣', rank='A')], list_marble=[Marble(pos=72, is_save=False), Marble(pos=73, is_save=False), Marble(pos=74, is_save=False), Marble(pos=75, is_save=False)]), PlayerState(name='Player 3', list_card=[Card(suit='♠', rank='J'), Card(suit='♣', rank='9'), Card(suit='♣', rank='K'), Card(suit='♣', rank='10'), Card(suit='♠', rank='J'), Card(suit='♠', rank='5')], list_marble=[Marble(pos=32, is_save=False), Marble(pos=81, is_save=False), Marble(pos=82, is_save=False), Marble(pos=83, is_save=False)]), PlayerState(name='Player 4', list_card=[Card(suit='♠', rank='10'), Card(suit='♥', rank='8'), Card(suit='♥', rank='Q'), Card(suit='♥', rank='J'), Card(suit='♥', rank='9'), Card(suit='♥', rank='5')], list_marble=[Marble(pos=88, is_save=False), Marble(pos=89, is_save=False), Marble(pos=90, is_save=False), Marble(pos=91, is_save=False)])] list_card_draw=[Card(suit='♥', rank='3'), Card(suit='♣', rank='J'), Card(suit='♥', rank='3'), Card(suit='♠', rank='Q'), Card(suit='♥', rank='7'), Card(suit='♦', rank='10'), Card(suit='♣', rank='4'), Card(suit='♠', rank='6'), Card(suit='♥', rank='8'), Card(suit='♦', rank='A'), Card(suit='♦', rank='9'), Card(suit='', rank='JKR'), Card(suit='♥', rank='K'), Card(suit='♦', rank='10'), Card(suit='', rank='JKR'), Card(suit='♦', rank='4'), Card(suit='♥', rank='10'), Card(suit='♦', rank='Q'), Card(suit='♣', rank='7'), Card(suit='♦', rank='6'), Card(suit='♠', rank='2'), Card(suit='♦', rank='7'), Card(suit='♦', rank='A'), Card(suit='♠', rank='4'), Card(suit='♥', rank='10'), Card(suit='♦', rank='J'), Card(suit='♣', rank='K'), Card(suit='♦', rank='8'), Card(suit='', rank='JKR'), Card(suit='♠', rank='3'), Card(suit='♠', rank='5'), Card(suit='♦', rank='7'), Card(suit='♦', rank='5'), Card(suit='♣', rank='8'), Card(suit='♠', rank='7'), Card(suit='♥', rank='7'), Card(suit='♦', rank='K'), Card(suit='♠', rank='3'), Card(suit='♦', rank='K'), Card(suit='♠', rank='7'), Card(suit='♥', rank='6'), Card(suit='♦', rank='3'), Card(suit='♦', rank='3'), Card(suit='', rank='JKR'), Card(suit='♠', rank='9'), Card(suit='♣', rank='4'), Card(suit='♠', rank='4'), Card(suit='♦', rank='2'), Card(suit='♦', rank='8'), Card(suit='♣', rank='Q'), Card(suit='♥', rank='6'), Card(suit='♦', rank='2'), Card(suit='♠', rank='K'), Card(suit='', rank='JKR'), Card(suit='♥', rank='4'), Card(suit='♠', rank='K'), Card(suit='♣', rank='J'), Card(suit='♣', rank='3'), Card(suit='♥', rank='J'), Card(suit='♥', rank='5'), Card(suit='♠', rank='9'), Card(suit='♣', rank='9'), Card(suit='♦', rank='J'), Card(suit='♣', rank='6'), Card(suit='♠', rank='8'), Card(suit='♣', rank='A'), Card(suit='♦', rank='9'), Card(suit='♣', rank='2'), Card(suit='♥', rank='4'), Card(suit='♣', rank='3'), Card(suit='♠', rank='A'), Card(suit='♦', rank='6'), Card(suit='♣', rank='5'), Card(suit='♣', rank='5'), Card(suit='♠', rank='8'), Card(suit='♠', rank='Q'), Card(suit='♥', rank='9'), Card(suit='♠', rank='A'), Card(suit='♥', rank='Q'), Card(suit='♠', rank='10'), Card(suit='♦', rank='5'), Card(suit='♠', rank='2'), Card(suit='♥', rank='2'), Card(suit='♠', rank='6'), Card(suit='♣', rank='6'), Card(suit='♥', rank='A')] list_card_discard=[] card_active=NoneError 1: Player 1 must allowed to move with Player 3's marbles
+after placing his own marbles at the finish.
+
+[91mTest 053[0m: Test if list_action contains unique actions [2 point]
+cnt_player=4 phase=<GamePhase.RUNNING: 'running'> cnt_round=0 bool_card_exchanged=True idx_player_started=0 idx_player_active=0 list_player=[PlayerState(name='Player 1', list_card=[Card(suit='♣', rank='5'), Card(suit='♣', rank='5')], list_marble=[Marble(pos=0, is_save=False), Marble(pos=65, is_save=False), Marble(pos=66, is_save=False), Marble(pos=67, is_save=False)]), PlayerState(name='Player 2', list_card=[Card(suit='♣', rank='2'), Card(suit='♠', rank='7'), Card(suit='♣', rank='A'), Card(suit='♠', rank='4'), Card(suit='♣', rank='J'), Card(suit='♦', rank='Q')], list_marble=[Marble(pos=72, is_save=False), Marble(pos=73, is_save=False), Marble(pos=74, is_save=False), Marble(pos=75, is_save=False)]), PlayerState(name='Player 3', list_card=[Card(suit='♣', rank='10'), Card(suit='♦', rank='10'), Card(suit='♥', rank='A'), Card(suit='♦', rank='5'), Card(suit='♠', rank='K'), Card(suit='♠', rank='Q')], list_marble=[Marble(pos=80, is_save=False), Marble(pos=81, is_save=False), Marble(pos=82, is_save=False), Marble(pos=83, is_save=False)]), PlayerState(name='Player 4', list_card=[Card(suit='♦', rank='K'), Card(suit='♠', rank='10'), Card(suit='♠', rank='A'), Card(suit='♣', rank='A'), Card(suit='♦', rank='2'), Card(suit='♣', rank='10')], list_marble=[Marble(pos=88, is_save=False), Marble(pos=89, is_save=False), Marble(pos=90, is_save=False), Marble(pos=91, is_save=False)])] list_card_draw=[Card(suit='♣', rank='5'), Card(suit='♦', rank='8'), Card(suit='♦', rank='5'), Card(suit='♣', rank='9'), Card(suit='♦', rank='A'), Card(suit='♥', rank='K'), Card(suit='♦', rank='8'), Card(suit='♦', rank='6'), Card(suit='♠', rank='9'), Card(suit='♥', rank='K'), Card(suit='♠', rank='9'), Card(suit='♣', rank='3'), Card(suit='♠', rank='8'), Card(suit='♣', rank='Q'), Card(suit='♥', rank='9'), Card(suit='♣', rank='7'), Card(suit='♦', rank='3'), Card(suit='♥', rank='3'), Card(suit='♠', rank='K'), Card(suit='♣', rank='6'), Card(suit='', rank='JKR'), Card(suit='♥', rank='A'), Card(suit='♦', rank='J'), Card(suit='♠', rank='J'), Card(suit='♠', rank='2'), Card(suit='♦', rank='2'), Card(suit='♥', rank='Q'), Card(suit='♥', rank='6'), Card(suit='♥', rank='10'), Card(suit='', rank='JKR'), Card(suit='♣', rank='4'), Card(suit='♠', rank='8'), Card(suit='♦', rank='3'), Card(suit='♣', rank='J'), Card(suit='♠', rank='3'), Card(suit='♥', rank='4'), Card(suit='♥', rank='5'), Card(suit='♠', rank='10'), Card(suit='', rank='JKR'), Card(suit='♦', rank='A'), Card(suit='♦', rank='9'), Card(suit='♣', rank='8'), Card(suit='♠', rank='4'), Card(suit='♥', rank='7'), Card(suit='♠', rank='5'), Card(suit='♥', rank='10'), Card(suit='♥', rank='J'), Card(suit='♣', rank='3'), Card(suit='♥', rank='J'), Card(suit='', rank='JKR'), Card(suit='♦', rank='J'), Card(suit='♥', rank='7'), Card(suit='♦', rank='6'), Card(suit='♠', rank='J'), Card(suit='♥', rank='8'), Card(suit='♥', rank='2'), Card(suit='♦', rank='7'), Card(suit='♥', rank='9'), Card(suit='♥', rank='3'), Card(suit='♣', rank='6'), Card(suit='♥', rank='2'), Card(suit='♥', rank='8'), Card(suit='♠', rank='6'), Card(suit='♦', rank='4'), Card(suit='♦', rank='10'), Card(suit='♣', rank='K'), Card(suit='♠', rank='Q'), Card(suit='♠', rank='3'), Card(suit='♥', rank='5'), Card(suit='♣', rank='9'), Card(suit='♠', rank='7'), Card(suit='♣', rank='4'), Card(suit='♦', rank='4'), Card(suit='♣', rank='7'), Card(suit='♣', rank='Q'), Card(suit='♠', rank='5'), Card(suit='♥', rank='4'), Card(suit='', rank='JKR'), Card(suit='♦', rank='K'), Card(suit='♦', rank='9'), Card(suit='♣', rank='2'), Card(suit='♥', rank='Q'), Card(suit='♣', rank='K'), Card(suit='♠', rank='A'), Card(suit='♦', rank='Q'), Card(suit='♠', rank='2')] list_card_discard=[] card_active=NoneError: List of actions contains duplicate actions.
+
+[91mTest 054[0m: Test finish game [1 point]
+Traceback (most recent call last):
+  File "/Users/daniellelott/Documents/Masters/devops/devops_git/devops_project/benchmark/benchmark.py", line 51, in run_tests
+    function()
+  File "/Users/daniellelott/Documents/Masters/devops/devops_git/devops_project/benchmark/benchmark_dog.py", line 1877, in test_finish_game
+    action = Action(card=Card(suit='♥', rank='A'), pos_from=0, pos_to=68)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/daniellelott/Documents/Masters/devops/.venv/lib/python3.11/site-packages/pydantic/main.py", line 212, in __init__
+    validated_self = self.__pydantic_validator__.validate_python(data, self_instance=self)
+                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+pydantic_core._pydantic_core.ValidationError: 1 validation error for Action
+card_swap
+  Field required [type=missing, input_value={'card': Card(suit='♥',..._from': 0, 'pos_to': 68}, input_type=dict]
+    For further information visit https://errors.pydantic.dev/2.9/v/missing
+
+
+[91mTest 100[0m: Code style with Pylint [5 point]
+Pylint score 8.8/10
+
+[92mTest 101[0m: Type checking with MyPy [5 point]
+
+[91mTest 102[0m: Pytest runs successfully and coverage is >80% [5 point]
+There is no testfile for module 'dog' ('test/test_dog.py')
+
+[93mResult[0m
+Tests: 6/57 valid
+Mark:  14/121 points
+
