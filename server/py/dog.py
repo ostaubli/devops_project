@@ -280,7 +280,14 @@ class Dog(Game):
 
     def deal_cards(self):
         for player in self._state.list_player:
-            for _ in range(7 - (self._state.cnt_round % 6)): # every round, you get one card less. if last one was 1, next round you get 6
+            round_mod = self._state.cnt_round % 10
+            if round_mod == 0:
+                cards_to_deal = 2
+            elif round_mod <= 5:
+                cards_to_deal = 7 - round_mod
+            else:
+                cards_to_deal = 12 - round_mod
+            for _ in range(cards_to_deal):
                 card = self._state.list_card_draw.pop()
                 player.list_card.append(card)
 
