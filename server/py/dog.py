@@ -86,6 +86,7 @@ class GameState(BaseModel):
     card_active: Optional[Card]        # active card (for 7 and JKR with sequence of actions)
 
 
+
 class Dog(Game):
 
     def __init__(self) -> None:
