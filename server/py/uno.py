@@ -182,9 +182,15 @@ class RandomPlayer(Player):
         if action.card and action.card.symbol in ["wild", "wildcard4"]:
             action.color = random.choice(state.LIST_COLOR[:-1]) # choses a color but not 'any'
 
-        if len(actions) > 0:
-            return random.choice(actions)
-        return None
+        # UNO case action
+        if len(self.state.list_card)==1:
+            action.uno=True
+            print(f"{self.state.name} UNO. Game won! ")
+
+
+        #if len(actions) > 0:
+        #    return random.choice(actions)
+        return action
 
 
 if __name__ == '__main__':
