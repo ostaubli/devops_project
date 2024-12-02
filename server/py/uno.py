@@ -173,6 +173,9 @@ class RandomPlayer(Player):
 
     def select_action(self, state: GameState, actions: List[Action]) -> Optional[Action]:
         """ Given masked game state and possible actions, select the next action """
+        if not actions:
+            print(f"{self.state.name} hase no valid actions to undertake and must wither draw or skip.")
+            
         if len(actions) > 0:
             return random.choice(actions)
         return None
