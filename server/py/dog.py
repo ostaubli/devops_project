@@ -14,7 +14,7 @@ class Card(BaseModel):
 
 
 class Marble(BaseModel):
-    pos: str       # position on board (0 to 95)
+    pos: int       # position on board (0 to 95)
     is_save: bool  # true if marble was moved out of kennel and was not yet moved
 
 
@@ -150,34 +150,60 @@ class Dog(Game):
         actions = []
         to_positions = []
         active_player = self._state.list_player[self._state.idx_player_active]
+        marbles_in_kennel = self._count_marbles_in_kennel()
         for card in active_player.list_card:
             for marble in active_player.list_marble:
                 # TODO Go through all cards and marbles and return the possible positions.
 
-                # TODO LATIN-43 logic for start. you can only move if your marble is not inside the kennel or you have a 5 (and some other cards). for this, check if your marble is in the kernel. if so, only then "normal" actions can be taken.
+                # if marble is in kennel
+                queue_start = self.PLAYER_POSITIONS[self._state.idx_player_active]['queue_start']
+                if marble.pos in range(queue_start,
+                                            queue_start + 4):
 
-                if card.rank.isdigit() and card.rank not in ['7', '4']:
-                    to_positions = self._calculate_position_to(int(marble.pos), card, self._state.idx_player_active)
+                    # only allow actions for ACE, KING or JOKER
+                    if card.rank in ['A', 'JKR', 'K']:
+                        start_position = self.PLAYER_POSITIONS[self._state.idx_player_active]['start']
 
-                # TODO Add more logic for all the other cards LATIN-35
-                if card.rank == '7':
-                    # can be split into multiple marbles. if takes over, reset other marble
-                    # to_positions = ...
-                    pass
+                        # allow only if the current player does not have a marble on start
+                        if all(m.pos != start_position for m in active_player.list_marble):
+                            # if 4 in kennel, start_position + 3 - #in kennel-1
+                            if marble.pos == queue_start + 4 - marbles_in_kennel:
+                                actions.append(Action(card=card, pos_from=marble.pos, pos_to=start_position,
+                                                      card_swap=None))
+                else:
+                    if card.rank.isdigit() and card.rank not in ['7', '4']:
+                        to_positions = self._calculate_position_to(marble.pos, card, self._state.idx_player_active)
 
-                # checks for each possible position if the way is blocked. if it is not blocked, we add it to action.
-                for pos_to in to_positions:
-                    if not self._is_way_blocked(
-                            pos_to, int(marble.pos), self._get_all_safe_marbles()):
-                        actions.append(Action(card=card, pos_from=marble.pos, pos_to=pos_to,
-                                              card_swap=None))  # TODO add logic for card_swap (once we know what this is used for) LATIN-37
+                    # TODO Add more logic for all the other cards LATIN-35
+                    if card.rank == '7':
+                        # can be split into multiple marbles. if takes over, reset other marble
+                        # to_positions = ...
+                        pass
+
+                    # checks for each possible position if the way is blocked. if it is not blocked, we add it to action.
+                    for pos_to in to_positions:
+                        if not self._is_way_blocked(
+                                pos_to, marble.pos, self._get_all_safe_marbles()):
+                            actions.append(Action(card=card, pos_from=marble.pos, pos_to=pos_to,
+                                                  card_swap=None))  # TODO add logic for card_swap (once we know what this is used for) LATIN-37
 
         return actions
 
+    def _count_marbles_in_kennel(self) -> int:
+        active_player = self._state.list_player[self._state.idx_player_active]
+        queue_start = self.PLAYER_POSITIONS[self._state.idx_player_active]['queue_start']
+        queue_end = queue_start + 4
+        marbles_in_kennel = [marble for marble in active_player.list_marble if
+                             queue_start <= int(marble.pos) < queue_end]
+        return len(marbles_in_kennel)
+
     # TODO LATIN-27
     def apply_action(self, action: Action) -> None:
+        if action == None:
+            return
         """ Apply the given action to the game """
         active_player = self._state.list_player[self._state.idx_player_active]
+
         if action.card in active_player.list_card:
             # removing card from players hand and putting it to discarded stack
             active_player.list_card.remove(action.card)
