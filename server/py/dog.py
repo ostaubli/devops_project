@@ -28,7 +28,7 @@ class Action(BaseModel):
     card: Card                 # card to play
     pos_from: Optional[int]    # position to move the marble from
     pos_to: Optional[int]      # position to move the marble to
-    card_swap: Optional[Card]  # optional card to swap ()
+    card_swap: Optional[Card] = None  # optional card to swap ()
 
 
 class GamePhase(str, Enum):
@@ -182,18 +182,34 @@ class Dog(Game):
             # removing card from players hand and putting it to discarded stack
             active_player.list_card.remove(action.card)
             self._state.list_card_discard.append(action.card)
+            marble_to_move = next(
+                (marble for marble in active_player.list_marble if int(marble.pos) == int(action.pos_from)),
+                None
+            )
+            self._move_marble_logic(marble_to_move, action.pos_to, action.card)
 
-            # Example logic to update the game state based on the action
-            if action.pos_from is not None and action.pos_to is not None:
-                # TODO Move marble logic LATIN-38
-                pass
+            # TODO LATIN -46 check for collision
+            #if self._is_collision :
+            #self.handle_collision(....)
             # TODO Add more logic for other actions like sending marble home
-
-            ## TODO LATIN-42 logic for check if game is over (define winners)
+            ## TODO LATIN -42 logic for check if game is over (define winners)
 
         # calculate the next player (after 4, comes 1 again). not sure if needed here or somewhere else
         # example: (4+1)%4=1 -> after player 4, it's player 1's turn again
         self._state.idx_player_active = (self._state.idx_player_active + 1) % self._state.cnt_player
+
+    def _move_marble_logic(self, marble: Marble, pos_to: int, card: Card) -> None:
+        """
+        Core logic for moving a marble to a new position.
+        """
+        pos_to = int(pos_to)  # Ensure the target position is an integer
+
+        # Update marble position
+        marble.pos = pos_to
+
+# Def is_collision()
+# self._handle_collision(marble, pos_to) #TODO LATIN -45 create handle collision
+
 
     # TODO LATIN-28 check if logic is actually what we need it to be
     def get_player_view(self, idx_player: int) -> GameState:
