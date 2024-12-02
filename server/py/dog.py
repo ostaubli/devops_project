@@ -5,106 +5,81 @@ from pydantic import BaseModel
 from enum import Enum
 import random
 
-
 class Card(BaseModel):
-    suit: str  # card suit (color)
-    rank: str  # card rank
-
+    suit: str  
+    rank: str  
 
 class Marble(BaseModel):
-    pos: int       # position on board (0 to 95)
-    is_save: bool  # true if marble was moved out of kennel and was not yet moved
-
+    pos: int      
+    is_save: bool  
 
 class PlayerState(BaseModel):
-    name: str                  # name of player
-    list_card: List[Card]      # list of cards
-    list_marble: List[Marble]  # list of marbles
-
+    name: str                 
+    list_card: List[Card]     
+    list_marble: List[Marble] 
 
 class Action(BaseModel):
-    card: Card                 # card to play
-    pos_from: Optional[int]    # position to move the marble from
-    pos_to: Optional[int]      # position to move the marble to
-    card_swap: Optional[Card]  # optional card to swap ()
-
+    card: Card                
+    pos_from: Optional[int]   
+    pos_to: Optional[int]     
+    card_swap: Optional[Card] 
 
 class GamePhase(str, Enum):
-    SETUP = 'setup'            # before the game has started
-    RUNNING = 'running'        # while the game is running
-    FINISHED = 'finished'      # when the game is finished
-
+    SETUP = 'setup'           
+    RUNNING = 'running'       
+    FINISHED = 'finished'     
 
 class GameState(BaseModel):
-
-    LIST_SUIT: ClassVar[List[str]] = ['♠', '♥', '♦', '♣']  # 4 suits (colors)
+    LIST_SUIT: ClassVar[List[str]] = ['♠', '♥', '♦', '♣']
     LIST_RANK: ClassVar[List[str]] = [
-        '2', '3', '4', '5', '6', '7', '8', '9', '10',      # 13 ranks + Joker
+        '2', '3', '4', '5', '6', '7', '8', '9', '10',
         'J', 'Q', 'K', 'A', 'JKR'
     ]
     LIST_CARD: ClassVar[List[Card]] = [
-        # 2: Move 2 spots forward
         Card(suit='♠', rank='2'), Card(suit='♥', rank='2'), Card(suit='♦', rank='2'), Card(suit='♣', rank='2'),
-        # 3: Move 3 spots forward
         Card(suit='♠', rank='3'), Card(suit='♥', rank='3'), Card(suit='♦', rank='3'), Card(suit='♣', rank='3'),
-        # 4: Move 4 spots forward or back
         Card(suit='♠', rank='4'), Card(suit='♥', rank='4'), Card(suit='♦', rank='4'), Card(suit='♣', rank='4'),
-        # 5: Move 5 spots forward
         Card(suit='♠', rank='5'), Card(suit='♥', rank='5'), Card(suit='♦', rank='5'), Card(suit='♣', rank='5'),
-        # 6: Move 6 spots forward
         Card(suit='♠', rank='6'), Card(suit='♥', rank='6'), Card(suit='♦', rank='6'), Card(suit='♣', rank='6'),
-        # 7: Move 7 single steps forward
         Card(suit='♠', rank='7'), Card(suit='♥', rank='7'), Card(suit='♦', rank='7'), Card(suit='♣', rank='7'),
-        # 8: Move 8 spots forward
         Card(suit='♠', rank='8'), Card(suit='♥', rank='8'), Card(suit='♦', rank='8'), Card(suit='♣', rank='8'),
-        # 9: Move 9 spots forward
         Card(suit='♠', rank='9'), Card(suit='♥', rank='9'), Card(suit='♦', rank='9'), Card(suit='♣', rank='9'),
-        # 10: Move 10 spots forward
         Card(suit='♠', rank='10'), Card(suit='♥', rank='10'), Card(suit='♦', rank='10'), Card(suit='♣', rank='10'),
-        # Jake: A marble must be exchanged
         Card(suit='♠', rank='J'), Card(suit='♥', rank='J'), Card(suit='♦', rank='J'), Card(suit='♣', rank='J'),
-        # Queen: Move 12 spots forward
         Card(suit='♠', rank='Q'), Card(suit='♥', rank='Q'), Card(suit='♦', rank='Q'), Card(suit='♣', rank='Q'),
-        # King: Start or move 13 spots forward
         Card(suit='♠', rank='K'), Card(suit='♥', rank='K'), Card(suit='♦', rank='K'), Card(suit='♣', rank='K'),
-        # Ass: Start or move 1 or 11 spots forward
         Card(suit='♠', rank='A'), Card(suit='♥', rank='A'), Card(suit='♦', rank='A'), Card(suit='♣', rank='A'),
-        # Joker: Use as any other card you want
         Card(suit='', rank='JKR'), Card(suit='', rank='JKR'), Card(suit='', rank='JKR')
     ] * 2
 
-    cnt_player: int = 4                # number of players (must be 4)
-    phase: GamePhase                   # current phase of the game
-    cnt_round: int                     # current round
-    bool_card_exchanged: bool          # true if cards was exchanged in round
-    idx_player_started: int            # index of player that started the round
-    idx_player_active: int             # index of active player in round
-    list_player: List[PlayerState]     # list of players
-    list_card_draw: List[Card]         # list of cards to draw
-    list_card_discard: List[Card]      # list of cards discarded
-    card_active: Optional[Card]        # active card (for 7 and JKR with sequence of actions)
-
+    cnt_player: int = 4
+    phase: GamePhase             
+    cnt_round: int              
+    bool_card_exchanged: bool    
+    idx_player_started: int      
+    idx_player_active: int       
+    list_player: List[PlayerState]
+    list_card_draw: List[Card]   
+    list_card_discard: List[Card]
+    card_active: Optional[Card]  
 
 class Dog(Game):
     def __init__(self) -> None:
         self.reset()
 
     def reset(self) -> None:
-        # Create a fresh draw pile
         draw_pile = list(GameState.LIST_CARD)
-        random.shuffle(draw_pile)  # Shuffle the cards
-    
+        random.shuffle(draw_pile)
+        
         players = []
         for i in range(4):
-            # Create marbles for each player
             marbles = []
             for j in range(4):
                 marbles.append(Marble(pos=64 + i * 8 + j, is_save=False))
-        
-            # Deal 6 cards to each player
+            
             player_cards = draw_pile[:6]
-            draw_pile = draw_pile[6:]  # Remove dealt cards from draw pile
-        
+            draw_pile = draw_pile[6:]
+            
             players.append(PlayerState(
                 name=f"Player {i+1}",
                 list_card=player_cards,
@@ -118,7 +93,7 @@ class Dog(Game):
             idx_player_started=0,
             idx_player_active=0,
             list_player=players,
-            list_card_draw=draw_pile,  # Only undealt cards remain in draw pile
+            list_card_draw=draw_pile,
             list_card_discard=[],
             card_active=None
         )
@@ -133,24 +108,47 @@ class Dog(Game):
         pass
 
     def get_list_action(self) -> List[Action]:
+        # Get cards of active player
+        active_player = self.state.list_player[self.state.idx_player_active]
+        cards = active_player.list_card
+
+        # Start round card exchange
+        if not self.state.bool_card_exchanged and self.state.cnt_round == 0:
+            actions = []
+            for card in cards:
+                actions.append(Action(card=card, pos_from=-1, pos_to=-1, card_swap=None))
+            return actions
+            
         return []
 
     def apply_action(self, action: Action) -> None:
-        pass
+        if action is None:
+            # Move to next player
+            self.state.idx_player_active = (self.state.idx_player_active + 1) % 4
+            
+            # If we've gone through all players
+            if self.state.idx_player_active == self.state.idx_player_started:
+                # Move to next round
+                self.state.cnt_round += 1
+                self.state.idx_player_started = (self.state.idx_player_started + 1) % 4
+                self.state.bool_card_exchanged = False
+                
+                # Deal new cards based on round
+                draw_pile = self.state.list_card_draw
+                cards_per_player = 5
+                for player in self.state.list_player:
+                    player.list_card = draw_pile[:cards_per_player]
+                    draw_pile = draw_pile[cards_per_player:]
+                self.state.list_card_draw = draw_pile
+                
+                # Set active player to the player after the starting player
+                self.state.idx_player_active = (self.state.idx_player_started + 1) % 4
 
     def get_player_view(self, idx_player: int) -> GameState:
         return self.state
 
-
 class RandomPlayer(Player):
-
     def select_action(self, state: GameState, actions: List[Action]) -> Optional[Action]:
-        """ Given masked game state and possible actions, select the next action """
         if len(actions) > 0:
             return random.choice(actions)
         return None
-
-
-if __name__ == '__main__':
-
-    game = Dog()
