@@ -39,7 +39,10 @@ python server/py/hangman.py
 ````
 "../.venv\Scripts\activate" # if not already activated
 set PYTHONPATH=%cd%
+or PowerShell: $env:PYTHONPATH = (Get-Location).Path
 python benchmark/benchmark_hangman.py python hangman.Hangman # or battleship.Battleship
+
+python benchmark/benchmark_dog.py python dog.Dog
 ````
 
 ### Start the Server
