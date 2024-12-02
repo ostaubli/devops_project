@@ -17,7 +17,7 @@ class Marble(BaseModel):
 
 
 class PlayerState(BaseModel):
-    name: str                  # name of player
+    name: str                  # name of player [PlayerBlue, PlayerRed, PlayerYellow, PlayerGreen]
     list_card: List[Card]      # list of cards
     list_marble: List[Marble]  # list of marbles
 
@@ -85,6 +85,42 @@ class GameState(BaseModel):
     card_active: Optional[Card]        # active card (for 7 and JKR with sequence of actions)
 
 
+    def draw_cards(self) -> None:
+        '''
+        logic number of cards (cnt_round)
+        logic list_id_card_draw to low
+       
+        '''
+        pass
+
+
+    def get_list_possible_action(self) -> List[Action]:
+        '''
+        List of Action from active players Cards
+
+        '''
+        pass
+
+    def set_action_to_game(self, action: Action):
+        '''
+        Make the Action to the board
+        Marvel pos 15 to pos 18
+        '''
+
+        pass
+
+    def check_final_pos(pos:int) -> bool:
+        '''
+        Pos Blocked
+        '''
+        pass
+
+    def sending_home(pos:int) -> None: # Set player X Marvel home
+        '''
+        Pos of other player ==> Sending Home
+        '''
+        pass
+           
 
 class Dog(Game):
 
