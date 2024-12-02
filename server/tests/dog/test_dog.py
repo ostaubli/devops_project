@@ -1,5 +1,5 @@
 import pytest
-from server.py.dog import Dog
+from server.py.dog import Dog, Card, Marble, PlayerState, Action, GameState, GamePhase
 
 
 
