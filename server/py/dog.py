@@ -112,14 +112,16 @@ class Dog(Game):
         deck = GameState.LIST_CARD.copy()
         random.shuffle(deck)
 
+        idx_player_started = random.randint(0, 3)
+
         self.state = GameState(
             cnt_player=4,
             phase=GamePhase.RUNNING,
             cnt_round=1,
             bool_game_finished=False,
             bool_card_exchanged=False,
-            idx_player_started=random.randint(0, 3),
-            idx_player_active=random.randint(0, 3),
+            idx_player_started=idx_player_started,
+            idx_player_active=idx_player_started,
             list_player=players,
             list_card_draw=deck,
             list_card_discard=[],
