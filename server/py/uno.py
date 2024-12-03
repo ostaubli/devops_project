@@ -175,6 +175,12 @@ class Uno(Game):
             self.state.list_card_discard.append(action.card)
 
             # Update the active color (for wildcards)
+            if action.card.symbol in ['wild', 'wilddraw4']:
+                if not action.color:
+                    raise ValueError("A color must be chosen when playing a wildcard")
+                self.state.color = action.color
+            else:
+                self.state.color = action.card.color
 
 
     def get_player_view(self, idx_player: int) -> GameState:
