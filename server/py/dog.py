@@ -17,7 +17,7 @@ class Marble(BaseModel):
 
 
 class PlayerState(BaseModel):
-    name: str                  # name of player
+    name: str                  # name of player [PlayerBlue, PlayerRed, PlayerYellow, PlayerGreen]
     list_card: List[Card]      # list of cards
     list_marble: List[Marble]  # list of marbles
 
@@ -76,15 +76,51 @@ class GameState(BaseModel):
     cnt_player: int = 4                # number of players (must be 4)
     phase: GamePhase                   # current phase of the game
     cnt_round: int                     # current round
-    bool_game_finished: bool           # true if game has finished
     bool_card_exchanged: bool          # true if cards was exchanged in round
     idx_player_started: int            # index of player that started the round
     idx_player_active: int             # index of active player in round
     list_player: List[PlayerState]     # list of players
-    list_id_card_draw: List[Card]      # list of cards to draw
-    list_id_card_discard: List[Card]   # list of cards discarded
+    list_card_draw: List[Card]         # list of cards to draw
+    list_card_discard: List[Card]      # list of cards discarded
     card_active: Optional[Card]        # active card (for 7 and JKR with sequence of actions)
 
+
+    def draw_cards(self) -> None:
+        '''
+        logic number of cards (cnt_round)
+        logic list_id_card_draw to low
+       
+        '''
+        pass
+
+
+    def get_list_possible_action(self) -> List[Action]:
+        '''
+        List of Action from active players Cards
+
+        '''
+        pass
+
+    def set_action_to_game(self, action: Action):
+        '''
+        Make the Action to the board
+        Marvel pos 15 to pos 18
+        '''
+
+        pass
+
+    def check_final_pos(pos:int) -> bool:
+        '''
+        Pos Blocked
+        '''
+        pass
+
+    def sending_home(pos:int) -> None: # Set player X Marvel home
+        '''
+        Pos of other player ==> Sending Home
+        '''
+        pass
+           
 
 class Dog(Game):
 
@@ -94,11 +130,12 @@ class Dog(Game):
 
     def set_state(self, state: GameState) -> None:
         """ Set the game to a given state """
-        pass
+        self.state = state
 
     def get_state(self) -> GameState:
         """ Get the complete, unmasked game state """
-        pass
+        return self.state
+
 
     def print_state(self) -> None:
         """ Print the current game state """

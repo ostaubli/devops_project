@@ -1,4 +1,4 @@
-# Students Repository for HSLU Module "DevOps"
+clear# Students Repository for HSLU Module "DevOps"
 
 The following commands are all ment to be executed in the root directory of the project.
 
@@ -15,7 +15,10 @@ python server/py/hangman.py
 ````
 source ../.venv/bin/activate # if not already activated
 export PYTHONPATH=$(pwd)
-python benchmark/benchmark_hangman.py python hangman.Hangman # or battleship.Battleship
+python benchmark/benchmark_hangman.py python hangman.Hangman
+python benchmark/benchmark_battleship.py python battleship.Battleship
+python benchmark/benchmark_uno.py python uno.Uno
+python benchmark/benchmark_dog.py python dog.Dog
 ````
 
 ### Start the Server
@@ -39,7 +42,15 @@ python server/py/hangman.py
 ````
 "../.venv\Scripts\activate" # if not already activated
 set PYTHONPATH=%cd%
-python benchmark/benchmark_hangman.py python hangman.Hangman # or battleship.Battleship
+<<<<<<< HEAD
+python benchmark/benchmark_hangman.py python hangman.Hangman 
+python benchmark\benchmark_battleship.py python battleship.Battleship
+=======
+python benchmark/benchmark_hangman.py python hangman.Hangman
+python benchmark/benchmark_battleship.py python battleship.Battleship
+python benchmark/benchmark_uno.py python uno.Uno
+python benchmark/benchmark_dog.py python dog.Dog
+>>>>>>> 5fe96891e5077935cf03b4fc65369a02632cabd0
 ````
 
 ### Start the Server
