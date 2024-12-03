@@ -450,19 +450,28 @@ if __name__ == '__main__':
     game = Dog()
     player = RealPlayer()
 
-    while game.get_state() != GamePhase.FINISHED:
-        active_players = 4
+    while game.get_state().phase != GamePhase.FINISHED:
+        # Card-swapping phase at the start of the round
+        if not game.get_state().bool_card_swapped:
+            print("Starting card-swapping phase...")
+            game.handle_card_swapping()
+
+        # Deal cards if necessary
         game.deal_cards()
-        while not active_players == 0:
+
+        active_players = 4
+        while active_players > 0:
             list_actions = game.get_list_action()
 
-            if len(list_actions) == 0:
-                active_players = active_players-1
-                print("Player has no actions left. Please wait until the round is over")
+            if not list_actions:
+                active_players -= 1
+                print("Player has no actions left. Please wait until the round is over.")
             else:
                 action = player.select_action(game.get_state(), list_actions)
                 game.apply_action(action)
                 game.print_state()
 
-        print(
-            f"\n --------------- ROUND {game.get_state().cnt_round} finished -----------------")
+        # Reset card-swapping flag for the next round
+        game.get_state().bool_card_swapped = False
+
+        print(f"\n --------------- ROUND {game.get_state().cnt_round} finished -----------------")
