@@ -234,7 +234,19 @@ class Uno(Game):
 
     def get_player_view(self, idx_player: int) -> GameState:
         """ Get the masked state for the active player (e.g. the oppontent's cards are face down)"""
-        pass
+        if not self.state:
+            raise ValueError("Game state has not been initialized")
+
+        # clone current state to create masked view
+        masked_state = self.state.copy(deep=True)
+
+        # Mask the cards of all other players
+        for i, player in enumerate(masked_state.list_player):
+            if i != idx.player:
+                # replace the list of cards with a placeholder showing card count
+                player.list_card = [Card() for _ in range(len(player.list_card))]
+
+                
 
 
 class RandomPlayer(Player):
