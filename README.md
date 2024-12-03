@@ -42,15 +42,14 @@ python server/py/hangman.py
 ````
 "../.venv\Scripts\activate" # if not already activated
 set PYTHONPATH=%cd%
-<<<<<<< HEAD
-python benchmark/benchmark_hangman.py python hangman.Hangman 
-python benchmark\benchmark_battleship.py python battleship.Battleship
-=======
 python benchmark/benchmark_hangman.py python hangman.Hangman
 python benchmark/benchmark_battleship.py python battleship.Battleship
 python benchmark/benchmark_uno.py python uno.Uno
 python benchmark/benchmark_dog.py python dog.Dog
->>>>>>> 5fe96891e5077935cf03b4fc65369a02632cabd0
+
+### Ausgabe in einem LOG File
+python benchmark/benchmark_dog.py python dog.Dog > benchmark.log  
+python benchmark/benchmark_dog.py python dog.Dog > benchmark.log 2>&1
 ````
 
 ### Start the Server

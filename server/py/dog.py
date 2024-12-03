@@ -1,9 +1,14 @@
 # runcmd: cd ../.. & venv\Scripts\python server/py/dog_template.py
-from server.py.game import Game, Player
-from typing import List, Optional, ClassVar
-from pydantic import BaseModel
-from enum import Enum
+
 import random
+from typing import List, Optional, ClassVar
+from enum import Enum
+from pydantic import BaseModel
+
+if __name__ == '__main__':
+    from game import Game, Player
+else:
+    from server.py.game import Game, Player
 
 
 class Card(BaseModel):
@@ -73,15 +78,18 @@ class GameState(BaseModel):
         Card(suit='', rank='JKR'), Card(suit='', rank='JKR'), Card(suit='', rank='JKR')
     ] * 2
 
-    cnt_player: int = 4                         # number of players (must be 4)
-    def __init__(self) ->None:
-        super().__init__()                      # init von BaseModel aufrufen für Pylint
+    cnt_player: int = 4                             # number of players (must be 4)
+    phase: GamePhase  = GamePhase.SETUP             # current phase of the game
+    cnt_round: int = 0                              # current round
+    bool_card_exchanged: bool = False               # true if cards was exchanged in round
+    idx_player_started: int = random.randint(0,3)   # index of player that started the round
+    idx_player_active: int =idx_player_started      # index of active player in round
+    list_player: List[PlayerState] = []                  # list of players
+    list_id_card_draw: List[Card] = LIST_CARD                  # list of cards to draw
+    list_card_discard: List[Card] = []                 # list of cards discarded
+    card_active: Optional[Card]   = None             # active card (for 7 and JKR with sequence of actions)
 
-        self.phase: GamePhase                   # current phase of the game
-        self.cnt_round: int = 0                 # current round
-        self.bool_card_exchanged: bool          # true if cards was exchanged in round
-        self.idx_player_started: int            # index of player that started the round
-        self.idx_player_active: int             # index of active player in round
+    def setup_players(self) ->None:
         player_blue = PlayerState(
                 name="PlayerBlue",
                 list_card=[],
@@ -116,11 +124,6 @@ class GameState(BaseModel):
                 )
         self.list_player = [player_blue,player_green,player_red,player_yellow]
 
-        self.list_card_draw = self.LIST_CARD         # list of cards to draw
-        self.list_card_discard: List[Card] = []     # list of cards discarded
-        self.card_active: Optional[Card] = None       # active card (for 7 and JKR with sequence of actions)
-
-
     def deal_cards(self) -> bool:
         # TODO: Check if all players are out of cards.
         for player in self.list_player:
@@ -131,6 +134,8 @@ class GameState(BaseModel):
                 return False
 
         # TODO: Increase the current round.
+        self.cnt_round +=1
+
         # TODO: Calculate how many cards are needed.
         # TODO: Check if there are enough cards in the draw deck; if not, add a new card deck.
         # TODO: Randomly select cards for players.
@@ -169,15 +174,18 @@ class Dog(Game):
 
     def __init__(self) -> None:
         """ Game initialization (set_state call not necessary, we expect 4 players) """
-        pass
-
+        self.state = GameState()
+        self.state.setup_players()
+        self.state.phase = GamePhase.RUNNING
+        self.state.deal_cards()
+      
     def set_state(self, state: GameState) -> None:
         """ Set the game to a given state """
-        pass
+        self.state = state
 
     def get_state(self) -> GameState:
         """ Get the complete, unmasked game state """
-        pass
+        return self.state
 
     def print_state(self) -> None:
         """ Print the current game state """
@@ -208,3 +216,4 @@ class RandomPlayer(Player):
 if __name__ == '__main__':
 
     game = Dog()
+    print(game.get_state())
