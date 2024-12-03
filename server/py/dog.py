@@ -471,7 +471,7 @@ if __name__ == '__main__':
                 game.apply_action(action)
                 game.print_state()
 
-        # Reset card-swapping flag for the next round
+        # Reset card swapping flag for the next round
         game.get_state().bool_card_swapped = False
 
         print(f"\n --------------- ROUND {game.get_state().cnt_round} finished -----------------")
