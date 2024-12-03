@@ -202,7 +202,22 @@ class Uno(Game):
         # Move to the next player
         self._advance_to_next_player()
 
-    
+    def _skip_next_player(self) -> None:
+        """Skip the next player's turn"""
+        self._advance_to_next_player()
+
+    def _reverse_direction(self) -> None:
+        """Reverse direction of play"""
+        self.state.direction *= -1
+
+    def _draw_cards(self, player_index:int, count:int) -> None:
+        """Draw cards from the draw pile and add to player's hand"""
+        player = self.state.list_player[player_index]
+        for _ in range(count):
+            if not self.state.list_card_discard:
+                # reshuffle discard pile into draw pile if empty
+                self._reshuffle_discard_pile()
+            player.list_card.append(self.state.list_card_draw.pop())
 
 
 
