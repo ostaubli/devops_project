@@ -1,7 +1,7 @@
 # -runcmd: cd ../.. & venv\Scripts\python server/py/uno.py
 # runcmd: cd ../.. & venv\Scripts\python benchmark/benchmark_uno.py python uno.Uno
 
-from game import Game, Player #from server.py.game import Game, Player
+from server.py.game import Game, Player #from server.py.game import Game, Player
 from typing import List, Optional
 from pydantic import BaseModel
 from enum import Enum
