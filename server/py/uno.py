@@ -26,6 +26,41 @@ class PlayerState(BaseModel):
     name: Optional[str] = None  # name of player
     list_card: List[Card] = []  # list of cards
 
+    @staticmethod
+    def _display_deco(function):
+        """ Decorator to format the output of the display method, created within this class. """
+        def inner(*args, **kwargs):
+            print("---- Player State ----")
+            result = function(*args, **kwargs)
+            print("-----------------------")
+            return result
+        return inner 
+
+    def add_card(self, card: Card):
+        """ Add a card to the player's hand card-stack, when the player pulls a card. """
+        self.list_card.append(card)
+
+    def play_card(self, card: Card):
+        """ Remove a card from the player's hand stack, when the player plays a card. """
+        if card in self.list_card:
+            self.list_card.remove(card)
+
+    def check_uno(self) -> bool:
+        """ Check whether the player has only one card left to play. """
+        uno_card = len(self.list_card) == 1
+        return uno_card
+    
+    def check_no_cards(self) -> bool:
+        """ Check whether the player has no cards to play anymore. Then the player won the game. """
+        no_card = len(self.list_card) == 0
+        return no_card
+    
+    @_display_deco
+    def display_player_state(self):
+        """ Display the player's current state and hand card stack. """
+        print(f"Player: {self.name}")
+        print("Current cards in hand: ", [str(card) for card in self.list_card])
+    
 
 class GamePhase(str, Enum):
     SETUP = 'setup'            # before the game has started
@@ -133,12 +168,29 @@ class Uno(Game):
 
 
 class RandomPlayer(Player):
+    def __init__(self, name=str):
+        self.state=PlayerState(name= name)
 
     def select_action(self, state: GameState, actions: List[Action]) -> Optional[Action]:
         """ Given masked game state and possible actions, select the next action """
-        if len(actions) > 0:
-            return random.choice(actions)
-        return None
+        if not actions:
+            print(f"{self.state.name} hase no valid actions to undertake and must wither draw or skip.")
+
+        action = random.choice(actions) # randomly chooses an action
+
+        # wildcard case action
+        if action.card and action.card.symbol in ["wild", "wildcard4"]:
+            action.color = random.choice(state.LIST_COLOR[:-1]) # chooses a color not 'any'
+
+        # UNO case action
+        if len(self.state.list_card)==1:
+            action.uno=True
+            print(f"{self.state.name} UNO. Game won! ")
+
+
+        #if len(actions) > 0:
+        #    return random.choice(actions)
+        return action
 
 
 if __name__ == '__main__':
