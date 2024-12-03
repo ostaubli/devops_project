@@ -5,29 +5,35 @@ from pydantic import BaseModel
 from enum import Enum
 import random
 
+
 class Card(BaseModel):
-    suit: str  
-    rank: str  
+    suit: str
+    rank: str
+
 
 class Marble(BaseModel):
-    pos: int      
-    is_save: bool  
+    pos: int
+    is_save: bool
+
 
 class PlayerState(BaseModel):
-    name: str                 
-    list_card: List[Card]     
-    list_marble: List[Marble] 
+    name: str
+    list_card: List[Card]
+    list_marble: List[Marble]
+
 
 class Action(BaseModel):
-    card: Card                
-    pos_from: Optional[int]   
-    pos_to: Optional[int]     
-    card_swap: Optional[Card] = None 
+    card: Card
+    pos_from: Optional[int]
+    pos_to: Optional[int]
+    card_swap: Optional[Card] = None
+
 
 class GamePhase(str, Enum):
-    SETUP = 'setup'           
-    RUNNING = 'running'       
-    FINISHED = 'finished'     
+    SETUP = 'setup'
+    RUNNING = 'running'
+    FINISHED = 'finished'
+
 
 class GameState(BaseModel):
     LIST_SUIT: ClassVar[List[str]] = ['♠', '♥', '♦', '♣']
@@ -53,15 +59,16 @@ class GameState(BaseModel):
     ] * 2
 
     cnt_player: int = 4
-    phase: GamePhase             
-    cnt_round: int              
-    bool_card_exchanged: bool    
-    idx_player_started: int      
-    idx_player_active: int       
+    phase: GamePhase
+    cnt_round: int
+    bool_card_exchanged: bool
+    idx_player_started: int
+    idx_player_active: int
     list_player: List[PlayerState]
-    list_card_draw: List[Card]   
+    list_card_draw: List[Card]
     list_card_discard: List[Card]
-    card_active: Optional[Card]  
+    card_active: Optional[Card]
+
 
 class Dog(Game):
     def __init__(self) -> None:
@@ -70,18 +77,18 @@ class Dog(Game):
     def reset(self) -> None:
         draw_pile = list(GameState.LIST_CARD)
         random.shuffle(draw_pile)
-        
+
         players = []
         for i in range(4):
             marbles = []
             for j in range(4):
                 marbles.append(Marble(pos=64 + i * 8 + j, is_save=False))
-            
+
             player_cards = draw_pile[:6]
             draw_pile = draw_pile[6:]
-            
+
             players.append(PlayerState(
-                name=f"Player {i+1}",
+                name=f"Player {i + 1}",
                 list_card=player_cards,
                 list_marble=marbles
             ))
@@ -121,7 +128,14 @@ class Dog(Game):
             if card.rank in start_cards:
                 # Check if marbe in the kennel (pos=64)
                 for marble in active_player.list_marble:
-                    if marble.pos==64:
+                    if marble.pos == 64:
+                        opponent_marble = None
+                        for opponent in self.state.list_player:
+                            if opponent != active_player:
+                                for opp_marble in opponent.list_marble:
+                                    if marble.pos == 0 and opponent_marble.is_save:  # Opponent marble on start
+                                        opponent_marble = opp_marble
+                                        break
                         actions.append(Action(
                             card=card,
                             pos_from=64,
@@ -131,40 +145,46 @@ class Dog(Game):
         return actions
 
     def apply_action(self, action: Action) -> None:
-        if action is None:
-            # Move to next player
-            self.state.idx_player_active = (self.state.idx_player_active + 1) % 4
-        
-            # If we've gone through all players
-            if self.state.idx_player_active == self.state.idx_player_started:
-                # Move to next round
-                self.state.cnt_round += 1
-                self.state.idx_player_started = (self.state.idx_player_started + 1) % 4
-                self.state.bool_card_exchanged = False
-            
-                # Determine the number of cards to deal based on the current round
-                if 1 <= self.state.cnt_round <= 5:
-                    cards_per_player = 7 - self.state.cnt_round  # 6,5,4,3,2
-                elif self.state.cnt_round == 6:
-                    cards_per_player = 6  # Reset to 6
-                else:
-                    # Handle rounds beyond 6 if the game cycles
-                    cards_per_player = 7 - ((self.state.cnt_round - 1) % 5 + 1)
-                    cards_per_player = max(cards_per_player, 2)
-            
-                # Deal new cards based on the determined number
-                draw_pile = self.state.list_card_draw
-                for player in self.state.list_player:
-                    player.list_card = draw_pile[:cards_per_player]
-                    draw_pile = draw_pile[cards_per_player:]
-                self.state.list_card_draw = draw_pile
-            
-                # Set active player to the player after the starting player
-                self.state.idx_player_active = (self.state.idx_player_started + 1) % 4
+        if action:
+            # Get the active player and the marble to be moved
+            active_player = self.state.list_player[self.state.idx_player_active]
+            moving_marble = next(
+                (marble for marble in active_player.list_marble if marble.pos == action.pos_from), None
+            )
 
+            if moving_marble:
+                # Check if the target position has an opponent's marble
+                opponent_player = None
+                opponent_marble = None
+                for player in self.state.list_player:
+                    if player != active_player:
+                        for marble in player.list_marble:
+                            if marble.pos == action.pos_to:
+                                opponent_player = player
+                                opponent_marble = marble
+                                break
+                        if opponent_marble:
+                            break
+
+                # Handle displacement of opponent's marble
+                if opponent_marble:
+                    # Send the opponent's marble back to its kennel
+                    opponent_marble.pos = 72  # Kennel
+                    opponent_marble.is_save = False
+
+                # Move the active player's marble
+                moving_marble.pos = action.pos_to
+                moving_marble.is_save = True
+
+            # Remove the card from the active player's hand
+            active_player.list_card.remove(action.card)
+
+        # Proceed to the next player's turn
+        self.state.idx_player_active = (self.state.idx_player_active + 1) % self.state.cnt_player
 
     def get_player_view(self, idx_player: int) -> GameState:
         return self.state
+
 
 class RandomPlayer(Player):
     def select_action(self, state: GameState, actions: List[Action]) -> Optional[Action]:
