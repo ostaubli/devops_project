@@ -160,7 +160,10 @@ class Uno(Game):
 
     def apply_action(self, action: Action) -> None:
         """ Apply the given action to the game """
-        pass
+        if not self.state: # in case game state has not been initialized
+            raise ValueError("Game state has not been initialized")
+
+        
 
     def get_player_view(self, idx_player: int) -> GameState:
         """ Get the masked state for the active player (e.g. the oppontent's cards are face down)"""
