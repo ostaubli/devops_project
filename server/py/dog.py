@@ -25,10 +25,17 @@ class PlayerState(BaseModel):
 
 
 class Action(BaseModel):
+<<<<<<< Updated upstream
     card: Card                 # card to play
     pos_from: Optional[int]    # position to move the marble from
     pos_to: Optional[int]      # position to move the marble to
     card_swap: Optional[Card] = None  # optional card to swap ()
+=======
+    card: Card  # card to play
+    pos_from: Optional[int]  # position to move the marble from
+    pos_to: Optional[int]  # position to move the marble to
+    card_swap: Optional[Card]  # optional card to swap () #It is needed and it has to be done at the beginning?
+>>>>>>> Stashed changes
 
 
 class GamePhase(str, Enum):
@@ -38,6 +45,8 @@ class GamePhase(str, Enum):
 
 
 class GameState(BaseModel):
+        #Add a new field bool_card_swapped to track if card swapping is complete for the round
+        bool_card_swapped: bool = False  # Track if the card-swapping phase is completed
 
     LIST_SUIT: ClassVar[List[str]] = ['♠', '♥', '♦', '♣']  # 4 suits (colors)
     LIST_RANK: ClassVar[List[str]] = [
