@@ -182,6 +182,29 @@ class Uno(Game):
             else:
                 self.state.color = action.card.color
 
+            # Handle special card effects
+            if action.card.symbol == 'skip':
+                self._skip_next_player()
+            elif action.card.symbol == 'reverse':
+                self._reverse_direction()
+            elif action.card.symbol == 'draw2':
+                self.state.cnt_to_draw += 2
+            elif action.card.symbol == 'wilddraw4':
+                self.state.cnt_to_draw += 4
+
+            # Validate UNO call
+            if len(active_player.list_card) == 1 and not action.uno:
+                print(f"Player {active.player.name} failed to call UNO!")
+
+        elif action.draw:
+            self._draw_cards(self.state.idx_player_active, action.draw)
+
+        # Move to the next player
+        self._advance_to_next_player()
+
+    
+
+
 
     def get_player_view(self, idx_player: int) -> GameState:
         """ Get the masked state for the active player (e.g. the oppontent's cards are face down)"""
