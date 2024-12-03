@@ -22,7 +22,7 @@ class Action(BaseModel):
     card: Card                
     pos_from: Optional[int]   
     pos_to: Optional[int]     
-    card_swap: Optional[Card] 
+    card_swap: Optional[Card] = None 
 
 class GamePhase(str, Enum):
     SETUP = 'setup'           
@@ -108,18 +108,27 @@ class Dog(Game):
         pass
 
     def get_list_action(self) -> List[Action]:
+        actions = []
         # Get cards of active player
         active_player = self.state.list_player[self.state.idx_player_active]
         cards = active_player.list_card
 
-        # Start round card exchange
-        if not self.state.bool_card_exchanged and self.state.cnt_round == 0:
-            actions = []
-            for card in cards:
-                actions.append(Action(card=card, pos_from=-1, pos_to=-1, card_swap=None))
-            return actions
-            
-        return []
+        # Define start cards that allow moving out of kennel
+        start_cards = ['A', 'K', 'JKR']
+
+        # Check if any card allows moving out of kennel
+        for card in cards:
+            if card.rank in start_cards:
+                # Check if marbe in the kennel (pos=64)
+                for marble in active_player.list_marble:
+                    if marble.pos==64:
+                        actions.append(Action(
+                            card=card,
+                            pos_from=64,
+                            pos_to=0,
+                            card_swap=None
+                        ))
+        return actions
 
     def apply_action(self, action: Action) -> None:
         if action is None:
