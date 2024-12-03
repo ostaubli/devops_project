@@ -163,7 +163,10 @@ class Uno(Game):
         if not self.state: # in case game state has not been initialized
             raise ValueError("Game state has not been initialized")
 
-        
+        # Case 1: Play a card
+        if action.card:
+            if action.card not in active_player.list_card:
+                raise ValueError("Player cannot play a card they don't have")
 
     def get_player_view(self, idx_player: int) -> GameState:
         """ Get the masked state for the active player (e.g. the oppontent's cards are face down)"""
