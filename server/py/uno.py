@@ -246,7 +246,14 @@ class Uno(Game):
                 # replace the list of cards with a placeholder showing card count
                 player.list_card = [Card() for _ in range(len(player.list_card))]
 
-                
+        # reveal current player's hand
+        masked_state.list_player[idx_player].list_card = self.state.list_player[idx_player].list_card
+
+        # mask draw pile (size can be revealed but not cards)
+        masked_state.list_card_draw = [Card() * len(self.state.list_card_draw)]
+
+        # return masked state
+        return masked_state
 
 
 class RandomPlayer(Player):
