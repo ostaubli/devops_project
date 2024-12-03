@@ -203,8 +203,12 @@ class Dog(Game):
                                 pos_to, marble.pos, self._get_all_safe_marbles()):
                             actions.append(Action(card=card, pos_from=marble.pos, pos_to=pos_to,
                                                   card_swap=None))  # TODO add logic for card_swap (once we know what this is used for) LATIN-37
+            unique_actions = []
+            for action in actions:
+                if action not in unique_actions:
+                    unique_actions.append(action)
 
-        return actions
+        return unique_actions
 
     def _count_marbles_in_kennel(self) -> int:
         active_player = self._state.list_player[self._state.idx_player_active]
@@ -230,6 +234,8 @@ class Dog(Game):
                     f"Player {idx_player + 1} ({player.name}) has won the game!")
                 return True
         return False
+
+    # TODO LATIN-47 Check for TEAM WIN, if 2 players of the same team have all their marbles in the final area
 
     # TODO LATIN-27
     def apply_action(self, action: Action) -> None:
