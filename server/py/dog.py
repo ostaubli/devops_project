@@ -170,6 +170,38 @@ class Dog(Game):
         """ Print the current game state """
         print(self._state)
 
+    def handle_card_swapping(self):
+        """Handle the card-swapping process for all players."""
+        for idx_player, player in enumerate(self._state.list_player):
+            # Determine teammate index based on player index (teammates are 2 positions apart)
+            teammate_idx = (idx_player + 2) % self._state.cnt_player
+            teammate = self._state.list_player[teammate_idx]
+
+            # Choose cards to swap (randomly for now)
+            chosen_card = self._choose_card_to_swap(player)
+            swapped_card = self._choose_card_to_swap(teammate)
+
+            # Swap the chosen cards
+            if chosen_card and swapped_card:
+                player.list_card.remove(chosen_card)
+                teammate.list_card.remove(swapped_card)
+                player.list_card.append(swapped_card)
+                teammate.list_card.append(chosen_card)
+
+                print(
+                    f"Player {player.name} swapped {chosen_card.rank} of {chosen_card.suit} "
+                    f"with Player {teammate.name}'s {swapped_card.rank} of {swapped_card.suit}."
+                )
+
+        # Mark swapping phase as completed
+        self._state.bool_card_swapped = True
+
+    def _choose_card_to_swap(self, player: PlayerState) -> Optional[Card]:
+        """Choose a card to swap. This is placeholder logic."""
+        if player.list_card:
+            return random.choice(player.list_card)  # Randomly select a card to swap
+        return None
+
     def get_list_action(self) -> List[Action]:
         """ Get a list of possible actions for the active player """
         actions = []
