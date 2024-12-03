@@ -73,25 +73,68 @@ class GameState(BaseModel):
         Card(suit='', rank='JKR'), Card(suit='', rank='JKR'), Card(suit='', rank='JKR')
     ] * 2
 
-    cnt_player: int = 4                # number of players (must be 4)
-    phase: GamePhase                   # current phase of the game
-    cnt_round: int                     # current round
-    bool_card_exchanged: bool          # true if cards was exchanged in round
-    idx_player_started: int            # index of player that started the round
-    idx_player_active: int             # index of active player in round
-    list_player: List[PlayerState]     # list of players
-    list_card_draw: List[Card]         # list of cards to draw
-    list_card_discard: List[Card]      # list of cards discarded
-    card_active: Optional[Card]        # active card (for 7 and JKR with sequence of actions)
+    cnt_player: int = 4                         # number of players (must be 4)
+    def __init__(self) ->None:
+        super().__init__()                      # init von BaseModel aufrufen für Pylint
+
+        self.phase: GamePhase                   # current phase of the game
+        self.cnt_round: int = 0                 # current round
+        self.bool_card_exchanged: bool          # true if cards was exchanged in round
+        self.idx_player_started: int            # index of player that started the round
+        self.idx_player_active: int             # index of active player in round
+        player_blue = PlayerState(
+                name="PlayerBlue",
+                list_card=[],
+                list_marble=[Marble(pos="64", is_save=True), 
+                             Marble(pos="65", is_save=True),
+                             Marble(pos="66", is_save=True),
+                             Marble(pos="67", is_save=True)]
+                )
+        player_green = PlayerState(
+                name="PlayerGreen",
+                list_card=[],
+                list_marble=[Marble(pos="72", is_save=True), 
+                             Marble(pos="73", is_save=True),
+                             Marble(pos="74", is_save=True),
+                             Marble(pos="75", is_save=True)]
+                )
+        player_red = PlayerState(
+                name="PlayerRed",
+                list_card=[],
+                list_marble=[Marble(pos="80", is_save=True), 
+                             Marble(pos="81", is_save=True),
+                             Marble(pos="82", is_save=True),
+                             Marble(pos="83", is_save=True)]
+                )
+        player_yellow = PlayerState(
+                name="PlayerYellow",
+                list_card=[],
+                list_marble=[Marble(pos="88", is_save=True), 
+                             Marble(pos="89", is_save=True),
+                             Marble(pos="90", is_save=True),
+                             Marble(pos="91", is_save=True)]
+                )
+        self.list_player = [player_blue,player_green,player_red,player_yellow]
+
+        self.list_card_draw = self.LIST_CARD         # list of cards to draw
+        self.list_card_discard: List[Card] = []     # list of cards discarded
+        self.card_active: Optional[Card] = None       # active card (for 7 and JKR with sequence of actions)
 
 
     def deal_cards(self) -> bool:
         # TODO: Check if all players are out of cards.
+        for player in self.list_player:
+            if not player.list_card:
+                continue
+            else:
+                print(f"{player.name} has still {len(player.list_card)} card's")
+                return False
+
         # TODO: Increase the current round.
         # TODO: Calculate how many cards are needed.
         # TODO: Check if there are enough cards in the draw deck; if not, add a new card deck.
         # TODO: Randomly select cards for players.
-        pass
+        return True
 
 
     def get_list_possible_action(self) -> List[Action]:
