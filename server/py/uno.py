@@ -219,6 +219,17 @@ class Uno(Game):
                 self._reshuffle_discard_pile()
             player.list_card.append(self.state.list_card_draw.pop())
 
+    def _reshuffle_discard_pile(self) -> None:
+        """Reshuffle the discard pile into the draw pile"""
+        if len(self.state.list_card_discard) <= 1:
+            raise ValueError("Not enough cards to reshuffle")
+        self.state.list_card_draw = self.state.list_card_discard[:-1]
+        random.shuffle(self.state.list_card_draw)
+        self.state.list_card_discard = [self.state.list_card_discard[-1]]
+
+    def _advance_to_next_player(self) -> None:
+        """Advance to the next player in the correct direction"""
+        self.state.idx_player_active = (self.state.idx_player_active + self.state.direction % self.state.cnt_player)
 
 
     def get_player_view(self, idx_player: int) -> GameState:
