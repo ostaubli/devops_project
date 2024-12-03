@@ -89,11 +89,11 @@ class Dog(Game):
 
     def __init__(self) -> None:
         """ Game initialization (set_state call not necessary, we expect 4 players) """
-        pass
+        self.state = None
 
     def set_state(self, state: GameState) -> None:
         """ Set the game to a given state """
-        pass
+        self.state = state
 
     def get_state(self) -> GameState:
         """ Get the complete, unmasked game state """
@@ -115,8 +115,26 @@ class Dog(Game):
         """ Get the masked state for the active player (e.g. the oppontent's cards are face down)"""
         pass
 
-    def swap_cards(self, player1, player2):
-        pass  # Platzhalter DA-34
+    def swap_cards(self, player1_idx: int, player2_idx: int, card1: Card, card2: Card) -> None:
+        # Hole die Spielerobjekte
+        player1 = self.state.list_player[player1_idx]
+        player2 = self.state.list_player[player2_idx]
+
+        # Überprüfe, ob Spieler 1 die angegebene Karte hat
+        if card1 not in player1.list_card:
+            raise ValueError(f"Player {player1_idx} does not have the card {card1}.")
+
+        # Überprüfe, ob Spieler 2 die angegebene Karte hat
+        if card2 not in player2.list_card:
+            raise ValueError(f"Player {player2_idx} does not have the card {card2}.")
+
+        # Entferne die Karte von Spieler 1 und füge sie zu Spieler 2 hinzu
+        player1.list_card.remove(card1)
+        player2.list_card.append(card1)
+
+        # Entferne die Karte von Spieler 2 und füge sie zu Spieler 1 hinzu
+        player2.list_card.remove(card2)
+        player1.list_card.append(card2)
 
 class RandomPlayer(Player):
 
