@@ -134,24 +134,34 @@ class Dog(Game):
         if action is None:
             # Move to next player
             self.state.idx_player_active = (self.state.idx_player_active + 1) % 4
-            
+        
             # If we've gone through all players
             if self.state.idx_player_active == self.state.idx_player_started:
                 # Move to next round
                 self.state.cnt_round += 1
                 self.state.idx_player_started = (self.state.idx_player_started + 1) % 4
                 self.state.bool_card_exchanged = False
-                
-                # Deal new cards based on round
+            
+                # Determine the number of cards to deal based on the current round
+                if 1 <= self.state.cnt_round <= 5:
+                    cards_per_player = 7 - self.state.cnt_round  # 6,5,4,3,2
+                elif self.state.cnt_round == 6:
+                    cards_per_player = 6  # Reset to 6
+                else:
+                    # Handle rounds beyond 6 if the game cycles
+                    cards_per_player = 7 - ((self.state.cnt_round - 1) % 5 + 1)
+                    cards_per_player = max(cards_per_player, 2)
+            
+                # Deal new cards based on the determined number
                 draw_pile = self.state.list_card_draw
-                cards_per_player = 5
                 for player in self.state.list_player:
                     player.list_card = draw_pile[:cards_per_player]
                     draw_pile = draw_pile[cards_per_player:]
                 self.state.list_card_draw = draw_pile
-                
+            
                 # Set active player to the player after the starting player
                 self.state.idx_player_active = (self.state.idx_player_started + 1) % 4
+
 
     def get_player_view(self, idx_player: int) -> GameState:
         return self.state
