@@ -168,6 +168,15 @@ class Uno(Game):
             if action.card not in active_player.list_card:
                 raise ValueError("Player cannot play a card they don't have")
 
+            # Remove card from player hand
+            active_player.list_card.remove(action.card)
+
+            # Add card to discard pile
+            self.state.list_card_discard.append(action.card)
+
+            # Update the active color (for wildcards)
+
+
     def get_player_view(self, idx_player: int) -> GameState:
         """ Get the masked state for the active player (e.g. the oppontent's cards are face down)"""
         pass
