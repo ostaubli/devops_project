@@ -4,6 +4,7 @@ from typing import List, Optional, ClassVar
 from pydantic import BaseModel
 from enum import Enum
 import random
+from pprint import pprint
 
 
 class Card(BaseModel):
@@ -23,10 +24,10 @@ class PlayerState(BaseModel):
 
 
 class Action(BaseModel):
-    card: Card                 # card to play
-    pos_from: Optional[int]    # position to move the marble from
-    pos_to: Optional[int]      # position to move the marble to
-    card_swap: Optional[Card]  # optional card to swap ()
+    card: Optional[Card] = None           # Make optional
+    pos_from: Optional[int] = None        # Make optional
+    pos_to: Optional[int] = None          # Make optional
+    card_swap: Optional[Card] = None      # Make optional)
 
 
 class GamePhase(str, Enum):
@@ -84,36 +85,129 @@ class GameState(BaseModel):
     list_card_discard: List[Card]      # list of cards discarded
     card_active: Optional[Card]        # active card (for 7 and JKR with sequence of actions)
 
+    def get_card_steps(self, rank: str) -> int:
+        """ Return the number of steps based on the card rank """
+        if rank in ['2', '3', '4', '5', '6', '7', '8', '9', '10']:
+            return int(rank)
+        elif rank in ['Q']:
+            return 12
+        elif rank in ['K']:
+            return 13
+
 
 class Dog(Game):
 
     def __init__(self) -> None:
         """ Game initialization (set_state call not necessary, we expect 4 players) """
-        pass
+        # Shuffle the cards
+        shuffled_cards = random.sample(GameState.LIST_CARD, len(GameState.LIST_CARD))
+
+        # Setup the board with 95 places and initial marble positions
+        blue_marbles = [Marble(pos=str(i), is_save=True) for i in range(64, 68)]
+        green_marbles = [Marble(pos=str(i), is_save=True) for i in range(72, 76)]
+        red_marbles = [Marble(pos=str(i), is_save=True) for i in range(80, 84)]
+        yellow_marbles = [Marble(pos=str(i), is_save=True) for i in range(88, 92)]
+
+        # Initialize players
+        self.state = GameState(
+            cnt_player=4,
+            phase=GamePhase.SETUP,
+            cnt_round=0,
+            bool_card_exchanged=False,
+            idx_player_started=random.randint(0, 3),  # Randomly select start player
+            idx_player_active=0,
+            list_player=[
+                PlayerState(name="Blue", list_card=[], list_marble=blue_marbles),
+                PlayerState(name="Green", list_card=[], list_marble=green_marbles),
+                PlayerState(name="Red", list_card=[], list_marble=red_marbles),
+                PlayerState(name="Yellow", list_card=[], list_marble=yellow_marbles),
+            ],
+            list_card_draw=shuffled_cards,
+            list_card_discard=[],
+            card_active=None
+        )
+
+         # Deal 6 cards to each player directly in the init
+        num_cards_per_player = 6  # Example number of cards per player
+        for player in self.state.list_player:
+            player.list_card = [self.state.list_card_draw.pop() for _ in range(num_cards_per_player)]
+
+        # Transition to the running phase, since we're starting the game directly
+        self.state.phase = GamePhase.RUNNING
+        self.state.cnt_round = 1
+        self.state.idx_player_active = self.state.idx_player_started
+        self.state.bool_card_exchanged = False
 
     def set_state(self, state: GameState) -> None:
         """ Set the game to a given state """
-        pass
+        self.state = state
 
     def get_state(self) -> GameState:
         """ Get the complete, unmasked game state """
-        pass
+        return self.state
 
     def print_state(self) -> None:
         """ Print the current game state """
-        pass
+        
+        print("\n=== Brandi Dog Game State ===")
+        print(f"Phase: {self.state.phase}")
+        print(f"Round: {self.state.cnt_round}")
+        print(f"Player to Start: {self.state.list_player[self.state.idx_player_started].name}")
+        print(f"Active Player: {self.state.list_player[self.state.idx_player_active].name}")
+        print(f"Cards Left in Draw Pile: {len(self.state.list_card_draw)}")
+        print(f"Cards in Discard Pile: {len(self.state.list_card_discard)}")
+        print("\n--- Players ---")
+        for player in self.state.list_player:
+            print(f"Player: {player.name}")
+            print(f"  Marbles: {', '.join([f'Pos {m.pos} (Saved: {m.is_save})' for m in player.list_marble])}")
+            print(f"  Cards in Hand: {len(player.list_card)}")
+        print("\n--- Active Card ---")
+        if self.state.card_active:
+            print(f"Active Card: {self.state.card_active.suit}{self.state.card_active.rank}")
+        else:
+            print("No Active Card")
+        print("\n============================\n")
 
     def get_list_action(self) -> List[Action]:
         """ Get a list of possible actions for the active player """
-        pass
+        list_action = []
+        player = self.state.list_player[self.state.idx_player_active]
+
+        # Check if Player can move forward (NO SPECIAL CARDS HERE)
+        for card in player.list_card:
+            if card.rank in ['2', '3', '4', '5', '6', '8', '9', '10', 'Q']:
+                for marble in player.list_marble:
+                    if marble.pos >= 0 and marble.pos <= 63:    # for now only marbles on board are checked
+                        pos_from = marble.pos
+                        steps = self.get_card_steps(card)
+                        pos_to = (pos_from + steps)
+
+                        if self.is_valid_move(pos_from, pos_to):
+                            action = Action(card=card, pos_from=pos_from, pos_to=pos_to)
+                            list_action.append(action)
+
+        return list_action
 
     def apply_action(self, action: Action) -> None:
         """ Apply the given action to the game """
-        pass
+        player = self.state.list_player[self.state.idx_player_active]
 
+        # check if any marbles should be moved
+        marble_to_move = None
+        for marble in player.list_marble:
+            if marble.pos == action.pos_from:
+                marble_to_move = marble
+                break
+
+        # if there are marbles to be moved, then move them and discard the card of the player afterwards
+        if not marble_to_move is None:
+            marble_to_move.pos = action.pos_to
+            player.list_card.remove(action.card)
+            self.state.list_card_discard.append(action.card)
+        
     def get_player_view(self, idx_player: int) -> GameState:
         """ Get the masked state for the active player (e.g. the oppontent's cards are face down)"""
-        pass
+        return self.state
 
 
 class RandomPlayer(Player):
