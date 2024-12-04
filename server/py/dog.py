@@ -157,11 +157,96 @@ class GameState(BaseModel):
         return True
 
 
-    def get_list_possible_action(self) -> List[Action]:
+    def get_list_possible_action(self) -> List[Action]: #Nicolas
         '''
         List of Action from active players Cards
 
+        TODO: Home Handling to do
+        TODO: Marble blocks the way (RULE) if new on start
         '''
+        list_steps_split_7 = [
+            [1, 1, 1, 1, 1, 1, 1],
+            [2, 1, 1, 1, 1, 1],
+            [2, 2, 1, 1, 1],
+            [2, 2, 2, 1],
+            [3, 1, 1, 1, 1],
+            [3, 2, 1, 1],
+            [3, 2, 2],
+            [3, 3, 1],
+            [4, 1, 1, 1],
+            [4, 2, 1],
+            [4, 3],
+            [5, 2],
+            [6, 1],
+        ]
+        active_player = self.list_player[self.idx_player_active]
+        cards = active_player.list_card
+        marbles = active_player.list_marbles
+
+        action_list = []
+        for marble in marbles:
+            for card in cards:
+                match card.rank:
+                    case '2':
+                        action_list.append(Action(card = card,pos_from = marble.pos, pos_to = ((marble.pos + 2) % 64 )))
+                    case '3':
+                        action_list.append(Action(card = card,pos_from = marble.pos, pos_to = ((marble.pos + 3) % 64 )))
+                    case '4':
+                        action_list.append(Action(card = card,pos_from = marble.pos, pos_to = ((marble.pos + 4) % 64 )))
+                        action_list.append(Action(card = card,pos_from = marble.pos, pos_to = ((marble.pos - 4) % 64 )))
+                    case '5':
+                        action_list.append(Action(card = card,pos_from = marble.pos, pos_to = ((marble.pos + 5) % 64 )))
+                    case '6':
+                        action_list.append(Action(card = card,pos_from = marble.pos, pos_to = ((marble.pos + 6) % 64 )))
+                    case '7':
+                        for steps_split in list_steps_split_7:
+                            for i, steps in enumerate(steps_split):
+                                action_list.append(Action(card = card,pos_from = marble.pos, pos_to = (marble.pos + steps) % 64))
+                    case '8':
+                        action_list.append(Action(card=card, pos_from=marble.pos, pos_to=((marble.pos + 8) % 64)))
+                    case '9':
+                        action_list.append(Action(card=card, pos_from=marble.pos, pos_to=((marble.pos + 9) % 64)))
+                    case '10':
+                        action_list.append(Action(card=card, pos_from=marble.pos, pos_to=((marble.pos + 10) % 64)))
+                    case 'J':
+                        #TODO Jake Logic
+                        pass
+                    case 'Q':
+                        action_list.append(Action(card=card, pos_from=marble.pos, pos_to=((marble.pos + 12) % 64)))
+                    case 'K':
+                        action_list.append(Action(card=card, pos_from=marble.pos, pos_to=((marble.pos + 13) % 64)))
+                        #TODO Going Out
+                    case 'A':
+                        action_list.append(Action(card=card, pos_from=marble.pos, pos_to=((marble.pos + 11) % 64)))
+                        action_list.append(Action(card=card, pos_from=marble.pos, pos_to=((marble.pos + 1) % 64)))
+                        #TODO Going OUT
+                    case 'JKR':
+                        #
+
+
+
+
+
+
+
+
+        '''        
+        Define Each Action for Each Card
+        
+        Cards 2-10 Ex 7/4 -> Move One Marble the Amount of Value
+        Card 4 -> Move one Marble +4 or -4
+        Card 7 -> Move one to four Marbles in total of 7
+        Card Ace -> Move one Marble 1 or 11 or get out
+        Card Queen -> Move one Marble 12
+        Card King -> Move one Marble 13 or get out
+        Card Jake -> Marble position Exchange
+        Card Joker -> Card Swap
+        
+        
+        
+        '''
+
+
         pass
 
     def set_action_to_game(self, action: Action):
@@ -213,6 +298,7 @@ class Dog(Game):
 
     def __init__(self) -> None:
         """ Game initialization (set_state call not necessary, we expect 4 players) """
+
         self.state = GameState()
         self.state.setup_players()
         self.state.phase = GamePhase.RUNNING
