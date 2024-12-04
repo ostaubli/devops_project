@@ -154,33 +154,52 @@ class Dog(Game):
 
             if moving_marble:
                 # Check if the target position has an opponent's marble
-                opponent_player = None
                 opponent_marble = None
                 for player in self.state.list_player:
                     if player != active_player:
                         for marble in player.list_marble:
                             if marble.pos == action.pos_to:
-                                opponent_player = player
                                 opponent_marble = marble
                                 break
-                        if opponent_marble:
-                            break
 
                 # Handle displacement of opponent's marble
                 if opponent_marble:
-                    # Send the opponent's marble back to its kennel
-                    opponent_marble.pos = 72  # Kennel
+                    opponent_marble.pos = 72  # Move opponent's marble back to kennel
                     opponent_marble.is_save = False
 
                 # Move the active player's marble
                 moving_marble.pos = action.pos_to
                 moving_marble.is_save = True
 
-            # Remove the card from the active player's hand
-            active_player.list_card.remove(action.card)
+            # Remove the card used from the active player's hand
+            if action.card in active_player.list_card:
+                active_player.list_card.remove(action.card)
 
         # Proceed to the next player's turn
         self.state.idx_player_active = (self.state.idx_player_active + 1) % self.state.cnt_player
+
+        # Check if the round is complete
+        if self.state.idx_player_active == self.state.idx_player_started:
+            self.state.cnt_round += 1  # Increment round count
+            self.state.bool_card_exchanged = False  # Reset card exchange flag
+            self.state.idx_player_started = (self.state.idx_player_started + 1) % self.state.cnt_player
+
+            # Determine the number of cards to deal
+            if 1 <= self.state.cnt_round <= 5:
+                cards_per_player = 7 - self.state.cnt_round  # 6, 5, 4, 3, 2 cards
+            elif self.state.cnt_round == 6:
+                cards_per_player = 6  # Reset to 6 cards
+            else:
+                cards_per_player = max(7 - ((self.state.cnt_round - 1) % 5 + 1), 2)
+
+            # Deal cards to players
+            draw_pile = self.state.list_card_draw
+            for player in self.state.list_player:
+                player.list_card = draw_pile[:cards_per_player]
+                draw_pile = draw_pile[cards_per_player:]
+
+            # Update the draw pile
+            self.state.list_card_draw = draw_pile
 
     def get_player_view(self, idx_player: int) -> GameState:
         return self.state
