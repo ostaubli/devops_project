@@ -219,7 +219,7 @@ class GameState(BaseModel):
                         action_list.append(Action(card=card, pos_from=marble.pos, pos_to=((marble.pos + 1) % 64)))
                         #TODO Going OUT
                     case 'JKR':
-                        #
+                       pass
 
 
 
@@ -245,7 +245,7 @@ class GameState(BaseModel):
         '''
 
 
-        pass
+
 
     def set_action_to_game(self, action: Action):
         """
