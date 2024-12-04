@@ -152,18 +152,42 @@ class GameState(BaseModel):
 
         pass
 
-    def check_final_pos(pos:int) -> bool:
+    def check_final_pos(self, pos_to: int, pos_from: int, marble: Marble) -> None:
         '''
-        Pos Blocked
+        Check whether the final position of the marble is a special position.
+        1) The marble is save if it is in one of the four final spots of its color or
+        2) if it is newly out of the kennel.
         '''
-        pass
+        final_positions: list = [68, 69, 70, 71, 76, 77, 78, 79, 84, 85, 86, 87, 92, 93, 94, 95]
+        if pos_to in final_positions:
+            marble.is_save = True
 
-    def sending_home(pos:int) -> None: # Set player X Marvel home
+        last_positions: list = [64, 65, 66, 67, 72, 73, 74, 75, 80, 81, 82, 83, 88, 89, 90, 91]
+        if pos_from in last_position:
+            marble.is_save = True
+
+    def sending_home(self, murmel: Marble) -> None:  # Set player X Marvel home
         '''
-        Pos of other player ==> Sending Home
+        Function to send a player home. There are two possibilities:
+        1) a marble of another player lands exactly on the position of my marble
+        2) my marble gets jumped over by a marble with a 7-card.
         '''
-        pass
-           
+
+        # First case
+        for player in self.list_player:
+            for marble in player.list_marble:
+                if marble.pos == self.pos_to:
+                    marble.pos = 0 # Anpassen. Marble zurück auf Startposition. Wie definieren wir die Startposition? Fix zuweisen oder Logik?
+                    marble.is_save = True
+
+        # Second case
+        if Action.card.rank == 7:           # Müssen wir hier noch eine Action mitgeben?
+            for player in self.list_player:
+                for marble in player.list_marble:
+                    if murmel.pos_from < marble.pos < murmel.pos_to and marble.is_save == False:
+                        marble.pos = 0 # Anpassen. Marble zurück auf Startposition. Wie definieren wir die Startposition? Fix zuweisen oder Logik?
+                        marble.is_save = True
+
 
 class Dog(Game):
 
@@ -173,11 +197,12 @@ class Dog(Game):
 
     def set_state(self, state: GameState) -> None:
         """ Set the game to a given state """
-        pass
+        self.state = state
 
     def get_state(self) -> GameState:
         """ Get the complete, unmasked game state """
-        pass
+        return self.state
+
 
     def print_state(self) -> None:
         """ Print the current game state """
