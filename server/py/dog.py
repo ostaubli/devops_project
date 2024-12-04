@@ -115,19 +115,22 @@ class GameState(BaseModel):
         1) The marble is save if it is in one of the four final spots of its color or
         2) if it is newly out of the kennel.
         '''
-        final_positions = [68, 69, 70, 71, 76, 77, 78, 79, 84, 85, 86, 87, 92, 93, 94, 95]
+        final_positions: list = [68, 69, 70, 71, 76, 77, 78, 79, 84, 85, 86, 87, 92, 93, 94, 95]
         if pos_to in final_positions:
             marble.is_save = True
 
-        last_position = [64, 65, 66, 67, 72, 73, 74, 75, 80, 81, 82, 83, 88, 89, 90, 91]
+        last_positions: list = [64, 65, 66, 67, 72, 73, 74, 75, 80, 81, 82, 83, 88, 89, 90, 91]
         if pos_from in last_position:
             marble.is_save = True
 
-    def sending_home(pos:int) -> None: # Set player X Marvel home
+    def sending_home(self, murmel: Marble) -> None:  # Set player X Marvel home
         '''
-        Pos of other player ==> Sending Home
+        Function to send a player home. There are two possibilities:
+        1) a marble of another player lands exactly on the position of my marble
+        2) my marble gets jumped over by a marble with a 7-card.
         '''
-        pass
+
+
            
 
 class Dog(Game):
