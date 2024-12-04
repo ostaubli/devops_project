@@ -248,12 +248,59 @@ class GameState(BaseModel):
         pass
 
     def set_action_to_game(self, action: Action):
-        '''
-        Make the Action to the board
-        Marvel pos 15 to pos 18
-        '''
+        """
+        Apply the given action to the game state.
+        Moves the marble from pos_from to pos_to based on the action,
+        and handles special cases like sending marbles home and marking marbles as safe.
+        """
+        # Get the active player
+        active_player = self.list_player[self.idx_player_active]
 
-        pass
+        # Ensure the card played is in the player's hand
+        if action.card not in active_player.list_card:
+            raise ValueError("The card played is not in the active player's hand.")
+
+        # Ensure pos_from and pos_to are defined
+        if action.pos_from is None or action.pos_to is None:
+            raise ValueError("Both pos_from and pos_to must be specified for the action.")
+
+        # Find the marble to move based on pos_from
+        marble_to_move = next((m for m in active_player.list_marble if m.pos == str(action.pos_from)), None)
+        if not marble_to_move:
+            raise ValueError(f"No marble found at the specified pos_from: {action.pos_from}")
+
+        # Update the marble's position
+        marble_to_move.pos = str(action.pos_to)
+
+        # Check if the marble's new position is in a final or safe zone
+        self.check_final_pos(pos_to=action.pos_to, pos_from=action.pos_from, marble=marble_to_move)
+
+        # Handle cases where another player's marble occupies the destination
+        for player in self.list_player:
+            if player != active_player:
+                opponent_marble = next((m for m in player.list_marble if m.pos == str(action.pos_to)), None)
+                if opponent_marble:
+                    self.sending_home(opponent_marble)  # Send the opponent's marble home
+
+        # Discard the played card
+        active_player.list_card.remove(action.card)
+        self.list_card_discard.append(action.card)
+
+        # Handle special cards
+        if action.card.rank == '7':
+            # 7 allows multiple movements; the game logic should track additional actions
+            self.card_active = action.card
+        elif action.card.rank == 'J':
+            # J allows swapping marbles (specific logic to be implemented separately)
+            pass
+        elif action.card.rank == 'JKR':
+            # Joker allows flexibility, which may require additional rules
+            pass
+        else:
+            # Reset the active card for regular actions
+            self.card_active = None
+
+
 
     def check_final_pos(self, pos_to: int, pos_from: int, marble: Marble) -> None:
         '''
