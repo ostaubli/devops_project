@@ -117,6 +117,10 @@ class GameState(BaseModel):
 
 
 class Dog(Game):
+    teams = {
+        0: [0, 2],  # Team 1: Player 1 and Player 3
+        1: [1, 3],  # Team 2: Player 2 and Player 4
+    }
     # Constants for player positions
     PLAYER_POSITIONS = {
         0: {'start': 0, 'queue_start': 64, 'final_start': 68},
@@ -294,14 +298,8 @@ class Dog(Game):
         """
         Check if a team has won, that means, both players on a team have all their marbles in the final area.
         """
-        # Define teams
-        teams = {
-            0: [0, 2],  # Team 1: Player 1 and Player 3
-            1: [1, 3],  # Team 2: Player 2 and Player 4
-        }
-
         # Check each team
-        for team_id, players in teams.items():  # Iterates through each team and its associated players
+        for team_id, players in self.teams.items():  # Iterates through each team and its associated players
             team_wins = True
             for player_idx in players:
                 final_start = self.PLAYER_POSITIONS[player_idx]['final_start']
@@ -319,14 +317,14 @@ class Dog(Game):
 
         return False
 
-    # TODO LATIN-27
     none_actions_counter = 0
+
     def apply_action(self, action: Action) -> None:
         """ Apply the given action to the game """
         active_player = self._state.list_player[self._state.idx_player_active]
         if action == None:
             # there is no card to play #fixme what needs to be done?! it is use din the tests but i hve no idea why
-            self.none_actions_counter+=1
+            self.none_actions_counter += 1
             active_player.list_card = []
 
         if action is not None and action.card in active_player.list_card:
@@ -350,16 +348,21 @@ class Dog(Game):
         if self._check_team_win():
             self._state.phase = self._state.phase.FINISHED
 
-        # calculate the next player (after 4, comes 1 again). not sure if needed here or somewhere else
-        # example: (4+1)%4=1 -> after player 4, it's player 1's turn again
+        # check if round is over
+        if self.none_actions_counter == 4 and len(self._state.list_card_draw) != 0:
+            self._state.cnt_round += 1
+            self.deal_cards()
+            # calculate the next player (after 4, comes 1 again). not sure if needed here or somewhere else
+            # example: (4+1)%4=1 -> after player 4, it's player 1's turn again
+            self._state.idx_player_active = (self._state.idx_player_active + 1) % self._state.cnt_player
 
-        if len(self._state.list_card_draw) == 0 and self.none_actions_counter ==4:
+        # if round is over and no cards are left in stack
+        if len(self._state.list_card_draw) == 0 and self.none_actions_counter == 4:
             self._refresh_deck()
-            self.none_actions_counter=0
+            self.none_actions_counter = 0
             # do not want to do this but I have no idea how the tests logic should work
             for p in self._state.list_player:
                 p.list_card = []
-        self._state.idx_player_active = (self._state.idx_player_active + 1) % self._state.cnt_player
 
     def _move_marble_logic(self, marble: Marble, pos_to: int, card: Card) -> None:
         """
@@ -550,7 +553,7 @@ class Dog(Game):
                 self._state.list_player[player_index].list_marble.append(
                     Marble(
                         pos=
-                            int(self.PLAYER_POSITIONS[player_index]['queue_start'] + marble_index),
+                        int(self.PLAYER_POSITIONS[player_index]['queue_start'] + marble_index),
                         is_save=True)
                 )
 
