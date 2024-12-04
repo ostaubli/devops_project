@@ -85,7 +85,7 @@ class GameState(BaseModel):
     idx_player_started: int = random.randint(0,3)   # index of player that started the round
     idx_player_active: int =idx_player_started      # index of active player in round
     list_player: List[PlayerState] = []             # list of players
-    list_card_draw: List[Card] = LIST_CARD       # list of cards to draw
+    list_card_draw: List[Card] = LIST_CARD       # list of cards to draw ==> Was list_id_card_draw in given Template
     list_card_discard: List[Card] = []              # list of cards discarded
     card_active: Optional[Card]   = None             # active card (for 7 and JKR with sequence of actions)
 
