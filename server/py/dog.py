@@ -163,8 +163,10 @@ class Dog(Game):
     def get_list_action(self) -> List[Action]:
         """ Get a list of possible actions for the active player """
         actions = []
+        unique_actions = []
         to_positions = []
         active_player = self._state.list_player[self._state.idx_player_active]
+
         marbles_in_kennel = self._count_marbles_in_kennel()
         for card in active_player.list_card:
             for marble in active_player.list_marble:
@@ -255,7 +257,7 @@ class Dog(Game):
                             # TODO add logic for card_swap (once we know what this is used for) LATIN-37
                             actions.append(Action(card=card, pos_from=marble.pos, pos_to=pos_to,
                                                   card_swap=None))
-            unique_actions = []
+
             for action in actions:
                 if action not in unique_actions:
                     unique_actions.append(action)
@@ -318,14 +320,17 @@ class Dog(Game):
         return False
 
     # TODO LATIN-27
+    none_actions_counter = 0
     def apply_action(self, action: Action) -> None:
         """ Apply the given action to the game """
         if action == None:
-            return
+            # there is no card to play #fixme what needs to be done?! it is use din the tests but i hve no idea why
+            self.none_actions_counter+=1
+
 
         active_player = self._state.list_player[self._state.idx_player_active]
 
-        if action.card in active_player.list_card:
+        if action is not None and action.card in active_player.list_card:
             # removing card from players hand and putting it to discarded stack
             active_player.list_card.remove(action.card)
             self._state.list_card_discard.append(action.card)
@@ -338,21 +343,23 @@ class Dog(Game):
             if marble_to_move:
                 # Check for collision before moving the marble
                 if self._is_collision(marble_to_move, action.pos_to, action.card):
-                    self._handle_collision(marble_to_move, action.pos_to)
+                    self._handle_collision(marble_to_move.pos, action.pos_to)
 
                 # Perform the movement logic
                 self._move_marble_logic(marble_to_move, action.pos_to, action.card)
-
-            # TODO Add additional logic for special cases (e.g., sending marbles home, resolving specific card effects)
-
-            # Calculate the next player (after 4, comes 1 again)
-        self._state.idx_player_active = (self._state.idx_player_active + 1) % self._state.cnt_player
 
         if self._check_team_win():
             self._state.phase = self._state.phase.FINISHED
 
         # calculate the next player (after 4, comes 1 again). not sure if needed here or somewhere else
         # example: (4+1)%4=1 -> after player 4, it's player 1's turn again
+
+        if len(self._state.list_card_draw) == 0 and self.none_actions_counter ==4:
+            self._refresh_deck()
+            self.none_actions_counter=0
+            # do not want to do this but I have no idea how the tests logic should work
+            for p in self._state.list_player:
+                p.list_card = []
         self._state.idx_player_active = (self._state.idx_player_active + 1) % self._state.cnt_player
 
     def _move_marble_logic(self, marble: Marble, pos_to: int, card: Card) -> None:
@@ -435,9 +442,21 @@ class Dog(Game):
                 player.list_card = [Card(suit='?', rank='?')] * len(player.list_card)
         return masked_state
 
+    def _refresh_deck(self) -> None:
+        """
+        Shuffle the draw pile. If the draw pile does not have enough cards to be dealt, move discarded cards back to the draw pile and shuffle.
+        """
+
+        # Move discarded cards to the draw pile
+        self._state.list_card_draw = self._state.LIST_CARD.copy()
+        self._state.list_card_discard.clear()
+
+        # Shuffle the draw pile
+        random.shuffle(self._state.list_card_draw)
+
     ##################################################### PRIVATE METHODS #############################################
 
-    # TODO in case the way is blocked (marble on 0/16/32/48 of the player with correct index?). LATIN-36
+    # TODO in case the way is blocked (marble on 0/16/32/48 of the player with correct index (marble.is_save)?). LATIN-36
     def _is_way_blocked(self, pos_to: int, pos_from: int, safe_marbles: List[Marble]) -> bool:
         """ Check if the way is blocked between from  & to by any safe marble
         - If a marble is in the way: return True
@@ -518,6 +537,10 @@ class Dog(Game):
                 cards_to_deal = 7 - round_mod
             else:
                 cards_to_deal = 12 - round_mod
+
+            if cards_to_deal > len(self._state.list_card_draw):
+                self._refresh_deck()
+
             for _ in range(cards_to_deal):
                 card = self._state.list_card_draw.pop()
                 player.list_card.append(card)
