@@ -7,6 +7,8 @@ import benchmark
 import importlib
 import json
 import traceback
+sys.stdout.reconfigure(encoding='utf-8')
+
 
 from pydantic import BaseModel
 from typing import List, Optional, Dict
@@ -21,13 +23,13 @@ class DogBenchmark(benchmark.Benchmark):
 
     # --- tests ---
 
-    def test_initial_game_state_values(self):
+    def test_initial_game_state_values(self) -> None:
         """Test 001: Validate values of initial game state (cnt_round=1) [5 points]"""
         self.game_server.reset()
         state = self.game_server.get_state()
 
         assert state.phase == GamePhase.RUNNING, f'{state}Error: "phase" must be gamePhase.RUNNING initially'
-        assert state.cnt_round == 1, f'{state}Error: "cnt_round" must be 1 initially'
+        assert state.cnt_round == 1, f'{state}Err3or: "cnt_round" must be 1 initially'
         assert len(state.list_card_discard) == 0, f'{state}Error: len("list_card_discard") must be 0 initially'
         assert len(state.list_card_draw) == 86, f'{state}Error: len("list_card_draw") must be 86 initially'
         assert len(state.list_player) == 4, f'{state}Error: len("list_player") must be 4'
@@ -41,7 +43,7 @@ class DogBenchmark(benchmark.Benchmark):
             assert len(player.list_card) == 6, f'{state}Error: len("list_player.list_card") must be 6 initially'
             assert len(player.list_marble) == 4, f'{state}Error: len("list_player.list_marble") must be 4 initially'
 
-    def test_later_game_state_values(self):
+    def test_later_game_state_values(self)-> None:
         """Test 002: Validate values of later game state (cnt_round=2) [5 points]"""
         self.start_game_state_at_round_2()
 
