@@ -218,7 +218,8 @@ class Dog(Game):
                             if (not self._is_way_blocked(pos_to, marble.pos,
                                                          self._get_all_safe_marbles()) and
                                     not self._is_valid_move_in_final_area(marble.pos,
-                                                                          pos_to, active_player.list_marble, final_start,
+                                                                          pos_to, active_player.list_marble,
+                                                                          final_start,
                                                                           final_start + 3
                                                                           )):
                                 valid_positions.append(pos_to)
@@ -231,8 +232,9 @@ class Dog(Game):
                         if marble.pos < queue_start and next_position >= queue_start:
                             next_position = final_start + (next_position - queue_start) - 1
 
-                        if self._is_valid_move_in_final_area(marble.pos, next_position, active_player.list_marble, final_start,
-                                                          final_start + 3):
+                        if self._is_valid_move_in_final_area(marble.pos, next_position, active_player.list_marble,
+                                                             final_start,
+                                                             final_start + 3):
                             to_positions.append(next_position)
 
                         # Backward movement (-4)
@@ -241,8 +243,9 @@ class Dog(Game):
                         if marble.pos < queue_start and next_position >= queue_start:
                             next_position = final_start + (next_position - queue_start) - 1
 
-                        if self._is_valid_move_in_final_area(marble.pos, next_position, active_player.list_marble, final_start,
-                                                          final_start + 3):
+                        if self._is_valid_move_in_final_area(marble.pos, next_position, active_player.list_marble,
+                                                             final_start,
+                                                             final_start + 3):
                             to_positions.append(next_position)
 
                     # checks for each possible position if the way is blocked. if it is not blocked, we add it to action.
