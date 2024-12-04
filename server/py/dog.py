@@ -89,7 +89,7 @@ class GameState(BaseModel):
     list_card_discard: List[Card] = []              # list of cards discarded
     card_active: Optional[Card]   = None             # active card (for 7 and JKR with sequence of actions)
 
-    def setup_players(self) ->None:
+    def setup_players(self) ->None: # Kägi
         player_blue = PlayerState(
                 name="PlayerBlue",
                 list_card=[],
@@ -124,14 +124,14 @@ class GameState(BaseModel):
                 )
         self.list_player = [player_blue,player_green,player_red,player_yellow]
 
-    def deal_cards(self) -> bool:
+    def deal_cards(self) -> None: # Kägi
         # Check if all players are out of cards.
         for player in self.list_player:
             if not player.list_card:
                 continue
             else:
                 print(f"{player.name} has still {len(player.list_card)} card's")
-                return False
+                return
 
         # Go to next Gameround
         self.cnt_round +=1
@@ -292,6 +292,33 @@ class GameState(BaseModel):
                         marble.is_save = True
 
 
+    def init_next_turn(self) -> None: # Kägi
+        '''
+        If action is finished, set the next player active.
+
+        Logic:
+        - Iterate over players starting from the one next to the current active player.
+        - Check if the next player has cards:
+        1. If True, leave the loop and set this player as the active one.
+        2. If False, skip to the next player.
+        3. If the loop completes a full cycle back to the active player without finding any player with cards, deal new cards and set the active player to the next in normal order.
+        '''
+
+        # TODO: Kägi needs to test this (bedtime now)
+        pass
+        idx_next_player = self.idx_player_active + 1 if self.idx_player_active + 1 < 4 else 0
+
+        while not self.list_player[idx_next_player].list_card and idx_next_player!=self.idx_player_active:# logic 3
+            idx_next_player = idx_next_player + 1 if idx_next_player + 1 < 4 else 0
+
+        else:
+            if not self.list_player[idx_next_player].list_card:# logic 3
+                self.idx_player_active = self.idx_player_active + 1 if self.idx_player_active + 1 < 4 else 0
+                self.deal_cards()
+            else: # logic 1 & 2
+                self.idx_player_active = idx_next_player
+
+
 class Dog(Game):
 
     def __init__(self) -> None:
@@ -300,12 +327,11 @@ class Dog(Game):
         self.state = GameState()
         self.state.setup_players()
         self.state.phase = GamePhase.RUNNING
-        self.state.deal_cards()
-        print("debug X all done")
+        self.state.deal_cards() # deal first cards to players
       
     def set_state(self, state: GameState) -> None:
         """ Set the game to a given state """
-        pass
+        self.state = state
 
     def get_state(self) -> GameState:
         """ Get the complete, unmasked game state """
@@ -339,9 +365,6 @@ class Dog(Game):
         # TODO: Logik 1.4
         
         # TODO: Logik 2
-        
-        
-        
         
         pass
 
