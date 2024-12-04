@@ -19,15 +19,15 @@ class Marble(BaseModel):
 
 
 class PlayerState(BaseModel):
-    name: str  # name of player
-    list_card: List[Card]  # list of cards
+    name: str                  # name of player
+    list_card: List[Card]      # list of cards
     list_marble: List[Marble]  # list of marbles
 
 
 class Action(BaseModel):
-    card: Card  # card to play
-    pos_from: Optional[int]  # position to move the marble from
-    pos_to: Optional[int]  # position to move the marble to
+    card: Card                 # card to play
+    pos_from: Optional[int]    # position to move the marble from
+    pos_to: Optional[int]      # position to move the marble to
     card_swap: Optional[Card] = None  # optional card to swap ()
 
 
@@ -276,25 +276,31 @@ class Dog(Game):
             # removing card from players hand and putting it to discarded stack
             active_player.list_card.remove(action.card)
             self._state.list_card_discard.append(action.card)
+            # Find the marble being moved
             marble_to_move = next(
-                (marble for marble in active_player.list_marble if int(
-                    marble.pos) == int(action.pos_from)),
+                (marble for marble in active_player.list_marble if int(marble.pos) == int(action.pos_from)),
                 None
             )
-            self._move_marble_logic(marble_to_move, action.pos_to, action.card)
-            # Check if the game is finished
-            if self._check_finish_game():
-                return  # Exit if the game is finished
-            # TODO LATIN -46 check for collision
-            # if self._is_collision :
-            # self.handle_collision(....)
-            # TODO Add more logic for other actions like sending marble home
-            # TODO LATIN -42 logic for check if game is over (define winners)
+
+            if marble_to_move:
+                # Check for collision before moving the marble
+                if self._is_collision(marble_to_move, action.pos_to, action.card):
+                    self._handle_collision(marble_to_move, action.pos_to)
+
+                # Perform the movement logic
+                self._move_marble_logic(marble_to_move, action.pos_to, action.card)
+
+            # TODO Add additional logic for special cases (e.g., sending marbles home, resolving specific card effects)
+
+            # Calculate the next player (after 4, comes 1 again)
+        self._state.idx_player_active = (self._state.idx_player_active + 1) % self._state.cnt_player
+
+        # TODO Add more logic for other actions like sending marble home
+        ## TODO LATIN -42 logic for check if game is over (define winners)
 
         # calculate the next player (after 4, comes 1 again). not sure if needed here or somewhere else
         # example: (4+1)%4=1 -> after player 4, it's player 1's turn again
-        self._state.idx_player_active = (
-                                                self._state.idx_player_active + 1) % self._state.cnt_player
+        self._state.idx_player_active = (self._state.idx_player_active + 1) % self._state.cnt_player
 
     def _move_marble_logic(self, marble: Marble, pos_to: int, card: Card) -> None:
         """
@@ -305,8 +311,66 @@ class Dog(Game):
         # Update marble position
         marble.pos = pos_to
 
-    # Def is_collision()
-    # self._handle_collision(marble, pos_to) #TODO LATIN -45 create handle collision
+    # Define is collision #TODO LATIN -45 create handle collision
+    def _is_collision(self, marble: Marble, pos_to: int, card: Card) -> bool:
+        """
+        Check if the movement of the marble using the card results in a collision.
+
+        Args:
+            marble (Marble): The marble being moved.
+            pos_to (int): The target position.
+            card (Card): The card being played.
+
+        Returns:
+            bool: True if the marble jumps over another marble, False otherwise.
+        """
+        pos_from = int(marble.pos)
+        total_steps = self.TOTAL_STEPS
+        marble_positions = {int(m.pos) for player in self._state.list_player for m in player.list_marble}
+
+        # Exclude the active player's marbles from the collision check for the start marble
+        active_player = self._state.list_player[self._state.idx_player_active]
+        active_player_marbles = {int(m.pos) for m in active_player.list_marble}
+
+        # If the marble is moving to a position occupied by its own start, do not count as a collision
+        if pos_to in active_player_marbles and pos_to != marble.pos:
+            return True
+
+        if card.rank == '7':
+            # Simulate all positions between pos_from and pos_to
+            steps = abs(pos_to - pos_from)
+            for step in range(1, steps + 1):
+                intermediate_pos = (pos_from + step) % total_steps
+                if intermediate_pos in marble_positions and intermediate_pos not in active_player_marbles:
+                    return True
+
+        elif card.rank == '4':
+            # Similar logic, but account for reverse movement
+            if pos_to < pos_from:  # Handling wrap-around
+                pos_range = list(range(pos_from, total_steps)) + list(range(0, pos_to + 1))
+            else:
+                pos_range = list(range(pos_from, pos_to + 1))
+
+            for pos in pos_range:
+                if pos in marble_positions and pos not in active_player_marbles:
+                    return True
+
+        # Add additional checks for other cards with collision logic
+        return False
+
+    def _handle_collision(self, pos_to: int, active_player_index: int) -> None:
+        """
+        Handle the collision by sending the marble back to its starting position.
+        """
+        for player_index, player in enumerate(self._state.list_player):
+            if player_index != active_player_index:  # Only consider other players' marbles
+                for marble in player.list_marble:
+                    if int(marble.pos) == pos_to and not marble.is_save:
+                        # Send the marble back to its queue start
+                        queue_start = self.PLAYER_POSITIONS[player_index]['queue_start']
+                        marble.pos = str(queue_start + player.list_marble.index(marble))  # Back to the queue
+                        marble.is_save = True
+                        print(f"Collision: Marble from Player {player_index + 1} sent back to the queue.")
 
     # TODO LATIN-28 check if logic is actually what we need it to be
 
@@ -315,8 +379,7 @@ class Dog(Game):
         masked_state: GameState = self._state.copy()
         for i, player in enumerate(masked_state.list_player):
             if i != idx_player:
-                player.list_card = [
-                                       Card(suit='?', rank='?')] * len(player.list_card)
+                player.list_card = [Card(suit='?', rank='?')] * len(player.list_card)
         return masked_state
 
     ##################################################### PRIVATE METHODS #############################################
