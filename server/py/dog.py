@@ -130,8 +130,21 @@ class GameState(BaseModel):
         2) my marble gets jumped over by a marble with a 7-card.
         '''
 
+        # First case
+        for player in self.list_player:
+            for marble in player.list_marble:
+                if marble.pos == self.pos_to:
+                    marble.pos = 0 # Anpassen. Marble zurück auf Startposition. Wie definieren wir die Startposition? Fix zuweisen oder Logik?
+                    marble.is_save = True
 
-           
+        # Second case
+        if Action.card.rank == 7:           # Müssen wir hier noch eine Action mitgeben?
+            for player in self.list_player:
+                for marble in player.list_marble:
+                    if murmel.pos_from < marble.pos < murmel.pos_to and marble.is_save == False:
+                        marble.pos = 0 # Anpassen. Marble zurück auf Startposition. Wie definieren wir die Startposition? Fix zuweisen oder Logik?
+                        marble.is_save = True
+
 
 class Dog(Game):
 
