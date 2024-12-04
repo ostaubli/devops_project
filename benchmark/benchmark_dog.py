@@ -7,6 +7,8 @@ import benchmark
 import importlib
 import json
 import traceback
+sys.stdout.reconfigure(encoding='utf-8')
+
 
 from pydantic import BaseModel
 from typing import List, Optional, Dict
@@ -27,7 +29,7 @@ class DogBenchmark(benchmark.Benchmark):
         state = self.game_server.get_state()
 
         assert state.phase == GamePhase.RUNNING, f'{state}Error: "phase" must be gamePhase.RUNNING initially'
-        assert state.cnt_round == 1, f'{state}Error: "cnt_round" must be 1 initially'
+        assert state.cnt_round == 1, f'{state}Err3or: "cnt_round" must be 1 initially'
         assert len(state.list_card_discard) == 0, f'{state}Error: len("list_card_discard") must be 0 initially'
         assert len(state.list_card_draw) == 86, f'{state}Error: len("list_card_draw") must be 86 initially'
         assert len(state.list_player) == 4, f'{state}Error: len("list_player") must be 4'

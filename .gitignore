@@ -1,5 +1,6 @@
-Test_NB.ipynb
-
+# Kägis Ignors
+*.ipynb
+logs/
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
