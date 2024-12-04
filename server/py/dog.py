@@ -226,6 +226,7 @@ class GameState(BaseModel):
 
 
 
+        #
 
 
         '''        
@@ -352,6 +353,10 @@ class GameState(BaseModel):
         '''
 
         # TODO: Kägi needs to test this (bedtime now)
+
+        #TODO: Laurcence alternative for going to the next turn in one Line
+        # self.state.idx_player_active = (self.state.idx_player_active + 1)%4
+
         pass
         idx_next_player = self.idx_player_active + 1 if self.idx_player_active + 1 < 4 else 0
 
