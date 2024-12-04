@@ -85,6 +85,15 @@ class GameState(BaseModel):
     list_card_discard: List[Card]      # list of cards discarded
     card_active: Optional[Card]        # active card (for 7 and JKR with sequence of actions)
 
+    def get_card_steps(self, rank: str) -> int:
+        """ Return the number of steps based on the card rank """
+        if rank in ['2', '3', '4', '5', '6', '7', '8', '9', '10']:
+            return int(rank)
+        elif rank in ['Q']:
+            return 12
+        elif rank in ['K']:
+            return 13
+
 
 class Dog(Game):
 
@@ -161,12 +170,41 @@ class Dog(Game):
 
     def get_list_action(self) -> List[Action]:
         """ Get a list of possible actions for the active player """
-        return []  # Return other actions as needed during gameplay 
+        list_action = []
+        player = self.state.list_player[self.state.idx_player_active]
+
+        # Check if Player can move forward (NO SPECIAL CARDS HERE)
+        for card in player.list_card:
+            if card.rank in ['2', '3', '4', '5', '6', '8', '9', '10', 'Q']:
+                for marble in player.list_marble:
+                    if marble.pos >= 0 and marble.pos <= 63:    # for now only marbles on board are checked
+                        pos_from = marble.pos
+                        steps = self.get_card_steps(card)
+                        pos_to = (pos_from + steps)
+
+                        if self.is_valid_move(pos_from, pos_to):
+                            action = Action(card=card, pos_from=pos_from, pos_to=pos_to)
+                            list_action.append(action)
+
+        return list_action
 
     def apply_action(self, action: Action) -> None:
         """ Apply the given action to the game """
-        pass
+        player = self.state.list_player[self.state.idx_player_active]
 
+        # check if any marbles should be moved
+        marble_to_move = None
+        for marble in player.list_marble:
+            if marble.pos == action.pos_from:
+                marble_to_move = marble
+                break
+
+        # if there are marbles to be moved, then move them and discard the card of the player afterwards
+        if not marble_to_move is None:
+            marble_to_move.pos = action.pos_to
+            player.list_card.remove(action.card)
+            self.state.list_card_discard.append(action.card)
+        
     def get_player_view(self, idx_player: int) -> GameState:
         """ Get the masked state for the active player (e.g. the oppontent's cards are face down)"""
         return self.state
@@ -184,4 +222,3 @@ class RandomPlayer(Player):
 if __name__ == '__main__':
 
     game = Dog()
-    

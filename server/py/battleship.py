@@ -1,9 +1,3 @@
-import sys
-import os
-
-# Projekthauptpfad hinzufügen
-sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..')))
-
 from typing import List, Optional
 from enum import Enum
 import random
@@ -87,43 +81,8 @@ class Battleship(Game):
         self.state.players.extend([player1, player2])
 
     def print_state(self) -> None:
-        """ Print the current state of the game board """
-        rows = "ABCDEFGHIJ"
-        columns = [str(i) for i in range(1, 11)]
-        board_size = len(rows)
-
-        # Initialize empty boards for both players
-        player_boards = [
-            [["~"] * board_size for _ in range(board_size)],  # Player 1's board
-            [["~"] * board_size for _ in range(board_size)],  # Player 2's board
-        ]
-
-        # Populate the boards with ships and shots
-        for player_idx, player in enumerate(self.state.players):
-            # Mark ships
-            for ship in player.ships:
-                for cell in ship.location:
-                    row = rows.index(cell[0])
-                    col = int(cell[1:]) - 1
-                    player_boards[player_idx][row][col] = "S"  # 'S' for Ship
-
-            # Mark shots
-            for shot in player.shots:
-                row = rows.index(shot[0])
-                col = int(shot[1:]) - 1
-                if player_boards[player_idx][row][col] == "S":
-                    player_boards[player_idx][row][col] = "X"  # 'X' for hit
-                else:
-                    player_boards[player_idx][row][col] = "O"  # 'O' for miss
-
-        # Print the boards
-        for player_idx, board in enumerate(player_boards):
-            print(f"Player {player_idx + 1}'s Board:")
-            print("  " + " ".join(columns))
-            for i, row in enumerate(board):
-                print(rows[i] + " " + " ".join(row))
-            print()
-
+        """ Set the game to a given state """
+        pass
 
     def get_state(self) -> BattleshipGameState:
         """ Get the complete, unmasked game state """
@@ -141,11 +100,11 @@ class Battleship(Game):
 
         # check how many ships the active player has placed
         active_player = self.state.players[self.state.idx_player_active]
-        if len(active_player.ships) == len(self.SHIPS_TO_PLACE):
+        if len(active_player.ships) == len(ships_to_place):
             return []
         
         # Get the next ship to place
-        ship_name, ship_length = self.SHIPS_TO_PLACE[len(active_player.ships)]
+        ship_name, ship_length = ships_to_place[len(active_player.ships)]
 
         # Generate possible placements (horizontal and vertical)
         actions = []
@@ -169,20 +128,7 @@ class Battleship(Game):
     def apply_action(self, action: BattleshipAction) -> None:
         """ Apply the given action to the game """
         active_player = self.state.players[self.state.idx_player_active]
-        opponent_idx = (self.state.idx_player_active + 1) % len(self.state.players)
-        opponent = self.state.players[opponent_idx]
-
-        if action.action_type == ActionType.SHOOT:
-            # TODO: @ Fabian & Jach add shooting & hitting function here
-
-            
-            # Check if all opponent's ships are sunk
-            if self.check_win_condition(opponent):
-                self.state.phase = GamePhase.FINISHED
-                self.state.winner = self.state.idx_player_active
-                print(f"{active_player.name} wins the game!")
-                return  # No further actions needed as the game is over
-
+        
         if action.action_type == ActionType.SET_SHIP:
             # Check for overlap
             occupied_cells = set()
@@ -214,6 +160,8 @@ class Battleship(Game):
             else:
                 print(f"{active_player.name} has placed {len(active_player.ships)}/{len(Battleship.SHIPS_TO_PLACE)} ships.")
 
+        # Other action types (e.g., shooting) can be handled here in future
+
     def get_player_view(self, idx_player: int) -> BattleshipGameState:
         """ Get the masked state for the active player (e.g. the oppontent's cards are face down)"""
         pass
@@ -229,6 +177,5 @@ class RandomPlayer(Player):
 
 
 if __name__ == "__main__":
-    # Initialize the game
+
     game = Battleship()
-    
