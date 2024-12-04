@@ -1,9 +1,14 @@
 # runcmd: cd ../.. & venv\Scripts\python server/py/dog_template.py
-from server.py.game import Game, Player
-from typing import List, Optional, ClassVar
-from pydantic import BaseModel
-from enum import Enum
+
 import random
+from typing import List, Optional, ClassVar
+from enum import Enum
+from pydantic import BaseModel
+
+if __name__ == '__main__':
+    from game import Game, Player
+else:
+    from server.py.game import Game, Player
 
 
 class Card(BaseModel):
@@ -73,25 +78,83 @@ class GameState(BaseModel):
         Card(suit='', rank='JKR'), Card(suit='', rank='JKR'), Card(suit='', rank='JKR')
     ] * 2
 
-    cnt_player: int = 4                # number of players (must be 4)
-    phase: GamePhase                   # current phase of the game
-    cnt_round: int                     # current round
-    bool_card_exchanged: bool          # true if cards was exchanged in round
-    idx_player_started: int            # index of player that started the round
-    idx_player_active: int             # index of active player in round
-    list_player: List[PlayerState]     # list of players
-    list_card_draw: List[Card]         # list of cards to draw
-    list_card_discard: List[Card]      # list of cards discarded
-    card_active: Optional[Card]        # active card (for 7 and JKR with sequence of actions)
+    cnt_player: int = 4                             # number of players (must be 4)
+    phase: GamePhase  = GamePhase.SETUP             # current phase of the game
+    cnt_round: int = 0                              # current round
+    bool_card_exchanged: bool = False               # true if cards was exchanged in round
+    idx_player_started: int = random.randint(0,3)   # index of player that started the round
+    idx_player_active: int =idx_player_started      # index of active player in round
+    list_player: List[PlayerState] = []             # list of players
+    list_card_draw: List[Card] = LIST_CARD       # list of cards to draw ==> Was list_id_card_draw in given Template
+    list_card_discard: List[Card] = []              # list of cards discarded
+    card_active: Optional[Card]   = None             # active card (for 7 and JKR with sequence of actions)
 
+    def setup_players(self) ->None:
+        player_blue = PlayerState(
+                name="PlayerBlue",
+                list_card=[],
+                list_marble=[Marble(pos="64", is_save=True), 
+                             Marble(pos="65", is_save=True),
+                             Marble(pos="66", is_save=True),
+                             Marble(pos="67", is_save=True)]
+                )
+        player_green = PlayerState(
+                name="PlayerGreen",
+                list_card=[],
+                list_marble=[Marble(pos="72", is_save=True), 
+                             Marble(pos="73", is_save=True),
+                             Marble(pos="74", is_save=True),
+                             Marble(pos="75", is_save=True)]
+                )
+        player_red = PlayerState(
+                name="PlayerRed",
+                list_card=[],
+                list_marble=[Marble(pos="80", is_save=True), 
+                             Marble(pos="81", is_save=True),
+                             Marble(pos="82", is_save=True),
+                             Marble(pos="83", is_save=True)]
+                )
+        player_yellow = PlayerState(
+                name="PlayerYellow",
+                list_card=[],
+                list_marble=[Marble(pos="88", is_save=True), 
+                             Marble(pos="89", is_save=True),
+                             Marble(pos="90", is_save=True),
+                             Marble(pos="91", is_save=True)]
+                )
+        self.list_player = [player_blue,player_green,player_red,player_yellow]
 
-    def draw_cards(self) -> None:
-        '''
-        logic number of cards (cnt_round)
-        logic list_id_card_draw to low
-       
-        '''
-        pass
+    def deal_cards(self) -> bool:
+        # Check if all players are out of cards.
+        for player in self.list_player:
+            if not player.list_card:
+                continue
+            else:
+                print(f"{player.name} has still {len(player.list_card)} card's")
+                return False
+
+        # Go to next Gameround
+        self.cnt_round +=1
+
+        # get number of Cards
+        cards_per_round = [6, 5, 4, 3, 2]
+        for i in range(1, 12):
+            # Ermitteln der Kartenanzahl durch Modulo-Operation
+            num_cards = cards_per_round[(i - 1) % len(cards_per_round)]
+
+        # Check if there are enough cards in the draw deck; if not, add a new card deck.
+        if num_cards*4 > len(self.list_card_draw):
+            ## reshuffle the Deck
+            self.list_card_draw = GameState.LIST_CARD
+            self.list_card_discard = []
+
+        # Randomly select cards for players.
+        for player in self.list_player:
+            player.list_card = random.sample(self.list_card_draw, num_cards)
+            for card in player.list_card :
+                self.list_card_draw.remove(card)
+
+        return True
 
 
     def get_list_possible_action(self) -> List[Action]: #Nicolas
@@ -194,33 +257,61 @@ class GameState(BaseModel):
 
         pass
 
-    def check_final_pos(pos:int) -> bool:
+    def check_final_pos(self, pos_to: int, pos_from: int, marble: Marble) -> None:
         '''
-        Pos Blocked
+        Check whether the final position of the marble is a special position.
+        1) The marble is save if it is in one of the four final spots of its color or
+        2) if it is newly out of the kennel.
         '''
-        pass
+        final_positions: list = [68, 69, 70, 71, 76, 77, 78, 79, 84, 85, 86, 87, 92, 93, 94, 95]
+        if pos_to in final_positions:
+            marble.is_save = True
 
-    def sending_home(pos:int) -> None: # Set player X Marvel home
+        last_positions: list = [64, 65, 66, 67, 72, 73, 74, 75, 80, 81, 82, 83, 88, 89, 90, 91]
+        if pos_from in last_position:
+            marble.is_save = True
+
+    def sending_home(self, murmel: Marble) -> None:  # Set player X Marvel home
         '''
-        Pos of other player ==> Sending Home
+        Function to send a player home. There are two possibilities:
+        1) a marble of another player lands exactly on the position of my marble
+        2) my marble gets jumped over by a marble with a 7-card.
         '''
-        pass
-           
+
+        # First case
+        for player in self.list_player:
+            for marble in player.list_marble:
+                if marble.pos == self.pos_to:
+                    marble.pos = 0 # Anpassen. Marble zurück auf Startposition. Wie definieren wir die Startposition? Fix zuweisen oder Logik?
+                    marble.is_save = True
+
+        # Second case
+        if Action.card.rank == 7:           # Müssen wir hier noch eine Action mitgeben?
+            for player in self.list_player:
+                for marble in player.list_marble:
+                    if murmel.pos_from < marble.pos < murmel.pos_to and marble.is_save == False:
+                        marble.pos = 0 # Anpassen. Marble zurück auf Startposition. Wie definieren wir die Startposition? Fix zuweisen oder Logik?
+                        marble.is_save = True
+
 
 class Dog(Game):
 
     def __init__(self) -> None:
         """ Game initialization (set_state call not necessary, we expect 4 players) """
 
-        pass
-
+        self.state = GameState()
+        self.state.setup_players()
+        self.state.phase = GamePhase.RUNNING
+        self.state.deal_cards()
+        print("debug X all done")
+      
     def set_state(self, state: GameState) -> None:
         """ Set the game to a given state """
         pass
 
     def get_state(self) -> GameState:
         """ Get the complete, unmasked game state """
-        pass
+        return self.state
 
     def print_state(self) -> None:
         """ Print the current game state """
@@ -251,3 +342,6 @@ class RandomPlayer(Player):
 if __name__ == '__main__':
 
     game = Dog()
+    print(len(game.state.list_card_draw))
+    print("Neue Karten Vergeben mit bestehenden Karten? ", game.state.deal_cards())
+    print
