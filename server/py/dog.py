@@ -295,8 +295,31 @@ class Dog(Game):
 
     # TODO in case the way is blocked (marble on 0/16/32/48 of the player with correct index?). LATIN-36
     def _is_way_blocked(self, pos_to: int, pos_from: int, safe_marbles: List[Marble]) -> bool:
-        """ Check if the way is blocked between from  & to by any safe marble """
-        pass
+        """ Check if the way is blocked between from  & to by any safe marble
+        - If a marble is in the way: return True
+        - If no marble is in the way: return False"""
+
+        # Identify the "safe" positions (0, 16, 32, 48)
+        safe_positions = [0, 16, 32, 48] # Marbles are protected and can't be passed by others
+
+        # Adjust pos_to for circular board wrapping
+        total_steps = self.TOTAL_STEPS  # Board has 64 total steps (0–63)
+        if pos_to < pos_from:
+            pos_to += total_steps  # Adjust pos_to if it wraps around the board
+
+        # Loop through each safe marble
+        for marble in safe_marbles: # Loops through all the marbles that are currently on the safe spots
+            marble_pos = marble.pos
+            if marble_pos in safe_positions:
+                # Normalize marble_pos to match the current path calculation
+                if marble_pos < pos_from:
+                    marble_pos += total_steps
+
+                # Check if the marble is blocking the path
+                if pos_from < marble_pos <= pos_to:
+                    return True  # Path is blocked by a safe marble
+
+        return False  # No safe marble is blocking the path
 
     # TODO complete method LATIN-34
     def _calculate_position_to(self, pos_from: int, card: Card, active_player_indx: int) -> List[int]:
