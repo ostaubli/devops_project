@@ -236,6 +236,34 @@ class Dog(Game):
         return False
 
     # TODO LATIN-47 Check for TEAM WIN, if 2 players of the same team have all their marbles in the final area
+    def _check_team_win(self):
+        """
+        Check if a team has won, that means, both players on a team have all their marbles in the final area.
+        """
+        # Define teams
+        teams = {
+            0: [0, 2],  # Team 1: Player 1 and Player 3
+            1: [1, 3],  # Team 2: Player 2 and Player 4
+        }
+
+        # Check each team
+        for team_id, players in teams.items(): # Iterates through each team and its associated players
+            team_wins = True
+            for player_idx in players:
+                final_start = self.PLAYER_POSITIONS[player_idx]['final_start']
+                final_positions = range(final_start, final_start + 4)
+                player = self._state.list_player[player_idx]
+                if not all(marble.pos in final_positions for marble in player.list_marble):
+                    team_wins = False
+                    break
+
+            if team_wins:
+                # Update game phase and print winner
+                self._state.phase = GamePhase.FINISHED
+                print(f"Team {team_id + 1} has won the game!")
+                return True
+
+        return False
 
     # TODO LATIN-27
     def apply_action(self, action: Action) -> None:
