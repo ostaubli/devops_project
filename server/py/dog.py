@@ -42,35 +42,21 @@ class GameState(BaseModel):
         'J', 'Q', 'K', 'A', 'JKR'
     ]
     LIST_CARD: ClassVar[List[Card]] = [
-                                          Card(suit='♠', rank='2'), Card(suit='♥', rank='2'), Card(suit='♦', rank='2'),
-                                          Card(suit='♣', rank='2'),
-                                          Card(suit='♠', rank='3'), Card(suit='♥', rank='3'), Card(suit='♦', rank='3'),
-                                          Card(suit='♣', rank='3'),
-                                          Card(suit='♠', rank='4'), Card(suit='♥', rank='4'), Card(suit='♦', rank='4'),
-                                          Card(suit='♣', rank='4'),
-                                          Card(suit='♠', rank='5'), Card(suit='♥', rank='5'), Card(suit='♦', rank='5'),
-                                          Card(suit='♣', rank='5'),
-                                          Card(suit='♠', rank='6'), Card(suit='♥', rank='6'), Card(suit='♦', rank='6'),
-                                          Card(suit='♣', rank='6'),
-                                          Card(suit='♠', rank='7'), Card(suit='♥', rank='7'), Card(suit='♦', rank='7'),
-                                          Card(suit='♣', rank='7'),
-                                          Card(suit='♠', rank='8'), Card(suit='♥', rank='8'), Card(suit='♦', rank='8'),
-                                          Card(suit='♣', rank='8'),
-                                          Card(suit='♠', rank='9'), Card(suit='♥', rank='9'), Card(suit='♦', rank='9'),
-                                          Card(suit='♣', rank='9'),
-                                          Card(suit='♠', rank='10'), Card(suit='♥', rank='10'),
-                                          Card(suit='♦', rank='10'), Card(suit='♣', rank='10'),
-                                          Card(suit='♠', rank='J'), Card(suit='♥', rank='J'), Card(suit='♦', rank='J'),
-                                          Card(suit='♣', rank='J'),
-                                          Card(suit='♠', rank='Q'), Card(suit='♥', rank='Q'), Card(suit='♦', rank='Q'),
-                                          Card(suit='♣', rank='Q'),
-                                          Card(suit='♠', rank='K'), Card(suit='♥', rank='K'), Card(suit='♦', rank='K'),
-                                          Card(suit='♣', rank='K'),
-                                          Card(suit='♠', rank='A'), Card(suit='♥', rank='A'), Card(suit='♦', rank='A'),
-                                          Card(suit='♣', rank='A'),
-                                          Card(suit='', rank='JKR'), Card(suit='', rank='JKR'),
-                                          Card(suit='', rank='JKR')
-                                      ] * 2
+        Card(suit='♠', rank='2'), Card(suit='♥', rank='2'), Card(suit='♦', rank='2'), Card(suit='♣', rank='2'),
+        Card(suit='♠', rank='3'), Card(suit='♥', rank='3'), Card(suit='♦', rank='3'), Card(suit='♣', rank='3'),
+        Card(suit='♠', rank='4'), Card(suit='♥', rank='4'), Card(suit='♦', rank='4'), Card(suit='♣', rank='4'),
+        Card(suit='♠', rank='5'), Card(suit='♥', rank='5'), Card(suit='♦', rank='5'), Card(suit='♣', rank='5'),
+        Card(suit='♠', rank='6'), Card(suit='♥', rank='6'), Card(suit='♦', rank='6'), Card(suit='♣', rank='6'),
+        Card(suit='♠', rank='7'), Card(suit='♥', rank='7'), Card(suit='♦', rank='7'), Card(suit='♣', rank='7'),
+        Card(suit='♠', rank='8'), Card(suit='♥', rank='8'), Card(suit='♦', rank='8'), Card(suit='♣', rank='8'),
+        Card(suit='♠', rank='9'), Card(suit='♥', rank='9'), Card(suit='♦', rank='9'), Card(suit='♣', rank='9'),
+        Card(suit='♠', rank='10'), Card(suit='♥', rank='10'), Card(suit='♦', rank='10'), Card(suit='♣', rank='10'),
+        Card(suit='♠', rank='J'), Card(suit='♥', rank='J'), Card(suit='♦', rank='J'), Card(suit='♣', rank='J'),
+        Card(suit='♠', rank='Q'), Card(suit='♥', rank='Q'), Card(suit='♦', rank='Q'), Card(suit='♣', rank='Q'),
+        Card(suit='♠', rank='K'), Card(suit='♥', rank='K'), Card(suit='♦', rank='K'), Card(suit='♣', rank='K'),
+        Card(suit='♠', rank='A'), Card(suit='♥', rank='A'), Card(suit='♦', rank='A'), Card(suit='♣', rank='A'),
+        Card(suit='', rank='JKR'), Card(suit='', rank='JKR'), Card(suit='', rank='JKR')
+    ] * 2
 
     cnt_player: int = 4
     phase: GamePhase
@@ -133,46 +119,76 @@ class Dog(Game):
         active_player = self.state.list_player[self.state.idx_player_active]
         cards = active_player.list_card
 
-        # Iterate over each card in the player's hand
-        for card in cards:
-            if card.rank == 'A':
-                # Check if any marble is at the start position (pos=0)
-                for marble in active_player.list_marble:
-                    if marble.pos == 0:
-                        # Add actions for moving 1 or 11 steps
-                        actions.append(Action(card=card, pos_from=0, pos_to=1))
-                        actions.append(Action(card=card, pos_from=0, pos_to=11))
+        # Define start cards that allow moving out of kennel
+        start_cards = ['A', 'K', 'JKR']
 
-            # Add more logic for handling other card types if needed
-            # Example for start cards like 'K' or 'JKR'
-            elif card.rank in ['K', 'JKR']:
-                for marble in active_player.list_marble:
-                    if marble.pos == 64:  # Example: marble in the kennel
-                        actions.append(Action(card=card, pos_from=64, pos_to=0))
+        # Check if any marble is in the kennel
+        has_marble_in_kennel = any(marble.pos == 64 for marble in active_player.list_marble)
+        if not has_marble_in_kennel:
+            return []
+
+        # Generate actions for valid start cards
+        for card in active_player.list_card:
+            if card.rank in start_cards:
+                actions.append(Action(
+                    card=card,
+                    pos_from=64,  # From kennel
+                    pos_to=0,     # To start position
+                    card_swap=None
+                ))
 
         return actions
 
-    def apply_action(self, action: Action) -> None:
-        if action is None:
-            # Skip turn
-            self.state.idx_player_active = (self.state.idx_player_active + 1) % len(self.state.list_player)
-            return
 
+
+    def apply_action(self, action: Action) -> None:
         active_player = self.state.list_player[self.state.idx_player_active]
 
-        # Find the marble to move
+        if action is None:
+            # Move to the next player
+            self.state.idx_player_active = (self.state.idx_player_active + 1) % self.state.cnt_player
+
+            # Check if we've gone through all players
+            if self.state.idx_player_active == self.state.idx_player_started:
+                # Move to the next round
+                self.state.cnt_round += 1
+                self.state.idx_player_started = (self.state.idx_player_started + 1) % self.state.cnt_player
+                self.state.bool_card_exchanged = False
+
+                # Determine the number of cards to deal based on the current round
+                if 1 <= self.state.cnt_round <= 5:
+                    cards_per_player = 7 - self.state.cnt_round  # 6, 5, 4, 3, 2
+                elif self.state.cnt_round == 6:
+                    cards_per_player = 6  # Reset to 6
+                else:
+                    # Handle rounds beyond 6 if the game cycles
+                    cards_per_player = 7 - ((self.state.cnt_round - 1) % 5 + 1)
+                    cards_per_player = max(cards_per_player, 2)
+
+                # Deal new cards based on the determined number
+                draw_pile = self.state.list_card_draw
+                for player in self.state.list_player:
+                    player.list_card = draw_pile[:cards_per_player]
+                    draw_pile = draw_pile[cards_per_player:]
+                self.state.list_card_draw = draw_pile
+
+                # Set active player to the player after the starting player
+                self.state.idx_player_active = (self.state.idx_player_started + 1) % self.state.cnt_player
+            return
+
+        # Validate the action: check if moving out of kennel is valid
+        if action.pos_from == 64:  # 64 is the kennel position
+            marble_to_move = next((m for m in active_player.list_marble if m.pos == action.pos_from), None)
+            if marble_to_move is None:
+                raise ValueError("No marble in the kennel to move")
+
+        # Update the marble's position
         for marble in active_player.list_marble:
             if marble.pos == action.pos_from:
-                # Process ACE-specific logic
-                if action.card.rank == 'A' and action.pos_to in [1, 11]:
-                    # Move the marble by the specified steps (1 or 11)
-                    marble.pos = action.pos_to
-                else:
-                    # Default move logic for other cards
-                    marble.pos = action.pos_to
+                marble.pos = action.pos_to
+                break
 
-                # Remove the card from the player's hand
-                active_player.list_card.remove(action.card)
+
 
                 # End turn
                 self.state.idx_player_active = (self.state.idx_player_active + 1) % len(self.state.list_player)
