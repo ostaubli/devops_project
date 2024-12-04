@@ -116,83 +116,71 @@ class Dog(Game):
 
     def get_list_action(self) -> List[Action]:
         actions = []
+        # Get cards of active player
         active_player = self.state.list_player[self.state.idx_player_active]
         cards = active_player.list_card
 
         # Define start cards that allow moving out of kennel
         start_cards = ['A', 'K', 'JKR']
 
-        # Check if any marble is in the kennel
-        has_marble_in_kennel = any(marble.pos == 64 for marble in active_player.list_marble)
-        if not has_marble_in_kennel:
-            return []
-
-        # Generate actions for valid start cards
-        for card in active_player.list_card:
+        # Check if any card allows moving out of kennel
+        for card in cards:
             if card.rank in start_cards:
-                actions.append(Action(
-                    card=card,
-                    pos_from=64,  # From kennel
-                    pos_to=0,     # To start position
-                    card_swap=None
-                ))
-
+                # Check if marbe in the kennel (pos=64)
+                for marble in active_player.list_marble:
+                    if marble.pos == 64:
+                        opponent_marble = None
+                        for opponent in self.state.list_player:
+                            if opponent != active_player:
+                                for opp_marble in opponent.list_marble:
+                                    if marble.pos == 0 and opponent_marble.is_save:  # Opponent marble on start
+                                        opponent_marble = opp_marble
+                                        break
+                        actions.append(Action(
+                            card=card,
+                            pos_from=64,
+                            pos_to=0,
+                            card_swap=None
+                        ))
         return actions
 
-
-
     def apply_action(self, action: Action) -> None:
-        active_player = self.state.list_player[self.state.idx_player_active]
+        if action:
+            # Get the active player and the marble to be moved
+            active_player = self.state.list_player[self.state.idx_player_active]
+            moving_marble = next(
+                (marble for marble in active_player.list_marble if marble.pos == action.pos_from), None
+            )
 
-        if action is None:
-            # Move to the next player
-            self.state.idx_player_active = (self.state.idx_player_active + 1) % self.state.cnt_player
-
-            # Check if we've gone through all players
-            if self.state.idx_player_active == self.state.idx_player_started:
-                # Move to the next round
-                self.state.cnt_round += 1
-                self.state.idx_player_started = (self.state.idx_player_started + 1) % self.state.cnt_player
-                self.state.bool_card_exchanged = False
-
-                # Determine the number of cards to deal based on the current round
-                if 1 <= self.state.cnt_round <= 5:
-                    cards_per_player = 7 - self.state.cnt_round  # 6, 5, 4, 3, 2
-                elif self.state.cnt_round == 6:
-                    cards_per_player = 6  # Reset to 6
-                else:
-                    # Handle rounds beyond 6 if the game cycles
-                    cards_per_player = 7 - ((self.state.cnt_round - 1) % 5 + 1)
-                    cards_per_player = max(cards_per_player, 2)
-
-                # Deal new cards based on the determined number
-                draw_pile = self.state.list_card_draw
+            if moving_marble:
+                # Check if the target position has an opponent's marble
+                opponent_player = None
+                opponent_marble = None
                 for player in self.state.list_player:
-                    player.list_card = draw_pile[:cards_per_player]
-                    draw_pile = draw_pile[cards_per_player:]
-                self.state.list_card_draw = draw_pile
+                    if player != active_player:
+                        for marble in player.list_marble:
+                            if marble.pos == action.pos_to:
+                                opponent_player = player
+                                opponent_marble = marble
+                                break
+                        if opponent_marble:
+                            break
 
-                # Set active player to the player after the starting player
-                self.state.idx_player_active = (self.state.idx_player_started + 1) % self.state.cnt_player
-            return
+                # Handle displacement of opponent's marble
+                if opponent_marble:
+                    # Send the opponent's marble back to its kennel
+                    opponent_marble.pos = 72  # Kennel
+                    opponent_marble.is_save = False
 
-        # Validate the action: check if moving out of kennel is valid
-        if action.pos_from == 64:  # 64 is the kennel position
-            marble_to_move = next((m for m in active_player.list_marble if m.pos == action.pos_from), None)
-            if marble_to_move is None:
-                raise ValueError("No marble in the kennel to move")
+                # Move the active player's marble
+                moving_marble.pos = action.pos_to
+                moving_marble.is_save = True
 
-        # Update the marble's position
-        for marble in active_player.list_marble:
-            if marble.pos == action.pos_from:
-                marble.pos = action.pos_to
-                break
+            # Remove the card from the active player's hand
+            active_player.list_card.remove(action.card)
 
-
-
-                # End turn
-                self.state.idx_player_active = (self.state.idx_player_active + 1) % len(self.state.list_player)
-                return
+        # Proceed to the next player's turn
+        self.state.idx_player_active = (self.state.idx_player_active + 1) % self.state.cnt_player
 
     def get_player_view(self, idx_player: int) -> GameState:
         return self.state
