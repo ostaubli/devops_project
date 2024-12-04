@@ -138,10 +138,8 @@ class GameState(BaseModel):
 
         # get number of Cards
         cards_per_round = [6, 5, 4, 3, 2]
-        for i in range(1, 12):
-            # Ermitteln der Kartenanzahl durch Modulo-Operation
-            num_cards = cards_per_round[(i - 1) % len(cards_per_round)]
-
+        num_cards = cards_per_round[(self.cnt_round - 1) % len(cards_per_round)]
+        
         # Check if there are enough cards in the draw deck; if not, add a new card deck.
         if num_cards*4 > len(self.list_card_draw):
             ## reshuffle the Deck
@@ -322,7 +320,29 @@ class Dog(Game):
         pass
 
     def apply_action(self, action: Action) -> None:
-        """ Apply the given action to the game """
+        """ Apply the given action to the game 
+        Aktion auf das spielbrett übertragen ==> Gamestate verändern
+        Logiken:
+        1.1 Normaler Zug von ausgangspos zu zielpos gilt für alle karte ausser JKR, 7 und Jack
+        1.2 7 spezialkarte welche 7 x einen schritt machen kann
+        1.3 Jack tauscht zwei kugeln miteinander NOTE: Muss eine davon eine eigene Kugel sein?
+        1.4 JKR kann alle logiken von 1 bis und mit 3 aufweisen NOTE: Idee für umsetzung?
+
+        2. Wenn Zug abgeschlossen Aktiver spieler weitergeben
+        """
+        # TODO: Logik 1.1
+
+        # TODO: Logik 1.2
+
+        # TODO: Logik 1.3
+
+        # TODO: Logik 1.4
+        
+        # TODO: Logik 2
+        
+        
+        
+        
         pass
 
     def get_player_view(self, idx_player: int) -> GameState:

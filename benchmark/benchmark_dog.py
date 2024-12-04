@@ -23,7 +23,7 @@ class DogBenchmark(benchmark.Benchmark):
 
     # --- tests ---
 
-    def test_initial_game_state_values(self):
+    def test_initial_game_state_values(self) -> None:
         """Test 001: Validate values of initial game state (cnt_round=1) [5 points]"""
         self.game_server.reset()
         state = self.game_server.get_state()
@@ -43,7 +43,7 @@ class DogBenchmark(benchmark.Benchmark):
             assert len(player.list_card) == 6, f'{state}Error: len("list_player.list_card") must be 6 initially'
             assert len(player.list_marble) == 4, f'{state}Error: len("list_player.list_marble") must be 4 initially'
 
-    def test_later_game_state_values(self):
+    def test_later_game_state_values(self)-> None:
         """Test 002: Validate values of later game state (cnt_round=2) [5 points]"""
         self.start_game_state_at_round_2()
 
