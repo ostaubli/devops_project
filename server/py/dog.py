@@ -527,8 +527,8 @@ class Dog(Game):
             for marble_index in range(4):
                 self._state.list_player[player_index].list_marble.append(
                     Marble(
-                        pos=str(
-                            int(self.PLAYER_POSITIONS[player_index]['queue_start'] + marble_index)),
+                        pos=
+                            int(self.PLAYER_POSITIONS[player_index]['queue_start'] + marble_index),
                         is_save=True)
                 )
 
