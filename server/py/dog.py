@@ -323,12 +323,11 @@ class Dog(Game):
     none_actions_counter = 0
     def apply_action(self, action: Action) -> None:
         """ Apply the given action to the game """
+        active_player = self._state.list_player[self._state.idx_player_active]
         if action == None:
             # there is no card to play #fixme what needs to be done?! it is use din the tests but i hve no idea why
             self.none_actions_counter+=1
-
-
-        active_player = self._state.list_player[self._state.idx_player_active]
+            active_player.list_card = []
 
         if action is not None and action.card in active_player.list_card:
             # removing card from players hand and putting it to discarded stack
