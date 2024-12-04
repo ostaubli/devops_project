@@ -84,9 +84,9 @@ class GameState(BaseModel):
     bool_card_exchanged: bool = False               # true if cards was exchanged in round
     idx_player_started: int = random.randint(0,3)   # index of player that started the round
     idx_player_active: int =idx_player_started      # index of active player in round
-    list_player: List[PlayerState] = []                  # list of players
-    list_id_card_draw: List[Card] = LIST_CARD                  # list of cards to draw
-    list_card_discard: List[Card] = []                 # list of cards discarded
+    list_player: List[PlayerState] = []             # list of players
+    list_card_draw: List[Card] = LIST_CARD       # list of cards to draw
+    list_card_discard: List[Card] = []              # list of cards discarded
     card_active: Optional[Card]   = None             # active card (for 7 and JKR with sequence of actions)
 
     def setup_players(self) ->None:
@@ -125,7 +125,7 @@ class GameState(BaseModel):
         self.list_player = [player_blue,player_green,player_red,player_yellow]
 
     def deal_cards(self) -> bool:
-        # TODO: Check if all players are out of cards.
+        # Check if all players are out of cards.
         for player in self.list_player:
             if not player.list_card:
                 continue
@@ -133,12 +133,27 @@ class GameState(BaseModel):
                 print(f"{player.name} has still {len(player.list_card)} card's")
                 return False
 
-        # TODO: Increase the current round.
+        # Go to next Gameround
         self.cnt_round +=1
 
-        # TODO: Calculate how many cards are needed.
-        # TODO: Check if there are enough cards in the draw deck; if not, add a new card deck.
-        # TODO: Randomly select cards for players.
+        # get number of Cards
+        cards_per_round = [6, 5, 4, 3, 2]
+        for i in range(1, 12):
+            # Ermitteln der Kartenanzahl durch Modulo-Operation
+            num_cards = cards_per_round[(i - 1) % len(cards_per_round)]
+
+        # Check if there are enough cards in the draw deck; if not, add a new card deck.
+        if num_cards*4 > len(self.list_card_draw):
+            ## reshuffle the Deck
+            self.list_card_draw = GameState.LIST_CARD
+            self.list_card_discard = []
+
+        # Randomly select cards for players.
+        for player in self.list_player:
+            player.list_card = random.sample(self.list_card_draw, num_cards)
+            for card in player.list_card :
+                self.list_card_draw.remove(card)
+
         return True
 
 
@@ -178,6 +193,7 @@ class Dog(Game):
         self.state.setup_players()
         self.state.phase = GamePhase.RUNNING
         self.state.deal_cards()
+        print("debug X all done")
       
     def set_state(self, state: GameState) -> None:
         """ Set the game to a given state """
@@ -216,4 +232,6 @@ class RandomPlayer(Player):
 if __name__ == '__main__':
 
     game = Dog()
-    print(game.get_state())
+    print(len(game.state.list_card_draw))
+    print("Neue Karten Vergeben mit bestehenden Karten? ", game.state.deal_cards())
+    print
