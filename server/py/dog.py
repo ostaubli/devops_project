@@ -109,11 +109,17 @@ class GameState(BaseModel):
 
         pass
 
-    def check_final_pos(pos:int) -> bool:
+    def check_final_pos(self, pos_to: int, pos_from: int, marble: Marble) -> None:
         '''
-        Pos Blocked
+        Check whether the final position of the marble is blocked.
         '''
-        pass
+        final_positions = [68, 69, 70, 71, 76, 77, 78, 79, 84, 85, 86, 87, 92, 93, 94, 95]
+        if pos_to in final_positions:
+            marble.is_save = True
+
+        last_position = [64, 65, 66, 67, 72, 73, 74, 75, 80, 81, 82, 83, 88, 89, 90, 91]
+        if pos_from in last_position:
+            marble.is_save = True
 
     def sending_home(pos:int) -> None: # Set player X Marvel home
         '''
