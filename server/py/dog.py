@@ -17,8 +17,9 @@ class Card(BaseModel):
 
 
 class Marble(BaseModel):
-    pos: str       # position on board (0 to 95)
+    pos: int       # position on board (0 to 95)
     is_save: bool  # true if marble was moved out of kennel and was not yet moved
+    start_pos : int # 
 
 
 class PlayerState(BaseModel):
@@ -314,7 +315,7 @@ class GameState(BaseModel):
             marble.is_save = True
 
         last_positions: list = [64, 65, 66, 67, 72, 73, 74, 75, 80, 81, 82, 83, 88, 89, 90, 91]
-        if pos_from in last_position:
+        if pos_from in last_positions:
             marble.is_save = True
 
     def sending_home(self, murmel: Marble) -> None:  # Set player X Marvel home
