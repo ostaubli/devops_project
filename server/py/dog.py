@@ -164,6 +164,38 @@ class Dog(Game):
         """ Print the current game state """
         print(self._state)
 
+    def _handle_card_swapping(self):
+        """Handle the card-swapping process for all players."""
+        for idx_player, player in enumerate(self._state.list_player):
+            # Determine teammate index based on player index (teammates are 2 positions apart)
+            teammate_idx = (idx_player + 2) % self._state.cnt_player
+            teammate = self._state.list_player[teammate_idx]
+
+            # Choose cards to swap (randomly for now)
+            chosen_card = self._choose_card_to_swap(player)
+            swapped_card = self._choose_card_to_swap(teammate)
+
+            # Swap the chosen cards
+            if chosen_card and swapped_card:
+                player.list_card.remove(chosen_card)
+                teammate.list_card.remove(swapped_card)
+                player.list_card.append(swapped_card)
+                teammate.list_card.append(chosen_card)
+
+                print(
+                    f"Player {player.name} swapped {chosen_card.rank} of {chosen_card.suit} "
+                    f"with Player {teammate.name}'s {swapped_card.rank} of {swapped_card.suit}."
+                )
+
+        # Mark swapping phase as completed
+        self._state.bool_card_swapped = True
+
+    def _choose_card_to_swap(self, player: PlayerState) -> Optional[Card]:
+        """Choose a card to swap. This is placeholder logic."""
+        if player.list_card:
+            return random.choice(player.list_card)  # Randomly select a card to swap
+        return None
+
     def get_list_action(self) -> List[Action]:
         """ Get a list of possible actions for the active player """
         actions = []
@@ -375,7 +407,6 @@ class Dog(Game):
         # Update marble position
         marble.pos = pos_to
 
-    # Define is collision #TODO LATIN -45 create handle collision
     def _is_collision(self, marble: Marble, pos_to: int, card: Card) -> bool:
         """
         Check if the movement of the marble using the card results in a collision.
@@ -477,8 +508,6 @@ class Dog(Game):
 
         # Shuffle the draw pile
         random.shuffle(self._state.list_card_draw)
-
-    ##################################################### PRIVATE METHODS #############################################
 
     # TODO in case the way is blocked (marble on 0/16/32/48 of the player with correct index (marble.is_save)?). LATIN-36
     def _is_way_blocked(self, pos_to: int, pos_from: int, safe_marbles: List[Marble]) -> bool:
@@ -609,19 +638,28 @@ if __name__ == '__main__':
     game = Dog()
     player = RealPlayer()
 
-    while game.get_state() != GamePhase.FINISHED:
-        active_players = 4
+    while game.get_state().phase != GamePhase.FINISHED:
+        # Card-swapping phase at the start of the round
+        if not game.get_state().bool_card_swapped:
+            print("Starting card-swapping phase...")
+            game._handle_card_swapping()
+
+        # Deal cards if necessary
         game.deal_cards()
-        while not active_players == 0:
+
+        active_players = 4
+        while active_players > 0:
             list_actions = game.get_list_action()
 
-            if len(list_actions) == 0:
-                active_players = active_players - 1
-                print("Player has no actions left. Please wait until the round is over")
+            if not list_actions:
+                active_players -= 1
+                print("Player has no actions left. Please wait until the round is over.")
             else:
                 action = player.select_action(game.get_state(), list_actions)
                 game.apply_action(action)
                 game.print_state()
 
-        print(
-            f"\n --------------- ROUND {game.get_state().cnt_round} finished -----------------")
+        # Reset card swapping flag for the next round
+        game.get_state().bool_card_swapped = False
+
+        print(f"\n --------------- ROUND {game.get_state().cnt_round} finished -----------------")
