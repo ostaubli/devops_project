@@ -164,7 +164,7 @@ class Dog(Game):
         """ Print the current game state """
         print(self._state)
 
-    def handle_card_swapping(self):
+    def _handle_card_swapping(self):
         """Handle the card-swapping process for all players."""
         for idx_player, player in enumerate(self._state.list_player):
             # Determine teammate index based on player index (teammates are 2 positions apart)
@@ -642,7 +642,7 @@ if __name__ == '__main__':
         # Card-swapping phase at the start of the round
         if not game.get_state().bool_card_swapped:
             print("Starting card-swapping phase...")
-            game.handle_card_swapping()
+            game._handle_card_swapping()
 
         # Deal cards if necessary
         game.deal_cards()
