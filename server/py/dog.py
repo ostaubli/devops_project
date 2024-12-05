@@ -1,5 +1,10 @@
 # runcmd: cd ../.. & venv\Scripts\python server/py/dog_template.py
-from server.py.game import Game, Player
+import sys
+import os
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '../..')))
+
+
+from game import Game, Player
 from typing import List, Optional, ClassVar
 from pydantic import BaseModel
 from enum import Enum
@@ -21,6 +26,7 @@ class PlayerState(BaseModel):
     name: str                  # name of player
     list_card: List[Card]      # list of cards
     list_marble: List[Marble]  # list of marbles
+    teamMate: str
 
 
 class Action(BaseModel):
@@ -117,26 +123,41 @@ class Dog(Game):
             idx_player_started=random.randint(0, 3),  # Randomly select start player
             idx_player_active=0,
             list_player=[
-                PlayerState(name="Blue", list_card=[], list_marble=blue_marbles),
-                PlayerState(name="Green", list_card=[], list_marble=green_marbles),
-                PlayerState(name="Red", list_card=[], list_marble=red_marbles),
-                PlayerState(name="Yellow", list_card=[], list_marble=yellow_marbles),
+                PlayerState(name="Blue", list_card=[], list_marble=blue_marbles, teamMate = "Green"),
+                PlayerState(name="Green", list_card=[], list_marble=green_marbles, teamMate = "Blue"),
+                PlayerState(name="Red", list_card=[], list_marble=red_marbles, teamMate = "Yellow"),
+                PlayerState(name="Yellow", list_card=[], list_marble=yellow_marbles, teamMate= "Red"),
             ],
             list_card_draw=shuffled_cards,
             list_card_discard=[],
             card_active=None
         )
-
+        
+    
          # Deal 6 cards to each player directly in the init
         num_cards_per_player = 6  # Example number of cards per player
         for player in self.state.list_player:
             player.list_card = [self.state.list_card_draw.pop() for _ in range(num_cards_per_player)]
 
+        
+        # Exchange card with teammate
+        if self.state.bool_card_exchanged:
+            for player in self.state.list_player:
+                for teammate in self.state.list_player:
+                    if teammate.name == player.teamMate and player.name < teammate.name: 
+                        card_to_exchange = random.choice(player.list_card)
+                        player.list_card.remove(card_to_exchange)
+                        card_from_teammate = random.choice(teammate.list_card)
+                        teammate.list_card.remove(card_from_teammate)
+                        teammate.list_card.append(card_to_exchange)
+                        player.list_card.append(card_from_teammate)
+            self.state.bool_card_exchanged = False
+
         # Transition to the running phase, since we're starting the game directly
         self.state.phase = GamePhase.RUNNING
         self.state.cnt_round = 1
         self.state.idx_player_active = self.state.idx_player_started
-        self.state.bool_card_exchanged = False
+        self.state.bool_card_exchanged = True
 
     def set_state(self, state: GameState) -> None:
         """ Set the game to a given state """
@@ -177,7 +198,7 @@ class Dog(Game):
         for card in player.list_card:
             if card.rank in ['2', '3', '4', '5', '6', '8', '9', '10', 'Q']:
                 for marble in player.list_marble:
-                    if marble.pos >= 0 and marble.pos <= 63:    # for now only marbles on board are checked
+                    if int(marble.pos) >= 0 and int(marble.pos) <= 63:    # for now only marbles on board are checked
                         pos_from = marble.pos
                         steps = self.get_card_steps(card)
                         pos_to = (pos_from + steps)
@@ -220,5 +241,11 @@ class RandomPlayer(Player):
 
 
 if __name__ == '__main__':
-
     game = Dog()
+    game.print_state()
+    actions = game.get_list_action()
+    print(actions)
+    start_game_action = next((a for a in actions if a.action_type == ActionType.GAME_START), None)
+    if start_game_action:
+        game.apply_action(start_game_action)
+    game.print_state()
