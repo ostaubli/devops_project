@@ -98,16 +98,61 @@ class GameState(BaseModel):
         Card(color='any', symbol='wilddraw4'), Card(color='any', symbol='wilddraw4'),
     ]
 
-    list_card_draw: Optional[List[Card]]     # list of cards to draw
-    list_card_discard: Optional[List[Card]]  # list of cards discarded
-    list_player: List[PlayerState]           # list of player-states
-    phase: GamePhase                         # the current game-phase ("setup"|"running"|"finished")
-    cnt_player: int                          # number of players N (to be set in the phase "setup")
-    idx_player_active: Optional[int]         # the index (0 to N-1) of active player
-    direction: int                           # direction of the game, +1 to the left, -1 to right
-    color: str                               # active color (last card played or the chosen color after a wild cards)
-    cnt_to_draw: int                         # accumulated number of cards to draw for the next player
-    has_drawn: bool                          # flag to indicate if the last player has alreay drawn cards or not
+    list_card_draw: Optional[List[Card]] = []   # list of cards to draw
+    list_card_discard: Optional[List[Card]] = []# list of cards discarded
+    list_player: List[PlayerState] = []         # list of player-states
+    phase: GamePhase = GamePhase.SETUP          # the current game-phase ("setup"|"running"|"finished")
+    cnt_player: int = 0                         # number of players N (to be set in the phase "setup")
+    idx_player_active: Optional[int] = 0        # the index (0 to N-1) of active player
+    direction: int = 1                          # direction of the game, +1 to the left, -1 to right
+    color: str = ''                             # active color (last card played or the chosen color after a wild cards)
+    cnt_to_draw: int = 0                        # accumulated number of cards to draw for the next player
+    has_drawn: bool = False                     # flag to indicate if the last player has alreay drawn cards or not
+
+    def setup_game(self, players: List[str]) -> None:
+        """Initialize the game with players."""
+        self.list_player = [PlayerState(name=player) for player in players]
+        self.cnt_player = len(players)
+        self.list_card_draw = random.sample(self.LIST_CARD, len(self.LIST_CARD))
+        self.phase = GamePhase.SETUP
+        self.deal_cards()
+    
+    def deal_cards(self) -> None:
+        """Deal cards to each player."""
+        for player in self.list_player:
+            for _ in range(self.CNT_HAND_CARDS):
+                card = self.list_card_draw.pop()
+                player.add_card(card)
+
+        # Set initial discard card
+        self.list_card_discard.append(self.list_card_draw.pop())
+        self.color = self.list_card_discard[-1].color
+
+    def next_player(self) -> None:
+        """Advance to the next player."""
+        self.idx_player_active = (self.idx_player_active + self.direction) % self.cnt_player
+
+    def reverse_direction(self) -> None:
+        """Reverse the direction of play."""
+        self.direction *= -1
+
+    def draw_card(self, player_idx: int, count: int = 1) -> None:
+        """Draw cards for a player."""
+        player = self.list_player[player_idx]
+        for _ in range(count):
+            if not self.list_card_draw:
+                self.reshuffle_discard_pile()
+            player.add_card(self.list_card_draw.pop())
+    
+    def reshuffle_discard_pile(self) -> None:
+        """Reshuffle the discard pile into the draw pile."""
+        if len(self.list_card_discard) <= 1:
+            raise ValueError("Not enough cards in the discard pile to reshuffle.")
+        self.list_card_draw = self.list_card_discard[:-1]
+        random.shuffle(self.list_card_draw)
+        self.list_card_discard = [self.list_card_discard[-1]]
+        
+
 
 
 class Uno(Game):
@@ -316,4 +361,4 @@ if __name__ == '__main__':
     uno = Uno()
     state = GameState(cnt_player=3)
     uno.set_state(state)
-    print("test")
+
