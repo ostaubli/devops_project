@@ -254,6 +254,37 @@ class Dog(Game):
                                                              final_start + 3):
                             to_positions.append(next_position)
 
+                    if card.rank == 'J':
+
+                        # Get the active player's marbles that are not in the kennel
+                        active_player_marbles = [
+                            marble for marble in active_player.list_marble
+                            if marble.pos not in range(queue_start, queue_start + 4)  # Exclude marbles in the kennel
+                        ]
+
+                        # Collect all other players' marbles that are not "safe"
+                        other_players_marbles = [
+                            (player_idx, marble)
+                            for player_idx, player in enumerate(self._state.list_player)
+                            if player_idx != self._state.idx_player_active  # Exclude the active player
+                            for marble in player.list_marble
+                            if not marble.is_save  # Only consider marbles that are not safe
+                        ]
+
+                        # Generate swap actions
+                        for marble_own in active_player_marbles:
+                            for player_idx, marble_other in other_players_marbles:
+                                # Add a valid swap action
+                                actions.append(
+                                    Action(
+                                        card=card,
+                                        pos_from=marble_own.pos,  # Position of the active player's marble
+                                        pos_to=marble_other.pos,  # Position of the other player's marble
+                                        card_swap=None  # Specify that the action involves a swap
+                                    )
+                                )
+
+
                     # checks for each possible position if the way is blocked. if it is not blocked, we add it to action.
                     for pos_to in to_positions:
                         if not self._is_way_blocked(
