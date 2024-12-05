@@ -389,7 +389,7 @@ class Dog(Game):
             bool: True if the marble jumps over another marble, False otherwise.
         """
 
-        #simple logic if card is not 7!
+        # simple logic if card is not 7!
         active_player = self._state.list_player[self._state.idx_player_active]
         active_player_marbles = {int(m.pos) for m in active_player.list_marble}
 
