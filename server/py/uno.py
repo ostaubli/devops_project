@@ -70,31 +70,26 @@ class GamePhase(str, Enum):
 
 class GameState(BaseModel):
     # numbers of cards for each player to start with
-    CNT_HAND_CARDS: int = 7
+    CNT_HAND_CARDS: int = 0
     # any = for wild cards
     LIST_COLOR: List[str] = ['red', 'green', 'yellow', 'blue', 'any']
     # draw2 = draw two cards, wild = chose color, wilddraw4 = chose color and draw 4
     LIST_SYMBOL: List[str] = ['skip', 'reverse', 'draw2', 'wild', 'wilddraw4']
     LIST_CARD: List[Card] = [
-        Card(color='red', number=0), Card(color='green', number=0), Card(color='yellow', number=0), Card(color='blue', number=0),
-        Card(color='red', number=1), Card(color='green', number=1), Card(color='yellow', number=1), Card(color='blue', number=1),
-        Card(color='red', number=2), Card(color='green', number=2), Card(color='yellow', number=2), Card(color='blue', number=2),
-        Card(color='red', number=3), Card(color='green', number=3), Card(color='yellow', number=3), Card(color='blue', number=3),
-        Card(color='red', number=4), Card(color='green', number=4), Card(color='yellow', number=4), Card(color='blue', number=4),
-        Card(color='red', number=5), Card(color='green', number=5), Card(color='yellow', number=5), Card(color='blue', number=5),
-        Card(color='red', number=6), Card(color='green', number=6), Card(color='yellow', number=6), Card(color='blue', number=6),
-        Card(color='red', number=7), Card(color='green', number=7), Card(color='yellow', number=7), Card(color='blue', number=7),
-        Card(color='red', number=8), Card(color='green', number=8), Card(color='yellow', number=8), Card(color='blue', number=8),
-        Card(color='red', number=9), Card(color='green', number=9), Card(color='yellow', number=9), Card(color='blue', number=9),
-        # skip next player
-        Card(color='red', symbol='skip'), Card(color='green', symbol='skip'), Card(color='yellow', symbol='skip'), Card(color='blue', symbol='skip'),
-        # revers playing direction
-        Card(color='red', symbol='reverse'), Card(color='green', symbol='reverse'), Card(color='yellow', symbol='reverse'), Card(color='blue', symbol='reverse'),
-        # next player must draw 2 cards
-        Card(color='red', symbol='draw2'), Card(color='green', symbol='draw2'), Card(color='yellow', symbol='draw2'), Card(color='blue', symbol='draw2'),
-        # current player choses color for next player to play
+        # 76 Numbered Cards
+        Card(color='red', number=0), Card(color='green', number=0), Card(color='yellow', number=0),
+        Card(color='blue', number=0),
+        *[Card(color=color, number=number) for color in ['red', 'green', 'yellow', 'blue'] for number in
+          range(1, 10)] * 2,  # Two copies of each 1-9
+        # 8 Skip Cards
+        *[Card(color=color, symbol='skip') for color in ['red', 'green', 'yellow', 'blue']],
+        # 8 Reverse Cards
+        *[Card(color=color, symbol='reverse') for color in ['red', 'green', 'yellow', 'blue']],
+        # 8 Draw 2 Cards
+        *[Card(color=color, symbol='draw2') for color in ['red', 'green', 'yellow', 'blue']],
+        # 4 Wild Cards
         Card(color='any', symbol='wild'), Card(color='any', symbol='wild'),
-        # current player choses color for next player to play and next player must draw 4 cards
+        # 4 Wild Draw 4 Cards
         Card(color='any', symbol='wilddraw4'), Card(color='any', symbol='wilddraw4'),
     ]
 
