@@ -188,7 +188,27 @@ class Dog(Game):
 
     def get_list_action(self) -> List[Action]:
         """ Get a list of possible actions for the active player """
-        pass
+        actions: List[Action] = []
+        
+        active_player_idx = self.state.idx_player_active
+        active_player = self.state.list_player[active_player_idx]
+    
+        marbles_in_kennel = [marble for marble in active_player.list_marble if marble.pos == self.KENNEL_POSITION]
+        
+        for card in active_player.list_card:
+            if card.rank in ['K', 'A', 'JKR']:
+                if marbles_in_kennel:
+                    for marble in marbles_in_kennel:
+                        action = Action(
+                            card=card,
+                            pos_from=self.KENNEL_POSITION,
+                            pos_to=active_player_idx*16,
+                            card_swap=None
+                        )
+                        actions.append(action)
+                        
+        return actions
+
 
     def apply_action(self, action: Action) -> None:
         """ Apply the given action to the game """
