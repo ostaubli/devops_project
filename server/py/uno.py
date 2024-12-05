@@ -331,7 +331,7 @@ class Uno(Game):
 
 
 class RandomPlayer(Player):
-    def __init__(self, name=str):
+    def __init__(self, name: str = "Player") -> None:
         self.state=PlayerState(name= name)
 
     def select_action(self, state: GameState, actions: List[Action]) -> Optional[Action]:
