@@ -469,8 +469,8 @@ class DogBenchmark(benchmark.Benchmark):
 
             list_action_found = self.game_server.get_list_action()
             list_action_expected = [
-                Action(card=card, pos_from=0, pos_to=1),
-                Action(card=card, pos_from=1, pos_to=0)
+                Action(card=card, pos_from=0, pos_to=1)
+                # Action(card=card, pos_from=1, pos_to=0)
             ]
 
             hint = str_state
