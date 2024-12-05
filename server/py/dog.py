@@ -87,21 +87,82 @@ class GameState(BaseModel):
 
 class Dog(Game):
 
-    def __init__(self) -> None:
+    def __init__(self, cnt_players: int = 4) -> None:
         """ Game initialization (set_state call not necessary, we expect 4 players) """
-        pass
+        self._initialize_game(cnt_players)
+
+    def _initialize_game(self, cnt_players: int) -> None:
+        """Initialize the game to its starting state"""
+        if cnt_players not in [4]:
+            raise ValueError("The game must be played with 4 players.")
+
+        self.state = GameState(
+            cnt_player=cnt_players,
+            phase=GamePhase.SETUP,
+            cnt_round=1,
+            bool_card_exchanged=False,
+            idx_player_started=0,
+            idx_player_active=0,
+            list_player=[],
+            list_card_draw=[],
+            list_card_discard=[],
+            card_active=None
+        )
+
+        # Initialize card deck (two packs of Bridge-cards)
+        self.state.list_card_draw = GameState.LIST_CARD.copy()   # Two packs of cards
+        random.shuffle(self.state.list_card_draw)  # Shuffle the deck
+
+        # Set up players
+        for idx in range(self.state.cnt_player):
+            list_card = [self.state.list_card_draw.pop() for _ in range(6)]  # Draw 6 cards for each player
+            list_marble = [Marble(pos=None, is_save=False) for _ in range(4)]  # All marbles start in kennel
+            player_state = PlayerState(name=f"Player {idx + 1}", list_card=list_card, list_marble=list_marble)
+            self.state.list_player.append(player_state)
+
+        # Randomly select the player who starts
+        self.state.idx_player_started = random.randint(0, self.state.cnt_player - 1)
+        self.state.idx_player_active = self.state.idx_player_started
+
+        # Update the game phase after setup
+        self.state.phase = GamePhase.RUNNING
+        self.state.bool_card_exchanged = False  # Reset card exchange flag at the beginning
+
+    def reset(self) -> None:
+        """Setzt das Spiel in den Ausgangszustand zurück"""
+        self._initialize_game(self.state.cnt_player)
 
     def set_state(self, state: GameState) -> None:
         """ Set the game to a given state """
-        pass
+        self.state = state
 
     def get_state(self) -> GameState:
         """ Get the complete, unmasked game state """
-        pass
+        return self.state
 
     def print_state(self) -> None:
         """ Print the current game state """
         pass
+
+    def setup_next_round(self) -> None:
+        """ Setup the next round with decreasing number of cards """
+        cards_in_round = [6, 5, 4, 3, 2]  # Anzahl der Karten für jede Runde (beginnend mit Runde 1)
+        current_cards_count = cards_in_round[(self.state.cnt_round - 1) % len(cards_in_round)]
+        # Deal cards to each player
+        for player in self.state.list_player:
+            player.list_card = [self.state.list_card_draw.pop() for _ in range(current_cards_count) if
+                                self.state.list_card_draw]
+        # TODO:: Test re-shuffle if stock out of cards (list_card_draw)
+
+    def next_turn(self) -> None:
+        """ Advance the turn to the next player """
+        self.state.idx_player_active = (self.state.idx_player_active + 1) % self.state.cnt_player
+        # If all players have played, increase the round count
+        if self.state.idx_player_active == self.state.idx_player_started:
+            self.state.cnt_round += 1
+            # self.exchange_cards() # TODO:: Exchange cards between players
+            self.setup_next_round()  # Setup the next round with updated card counts
+
 
     def get_list_action(self) -> List[Action]:
         """ Get a list of possible actions for the active player """
@@ -109,7 +170,17 @@ class Dog(Game):
 
     def apply_action(self, action: Action) -> None:
         """ Apply the given action to the game """
-        pass
+        if action is None:
+            # print("No valid action provided. Skipping turn.")
+            self.next_turn()
+            return
+        player = self.state.list_player[self.state.idx_player_active]
+        # Remove the card from the player's hand
+        player.list_card.remove(action.card)
+        self.state.list_card_discard.append(action.card)
+        # TODO:: Move the marble if applicable
+        # Advance to the next player
+        self.next_turn()
 
     def get_player_view(self, idx_player: int) -> GameState:
         """ Get the masked state for the active player (e.g. the oppontent's cards are face down)"""
@@ -128,3 +199,36 @@ class RandomPlayer(Player):
 if __name__ == '__main__':
 
     game = Dog()
+
+    # Get the initial state of the game and print it
+    initial_state = game.get_state()
+    print("Initial Game State:")
+    print(initial_state)
+
+    # Simulate setting up the next rounds to see how the card distribution changes
+    for round_num in range(1, 4):
+        game.setup_next_round()
+        print(f"\nGame State after setting up round {round_num + 1}:")
+        print(game.get_state())
+
+    # Simulate a few turns to see how the game progresses
+    print("\nStarting turns simulation:")
+    for turn in range(6):
+        # Example of getting available actions (currently, not implemented)
+        actions = game.get_list_action()
+        if actions:
+            # Apply a random action (using RandomPlayer logic as an example)
+            action = random.choice(actions)
+            game.apply_action(action)
+        else:
+            # If no valid actions, skip the turn
+            game.next_turn()
+
+        # Print the game state after each turn
+        print(f"\nGame State after turn {turn + 1}:")
+        print(game.get_state())
+
+    # Reset the game and print the reset state
+    game.reset()
+    print("\nGame State after resetting:")
+    print(game.get_state())
