@@ -1,7 +1,7 @@
 # -runcmd: cd ../.. & venv\Scripts\python server/py/uno.py
 # runcmd: cd ../.. & venv\Scripts\python benchmark/benchmark_uno.py python uno.Uno
 
-from server.py.game import Game, Player #from server.py.game import Game, Player
+from game import Game, Player #from server.py.game import Game, Player
 from typing import List, Optional
 from pydantic import BaseModel
 from enum import Enum
@@ -126,8 +126,37 @@ class Uno(Game):
         return self.state
 
     def print_state(self) -> None:
-        """ Print the current game state """
-        pass
+        """ Print the current game state fo debbuging"""
+        if not self.state:
+            print("Game state has not been initialized")
+            return
+        
+        print("\n==== Game State ====")
+        print(f"Phase: {self.state.phase}")
+        print(f"Direction: {'Clockwise' if self.state.direction == 1 else 'Counterclockwise'}")
+        print(f"Active Player Index: {self.state.idx_player_active}")
+        print(f"Active Color: {self.state.color}")
+        print(f"Cards to Draw: {self.state.cnt_to_draw}")
+        print(f"Has Drawn: {'Yes' if self.state.has_drawn else 'No'}")
+
+        print("\n-- Players --")
+        for idx, player in enumerate(self.state.list_player):
+            active_marker = " (Active)" if idx == self.state.idx_player_active else ""
+            print(f"Player {idx + 1}{active_marker}: {player.name}")
+            print(f"  Cards: {[str(card) for card in player.list_card]}")
+
+        print("\n-- Draw Pile --")
+        print(f"Cards remaining: {len(self.state.list_card_draw)}")
+
+        print("\n-- Discard Pile --")
+        if self.state.list_card_discard:
+            print(f"Top Card: {self.state.list_card_discard[-1]}")
+        else:
+            print("Discard pile is empty.")
+
+        print("====================\n")
+
+        
 
     def get_list_action(self) -> List[Action]:
         """ Get a list of possible actions for the active player """
