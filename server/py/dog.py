@@ -14,109 +14,111 @@ class Card(BaseModel):
 
 
 class Marble(BaseModel):
-    pos: int       # position on board (0 to 95)
+    pos: int  # position on board (0 to 95)
     is_save: bool  # true if marble was moved out of kennel and was not yet moved
 
 
 class PlayerState(BaseModel):
-    name: str                  # name of player
-    list_card: List[Card]      # list of cards
+    name: str  # name of player
+    list_card: List[Card]  # list of cards
     list_marble: List[Marble]  # list of marbles
 
 
 class Action(BaseModel):
-
-    card: Card                 # card to play
-    pos_from: Optional[int]    # position to move the marble from
-    pos_to: Optional[int]      # position to move the marble to
+    card: Card  # card to play
+    pos_from: Optional[int]  # position to move the marble from
+    pos_to: Optional[int]  # position to move the marble to
     card_swap: Optional[Card] = None  # optional card to swap ()
 
+
 class GamePhase(str, Enum):
-    SETUP = 'setup'            # before the game has started
-    RUNNING = 'running'        # while the game is running
-    FINISHED = 'finished'      # when the game is finished
+    SETUP = 'setup'  # before the game has started
+    RUNNING = 'running'  # while the game is running
+    FINISHED = 'finished'  # when the game is finished
 
 
 class GameState(BaseModel):
-        #Add a new field bool_card_swapped to track if card swapping is complete for the round
-        bool_card_swapped: bool = False  # Track if the card-swapping phase is completed
+    # Add a new field bool_card_swapped to track if card swapping is complete for the round
+    bool_card_swapped: bool = False  # Track if the card-swapping phase is completed
 
-    LIST_SUIT: ClassVar[List[str]] = ['♠', '♥', '♦', '♣']  # 4 suits (colors)
-    LIST_RANK: ClassVar[List[str]] = [
-        '2', '3', '4', '5', '6', '7', '8', '9', '10',      # 13 ranks + Joker
-        'J', 'Q', 'K', 'A', 'JKR'
-    ]
-    LIST_CARD: ClassVar[List[Card]] = [
-        # 2: Move 2 spots forward
-        Card(suit='♠', rank='2'), Card(suit='♥', rank='2'), Card(
-            suit='♦', rank='2'), Card(suit='♣', rank='2'),
-        # 3: Move 3 spots forward
-        Card(suit='♠', rank='3'), Card(suit='♥', rank='3'), Card(
-            suit='♦', rank='3'), Card(suit='♣', rank='3'),
-        # 4: Move 4 spots forward or back
-        Card(suit='♠', rank='4'), Card(suit='♥', rank='4'), Card(
-            suit='♦', rank='4'), Card(suit='♣', rank='4'),
-        # 5: Move 5 spots forward
-        Card(suit='♠', rank='5'), Card(suit='♥', rank='5'), Card(
-            suit='♦', rank='5'), Card(suit='♣', rank='5'),
-        # 6: Move 6 spots forward
-        Card(suit='♠', rank='6'), Card(suit='♥', rank='6'), Card(
-            suit='♦', rank='6'), Card(suit='♣', rank='6'),
-        # 7: Move 7 single steps forward
-        Card(suit='♠', rank='7'), Card(suit='♥', rank='7'), Card(
-            suit='♦', rank='7'), Card(suit='♣', rank='7'),
-        # 8: Move 8 spots forward
-        Card(suit='♠', rank='8'), Card(suit='♥', rank='8'), Card(
-            suit='♦', rank='8'), Card(suit='♣', rank='8'),
-        # 9: Move 9 spots forward
-        Card(suit='♠', rank='9'), Card(suit='♥', rank='9'), Card(
-            suit='♦', rank='9'), Card(suit='♣', rank='9'),
-        # 10: Move 10 spots forward
-        Card(suit='♠', rank='10'), Card(suit='♥', rank='10'), Card(
-            suit='♦', rank='10'), Card(suit='♣', rank='10'),
-        # Jake: A marble must be exchanged
-        Card(suit='♠', rank='J'), Card(suit='♥', rank='J'), Card(
-            suit='♦', rank='J'), Card(suit='♣', rank='J'),
-        # Queen: Move 12 spots forward
-        Card(suit='♠', rank='Q'), Card(suit='♥', rank='Q'), Card(
-            suit='♦', rank='Q'), Card(suit='♣', rank='Q'),
-        # King: Start or move 13 spots forward
-        Card(suit='♠', rank='K'), Card(suit='♥', rank='K'), Card(
-            suit='♦', rank='K'), Card(suit='♣', rank='K'),
-        # Ass: Start or move 1 or 11 spots forward
-        Card(suit='♠', rank='A'), Card(suit='♥', rank='A'), Card(
-            suit='♦', rank='A'), Card(suit='♣', rank='A'),
-        # Joker: Use as any other card you want
-        Card(suit='', rank='JKR'), Card(
-            suit='', rank='JKR'), Card(suit='', rank='JKR')
-    ] * 2
 
-    cnt_player: int = 4                # number of players (must be 4)
-    phase: GamePhase                   # current phase of the game
-    cnt_round: int                     # current round
-    bool_card_exchanged: bool          # true if cards was exchanged in round
-    idx_player_started: int            # index of player that started the round
-    idx_player_active: int             # index of active player in round
-    list_player: List[PlayerState]     # list of players
-    list_card_draw: List[Card]         # list of cards to draw
-    list_card_discard: List[Card]      # list of cards discarded
-    # active card (for 7 and JKR with sequence of actions)
-    card_active: Optional[Card]
+LIST_SUIT: ClassVar[List[str]] = ['♠', '♥', '♦', '♣']  # 4 suits (colors)
+LIST_RANK: ClassVar[List[str]] = [
+    '2', '3', '4', '5', '6', '7', '8', '9', '10',  # 13 ranks + Joker
+    'J', 'Q', 'K', 'A', 'JKR'
+]
+LIST_CARD: ClassVar[List[Card]] = [
+                                      # 2: Move 2 spots forward
+                                      Card(suit='♠', rank='2'), Card(suit='♥', rank='2'), Card(
+        suit='♦', rank='2'), Card(suit='♣', rank='2'),
+                                      # 3: Move 3 spots forward
+                                      Card(suit='♠', rank='3'), Card(suit='♥', rank='3'), Card(
+        suit='♦', rank='3'), Card(suit='♣', rank='3'),
+                                      # 4: Move 4 spots forward or back
+                                      Card(suit='♠', rank='4'), Card(suit='♥', rank='4'), Card(
+        suit='♦', rank='4'), Card(suit='♣', rank='4'),
+                                      # 5: Move 5 spots forward
+                                      Card(suit='♠', rank='5'), Card(suit='♥', rank='5'), Card(
+        suit='♦', rank='5'), Card(suit='♣', rank='5'),
+                                      # 6: Move 6 spots forward
+                                      Card(suit='♠', rank='6'), Card(suit='♥', rank='6'), Card(
+        suit='♦', rank='6'), Card(suit='♣', rank='6'),
+                                      # 7: Move 7 single steps forward
+                                      Card(suit='♠', rank='7'), Card(suit='♥', rank='7'), Card(
+        suit='♦', rank='7'), Card(suit='♣', rank='7'),
+                                      # 8: Move 8 spots forward
+                                      Card(suit='♠', rank='8'), Card(suit='♥', rank='8'), Card(
+        suit='♦', rank='8'), Card(suit='♣', rank='8'),
+                                      # 9: Move 9 spots forward
+                                      Card(suit='♠', rank='9'), Card(suit='♥', rank='9'), Card(
+        suit='♦', rank='9'), Card(suit='♣', rank='9'),
+                                      # 10: Move 10 spots forward
+                                      Card(suit='♠', rank='10'), Card(suit='♥', rank='10'), Card(
+        suit='♦', rank='10'), Card(suit='♣', rank='10'),
+                                      # Jake: A marble must be exchanged
+                                      Card(suit='♠', rank='J'), Card(suit='♥', rank='J'), Card(
+        suit='♦', rank='J'), Card(suit='♣', rank='J'),
+                                      # Queen: Move 12 spots forward
+                                      Card(suit='♠', rank='Q'), Card(suit='♥', rank='Q'), Card(
+        suit='♦', rank='Q'), Card(suit='♣', rank='Q'),
+                                      # King: Start or move 13 spots forward
+                                      Card(suit='♠', rank='K'), Card(suit='♥', rank='K'), Card(
+        suit='♦', rank='K'), Card(suit='♣', rank='K'),
+                                      # Ass: Start or move 1 or 11 spots forward
+                                      Card(suit='♠', rank='A'), Card(suit='♥', rank='A'), Card(
+        suit='♦', rank='A'), Card(suit='♣', rank='A'),
+                                      # Joker: Use as any other card you want
+                                      Card(suit='', rank='JKR'), Card(
+        suit='', rank='JKR'), Card(suit='', rank='JKR')
+                                  ] * 2
 
-    def __str__(self) -> str:
-        player_states = "\n".join(
-            f"Player {i + 1} ({player.name}): Cards: {len(player.list_card)}, Marbles: {len(player.list_marble)}"
-            for i, player in enumerate(self.list_player)
-        )
-        return (
-            f"Game Phase: {self.phase}\n"
-            f"Round: {self.cnt_round}\n"
-            f"Active Player: {self.idx_player_active + 1}\n"
-            f"Players:\n{player_states}\n"
-            f"Cards to Draw: {len(self.list_card_draw)}\n"
-            f"Cards Discarded: {len(self.list_card_discard)}\n"
-            f"Active Card: {self.card_active}\n"
-        )
+cnt_player: int = 4  # number of players (must be 4)
+phase: GamePhase  # current phase of the game
+cnt_round: int  # current round
+bool_card_exchanged: bool  # true if cards was exchanged in round
+idx_player_started: int  # index of player that started the round
+idx_player_active: int  # index of active player in round
+list_player: List[PlayerState]  # list of players
+list_card_draw: List[Card]  # list of cards to draw
+list_card_discard: List[Card]  # list of cards discarded
+# active card (for 7 and JKR with sequence of actions)
+card_active: Optional[Card]
+
+
+def __str__(self) -> str:
+    player_states = "\n".join(
+        f"Player {i + 1} ({player.name}): Cards: {len(player.list_card)}, Marbles: {len(player.list_marble)}"
+        for i, player in enumerate(self.list_player)
+    )
+    return (
+        f"Game Phase: {self.phase}\n"
+        f"Round: {self.cnt_round}\n"
+        f"Active Player: {self.idx_player_active + 1}\n"
+        f"Players:\n{player_states}\n"
+        f"Cards to Draw: {len(self.list_card_draw)}\n"
+        f"Cards Discarded: {len(self.list_card_discard)}\n"
+        f"Active Card: {self.card_active}\n"
+    )
 
 
 class Dog(Game):
@@ -300,7 +302,7 @@ class Dog(Game):
         # calculate the next player (after 4, comes 1 again). not sure if needed here or somewhere else
         # example: (4+1)%4=1 -> after player 4, it's player 1's turn again
         self._state.idx_player_active = (
-            self._state.idx_player_active + 1) % self._state.cnt_player
+                                                self._state.idx_player_active + 1) % self._state.cnt_player
 
     def _move_marble_logic(self, marble: Marble, pos_to: int, card: Card) -> None:
         """
@@ -311,8 +313,8 @@ class Dog(Game):
         # Update marble position
         marble.pos = pos_to
 
-# Def is_collision()
-# self._handle_collision(marble, pos_to) #TODO LATIN -45 create handle collision
+    # Def is_collision()
+    # self._handle_collision(marble, pos_to) #TODO LATIN -45 create handle collision
 
     # TODO LATIN-28 check if logic is actually what we need it to be
 
@@ -322,7 +324,7 @@ class Dog(Game):
         for i, player in enumerate(masked_state.list_player):
             if i != idx_player:
                 player.list_card = [
-                    Card(suit='?', rank='?')] * len(player.list_card)
+                                       Card(suit='?', rank='?')] * len(player.list_card)
         return masked_state
 
     ##################################################### PRIVATE METHODS #############################################
