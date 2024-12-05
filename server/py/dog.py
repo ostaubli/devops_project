@@ -179,20 +179,38 @@ class Dog(Game):
                 queue_start = self.PLAYER_POSITIONS[self._state.idx_player_active]['queue_start']
                 active_player_fields = self.PLAYER_POSITIONS[self._state.idx_player_active]
                 final_start = active_player_fields['final_start']
+                # if marble is in kennel
                 if marble.pos in range(queue_start,
                                        queue_start + 4):
-                    # if marble is in kennel
+                    if marble.pos == queue_start + 4 - marbles_in_kennel:
 
-                    # only allow actions for ACE, KING or JOKER
-                    if card.rank in ['A', 'JKR', 'K']:
-                        start_position = self.PLAYER_POSITIONS[self._state.idx_player_active]['start']
+                        # only allow actions for ACE, KING or JOKER
+                        if card.rank in ['A', 'JKR', 'K']:
+                            start_position = self.PLAYER_POSITIONS[self._state.idx_player_active]['start']
 
-                        # allow only if the current player does not have a marble on start
-                        if all(m.pos != start_position for m in active_player.list_marble):
-                            # if 4 in kennel, start_position + 3 - #in kennel-1
-                            if marble.pos == queue_start + 4 - marbles_in_kennel:
-                                actions.append(Action(card=card, pos_from=marble.pos, pos_to=start_position,
-                                                      card_swap=None))
+                            # allow only if the current player does not have a marble on start
+                            if all(m.pos != start_position for m in active_player.list_marble):
+                                # if 4 in kennel, start_position + 3 - #in kennel-1
+                                if marble.pos == queue_start + 4 - marbles_in_kennel:
+                                    actions.append(Action(card=card, pos_from=marble.pos, pos_to=start_position,
+                                                          card_swap=None))
+
+                                # Handle JOKER acting as ACE or KING
+                                if card.rank == 'JKR':
+                                    # As Ace
+                                    actions.append(Action(
+                                        card=card,
+                                        pos_from=marble.pos,
+                                        pos_to=start_position,
+                                        card_swap=Card(suit='♥', rank='A')  # JKR acting as Ace
+                                    ))
+                                    # As King
+                                    actions.append(Action(
+                                        card=card,
+                                        pos_from=marble.pos,
+                                        pos_to=start_position,
+                                        card_swap=Card(suit='♥', rank='K')  # JKR acting as King
+                                    ))
                 else:
                     if card.rank.isdigit() and card.rank not in ['7', '4']:
                         to_positions = self._calculate_position_to(
