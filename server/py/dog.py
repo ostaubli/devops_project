@@ -373,18 +373,22 @@ class Dog(Game):
             active_player.list_card.remove(action.card)
             self._state.list_card_discard.append(action.card)
             # Find the marble being moved
-            marble_to_move = next(
-                (marble for marble in active_player.list_marble if int(marble.pos) == int(action.pos_from)),
-                None
-            )
 
-            if marble_to_move:
-                # Check for collision before moving the marble
-                if self._is_collision(marble_to_move, action.pos_to, action.card):
-                    self._handle_collision(action.pos_to, self._state.idx_player_active)
+            if action.card.rank == 'J':
+                self._swap_marbles(action)
+            else:
+                marble_to_move = next(
+                    (marble for marble in active_player.list_marble if int(marble.pos) == int(action.pos_from)),
+                    None
+                )
 
-                # Perform the movement logic
-                self._move_marble_logic(marble_to_move, action.pos_to, action.card)
+                if marble_to_move:
+                    # Check for collision before moving the marble
+                    if self._is_collision(marble_to_move, action.pos_to, action.card):
+                        self._handle_collision(action.pos_to, self._state.idx_player_active)
+
+                    # Perform the movement logic
+                    self._move_marble_logic(marble_to_move, action.pos_to, action.card)
 
         if self._check_team_win():
             self._state.phase = self._state.phase.FINISHED
@@ -630,6 +634,34 @@ class Dog(Game):
                 if any(marble.pos == position for marble in player.list_marble):
                     return False  # Invalid if another marble is in the way
         return True
+
+    def _swap_marbles(self, action: Action):
+        """
+          Swap the positions of two marbles based on the provided action.
+
+          Args:
+              action (Action): The action containing pos_from and pos_to.
+          """
+        marble_from = None
+        marble_to = None
+
+        # Find the marble at pos_from and pos_to
+        for player in self._state.list_player:
+            for marble in player.list_marble:
+                if marble.pos == action.pos_from:
+                    marble_from = marble
+                elif marble.pos == action.pos_to:
+                    marble_to = marble
+
+                # Exit early if both marbles are found
+                if marble_from and marble_to:
+                    break
+            if marble_from and marble_to:
+                break
+
+        # If both marbles are found, swap their positions
+        if marble_from and marble_to:
+            marble_from.pos, marble_to.pos = marble_to.pos, marble_from.pos
 
 
 class RealPlayer(Player):
