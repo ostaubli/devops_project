@@ -1,0 +1,36 @@
+[Start "Execute Actions"]
+       |
+       v
+[Receive Selected Action]
+  - Card chosen by the player.
+  - Corresponding piece to move or effect to apply.
+       |
+       v
+[Perform Action]
+  - Move piece on board.
+  - Apply card effects (e.g., switch pieces, move forward/backward).
+       |
+       v
+[Check Action Validity]
+  - Ensure the action complies with game rules:
+      - Are target positions valid?
+      - Are constraints satisfied (e.g., no landing on teammate)?
+      - Is the card's effect correctly applied?
+       |
+       v
+[Update Game State]
+  - Update board state (piece positions, captures).
+  - Update player's hand (discard card, draw new if applicable).
+  - Update global game metrics (e.g., turns remaining, pieces in goal).
+       |
+       v
+[Trigger Effects (if any)]
+  - Handle chain reactions or special rules (e.g., piece swapping, replays).
+       |
+       v
+[Action Execution Complete?]
+  - Yes: End phase and return to main game flow.
+  - No: Revert changes, prompt for a new action, or signal an error.
+       |
+       v
+[End "Execute Actions"]

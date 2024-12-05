@@ -12,7 +12,7 @@ class Card(BaseModel):
 
 
 class Marble(BaseModel):
-    pos: Optional[int] # position on board (0 to 95) -> need to be int
+    pos: int       # position on board (0 to 95)
     is_save: bool  # true if marble was moved out of kennel and was not yet moved
 
 

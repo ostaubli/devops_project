@@ -1,0 +1,23 @@
+[Game Initialization] ---> [Game Loop] # Remark: The game loop is usually simulated by Oliver/the game engine/the test suite.
+                             |
+                             v
+                [Game Round (All Players)]
+                             |
+                 +-----------+------------+
+                 |                        |
+    [Player 1's Turn]       [Player 2's Turn] ...
+                 |                        |
+   [Determine Actions]       [Determine Actions]
+                 |                        |
+   [Execute Actions]         [Execute Actions]
+                 |                        |
+                [Validate]   ...         [Validate]
+                 +-----------+------------+
+                             |
+                             v
+                    [Update Game State]
+                             |
+         [Check Win Conditions] ---> [Game End]
+                             |
+                             v
+                         [Next Round]
