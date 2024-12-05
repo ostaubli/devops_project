@@ -337,7 +337,7 @@ class Dog(Game):
             if marble_to_move:
                 # Check for collision before moving the marble
                 if self._is_collision(marble_to_move, action.pos_to, action.card):
-                    self._handle_collision(marble_to_move.pos, action.pos_to)
+                    self._handle_collision(action.pos_to, self._state.idx_player_active)
 
                 # Perform the movement logic
                 self._move_marble_logic(marble_to_move, action.pos_to, action.card)
@@ -388,39 +388,59 @@ class Dog(Game):
         Returns:
             bool: True if the marble jumps over another marble, False otherwise.
         """
-        pos_from = int(marble.pos)
-        total_steps = self.TOTAL_STEPS
-        marble_positions = {int(m.pos) for player in self._state.list_player for m in player.list_marble}
 
-        # Exclude the active player's marbles from the collision check for the start marble
+        #simple logic if card is not 7!
         active_player = self._state.list_player[self._state.idx_player_active]
         active_player_marbles = {int(m.pos) for m in active_player.list_marble}
 
-        # If the marble is moving to a position occupied by its own start, do not count as a collision
-        if pos_to in active_player_marbles and pos_to != marble.pos:
-            return True
+        # Check if the target position is occupied by a marble
+        for player_index, player in enumerate(self._state.list_player):
+            if player == active_player:
+                continue  # Skip the active player's marbles
 
-        if card.rank == '7':
-            # Simulate all positions between pos_from and pos_to
-            steps = abs(pos_to - pos_from)
-            for step in range(1, steps + 1):
-                intermediate_pos = (pos_from + step) % total_steps
-                if intermediate_pos in marble_positions and intermediate_pos not in active_player_marbles:
-                    return True
+            for other_marble in player.list_marble:
+                if other_marble.pos == pos_to:
+                    # If the marble is not safe and belongs to another player, return True
+                    if not other_marble.is_save:
+                        return True
 
-        elif card.rank == '4':
-            # Similar logic, but account for reverse movement
-            if pos_to < pos_from:  # Handling wrap-around
-                pos_range = list(range(pos_from, total_steps)) + list(range(0, pos_to + 1))
-            else:
-                pos_range = list(range(pos_from, pos_to + 1))
-
-            for pos in pos_range:
-                if pos in marble_positions and pos not in active_player_marbles:
-                    return True
-
-        # Add additional checks for other cards with collision logic
         return False
+
+        # TODO logic if card is 7!
+
+        # pos_from = int(marble.pos)
+        # total_steps = self.TOTAL_STEPS
+        # marble_positions = {int(m.pos) for player in self._state.list_player for m in player.list_marble}
+        #
+        # # Exclude the active player's marbles from the collision check for the start marble
+        # active_player = self._state.list_player[self._state.idx_player_active]
+        # active_player_marbles = {int(m.pos) for m in active_player.list_marble}
+        #
+        # # If the marble is moving to a position occupied by its own start, do not count as a collision
+        # if pos_to in active_player_marbles and pos_to != marble.pos:
+        #     return True
+        #
+        # if card.rank == '7':
+        #     # Simulate all positions between pos_from and pos_to
+        #     steps = abs(pos_to - pos_from)
+        #     for step in range(1, steps + 1):
+        #         intermediate_pos = (pos_from + step) % total_steps
+        #         if intermediate_pos in marble_positions and intermediate_pos not in active_player_marbles:
+        #             return True
+        #
+        # elif card.rank == '4':
+        #     # Similar logic, but account for reverse movement
+        #     if pos_to < pos_from:  # Handling wrap-around
+        #         pos_range = list(range(pos_from, total_steps)) + list(range(0, pos_to + 1))
+        #     else:
+        #         pos_range = list(range(pos_from, pos_to + 1))
+        #
+        #     for pos in pos_range:
+        #         if pos in marble_positions and pos not in active_player_marbles:
+        #             return True
+        #
+        # # Add additional checks for other cards with collision logic
+        # return False
 
     def _handle_collision(self, pos_to: int, active_player_index: int) -> None:
         """
@@ -429,10 +449,10 @@ class Dog(Game):
         for player_index, player in enumerate(self._state.list_player):
             if player_index != active_player_index:  # Only consider other players' marbles
                 for marble in player.list_marble:
-                    if int(marble.pos) == pos_to and not marble.is_save:
+                    if marble.pos == pos_to and not marble.is_save:
                         # Send the marble back to its queue start
                         queue_start = self.PLAYER_POSITIONS[player_index]['queue_start']
-                        marble.pos = str(queue_start + player.list_marble.index(marble))  # Back to the queue
+                        marble.pos = queue_start + player.list_marble.index(marble)  # Back to the queue
                         marble.is_save = True
                         print(f"Collision: Marble from Player {player_index + 1} sent back to the queue.")
 
