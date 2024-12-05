@@ -1,0 +1,28 @@
+[Start "Determine Actions"]
+       |
+       v
+[Fetch Player's Hand]
+       |
+       v
+[Identify Potential Actions]
+  - Based on cards in hand.
+  - Considering board state.
+  - Evaluating player's pieces (e.g., in base, on board, in goal).
+       |
+       v
+[Validate Actions]
+  - Check game rules (e.g., move restrictions, card-specific rules).
+  - Filter out invalid actions.
+       |
+       v
+[Provide Valid Actions to Player]
+  - Display possible moves.
+  - Allow selection of a valid action.
+       |
+       v
+[Action Selected?]
+  - Yes: Proceed to "Execute Actions."
+  - No: Prompt the player again or apply a timeout for multiplayer.
+       |
+       v
+[End "Determine Actions"]
