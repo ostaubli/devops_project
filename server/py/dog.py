@@ -322,10 +322,7 @@ class Dog(Game):
     def apply_action(self, action: Action) -> None:
         """ Apply the given action to the game """
         active_player = self._state.list_player[self._state.idx_player_active]
-        if action == None:
-            # there is no card to play #fixme what needs to be done?! it is use din the tests but i hve no idea why
-            self.none_actions_counter += 1
-            active_player.list_card = []
+        self._handle_none_action(action, active_player)
 
         if action is not None and action.card in active_player.list_card:
             # removing card from players hand and putting it to discarded stack
@@ -363,6 +360,11 @@ class Dog(Game):
             # do not want to do this but I have no idea how the tests logic should work
             for p in self._state.list_player:
                 p.list_card = []
+
+    def _handle_none_action(self, action, active_player):
+        if action is None:
+            self.none_actions_counter += 1
+            active_player.list_card = []
 
     def _move_marble_logic(self, marble: Marble, pos_to: int, card: Card) -> None:
         """
