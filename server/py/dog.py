@@ -107,7 +107,7 @@ class Dog(Game):
             list_card_discard=[],
             card_active=None,
         )
-        
+
     def _initialize_board(self) -> dict:
         """ Initialize the board representation """
         # Define the circular path and separate home positions for 4 players
@@ -133,6 +133,76 @@ class Dog(Game):
             },
         }
         return board
+
+    # Round logic
+    def handle_round(self) -> None:
+        """
+        Handle a single round:
+        - Deal cards based on the current round number.
+        - Allow teammates to exchange one card.
+        - Set the starting player (anti-clockwise from the dealer).
+        """
+        CARD_DISTRIBUTION = [6, 5, 4, 3, 2]  # Number of cards per round
+        round_index = (self.state.cnt_round - 1) % len(CARD_DISTRIBUTION)  # Cycle through rounds
+        cards_to_deal = CARD_DISTRIBUTION[round_index]
+
+        print(f"Starting Round {self.state.cnt_round} - Dealing {cards_to_deal} cards.")
+
+        # Step 1: Deal cards
+        self.deal_cards_for_round(cards_to_deal)
+
+        # Step 2: Teammates exchange cards
+        self.exchange_cards(0, 2)  # Example: Player 0 and Player 2 are teammates
+        self.exchange_cards(1, 3)  # Example: Player 1 and Player 3 are teammates
+
+        # Step 3: Set starting player
+        self.set_starting_player()
+
+    def deal_cards_for_round(self, cards_to_deal: int) -> None:
+        """
+        Deal a specific number of cards to each player.
+        Reshuffle the discard pile if the draw pile runs out of cards.
+        """
+        for player in self.state.list_player:
+            # Ensure there are enough cards in the draw pile
+            if len(self.state.list_card_draw) < cards_to_deal:
+                self.reshuffle_discard_pile()
+
+            # Deal the cards
+            player.list_card = self.state.list_card_draw[:cards_to_deal]
+            self.state.list_card_draw = self.state.list_card_draw[cards_to_deal:]
+
+    def reshuffle_discard_pile(self) -> None:
+        """Reshuffle the discard pile into the draw pile."""
+        if not self.state.list_card_discard:
+            raise ValueError("No cards left to reshuffle!")
+        self.state.list_card_draw = random.sample(self.state.list_card_discard, len(self.state.list_card_discard))
+        self.state.list_card_discard.clear()
+        print("Reshuffled the discard pile into the draw pile.")
+
+    def exchange_cards(self, player1_index: int, player2_index: int) -> None:
+        """
+        Allow teammates to exchange one card each without revealing it.
+        """
+        player1 = self.state.list_player[player1_index]
+        player2 = self.state.list_player[player2_index]
+
+        # Example: Exchange the first card in their hands
+        card_from_p1 = player1.list_card.pop(0)
+        card_from_p2 = player2.list_card.pop(0)
+
+        player1.list_card.append(card_from_p2)
+        player2.list_card.append(card_from_p1)
+
+        print(f"Player {player1_index} and Player {player2_index} exchanged one card.")
+
+    def set_starting_player(self) -> None:
+        """
+        Set the starting player for the current round.
+        The starting player is the one to the right of the dealer.
+        """
+        self.state.idx_player_active = (self.state.idx_player_active - 1) % self.state.cnt_player
+        print(f"Player {self.state.idx_player_active} will start this round.")
 
     def send_home(self, pos: int) -> None:
         """Send the marble at the given position back to the kennel, if not in finish area."""
@@ -375,12 +445,17 @@ if __name__ == '__main__':
 
     # Main game loop
     while game.state.phase != GamePhase.FINISHED:
-        actions = game.get_list_action()
-        active_player = players[game.state.idx_player_active]
-        selected_action = active_player.select_action(game.get_player_view(game.state.idx_player_active), actions)
-        if selected_action:
-            game.apply_action(selected_action)
-        game.print_state()
+        # Start a new round
+        game.state.cnt_round += 1  # Increment the round counter
+        game.handle_round()  # Call the round logic
+
+        # Proceed with player actions
+        for _ in range(len(game.state.list_player)):
+            actions = game.get_list_action()
+            active_player = players[game.state.idx_player_active]
+            selected_action = active_player.select_action(game.get_player_view(game.state.idx_player_active), actions)
+            if selected_action:
+                game.apply_action(selected_action)
 
         # End condition (example: after 10 rounds)
         if game.state.cnt_round > 10:
