@@ -20,11 +20,11 @@ class TestUnoGame(unittest.TestCase):
         - Check if the correct number of players are added to the game.
         - Ensure that each player is dealt the correct number of cards.
         '''
-        players = ["Daniel", "Ramon", "Carlos"]
+        players = ["Daniel", "Ramon"]
         self.uno.state.setup_game(players)
 
         # Assert that the correct number of players are set up
-        self.assertEqual(len(self.uno.state.list_player), 3, 'The number of players should match the input list.')
+        self.assertEqual(len(self.uno.state.list_player), 2, 'The number of players should match the input list.')
         
         # Assert that each player has 7 cards
         for player in self.uno.state.list_player:
@@ -36,7 +36,7 @@ class TestUnoGame(unittest.TestCase):
         - Simulate a player drawing a card.
         - Check if the game state is updated properly after the action.
         '''
-        players = ["Alice", "Bob"]
+        players = ["Daniel", "Ramon"]
         self.uno.state.setup_game(players)
 
         # Simulate a player action: drawing one card
@@ -67,7 +67,4 @@ class TestUnoGame(unittest.TestCase):
         self.assertEqual(next_index, (initial_index + 1) % len(players), 'The turn should move to the next player.')
 
 if __name__ == "__main__":
-    '''
-    If this script is run directly, execute all the test cases.
-    '''
     unittest.main()
