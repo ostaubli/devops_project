@@ -121,7 +121,7 @@ class Dog(Game):
                 name=f"Player {i+1}",
                 list_card=[],
                 list_marble=[
-                    Marble(pos=kennels[i][j], is_save=False) for j in range(4)
+                    Marble(pos=kennels[i][j], is_save=True) for j in range(4)
                 ]
             )
             for i in range(4)
@@ -361,10 +361,10 @@ class Dog(Game):
 
             # Update marble position if applicable
             safe_spaces = {
-                0: [92, 93, 94, 95],  # Player 1's safe spaces
-                1: [68, 69, 70, 71],  # Player 2's safe spaces
-                2: [44, 45, 46, 47],  # Player 3's safe spaces
-                3: [20, 21, 22, 23]   # Player 4's safe spaces
+                0: [0, 68, 69, 70, 71],  # Player 1's safe spaces, blue
+                1: [16, 76, 77, 78, 79],  # Player 2's safe spaces, green
+                2: [32, 84, 85, 86, 87],  # Player 3's safe spaces, red
+                3: [48, 92, 93, 94, 95]   # Player 4's safe spaces, yellow
             }
             for marble in self.state.list_player[self.state.idx_player_active].list_marble:
                 if marble.pos == action.pos_from:
