@@ -391,7 +391,7 @@ class Dog(Game):
         active_player = self.state.list_player[self.state.idx_player_active]
         current_cards = active_player.list_card  # cards of current player
         active_marbles = active_player.list_marble  # marbels of current player
-        all_marbles = self.get_all_marbles()
+        all_marbles = self.get_all_marbles() #marbel information of all players
 
         # Safe Spaces, Kennel and Startposition for all players
         kennels = self.KENNEL_POSITIONS
@@ -605,12 +605,19 @@ class Dog(Game):
         # Shuffle the draw pile
         random.shuffle(self.state.list_card_draw)
 
-        # Deal cards to players
-        starting_player_idx = self.state.idx_player_started
-        for i in range(self.state.cnt_player):
-            current_player_idx = (starting_player_idx + i) % self.state.cnt_player
-            current_player = self.state.list_player[current_player_idx]
-            current_player.list_card = [self.state.list_card_draw.pop() for _ in range(num_cards)]
+        # Deal cards one by one to each player
+        for _ in range(num_cards):
+            for player in self.state.list_player:
+                # Ensure enough cards are available in the draw pile
+                if not self.state.list_card_draw:
+                    if not self.state.list_card_discard:
+                        raise ValueError("Not enough cards to reshuffle and deal.")
+                    self.reshuffle_discard_into_draw()
+
+                # Give one card to the current player
+                card = self.state.list_card_draw.pop()
+                player.list_card.append(card)
+
 
 
     def validate_game_state(self) -> None:
@@ -707,9 +714,9 @@ if __name__ == '__main__':
             # Get the list of possible actions for the active player
             actions = game.get_list_action()
             # Display possible actions
-            print("\nPossible Actions:")
-            for idx, action in enumerate(actions):
-                print(f"{idx}: Play {action.card.rank} of {action.card.suit} from {action.pos_from} to {action.pos_to}")
+            #print("\nPossible Actions:")
+            #for idx, action in enumerate(actions):
+                #print(f"{idx}: Play {action.card.rank} of {action.card.suit} from {action.pos_from} to {action.pos_to}")
 
             # Select an action (random in this example)
             selected_action = random.choice(actions) if actions else None
@@ -722,6 +729,6 @@ if __name__ == '__main__':
             game.validate_total_cards()
 
             # Optionally exit after a certain number of rounds (for testing)
-            if game.state.cnt_round > 8:  # Example limit
+            if game.state.cnt_round > 1:  # Example limit
                 print(f"Ending game for testing after {game.state.cnt_round} rounds.")
                 break
