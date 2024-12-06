@@ -1,4 +1,3 @@
-# runcmd: cd ../.. & venv\Scripts\python server/py/dog_template.py
 from server.py.game import Game, Player
 from typing import List, Optional, ClassVar
 from pydantic import BaseModel
@@ -12,7 +11,6 @@ class Card(BaseModel):
 
 
 class Marble(BaseModel):
-    # pos: str       # position on board (0 to 95) -- original but in my opinion it should be int
     pos: int       # position on board (0 to 95)
     is_save: bool  # true if marble was moved out of kennel and was not yet moved
 
