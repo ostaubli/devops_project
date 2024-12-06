@@ -190,6 +190,18 @@ class Uno(Game):
     def set_state(self, state: GameState) -> None:
         """ Set the game to a given state """
         self.state = state
+
+        if len(self.state.list_card_discard) == 0:
+            self.state.list_card_discard = [state.list_card_draw.pop()] if state.list_card_draw else []
+
+        self.state.list_player = [PlayerState() for i in range(state.cnt_player)]
+        self.state.idx_player_active = state.idx_player_active
+        self.state.direction = 1
+
+        for i in range(self.state.CNT_HAND_CARDS):
+            for player in self.state.list_player:
+                player.list_card.append(state.list_card_draw.pop())
+
         self.state.phase = GamePhase.RUNNING
 
     def get_state(self) -> GameState:
@@ -227,7 +239,6 @@ class Uno(Game):
 
         print("====================\n")
 
-        
 
     def get_list_action(self) -> List[Action]:
         """ Get a list of possible actions for the active player """
