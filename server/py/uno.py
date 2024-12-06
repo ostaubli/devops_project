@@ -68,6 +68,30 @@ class GamePhase(str, Enum):
     FINISHED = 'finished'      # when the game is finished
 
 
+def create_deck():
+    initial_deck = []
+    initial_deck.extend(
+        [Card(color=color, number=0) for color in LIST_COLOR]
+    )
+
+    initial_deck.extend(
+        [
+            Card(color=color, number=number)
+            for _ in range(2)
+            for color in LIST_COLOR
+            for number in range(1, 10)
+        ]
+    )
+    initial_deck.extend(
+        [
+            Card(color=color, symbol=symbol)
+            for _ in range(2)
+            for color in LIST_COLOR
+            for symbol in ['skip', 'reverse', 'draw2']
+        ]
+
+    return initial_deck
+
 class GameState(BaseModel):
     # numbers of cards for each player to start with
     CNT_HAND_CARDS: int = 0
@@ -146,8 +170,6 @@ class GameState(BaseModel):
         self.list_card_draw = self.list_card_discard[:-1]
         random.shuffle(self.list_card_draw)
         self.list_card_discard = [self.list_card_discard[-1]]
-        
-
 
 
 class Uno(Game):
