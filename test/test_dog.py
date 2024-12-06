@@ -45,3 +45,44 @@ def test_reshuffle_logic():
     state = game.get_state()  # Get the updated state after reshuffling
     assert len(state.list_card_draw) == 50, "Reshuffle failed: Draw pile does not have the correct number of cards."
     assert len(state.list_card_discard) == 0, "Reshuffle failed: Discard pile was not cleared."
+
+
+def test_get_list_action_no_valid_kennel_moves():
+    """Test get_list_action when all marbles are in the kennel and no valid cards are available."""
+    # Initialize the game
+    game = Dog()
+    game.initialize_game()
+    
+    # Set up the game state
+    player_idx = 0  # Test the first player
+    game.state.idx_player_active = player_idx
+    active_player = game.state.list_player[player_idx]
+
+    # Place all marbles in the kennel for the active player
+    kennels = {
+        0: [64, 65, 66, 67],
+        1: [72, 73, 74, 75],
+        2: [80, 81, 82, 83],
+        3: [88, 89, 90, 91]
+    }
+    for i, marble in enumerate(active_player.list_marble):
+        marble.pos = kennels[player_idx][i]
+
+    # Assign cards that cannot move marbles out of the kennel
+    invalid_cards = [
+        Card(suit='♠', rank='2'), 
+        Card(suit='♥', rank='3'), 
+        Card(suit='♦', rank='4'),
+        Card(suit='♣', rank='5'), 
+        Card(suit='♠', rank='6'), 
+        Card(suit='♥', rank='8')
+    ]
+    active_player.list_card = invalid_cards
+
+    # Call get_list_action and verify the result
+    actions = game.get_list_action()
+
+    # Assert that no actions are returned
+    assert len(actions) == 0, f"Expected no actions, but found: {actions}"
+
+    print("Test passed: No valid actions when all marbles are in the kennel and no valid cards are available.")
