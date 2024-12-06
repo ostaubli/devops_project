@@ -94,7 +94,6 @@ class Dog(Game):
     # Constants
     STARTING_CARDS = {'A', 'K', 'JKR'}
     MOVEMENT_CARDS = {'2', '3', '4', '5', '6', '8', '9', '10', 'Q', 'K', 'A', 'JKR'}
-    INVALID_POSITIONS = {'kennel', 'finish'}
     SAFE_SPACES = {
             0: [68, 69, 70, 71],  # Player 1's safe spaces, blue
             1: [76, 77, 78, 79],  # Player 2's safe spaces, green
