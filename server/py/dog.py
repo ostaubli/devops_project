@@ -351,6 +351,10 @@ class Dog(Game):
         
         active_player = self.state.list_player[self.state.idx_player_active]
 
+         # Check if all players are out of cards
+        if all(len(player.list_card) == 0 for player in self.state.list_player):
+            self.next_round()
+
         # Handle the case where no action is provided (skip turn)
         if action is None:
             print("No action provided. Advancing the active player.")
@@ -417,9 +421,6 @@ class Dog(Game):
         # Advance to the next active player
         self.state.idx_player_active = (self.state.idx_player_active + 1) % len(self.state.list_player)
 
-        # Check if all players are out of cards
-        if all(len(player.list_card) == 0 for player in self.state.list_player):
-            self.next_round()
 
     def get_cards_per_round(self) -> int:
         """Determine the number of cards to be dealt based on the round."""
