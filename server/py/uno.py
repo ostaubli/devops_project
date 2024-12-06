@@ -89,6 +89,15 @@ def create_deck():
             for color in LIST_COLOR
             for symbol in ['skip', 'reverse', 'draw2']
         ]
+    )
+
+    initial_deck.extend(
+        [
+            Card(color='any', symbol=symbol)
+            for _ in range(4)
+            for symbol in ['wild', 'wilddraw4']
+        ]
+    )
 
     return initial_deck
 
