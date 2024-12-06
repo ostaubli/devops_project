@@ -94,7 +94,6 @@ class Dog(Game):
     # Constants
     STARTING_CARDS = {'A', 'K', 'JKR'}
     MOVEMENT_CARDS = {'2', '3', '4', '5', '6', '8', '9', '10', 'Q', 'K', 'A', 'JKR'}
-    INVALID_POSITIONS = {'kennel', 'finish'}
     SAFE_SPACES = {
             0: [68, 69, 70, 71],  # Player 1's safe spaces, blue
             1: [76, 77, 78, 79],  # Player 2's safe spaces, green
@@ -119,13 +118,6 @@ class Dog(Game):
 
         Each player (i: range 0-3) has 4 marbles (j: range 0-3), initialized from unique positions (pos).
         """
-                # Define kennel positions for each player
-        kennels = {
-            0: [64, 65, 66, 67],  # Player 1's kennel positions
-            1: [72, 73, 74, 75],  # Player 2's kennel positions
-            2: [80, 81, 82, 83],  # Player 3's kennel positions
-            3: [88, 89, 90, 91]   # Player 4's kennel positions
-        }
 
         # Initialize players with empty card hands and marbles in their kennel positions
         players = [
@@ -133,7 +125,7 @@ class Dog(Game):
                 name=f"Player {i+1}",
                 list_card=[],
                 list_marble=[
-                    Marble(pos=kennels[i][j], is_save=True) for j in range(4)
+                    Marble(pos=self.KENNEL_POSITIONS[i][j], is_save=True) for j in range(4)
                 ]
             )
             for i in range(4)
@@ -364,11 +356,11 @@ class Dog(Game):
             return  # Exit the function early
         
         # Get the list of valid actions for the current state
-        valid_actions = self.get_list_action()  # Fetch valid actions from get_list_action
+        # valid_actions = self.get_list_action()  # Fetch valid actions from get_list_action
 
         # Validate the provided action
-        if action not in valid_actions:
-            raise ValueError(f"Invalid action: {action}. Action is not in the list of valid actions.")
+        # if action not in valid_actions:
+            # raise ValueError(f"Invalid action: {action}. Action is not in the list of valid actions.")
 
         active_player = self.state.list_player[self.state.idx_player_active]
 
@@ -382,32 +374,43 @@ class Dog(Game):
         # Add the played card to the discard pile
         self.state.list_card_discard.append(action.card)
 
-        # Update marble position if applicable
-        for marble in active_player.list_marble:
-            if marble.pos == action.pos_from:
-                marble.pos = action.pos_to
-                marble.is_save = marble.pos in self.SAFE_SPACES[self.state.idx_player_active]
-                if marble.is_save:
-                    print(f"Marble moved to a safe space at position {marble.pos}.")
+    # Handle moving a marble from the kennel to the start position
+        if action.pos_from in self.KENNEL_POSITIONS[self.state.idx_player_active] and action.pos_to == 0:
+            for marble in active_player.list_marble:
+                if marble.pos == action.pos_from:
+                    marble.pos = action.pos_to
+                    marble.is_save = True  # Mark the marble as safe after leaving the kennel
+                    print(f"Marble moved from kennel to start position: {marble.pos}.")
+                    break
+        else:
+            # Update marble position for regular moves
+            for marble in active_player.list_marble:
+                if marble.pos == action.pos_from:
+                    marble.pos = action.pos_to
+                    marble.is_save = marble.pos in self.SAFE_SPACES[self.state.idx_player_active]
+                    if marble.is_save:
+                        print(f"Marble moved to a safe space at position {marble.pos}.")
+                    break
+            else:
+                raise ValueError(f"No marble found at position {action.pos_from} for Player {active_player.name}.")
 
-                # Check for collision with other players' marbles
-                for other_idx, other_player in enumerate(self.state.list_player):
-                    if other_idx == self.state.idx_player_active:
-                        continue  # Skip the active player
-                    
-                    for other_marble in other_player.list_marble:
-                        if other_marble.pos == marble.pos:  # Collision detected
-                            print(f"Collision! Player {other_player.name}'s marble at position {other_marble.pos} "
-                                "is sent back to the kennel.")
-                            # Send the marble back to its kennel
-                            # Use the KENNEL_POSITIONS constant
-                            for pos in self.KENNEL_POSITIONS[other_idx]:
-                                # Ensure the kennel position is unoccupied
-                                if all(marble.pos != pos for player in self.state.list_player for marble in player.list_marble):
-                                    other_marble.pos = pos
-                                    other_marble.is_save = False
-                                    break
-                break  # Exit loop after updating the correct marble
+        # Check for collision with other players' marbles
+        for other_idx, other_player in enumerate(self.state.list_player):
+            if other_idx == self.state.idx_player_active:
+                continue  # Skip the active player
+
+            for other_marble in other_player.list_marble:
+                if other_marble.pos == action.pos_to:  # Collision detected
+                    print(f"Collision! Player {other_player.name}'s marble at position {other_marble.pos} "
+                        "is sent back to the kennel.")
+
+                    # Send the marble back to the kennel
+                    for pos in self.KENNEL_POSITIONS[other_idx]:
+                        # Ensure the kennel position is unoccupied
+                        if all(marble.pos != pos for player in self.state.list_player for marble in player.list_marble):
+                            other_marble.pos = pos
+                            other_marble.is_save = False
+                            break
 
         # Advance to the next active player
         self.state.idx_player_active = (self.state.idx_player_active + 1) % len(self.state.list_player)
