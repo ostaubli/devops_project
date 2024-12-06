@@ -86,8 +86,8 @@ class GameState(BaseModel):
     idx_player_started: int            # index of player that started the round
     idx_player_active: int             # index of active player in round
     list_player: List[PlayerState]     # list of players
-    list_card_draw: List[Card]      # list of cards to draw
-    list_card_discard: List[Card]   # list of cards discarded
+    list_card_draw: List[Card]         # list of cards to draw
+    list_card_discard: List[Card]      # list of cards discarded
     card_active: Optional[Card]        # active card (for 7 and JKR with sequence of actions)
 
 class Dog(Game):
@@ -155,7 +155,7 @@ class Dog(Game):
         # Deal initial cards (6 cards in first round)
         self.deal_cards()
 
-        print("Game initialized. Cards have been dealt.")
+        #print("Game initialized. Cards have been dealt.")
 
 
     def reset(self) -> None:
@@ -181,10 +181,21 @@ class Dog(Game):
         print(f"Game Phase: {self.state.phase}")
         print(f"Round: {self.state.cnt_round}")
         print(f"Active Player: {self.state.list_player[self.state.idx_player_active].name}")
-        for player in self.state.list_player:
-            print(f"\nPlayer: {player.name}")
-            print(f"Cards: {[f'{card.rank} of {card.suit}' for card in player.list_card]}")
-            print(f"Marbles: {[f'Position: {marble.pos}, Safe: {marble.is_save}' for marble in player.list_marble]}")
+        for idx, player in enumerate(self.state.list_player):
+            print(f"\nPlayer {idx + 1}: {player.name}")
+            
+            # Check for empty or invalid card lists
+            if not player.list_card:
+                print("Warning: No cards in player's hand.")
+            else:
+                print(f"Cards: {[f'{card.rank} of {card.suit}' for card in player.list_card]}")
+
+            # Ensure marbles list is valid
+            if not player.list_marble:
+                print("Warning: No marbles for the player.")
+            else:
+                print(f"Marbles: {[f'Position: {marble.pos}, Safe: {marble.is_save}' for marble in player.list_marble]}")
+
 
     def draw_board(self) -> None:
         """ Draw the board with kennels as the starting positions and safe spaces as the final destinations """
@@ -382,6 +393,16 @@ class Dog(Game):
         actions = []
         active_player = self.state.list_player[self.state.idx_player_active]
         current_cards = active_player.list_card  # cards of current player
+
+
+        # Card exchange logic during the setup phase
+        if self.state.bool_card_exchanged is False:
+            # Generate actions for the active player to exchange a card
+            for card in active_player.list_card:
+                actions.append(Action(card=card, pos_from=-1, pos_to=-1, card_swap=None))  # pos_from and pos_to not applicable
+            return actions
+
+
         active_marbles = active_player.list_marble  # marbels of current player
         all_marbles = self.get_all_marbles() #marbel information of all players
 
@@ -476,9 +497,31 @@ class Dog(Game):
         
         active_player = self.state.list_player[self.state.idx_player_active]
 
-         # Check if all players are out of cards
+        # Card exchange phase
+        if self.state.bool_card_exchanged is False:
+            # Find the partner's index
+            idx_partner = (self.state.idx_player_active + 2) % self.state.cnt_player
+            partner = self.state.list_player[idx_partner]
+
+            # Remove the selected card from the active player
+            if action.card not in active_player.list_card:
+                raise ValueError(f"Card {action.card} not found in active player's hand.")
+            active_player.list_card.remove(action.card)
+            partner.list_card.append(action.card)
+
+            # Advance to the next active player
+            self.state.idx_player_active = (self.state.idx_player_active + 1) % self.state.cnt_player
+
+            # Check if all players have completed their exchange
+            if self.state.idx_player_active == self.state.idx_player_started:
+                self.state.bool_card_exchanged = True  # Mark exchange phase as completed
+                print("All players have completed their card exchanges.")
+            return
+
+        # Check if all players are out of cards
         if all(len(player.list_card) == 0 for player in self.state.list_player):
             self.next_round()
+            return
 
         # Handle the case where no action is provided (skip turn)
         if action is None:
@@ -586,7 +629,7 @@ class Dog(Game):
             raise ValueError("Game state is not set.")
 
         num_cards = self.get_cards_per_round()
-        total_needed = num_cards * self.state.cnt_player
+        total_needed = num_cards * (len(self.state.list_player)+1)
 
         # Reshuffle if necessary
         while len(self.state.list_card_draw) < total_needed:
@@ -599,7 +642,9 @@ class Dog(Game):
 
         # Deal cards one by one to each player
         for _ in range(num_cards):
-            for player in self.state.list_player:
+            for idx in range(len(self.state.list_player)):
+                player = self.state.list_player[idx]
+
                 # Ensure enough cards are available in the draw pile
                 if not self.state.list_card_draw:
                     if not self.state.list_card_discard:
@@ -609,6 +654,11 @@ class Dog(Game):
                 # Give one card to the current player
                 card = self.state.list_card_draw.pop()
                 player.list_card.append(card)
+
+
+        # Debugging: Verify all players' hands after dealing
+        #for idx, player in enumerate(self.state.list_player):
+            #print(f"Player {idx + 1}: {player.name} has {len(player.list_card)} cards: {[f'{card.rank} of {card.suit}' for card in player.list_card]}")
 
 
 
@@ -648,6 +698,9 @@ class Dog(Game):
 
         # Deal cards for the new round
         self.deal_cards()
+
+        #Update Card exchange to not done
+        self.state.bool_card_exchanged = False 
 
         print(f"\nRound {self.state.cnt_round} begins. Player {self.state.list_player[self.state.idx_player_started].name} starts.")
 
@@ -691,6 +744,8 @@ if __name__ == '__main__':
 
     game = Dog()
 
+    random_player = RandomPlayer()
+
     # Ensure the game state is initialized before proceeding
     if game.state is None:
         print("Error: Game state is not initialized. Exiting...")
@@ -706,12 +761,13 @@ if __name__ == '__main__':
             # Get the list of possible actions for the active player
             actions = game.get_list_action()
             # Display possible actions
-            #print("\nPossible Actions:")
-            #for idx, action in enumerate(actions):
-                #print(f"{idx}: Play {action.card.rank} of {action.card.suit} from {action.pos_from} to {action.pos_to}")
+            print("\nPossible Actions:")
+            for idx, action in enumerate(actions):
+                print(f"{idx}: Play {action.card.rank} of {action.card.suit} from {action.pos_from} to {action.pos_to}")
 
             # Select an action (random in this example)
-            selected_action = random.choice(actions) if actions else None
+            selected_action = random_player.select_action(game.get_state(), actions)
+
 
             # Apply the selected action
             game.apply_action(selected_action)
@@ -721,6 +777,6 @@ if __name__ == '__main__':
             game.validate_total_cards()
 
             # Optionally exit after a certain number of rounds (for testing)
-            if game.state.cnt_round > 15:  # Example limit
+            if game.state.cnt_round > 8:  # Example limit
                 print(f"Ending game for testing after {game.state.cnt_round} rounds.")
                 break
