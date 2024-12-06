@@ -214,23 +214,26 @@ class Dog(Game):
 
         # Check if cards have to be exchanged
         if not self.state.bool_card_exchanged:
-            # chose random card of the active player
-            random_card = random.choice(active_player.list_card)
             
             # target_player (diagonal player)
             target_player_idx = (active_player_idx + 2) % 4
+            target_player = self.state.list_player[target_player_idx]
+
+            # chose random card of the active player
+            random_card_from_active = random.choice(active_player.list_card)
+
+            # chose random card of the target player
+            random_card_from_target = random.choice(target_player.list_card)
 
             # create exchange action
             exchange_action = Action(
-                card=random_card, # the card the active player gives
+                card=random_card_from_active,  # card that the active player gives away
                 pos_from=None,
-                pos_to=None,  
-                card_swap=None,    # placeholder for the card, the target player gives back.
+                pos_to=None,
+                card_swap=random_card_from_target  # card that the target player gives away
             )
-
-            # append exchange action to the actions list
             actions.append(exchange_action)
-            
+
         else:
             # Check if the start position is unoccupied
             if not any(marble.pos == start_position
@@ -259,7 +262,7 @@ class Dog(Game):
 
             # Check possible move actions for each marble
             for card in active_player.list_card:
-                if card.rank not in ['7', 'J', 'JKR', '4']:
+                if card.rank not in ['7', 'J', 'JKR', '4', 'K', 'Q']:
                     # "normal" Cards
                     for marble_idx, marble in enumerate(active_player.list_marble):
                         if marble.pos not in self.KENNEL_POSITIONS[active_player_idx]:
@@ -406,6 +409,7 @@ class Dog(Game):
         """ Apply the given action to the game """
 
         active_player_index = self.state.idx_player_active
+        active_player = self.state.list_player[active_player_index]
 
         # Check input of pos_from and pos_to
         if (action.pos_from is not None and action.pos_from != -1 and
@@ -420,12 +424,25 @@ class Dog(Game):
                     if action.pos_from in self.KENNEL_POSITIONS[active_player_index]:
                         self.state.list_player[active_player_index].list_marble[idx_marble].is_save = True
 
-        elif action.card_swap is not None:
-            # Swap a card
-            pass
+        elif action.card_swap is not None:  # Means it is a exchange action
+            # target player (diagonal player)
+            target_player_idx = (active_player_index + 2) % 4
+            target_player = self.state.list_player[target_player_idx]
+
+            # Active player gives their card and the target player receives the card from the active player
+            active_player.list_card.remove(action.card)
+            target_player.list_card.append(action.card)
+
+            # Target player gives a random card back
+            target_player.list_card.remove(action.card_swap)
+            active_player.list_card.append(action.card_swap)
+
+            # Überprüfen, ob der Karten-Tausch abgeschlossen ist
+            if active_player_index == 1:  # after player 2 all exchanges are done and we can move on with the game
+                self.state.bool_card_exchanged = True
 
 
-    def get_player_view(self, idx_player: int) -> GameState:
+def get_player_view(self, idx_player: int) -> GameState:
         """ Get the masked state for the active player (e.g. the opponent's cards are face down)"""
         # TODO: implement this
         player_view = self.state.model_copy(deep = True)
