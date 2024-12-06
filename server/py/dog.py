@@ -101,6 +101,12 @@ class Dog(Game):
             2: [84, 85, 86, 87],  # Player 3's safe spaces, red
             3: [92, 93, 94, 95]   # Player 4's safe spaces, yellow
         }
+    KENNEL_POSITIONS = {
+        0: [64, 65, 66, 67],  # Player 1's kennel positions
+        1: [72, 73, 74, 75],  # Player 2's kennel positions
+        2: [80, 81, 82, 83],  # Player 3's kennel positions
+        3: [88, 89, 90, 91]   # Player 4's kennel positions
+    }
 
     def __init__(self) -> None:
         """ Game initialization (set_state call not necessary, we expect 4 players) """
@@ -383,7 +389,25 @@ class Dog(Game):
                 marble.is_save = marble.pos in self.SAFE_SPACES[self.state.idx_player_active]
                 if marble.is_save:
                     print(f"Marble moved to a safe space at position {marble.pos}.")
-                break # Exit loop after updating the correct marble
+
+                # Check for collision with other players' marbles
+                for other_idx, other_player in enumerate(self.state.list_player):
+                    if other_idx == self.state.idx_player_active:
+                        continue  # Skip the active player
+                    
+                    for other_marble in other_player.list_marble:
+                        if other_marble.pos == marble.pos:  # Collision detected
+                            print(f"Collision! Player {other_player.name}'s marble at position {other_marble.pos} "
+                                "is sent back to the kennel.")
+                            # Send the marble back to its kennel
+                            # Use the KENNEL_POSITIONS constant
+                            for pos in self.KENNEL_POSITIONS[other_idx]:
+                                # Ensure the kennel position is unoccupied
+                                if all(marble.pos != pos for player in self.state.list_player for marble in player.list_marble):
+                                    other_marble.pos = pos
+                                    other_marble.is_save = False
+                                    break
+                break  # Exit loop after updating the correct marble
 
         # Advance to the next active player
         self.state.idx_player_active = (self.state.idx_player_active + 1) % len(self.state.list_player)
@@ -391,7 +415,6 @@ class Dog(Game):
         # Check if all players are out of cards
         if all(len(player.list_card) == 0 for player in self.state.list_player):
             self.next_round()
-
 
     def get_cards_per_round(self) -> int:
         """Determine the number of cards to be dealt based on the round."""
