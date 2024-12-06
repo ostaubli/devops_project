@@ -149,6 +149,9 @@ class Dog(Game):
         self.state.idx_player_started = random.randint(0, self.state.cnt_player - 1)
         self.state.idx_player_active = self.state.idx_player_started
 
+        # Initialize the state of the card exchange
+        self.state.bool_card_exchanged = False
+
         # TODO: deal cards as an action ?? -> probably make a separate function for this outside the init
         # Deal initial cards to players
         num_cards_per_player = 6  # Number of cards per player in the first round
