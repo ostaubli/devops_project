@@ -149,6 +149,12 @@ class Dog(Game):
         self.state.idx_player_started = random.randint(0, self.state.cnt_player - 1)
         self.state.idx_player_active = self.state.idx_player_started
 
+        # Initialize the state of the card exchange
+        self.state.bool_card_exchanged = False
+
+        # Initialize the number of rounds
+        self.state.cnt_round = 1
+
         # TODO: deal cards as an action ?? -> probably make a separate function for this outside the init
         # Deal initial cards to players
         num_cards_per_player = 6  # Number of cards per player in the first round
@@ -212,6 +218,38 @@ class Dog(Game):
         active_player = self.state.list_player[active_player_idx]
         start_position = self.START_POSITION[active_player_idx]
 
+        
+        # shuffle cards and distribute, when all cards are played
+        if not self.state.list_card_draw:
+            reshuffle_action = Action(
+                card=None,  # no specific card, because it is a shuffle action
+            )
+            actions.append(reshuffle_action)
+            return actions
+
+        
+        # Check if cards have to be exchanged
+        elif self.state.bool_card_exchanged is False:
+            # target_player (diagonal player)
+            target_player_idx = (active_player_idx + 2) % 4
+            target_player = self.state.list_player[target_player_idx]
+
+            # chose random card of the active player
+            random_card_from_active = random.choice(active_player.list_card)
+
+            # chose random card of the target player
+            random_card_from_target = random.choice(target_player.list_card)
+
+            # create exchange action
+            exchange_action = Action(
+                card=random_card_from_active,  # card that the active player gives away
+                pos_from=None,
+                pos_to=None,
+                card_swap=random_card_from_target  # card that the target player gives away
+            )
+            actions.append(exchange_action)
+            return actions
+
         # Check if the start position is unoccupied
         if not any(marble.pos == start_position
                    for marble in self.state.list_player[active_player_idx].list_marble):
@@ -239,7 +277,7 @@ class Dog(Game):
 
         # Check possible move actions for each marble
         for card in active_player.list_card:
-            if card.rank not in ['7', 'J', 'JKR', '4']:
+            if card.rank not in ['7', 'J', 'JKR', '4', 'K', 'Q']:
                 # "normal" Cards
                 for marble_idx, marble in enumerate(active_player.list_marble):
                     if marble.pos not in self.KENNEL_POSITIONS[active_player_idx]:
@@ -386,7 +424,46 @@ class Dog(Game):
         """ Apply the given action to the game """
 
         active_player_index = self.state.idx_player_active
+        active_player = self.state.list_player[active_player_index]
 
+        # Handle the case where action is None (reshuffle and distribute cards)
+        if action.card is None:
+            # update the round number
+            self.state.cnt_round += 1
+            # circle back to round 1 so the players get again 6 cards.
+            if self.state.cnt_round > 5:
+                self.state.cnt_round = 1
+            num_cards_per_player = 6 - ((self.state.cnt_round - 1) % 6)
+            total_cards_to_deal = num_cards_per_player * 4
+
+            # Ensure enough cards in the draw pile by reshuffling discarded cards if needed
+            if len(self.state.list_card_draw) < total_cards_to_deal:
+                print("Not enough cards in draw pile. Reshuffling discard pile into draw pile.")
+                self.state.list_card_draw.extend(self.state.list_card_discard)
+                self.state.list_card_discard.clear()
+                random.shuffle(self.state.list_card_draw)
+
+            # Assert there are now enough cards after reshuffling
+            assert len(self.state.list_card_draw) >= total_cards_to_deal, (
+                f"Not enough cards to deal even after reshuffling: "
+                f"required {total_cards_to_deal}, available {len(self.state.list_card_draw)}"
+             )
+            
+            # Move all remaining cards from players to discard pile -> I am not sure if we need this since the players shouldn't have cards anyway
+            for player in self.state.list_player:
+                self.state.list_card_discard.extend(player.list_card)
+                player.list_card.clear()
+
+            # Distribute new cards
+            for _ in range(num_cards_per_player):
+                for player in self.state.list_player:
+                    card = self.state.list_card_draw.pop()
+                    player.list_card.append(card)
+
+            # Update exchange status
+            self.state.bool_card_exchanged = False
+            return
+    
         # Check input of pos_from and pos_to
         if (action.pos_from is not None and action.pos_from != -1 and
                 action.pos_to is not None and action.pos_to != -1):
@@ -402,15 +479,29 @@ class Dog(Game):
 
         elif action.card_swap is not None:
             # Swap a card
-            pass
+            # target player (diagonal player)
+            target_player_idx = (active_player_index + 2) % 4
+            target_player = self.state.list_player[target_player_idx]
 
+            # Active player gives their card and the target player receives the card from the active player
+            active_player.list_card.remove(action.card)
+            target_player.list_card.append(action.card)
+
+            # Target player gives a random card back
+            target_player.list_card.remove(action.card_swap)
+            active_player.list_card.append(action.card_swap)
+
+            # Überprüfen, ob der Karten-Tausch abgeschlossen ist
+            if active_player_index == 1:  # after player 2 all exchanges are done and we can move on with the game
+                self.state.bool_card_exchanged = True
+
+# TODO: Moving to the next player is still missing
 
     def get_player_view(self, idx_player: int) -> GameState:
         """ Get the masked state for the active player (e.g. the opponent's cards are face down)"""
         # TODO: implement this
         player_view = self.state.model_copy(deep = True)
         return player_view
-
 
 def check_move_validity(self, test_state: GameState, active_player_idx: int, marble_idx: int) -> bool:
     """ Check if move is valid """
