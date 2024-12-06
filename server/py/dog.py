@@ -135,7 +135,7 @@ class Dog(Game):
     def __init__(self) -> None:
         """ Game initialization (set_state call not necessary, we expect 4 players) """
         super().__init__()
-        self._state = GameState(
+        self._state = GameState(  # type: ignore
             phase=GamePhase.RUNNING,
             cnt_round=1,
             bool_game_finished=False,
@@ -158,13 +158,13 @@ class Dog(Game):
 
     def get_state(self) -> GameState:
         """ Get the complete, unmasked game state """
-        return self._state
+        return self._state #type: ignore
 
     def print_state(self) -> None:
         """ Print the current game state """
         print(self._state)
 
-    def _handle_card_swapping(self):
+    def _handle_card_swapping(self) -> None:
         """Handle the card-swapping process for all players."""
         for idx_player, player in enumerate(self._state.list_player):
             # Determine teammate index based on player index (teammates are 2 positions apart)
@@ -386,7 +386,7 @@ class Dog(Game):
                              queue_start <= int(marble.pos) < queue_end]
         return len(marbles_in_kennel)
 
-    def _check_finish_game(self):
+    def _check_finish_game(self) -> bool:
         """
         Check if the game is finished, i.e., any player has all their marbles in the final area.
         If the game is finished, set the game phase to FINISHED.
@@ -404,7 +404,7 @@ class Dog(Game):
         return False
 
     # TODO LATIN-47 Check for TEAM WIN, if 2 players of the same team have all their marbles in the final area
-    def _check_team_win(self):
+    def _check_team_win(self) -> bool:
         """
         Check if a team has won, that means, both players on a team have all their marbles in the final area.
         """
@@ -444,17 +444,17 @@ class Dog(Game):
                 self._swap_marbles(action)
             else:
                 marble_to_move = next(
-                    (marble for marble in active_player.list_marble if int(marble.pos) == int(action.pos_from)),
+                    (marble for marble in active_player.list_marble if marble.pos == action.pos_from),
                     None
                 )
 
                 if marble_to_move:
                     # Check for collision before moving the marble
-                    if self._is_collision(marble_to_move, action.pos_to, action.card):
-                        self._handle_collision(action.pos_to, self._state.idx_player_active)
+                    if self._is_collision(marble=marble_to_move, pos_to=action.pos_to, card=action.card): #type: ignore
+                        self._handle_collision(pos_to=action.pos_to, active_player_index=self._state.idx_player_active) #type: ignore
 
                     # Perform the movement logic
-                    self._move_marble_logic(marble_to_move, action.pos_to, action.card)
+                    self._move_marble_logic(marble_to_move, action.pos_to, action.card)  #type: ignore
 
         if self._check_team_win():
             self._state.phase = self._state.phase.FINISHED
@@ -475,7 +475,7 @@ class Dog(Game):
             for p in self._state.list_player:
                 p.list_card = []
 
-    def _handle_none_action(self, action, active_player):
+    def _handle_none_action(self, action:Action, active_player:PlayerState) -> None:
         if action is None:
             self.none_actions_counter += 1
             active_player.list_card = []
@@ -504,7 +504,7 @@ class Dog(Game):
 
         # simple logic if card is not 7!
         active_player = self._state.list_player[self._state.idx_player_active]
-        active_player_marbles = {int(m.pos) for m in active_player.list_marble}
+        active_player_marbles = {m.pos for m in active_player.list_marble}
 
         # Check if the target position is occupied by a marble
         for player_index, player in enumerate(self._state.list_player):
@@ -639,7 +639,7 @@ class Dog(Game):
 
         return possible_positions
 
-    def _is_valid_move_in_final_area(self, pos_from, pos_to, marbles, final_area_start, final_area_end) -> bool:
+    def _is_valid_move_in_final_area(self, pos_from:int , pos_to:int, marbles:list[Marble], final_area_start:int, final_area_end:int) -> bool:
         """
         Validates whether a move in the final area is legal based on game rules.
         Marbles cannot jump over other marbles in the final area.
@@ -690,15 +690,15 @@ class Dog(Game):
                         is_save=True)
                 )
 
-    def _is_valid_final_area_move(self, start, end, player, final_area_start, final_area_end) -> bool:
-        step = 1 if end > start else -1
-        for position in range(start + step, end + step, step):
-            if final_area_start <= position <= final_area_end:
-                if any(marble.pos == position for marble in player.list_marble):
-                    return False  # Invalid if another marble is in the way
-        return True
+    # def _is_valid_final_area_move(self, start:int, end:int, player, final_area_start, final_area_end) -> bool:
+    #     step = 1 if end > start else -1
+    #     for position in range(start + step, end + step, step):
+    #         if final_area_start <= position <= final_area_end:
+    #             if any(marble.pos == position for marble in player.list_marble):
+    #                 return False  # Invalid if another marble is in the way
+    #     return True
 
-    def _swap_marbles(self, action: Action):
+    def _swap_marbles(self, action: Action) -> None:
         """
           Swap the positions of two marbles based on the provided action.
 
@@ -750,7 +750,7 @@ if __name__ == '__main__':
 
     while game.get_state().phase != GamePhase.FINISHED:
         # Card-swapping phase at the start of the round
-        if not game.get_state().bool_card_swapped:
+        if not game.get_state().bool_card_exchanged:
             print("Starting card-swapping phase...")
             game._handle_card_swapping()
 
@@ -770,6 +770,6 @@ if __name__ == '__main__':
                 game.print_state()
 
         # Reset card swapping flag for the next round
-        game.get_state().bool_card_swapped = False
+        game.get_state().bool_card_exchanged = False
 
         print(f"\n --------------- ROUND {game.get_state().cnt_round} finished -----------------")
