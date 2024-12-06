@@ -95,6 +95,12 @@ class Dog(Game):
     STARTING_CARDS = {'A', 'K', 'JKR'}
     MOVEMENT_CARDS = {'2', '3', '4', '5', '6', '8', '9', '10', 'Q', 'K', 'A', 'JKR'}
     INVALID_POSITIONS = {'kennel', 'finish'}
+    SAFE_SPACES = {
+            0: [68, 69, 70, 71],  # Player 1's safe spaces, blue
+            1: [76, 77, 78, 79],  # Player 2's safe spaces, green
+            2: [84, 85, 86, 87],  # Player 3's safe spaces, red
+            3: [92, 93, 94, 95]   # Player 4's safe spaces, yellow
+        }
 
     def __init__(self) -> None:
         """ Game initialization (set_state call not necessary, we expect 4 players) """
@@ -341,35 +347,43 @@ class Dog(Game):
         return actions
  
     def apply_action(self, action: Action) -> None:
-        """ Apply the given action to the game """
+        """Apply the given action to the game."""
         if not self.state:
             raise ValueError("Game state is not set.")
 
         # Handle the case where no action is provided (skip turn)
         if action is None:
-            print(f"No action provided. Advancing the active player.")
+            print("No action provided. Advancing the active player.")
             self.state.idx_player_active = (self.state.idx_player_active + 1) % len(self.state.list_player)
+            return  # Exit the function early
+        
+        # Get the list of valid actions for the current state
+        valid_actions = self.get_list_action()  # Fetch valid actions from get_list_action
 
-        else:
-            print(f"Player {self.state.list_player[self.state.idx_player_active].name} plays {action.card.rank} of {action.card.suit}")
-            
-            # Remove the played card from the player's hand
-            self.state.list_player[self.state.idx_player_active].list_card.remove(action.card)
-            
-            # Add the played card to the discard pile
-            self.state.list_card_discard.append(action.card)
+        # Validate the provided action
+        if action not in valid_actions:
+            raise ValueError(f"Invalid action: {action}. Action is not in the list of valid actions.")
 
-            # Update marble position if applicable
-            safe_spaces = {
-                0: [0, 68, 69, 70, 71],  # Player 1's safe spaces, blue
-                1: [16, 76, 77, 78, 79],  # Player 2's safe spaces, green
-                2: [32, 84, 85, 86, 87],  # Player 3's safe spaces, red
-                3: [48, 92, 93, 94, 95]   # Player 4's safe spaces, yellow
-            }
-            for marble in self.state.list_player[self.state.idx_player_active].list_marble:
-                if marble.pos == action.pos_from:
-                    marble.pos = action.pos_to
-                    marble.is_save = marble.pos in safe_spaces[self.state.idx_player_active]
+        active_player = self.state.list_player[self.state.idx_player_active]
+
+        # Log the action being applied
+        print(f"Player {active_player.name} plays {action.card.rank} of {action.card.suit} "
+          f"moving marble from {action.pos_from} to {action.pos_to}.")
+        
+        # Remove the played card from the player's hand
+        active_player.list_card.remove(action.card)
+
+        # Add the played card to the discard pile
+        self.state.list_card_discard.append(action.card)
+
+        # Update marble position if applicable
+        for marble in active_player.list_marble:
+            if marble.pos == action.pos_from:
+                marble.pos = action.pos_to
+                marble.is_save = marble.pos in self.SAFE_SPACES[self.state.idx_player_active]
+                if marble.is_save:
+                    print(f"Marble moved to a safe space at position {marble.pos}.")
+                break # Exit loop after updating the correct marble
 
         # Advance to the next active player
         self.state.idx_player_active = (self.state.idx_player_active + 1) % len(self.state.list_player)
