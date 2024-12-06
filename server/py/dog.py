@@ -214,21 +214,23 @@ class Dog(Game):
 
         # Check if cards have to be exchanged
         if not self.state.bool_card_exchanged:
-            # Zufällige Karte des aktiven Spielers auswählen
+            # chose random card of the active player
             random_card = random.choice(active_player.list_card)
             
-            # Zielspieler (diagonaler Spieler)
+            # target_player (diagonal player)
             target_player_idx = (active_player_idx + 2) % 4
 
-            # Austausch-Aktion erstellen
+            # create exchange action
             exchange_action = Action(
-                card=random_card,  # Die Karte, die der aktive Spieler gibt
-                card_swap=None,    # Platzhalter für die Karte, die der Zielspieler zurückgibt
+                card=random_card, # the card the active player gives
+                pos_from=None,
+                pos_to=None,  
+                card_swap=None,    # placeholder for the card, the target player gives back.
             )
 
-            # Austauschaktion zur Liste hinzufügen
+            # append exchange action to the actions list
             actions.append(exchange_action)
-
+            
         else:
             # Check if the start position is unoccupied
             if not any(marble.pos == start_position
