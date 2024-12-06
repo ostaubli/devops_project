@@ -119,13 +119,6 @@ class Dog(Game):
 
         Each player (i: range 0-3) has 4 marbles (j: range 0-3), initialized from unique positions (pos).
         """
-                # Define kennel positions for each player
-        kennels = {
-            0: [64, 65, 66, 67],  # Player 1's kennel positions
-            1: [72, 73, 74, 75],  # Player 2's kennel positions
-            2: [80, 81, 82, 83],  # Player 3's kennel positions
-            3: [88, 89, 90, 91]   # Player 4's kennel positions
-        }
 
         # Initialize players with empty card hands and marbles in their kennel positions
         players = [
@@ -133,7 +126,7 @@ class Dog(Game):
                 name=f"Player {i+1}",
                 list_card=[],
                 list_marble=[
-                    Marble(pos=kennels[i][j], is_save=True) for j in range(4)
+                    Marble(pos=self.KENNEL_POSITIONS[i][j], is_save=True) for j in range(4)
                 ]
             )
             for i in range(4)
@@ -491,7 +484,7 @@ class Dog(Game):
         # Handle the case where no action is provided (skip turn)
         if action is None:
             print("No action provided. Advancing the active player.")
-            self.state.list_card_draw.extend(active_player.list_card) # Add all cards from the player's hand to the draw pile
+            self.state.list_card_discard.extend(active_player.list_card) # Add all cards from the player's hand to the draw pile
             active_player.list_card = []
             self.state.idx_player_active = (self.state.idx_player_active + 1) % len(self.state.list_player)
             return  # Exit the function early
@@ -729,6 +722,6 @@ if __name__ == '__main__':
             game.validate_total_cards()
 
             # Optionally exit after a certain number of rounds (for testing)
-            if game.state.cnt_round > 1:  # Example limit
+            if game.state.cnt_round > 15:  # Example limit
                 print(f"Ending game for testing after {game.state.cnt_round} rounds.")
                 break
