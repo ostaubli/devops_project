@@ -1,9 +1,9 @@
 # runcmd: cd ../.. & venv\Scripts\python server/py/dog_template.py
-from server.py.game import Game, Player
 from typing import List, Optional, ClassVar
-from pydantic import BaseModel
 from enum import Enum
 import random
+from pydantic import BaseModel
+from server.py.game import Game, Player
 
 
 class Card(BaseModel):
@@ -27,7 +27,7 @@ class Action(BaseModel):
     card: Card                 # card to play
     pos_from: Optional[int]    # position to move the marble from
     pos_to: Optional[int]      # position to move the marble to
-    card_swap: Optional[Card]  # optional card to swap ()
+    card_swap: Optional[Card] = None # optional card to swap ()
 
 
 class GamePhase(str, Enum):
@@ -88,7 +88,15 @@ class GameState(BaseModel):
 
 class Dog(Game):
 
-    KENNEL_POSITION: ClassVar[int] = -1  # Special position for marbles in the kennel
+    KENNEL_POSITIONS = [
+        [64, 65, 66, 67],  # Positions for player index 0
+        [72, 73, 74, 75],  # Positions for player index 1
+        [80, 81, 82, 83],  # Positions for player index 2
+        [88, 89, 90, 91]  # Positions for player index 3
+    ]
+
+    # Define starting positions for each player
+    START_POSITION = [0, 16, 32, 48]
 
     def __init__(self) -> None:
         """ Game initialization (set_state call not necessary, we expect 4 players) """
@@ -113,24 +121,26 @@ class Dog(Game):
         # Initialize the players
         for idx in range(self.state.cnt_player):
             player_state: PlayerState = PlayerState(
-                name=f"Player {idx + 1}",
+                name = f"Player {idx + 1}",
                 list_card=[],
                 list_marble=[],
             )
+
             # Initialize player's marbles
-            for _ in range(4):  # Assuming each player has 4 marbles
-                marble: Marble = Marble(
-                    pos=self.KENNEL_POSITION,
-                    is_save=False,
-                )
+            for marble_idx in range(4):  # 4 marbles per player
+                marble = Marble(
+                    pos = self.KENNEL_POSITIONS[idx][marble_idx],  # get the position from the kennel
+                    is_save  = False)
                 player_state.list_marble.append(marble)
+
+            # Add the player state to the game state
             self.state.list_player.append(player_state)
 
         # Randomly select starting player
         self.state.idx_player_started = random.randint(0, self.state.cnt_player - 1)
         self.state.idx_player_active = self.state.idx_player_started
 
-        # TODO: deal cards as an action ??
+        # TODO: deal cards as an action ?? -> probably make a separate function for this outside the init
         # Deal initial cards to players
         num_cards_per_player = 6  # Number of cards per player in the first round
         total_cards_to_deal = num_cards_per_player * self.state.cnt_player
@@ -157,13 +167,12 @@ class Dog(Game):
         """ Get the complete, unmasked game state """
         return self.state
 
-
     def print_state(self) -> None:
         """ Print the current game state """
         if not self.state:
             print("No state set.")
             return
-        
+
         print("\n--- Game State ---")
         print(f"Phase: {self.state.phase}")
         print(f"Round: {self.state.cnt_round}")
@@ -179,44 +188,122 @@ class Dog(Game):
         print("\nPlayers:")
         for idx, player in enumerate(self.state.list_player):
             print(f"Player {idx + 1} - {player.name}")
-            print(f"Cards:")
+            print("Cards:")
             for card in player.list_card:
                 print(f"{card.suit}{card.rank}")
-            print(f"Marbles:")
+            print("Marbles:")
             for marble in player.list_marble:
                 print(f"Position: {marble.pos}, Safe: {marble.is_save}")
 
     def get_list_action(self) -> List[Action]:
         """ Get a list of possible actions for the active player """
         actions: List[Action] = []
-        
+
         active_player_idx = self.state.idx_player_active
         active_player = self.state.list_player[active_player_idx]
-    
-        marbles_in_kennel = [marble for marble in active_player.list_marble if marble.pos == self.KENNEL_POSITION]
-        
-        for card in active_player.list_card:
-            if card.rank in ['K', 'A', 'JKR']:
-                if marbles_in_kennel:
-                    for marble in marbles_in_kennel:
+        start_position = self.START_POSITION[active_player_idx]
+
+        # Check if the start position is unoccupied
+        if not any(marble.pos == start_position
+                   for marble in self.state.list_player[active_player_idx].list_marble):
+            # Start position is unoccupied
+
+            # Check if the player has any marbles in the kennel
+            marbles_in_kennel = [
+                marble for marble in self.state.list_player[active_player_idx].list_marble
+                if marble.pos in self.KENNEL_POSITIONS[active_player_idx]
+            ]
+            marbles_in_kennel.sort(key=lambda x: x.pos)
+
+            for card in active_player.list_card:
+                if card.rank in ['K', 'A', 'JKR']:
+                    if marbles_in_kennel:
+                        # Move the marble in the first kennel position to the start position
                         action = Action(
-                            card=card,
-                            pos_from=self.KENNEL_POSITION,
-                            pos_to=active_player_idx*16,
-                            card_swap=None
+                            card = card,
+                            pos_from = marbles_in_kennel[0].pos,
+                            pos_to = start_position,
+                            card_swap = None
                         )
                         actions.append(action)
-                        
+
+
+        # Check possible move actions for each marble
+        for card in active_player.list_card:
+            if card.rank not in ['7', 'J', 'JKR']:
+                for marble_idx, marble in enumerate(active_player.list_marble):
+                    if marble.pos not in self.KENNEL_POSITIONS[active_player_idx]:
+                        # Total moves allowed by the card
+                        if card.rank == 'A':
+                            num_moves = 1 # TODO: Need to implement the logic for 1 or 11
+                        elif card.rank == 'K':
+                            num_moves = 13
+                        elif card.rank == 'Q':
+                            num_moves = 12
+                        else:
+                            num_moves = int(card.rank)
+
+                        # Set move to allowed (will be rechecked in following steps)
+                        move_allowed = True
+
+                        # Create test game state
+                        test_state = self.state.model_copy(deep = True)
+
+                        while num_moves > 0:
+                            # Move the marble by 1 step
+                            test_state.list_player[active_player_idx].list_marble[marble_idx].pos += 1
+                            num_moves -= 1
+                            validity = self.check_move_validity(test_state, active_player_idx, marble_idx)
+                            if not validity:
+                                move_allowed = False
+                                break
+
+                        if move_allowed and num_moves == 0:
+                            action = Action(
+                                card = card,
+                                pos_from = marble.pos,
+                                pos_to = test_state.list_player[active_player_idx].list_marble[marble_idx].pos,
+                                card_swap = None
+                            )
+                            actions.append(action)
+
         return actions
 
 
     def apply_action(self, action: Action) -> None:
         """ Apply the given action to the game """
-        pass
+
+        active_player_index = self.state.idx_player_active
+
+        # Check input of pos_from and pos_to
+        if (action.pos_from is not None and action.pos_from != -1 and
+                action.pos_to is not None and action.pos_to != -1):
+
+            # Move a marble
+            for idx_marble, marble in enumerate(self.state.list_player[active_player_index].list_marble):
+                if marble.pos == action.pos_from:
+                    self.state.list_player[active_player_index].list_marble[idx_marble].pos = action.pos_to
+
+                    # Check if the marble is moved out of the kennel
+                    if action.pos_from in self.KENNEL_POSITIONS[active_player_index]:
+                        self.state.list_player[active_player_index].list_marble[idx_marble].is_save = True
+
+        elif action.card_swap is not None:
+            # Swap a card
+            pass
+
 
     def get_player_view(self, idx_player: int) -> GameState:
-        """ Get the masked state for the active player (e.g. the oppontent's cards are face down)"""
-        pass
+        """ Get the masked state for the active player (e.g. the opponent's cards are face down)"""
+        # TODO: implement this
+        player_view = self.state.model_copy(deep = True)
+        return player_view
+
+
+    def check_move_validity(self, test_state: GameState, active_player_idx: int, marble_idx: int) -> bool:
+        """ Check if the move is valid """
+        # TODO: implement the logic for checking the validity of the game state
+        return True
 
 
 class RandomPlayer(Player):
