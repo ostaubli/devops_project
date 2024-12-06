@@ -7,13 +7,30 @@ from pydantic import BaseModel
 from enum import Enum
 import random
 
-
-
 class Card(BaseModel):
     color: Optional[str] = None   # color of the card (see LIST_COLOR)
     number: Optional[int] = None  # number of the card (if not a symbol card)
     symbol: Optional[str] = None  # special cards (see LIST_SYMBOL)
 
+    def __lt__(self, other):
+        if not isinstance(other, Card): return False
+        other: Action = other
+        t1 = (self.color, self.number, self.symbol,)
+        t2 = (other.color, other.number, other.symbol,)
+
+        for v1, v2 in zip(t1, t2):
+            if v1 is None and v2 is None:
+                continue
+
+            if v1 is None:
+                return True
+
+            if v2 is None:
+                return False
+
+            return v1 < v2
+
+        return False
 
 class Action(BaseModel):
     card: Optional[Card] = None  # the card to play
