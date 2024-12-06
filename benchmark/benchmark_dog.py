@@ -13,8 +13,8 @@ from typing import List, Optional, Dict
 
 from server.py.dog import Card, Marble, PlayerState, Action, GameState, GamePhase
 
-
 class DogBenchmark(benchmark.Benchmark):
+
     CNT_PLAYERS = 4
     CNT_STEPS = 64
     CNT_BALLS = 4
@@ -68,8 +68,7 @@ class DogBenchmark(benchmark.Benchmark):
         state.idx_player_active = idx_player_active
         state.bool_card_exchanged = True
         player = state.list_player[idx_player_active]
-        player.list_card = [Card(suit='♣', rank='3'), Card(suit='♦', rank='9'), Card(suit='♣', rank='10'),
-                            Card(suit='♥', rank='Q'), Card(suit='♠', rank='7'), Card(suit='♣', rank='J')]
+        player.list_card = [Card(suit='♣', rank='3'), Card(suit='♦', rank='9'), Card(suit='♣', rank='10'), Card(suit='♥', rank='Q'), Card(suit='♠', rank='7'), Card(suit='♣', rank='J')]
         self.game_server.set_state(state)
         str_state = str(state)
 
@@ -99,8 +98,7 @@ class DogBenchmark(benchmark.Benchmark):
             state.idx_player_active = idx_player_active
             state.bool_card_exchanged = True
             player = state.list_player[idx_player_active]
-            player.list_card = [Card(suit='♣', rank='10'), Card(suit='♥', rank='Q'), Card(suit='♠', rank='7'),
-                                Card(suit='♣', rank='J'), card]
+            player.list_card = [Card(suit='♣', rank='10'), Card(suit='♥', rank='Q'), Card(suit='♠', rank='7'), Card(suit='♣', rank='J'), card]
             self.game_server.set_state(state)
             str_state = str(state)
 
@@ -125,8 +123,7 @@ class DogBenchmark(benchmark.Benchmark):
         state.idx_player_active = idx_player_active
         state.bool_card_exchanged = True
         player = state.list_player[idx_player_active]
-        player.list_card = [Card(suit='♣', rank='10'), Card(suit='♦', rank='A'), Card(suit='♠', rank='2'),
-                            Card(suit='♥', rank='K'), Card(suit='♠', rank='7'), Card(suit='♥', rank='A')]
+        player.list_card = [Card(suit='♣', rank='10'), Card(suit='♦', rank='A'), Card(suit='♠', rank='2'), Card(suit='♥', rank='K'), Card(suit='♠', rank='7'), Card(suit='♥', rank='A')]
         self.game_server.set_state(state)
         str_state = str(state)
 
@@ -428,11 +425,23 @@ class DogBenchmark(benchmark.Benchmark):
                 Action(card=card, pos_from=0, pos_to=49),
                 Action(card=card, pos_from=1, pos_to=17),
                 Action(card=card, pos_from=1, pos_to=33),
-                Action(card=card, pos_from=1, pos_to=49)
+                Action(card=card, pos_from=1, pos_to=49),
+                Action(card=card, pos_from=17, pos_to=0),
+                Action(card=card, pos_from=33, pos_to=0),
+                Action(card=card, pos_from=49, pos_to=0),
+                Action(card=card, pos_from=17, pos_to=1),
+                Action(card=card, pos_from=33, pos_to=1),
+                Action(card=card, pos_from=49, pos_to=1)
             ]
 
             hint = str_state
             hint += f'Error 1: "get_list_action" must return {len(list_action_expected)} not {len(list_action_found)} actions'
+            hint += f'\nExpected actions:'
+            for action in list_action_expected:
+                    hint += f'\n - {action}'
+            hint += f'\nFound actions:'
+            for action in list_action_found:
+                    hint += f'\n - {action}'
             assert len(list_action_found) == len(list_action_expected), hint
 
             hint = str_state
@@ -446,7 +455,7 @@ class DogBenchmark(benchmark.Benchmark):
                 list_action_expected), hint
 
     def test_swap_with_JAKE_2(self):
-        """Test 022: Test swap list_actions with card JAKE no oponents an no other actions [1 point]"""
+        """Test 022: Test swap list_actions with card JAKE no oponents and no other actions [1 point]"""
 
         list_card = [Card(suit='♣', rank='J'), Card(suit='♦', rank='J'), Card(suit='♥', rank='J'),
                      Card(suit='♠', rank='J')]
@@ -475,12 +484,18 @@ class DogBenchmark(benchmark.Benchmark):
 
             list_action_found = self.game_server.get_list_action()
             list_action_expected = [
-                Action(card=card, pos_from=0, pos_to=1)
-                # Action(card=card, pos_from=1, pos_to=0)
+                Action(card=card, pos_from=0, pos_to=1),
+                Action(card=card, pos_from=1, pos_to=0)
             ]
 
             hint = str_state
-            hint += f'Error 1: "get_list_action" must return {len(list_action_expected)} not {len(list_action_found)} actions'
+            hint +=f'Error 1: "get_list_action" must return {len(list_action_expected)} not {len(list_action_found)} actions'
+            hint += f'\nExpected actions:'
+            for action in list_action_expected:
+                    hint += f'\n - {action}'
+            hint += f'\nFound actions:'
+            for action in list_action_found:
+                    hint += f'\n - {action}'
             assert len(list_action_found) == len(list_action_expected), hint
 
             hint = str_state
@@ -594,10 +609,8 @@ class DogBenchmark(benchmark.Benchmark):
             list_action_found = self.game_server.get_list_action()
             list_action_expected = [
                 Action(card=Card(suit='', rank='JKR'), pos_from=64, pos_to=0),
-                Action(card=Card(suit='', rank='JKR'), pos_from=64, pos_to=0, card_swap=Card(suit='♥', rank='A')),
-                Action(card=Card(suit='', rank='JKR'), pos_from=64, pos_to=0, card_swap=Card(suit='♥', rank='K')),
-                #  Action(card=Card(suit='', rank='JKR'), pos_from=-1, pos_to=-1, card_swap=Card(suit='♥', rank='A')), # FIXME why -1 to -1?
-                # Action(card=Card(suit='', rank='JKR'), pos_from=-1, pos_to=-1, card_swap=Card(suit='♥', rank='K')), # FIXME why -1 to -1?
+                Action(card=Card(suit='', rank='JKR'), pos_from=-1, pos_to=-1, card_swap=Card(suit='♥', rank='A')),
+                Action(card=Card(suit='', rank='JKR'), pos_from=-1, pos_to=-1, card_swap=Card(suit='♥', rank='K')),
             ]
 
             hint = str_state
@@ -610,8 +623,7 @@ class DogBenchmark(benchmark.Benchmark):
             hint += f'\n{self.get_list_action_as_str(list_action_expected)}'
             hint += f'\nFound:'
             hint += f'\n{self.get_list_action_as_str(list_action_found)}'
-            # assert self.get_sorted_list_action(list_action_found) == self.get_sorted_list_action(
-            #     list_action_expected), hint  # fixme TypeError: '<' not supported between instances of 'Card' and 'NoneType'
+            assert self.get_sorted_list_action(list_action_found) == self.get_sorted_list_action(list_action_expected), hint
 
     def test_chose_card_with_JOKER_2(self):
         """Test 026: Test JOKER card in later game [5 point]"""
@@ -781,8 +793,7 @@ class DogBenchmark(benchmark.Benchmark):
             [5, 2],
             [6, 1],
         ]
-        list_card = [Card(suit='♣', rank='7'), Card(suit='♦', rank='7'), Card(suit='♥', rank='7'),
-                     Card(suit='♠', rank='7')]
+        list_card = [Card(suit='♣', rank='7'), Card(suit='♦', rank='7'), Card(suit='♥', rank='7'), Card(suit='♠', rank='7')]
 
         for card in list_card:
 
@@ -844,7 +855,7 @@ class DogBenchmark(benchmark.Benchmark):
                     assert state.idx_player_active == idx_player_active, hint
 
                     hint = str_states
-                    hint += f'Error 4: "card_active" must be set to "{card}" {"after" if card_active is None else "while"} steps of card SEVEN are moved.'
+                    hint +=f'Error 4: "card_active" must be set to "{card}" {"after" if card_active is None else "while"} steps of card SEVEN are moved.'
                     assert state.card_active == card_active, hint
 
                     pos_from += steps
@@ -867,8 +878,7 @@ class DogBenchmark(benchmark.Benchmark):
             [5, 2],
             [6, 1],
         ]
-        list_card = [Card(suit='♣', rank='7'), Card(suit='♦', rank='7'), Card(suit='♥', rank='7'),
-                     Card(suit='♠', rank='7')]
+        list_card = [Card(suit='♣', rank='7'), Card(suit='♦', rank='7'), Card(suit='♥', rank='7'), Card(suit='♠', rank='7')]
 
         for card in list_card:
 
@@ -932,12 +942,12 @@ class DogBenchmark(benchmark.Benchmark):
         """Test 031: Test move with card SEVEN and kick out oponents [1 point]"""
 
         list_steps = [1, 2, 3, 4, 5, 6, 7]
-        list_card = [Card(suit='♣', rank='7'), Card(suit='♦', rank='7'), Card(suit='♥', rank='7'),
-                     Card(suit='♠', rank='7')]
+        list_card = [Card(suit='♣', rank='7'), Card(suit='♦', rank='7'), Card(suit='♥', rank='7'), Card(suit='♠', rank='7')]
 
         for card in list_card:
 
             for steps in list_steps:
+
                 self.game_server.reset()
                 state = self.game_server.get_state()
 
@@ -988,8 +998,7 @@ class DogBenchmark(benchmark.Benchmark):
         """Test 032: Test move with card SEVEN and kick out own marbles [1 point]"""
 
         list_steps = [1, 2, 3, 4, 5, 6, 7]
-        list_card = [Card(suit='♣', rank='7'), Card(suit='♦', rank='7'), Card(suit='♥', rank='7'),
-                     Card(suit='♠', rank='7')]
+        list_card = [Card(suit='♣', rank='7'), Card(suit='♦', rank='7'), Card(suit='♥', rank='7'), Card(suit='♠', rank='7')]
 
         for card in list_card:
 
@@ -1045,8 +1054,7 @@ class DogBenchmark(benchmark.Benchmark):
         """Test 033: Test move with card SEVEN and can not play all steps [10 point]"""
 
         list_steps = [1, 2, 3]
-        list_card = [Card(suit='♣', rank='7'), Card(suit='♦', rank='7'), Card(suit='♥', rank='7'),
-                     Card(suit='♠', rank='7')]
+        list_card = [Card(suit='♣', rank='7'), Card(suit='♦', rank='7'), Card(suit='♥', rank='7'), Card(suit='♠', rank='7')]
 
         for card in list_card:
 
@@ -1131,8 +1139,7 @@ class DogBenchmark(benchmark.Benchmark):
         """Test 034: Test move with card SEVEN into finish [5 point]"""
 
         steps_split = [5, 2]
-        list_card = [Card(suit='♣', rank='7'), Card(suit='♦', rank='7'), Card(suit='♥', rank='7'),
-                     Card(suit='♠', rank='7')]
+        list_card = [Card(suit='♣', rank='7'), Card(suit='♦', rank='7'), Card(suit='♥', rank='7'), Card(suit='♠', rank='7')]
 
         for card in list_card:
 
@@ -1192,8 +1199,7 @@ class DogBenchmark(benchmark.Benchmark):
         """Test 035: Test move with card SEVEN into finish [5 point]"""
 
         steps_split = [5, 2]
-        list_card = [Card(suit='♣', rank='7'), Card(suit='♦', rank='7'), Card(suit='♥', rank='7'),
-                     Card(suit='♠', rank='7')]
+        list_card = [Card(suit='♣', rank='7'), Card(suit='♦', rank='7'), Card(suit='♥', rank='7'), Card(suit='♠', rank='7')]
 
         for card in list_card:
 
@@ -1482,8 +1488,7 @@ class DogBenchmark(benchmark.Benchmark):
                         else:
                             pos_from = pos_to - steps
 
-                        self.move_marble_to_finish(card=card, pos_from=pos_from, pos_to=pos_to, idx_player=idx_player,
-                                                   steps=steps)
+                        self.move_marble_to_finish(card=card, pos_from=pos_from, pos_to=pos_to, idx_player=idx_player, steps=steps)
 
     def test_move_to_empty_finish_with_negative_steps(self):
         """Test 042: Test that can not move to finish with negative steps [1 point]"""
@@ -1505,10 +1510,8 @@ class DogBenchmark(benchmark.Benchmark):
                     for steps in test['list_steps']:
                         pos_start = idx_player * int(self.CNT_STEPS / self.CNT_PLAYERS)
 
-                        pos_from = (pos_start + abs(steps) - (
-                                    pos_to - pos_finish + 1) + self.CNT_STEPS) % self.CNT_STEPS
-                        self.move_marble_to_finish(card=card, pos_from=pos_from, pos_to=pos_to, idx_player=idx_player,
-                                                   steps=steps)
+                        pos_from = (pos_start + abs(steps) - (pos_to - pos_finish + 1) + self.CNT_STEPS) % self.CNT_STEPS
+                        self.move_marble_to_finish(card=card, pos_from=pos_from, pos_to=pos_to, idx_player=idx_player, steps=steps)
 
     def test_not_overtaking_in_finish(self):
         """Test 043: Test not overtaking in finish [5 point]"""
@@ -1579,8 +1582,7 @@ class DogBenchmark(benchmark.Benchmark):
                         else:
                             pos_from = pos_to - steps
 
-                        self.move_marble_to_blocked_finish(card=card, pos_from=pos_from, pos_to=pos_to,
-                                                           idx_player=idx_player)
+                        self.move_marble_to_blocked_finish(card=card, pos_from=pos_from, pos_to=pos_to, idx_player=idx_player)
 
     def test_card_exchange_at_beginning_of_round_1(self):
         """Test 044: Test card exchange actions at beginning of round [1 point]"""
@@ -1828,7 +1830,7 @@ class DogBenchmark(benchmark.Benchmark):
             list_action_found = self.game_server.get_list_action()
 
             hint = str_states
-            hint += f'Error 1: Player {idx_player + 1} must allowed to move with Player {idx_partner + 1}\'s marbles'
+            hint += f'Error 1: Player {idx_player+1} must allowed to move with Player {idx_partner+1}\'s marbles'
             hint += f'\nafter placing his own marbles at the finish.'
             assert len(list_action_found) > 0, hint
 
@@ -1844,7 +1846,7 @@ class DogBenchmark(benchmark.Benchmark):
             idx_marble = self.get_idx_marble(player=player, pos=pos_to)
 
             hint = str_states
-            hint += f'Error 2: Player {idx_player + 1} should have moved Player {idx_partner + 1}\'s marble'
+            hint += f'Error 2: Player {idx_player+1} should have moved Player {idx_partner+1}\'s marble'
             hint += f'\nfrom {pos_start} to {pos_to}.'
             assert idx_marble != -1, hint
 
@@ -2026,7 +2028,7 @@ class DogBenchmark(benchmark.Benchmark):
                     player = state.list_player[idx_player]
                     found = self.get_idx_marble(player=player, pos=pos_to) != -1
                     hint = str_states
-                    hint += f'Error 3: Player {idx_player + 1}\'s marble must be moved from pos={pos_from} to pos={pos_to} with card={card}'
+                    hint += f'Error 3: Player {idx_player+1}\'s marble must be moved from pos={pos_from} to pos={pos_to} with card={card}'
                     assert found, hint
 
                 else:
@@ -2169,4 +2171,9 @@ if __name__ == '__main__':
         sys.exit()
 
     benchmark = DogBenchmark(argv=sys.argv)
-    benchmark.run_tests()
+
+    if True:  # Run all tests
+        benchmark.run_tests()
+
+    else: # Run specific test(s)
+        benchmark.test_stock_out_of_cards()
