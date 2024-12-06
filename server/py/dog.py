@@ -212,173 +212,191 @@ class Dog(Game):
         active_player = self.state.list_player[active_player_idx]
         start_position = self.START_POSITION[active_player_idx]
 
-        # Check if the start position is unoccupied
-        if not any(marble.pos == start_position
-                   for marble in self.state.list_player[active_player_idx].list_marble):
-            # Start position is unoccupied
+        # Check if cards have to be exchanged
+        if not self.state.bool_card_exchanged:
+            # Zufällige Karte des aktiven Spielers auswählen
+            random_card = random.choice(active_player.list_card)
+            
+            # Zielspieler (diagonaler Spieler)
+            target_player_idx = (active_player_idx + 2) % 4
 
-            # Check if the player has any marbles in the kennel
-            marbles_in_kennel = [
-                marble for marble in self.state.list_player[active_player_idx].list_marble
-                if marble.pos in self.KENNEL_POSITIONS[active_player_idx]
-            ]
-            marbles_in_kennel.sort(key=lambda x: x.pos)
+            # Austausch-Aktion erstellen
+            exchange_action = Action(
+                card=random_card,  # Die Karte, die der aktive Spieler gibt
+                card_swap=None,    # Platzhalter für die Karte, die der Zielspieler zurückgibt
+            )
 
-            for card in active_player.list_card:
-                if card.rank in ['K', 'A', 'JKR']:
-                    if marbles_in_kennel:
-                        # Move the marble in the first kennel position to the start position
-                        action = Action(
-                            card = card,
-                            pos_from = marbles_in_kennel[0].pos,
-                            pos_to = start_position,
-                            card_swap = None
-                        )
-                        actions.append(action)
+            # Austauschaktion zur Liste hinzufügen
+            actions.append(exchange_action)
 
+        else:
+            # Check if the start position is unoccupied
+            if not any(marble.pos == start_position
+                    for marble in self.state.list_player[active_player_idx].list_marble):
+                # Start position is unoccupied
 
-        # Check possible move actions for each marble
-        for card in active_player.list_card:
-            if card.rank not in ['7', 'J', 'JKR', '4']:
-                # "normal" Cards
-                for marble_idx, marble in enumerate(active_player.list_marble):
-                    if marble.pos not in self.KENNEL_POSITIONS[active_player_idx]:
-                        num_moves = int(card.rank)
-                        move_allowed = True
-                        test_state = self.state.model_copy(deep=True)
+                # Check if the player has any marbles in the kennel
+                marbles_in_kennel = [
+                    marble for marble in self.state.list_player[active_player_idx].list_marble
+                    if marble.pos in self.KENNEL_POSITIONS[active_player_idx]
+                ]
+                marbles_in_kennel.sort(key=lambda x: x.pos)
 
-                    for _ in range(num_moves):
-                        test_state.list_player[active_player_idx].list_marble[marble_idx].pos += 1
-                        validity = self.check_move_validity(
-                            test_state, active_player_idx, marble_idx)
-                        if not validity:
-                            move_allowed = False
-                            break
-
-                    if move_allowed:
-                        actions.append(
-                            Action(
-                                card=card,
-                                pos_from=marble.pos,
-                                pos_to=test_state.list_player[active_player_idx].list_marble[marble_idx].pos,
-                                card_swap=None
+                for card in active_player.list_card:
+                    if card.rank in ['K', 'A', 'JKR']:
+                        if marbles_in_kennel:
+                            # Move the marble in the first kennel position to the start position
+                            action = Action(
+                                card = card,
+                                pos_from = marbles_in_kennel[0].pos,
+                                pos_to = start_position,
+                                card_swap = None
                             )
-                        )
-            # --- Card 7 ---
-            if card.rank == '7':
-                for split1 in range(1, 8):  # First Action
-                    split2 = 7 - split1    # Second Action
-                    for marble1 in active_player.list_marble:
-                        for marble2 in active_player.list_marble:
-                            if marble1.pos not in self.KENNEL_POSITIONS[active_player_idx]:
+                            actions.append(action)
+
+
+            # Check possible move actions for each marble
+            for card in active_player.list_card:
+                if card.rank not in ['7', 'J', 'JKR', '4']:
+                    # "normal" Cards
+                    for marble_idx, marble in enumerate(active_player.list_marble):
+                        if marble.pos not in self.KENNEL_POSITIONS[active_player_idx]:
+                            num_moves = int(card.rank)
+                            move_allowed = True
+                            test_state = self.state.model_copy(deep=True)
+
+                        for _ in range(num_moves):
+                            test_state.list_player[active_player_idx].list_marble[marble_idx].pos += 1
+                            validity = self.check_move_validity(
+                                test_state, active_player_idx, marble_idx)
+                            if not validity:
+                                move_allowed = False
+                                break
+
+                        if move_allowed:
+                            actions.append(
+                                Action(
+                                    card=card,
+                                    pos_from=marble.pos,
+                                    pos_to=test_state.list_player[active_player_idx].list_marble[marble_idx].pos,
+                                    card_swap=None
+                                )
+                            )
+                # --- Card 7 ---
+                if card.rank == '7':
+                    for split1 in range(1, 8):  # First Action
+                        split2 = 7 - split1    # Second Action
+                        for marble1 in active_player.list_marble:
+                            for marble2 in active_player.list_marble:
+                                if marble1.pos not in self.KENNEL_POSITIONS[active_player_idx]:
+                                    test_state = self.state.model_copy(deep=True)
+                                    test_state.list_player[active_player_idx].list_marble[marble1.pos].pos += split1
+                                    validity1 = self.check_move_validity(
+                                        test_state, active_player_idx, marble1.pos)
+
+                                    if split2 > 0 and marble2.pos != marble1.pos:
+                                        test_state.list_player[active_player_idx].list_marble[marble2.pos].pos += split2
+                                        validity2 = self.check_move_validity(
+                                            test_state, active_player_idx, marble2.pos)
+                                    else:
+                                        validity2 = True
+
+                                    if validity1 and validity2:
+                                        actions.append(
+                                            Action(
+                                                card=card,
+                                                pos_from=marble1.pos,
+                                                pos_to=test_state.list_player[active_player_idx].list_marble[marble1.pos].pos,
+                                                card_swap=None
+                                            )
+                                        )
+
+                # --- Joker ---
+                if card.rank == 'JKR':
+                    for possible_card in range(1, 14):  
+                        for marble in active_player.list_marble:
+                            if marble.pos not in self.KENNEL_POSITIONS[active_player_idx]:
+                                num_moves = possible_card
+                                move_allowed = True
                                 test_state = self.state.model_copy(deep=True)
-                                test_state.list_player[active_player_idx].list_marble[marble1.pos].pos += split1
-                                validity1 = self.check_move_validity(
-                                    test_state, active_player_idx, marble1.pos)
 
-                                if split2 > 0 and marble2.pos != marble1.pos:
-                                    test_state.list_player[active_player_idx].list_marble[marble2.pos].pos += split2
-                                    validity2 = self.check_move_validity(
-                                        test_state, active_player_idx, marble2.pos)
-                                else:
-                                    validity2 = True
+                                for _ in range(num_moves):
+                                    test_state.list_player[active_player_idx].list_marble[marble.pos].pos += 1
+                                    validity = self.check_move_validity(
+                                        test_state, active_player_idx, marble.pos)
+                                    if not validity:
+                                        move_allowed = False
+                                        break
 
-                                if validity1 and validity2:
+                                if move_allowed:
                                     actions.append(
                                         Action(
-                                            card=card,
-                                            pos_from=marble1.pos,
-                                            pos_to=test_state.list_player[active_player_idx].list_marble[marble1.pos].pos,
+                                            card=Card(suit='', rank=str(possible_card)),
+                                            pos_from=marble.pos,
+                                            pos_to=test_state.list_player[active_player_idx].list_marble[marble.pos].pos,
                                             card_swap=None
                                         )
                                     )
 
-            # --- Joker ---
-            if card.rank == 'JKR':
-                for possible_card in range(1, 14):  
-                    for marble in active_player.list_marble:
-                        if marble.pos not in self.KENNEL_POSITIONS[active_player_idx]:
-                            num_moves = possible_card
-                            move_allowed = True
-                            test_state = self.state.model_copy(deep=True)
-
-                            for _ in range(num_moves):
-                                test_state.list_player[active_player_idx].list_marble[marble.pos].pos += 1
-                                validity = self.check_move_validity(
-                                    test_state, active_player_idx, marble.pos)
-                                if not validity:
-                                    move_allowed = False
-                                    break
-
-                            if move_allowed:
+                # --- Jack ---
+                if card.rank == 'J':
+                    all_marbles = [
+                        (idx, m) for idx, p in enumerate(self.state.list_player)
+                        for m in p.list_marble
+                    ]
+                    for my_marble in active_player.list_marble:
+                        for other_idx, other_marble in all_marbles:
+                            if my_marble.pos != other_marble.pos:
                                 actions.append(
                                     Action(
-                                        card=Card(suit='', rank=str(possible_card)),
-                                        pos_from=marble.pos,
-                                        pos_to=test_state.list_player[active_player_idx].list_marble[marble.pos].pos,
+                                        card=card,
+                                        pos_from=my_marble.pos,
+                                        pos_to=other_marble.pos,
                                         card_swap=None
                                     )
                                 )
 
-            # --- Jack ---
-            if card.rank == 'J':
-                all_marbles = [
-                    (idx, m) for idx, p in enumerate(self.state.list_player)
-                    for m in p.list_marble
-                ]
-                for my_marble in active_player.list_marble:
-                    for other_idx, other_marble in all_marbles:
-                        if my_marble.pos != other_marble.pos:
-                            actions.append(
-                                Action(
-                                    card=card,
-                                    pos_from=my_marble.pos,
-                                    pos_to=other_marble.pos,
-                                    card_swap=None
+                if card.rank == '4':
+                    for marble in active_player.list_marble:
+                        if marble.pos not in self.KENNEL_POSITIONS[active_player_idx]:
+                            pos_to_backwards = (marble.pos - 4) % 64 
+                            pos_to_forwards = (marble.pos + 4) % 64  
+
+                            # Check if backwards is allowed
+                            test_state_backwards = self.state.model_copy(deep=True)
+                            test_state_backwards.list_player[active_player_idx].list_marble[marble_idx].pos = pos_to_backwards
+
+                            # Check if forwards is allowed
+                            test_state_forwards = self.state.model_copy(deep=True)
+                            test_state_forwards.list_player[active_player_idx].list_marble[marble_idx].pos = pos_to_forwards
+
+                            if self.check_move_validity(test_state_backwards, active_player_idx, marble_idx):
+                                actions.append(
+                                    Action(
+                                        card=card,
+                                        pos_from=marble.pos,
+                                        pos_to=pos_to_backwards,
+                                        card_swap=None
+                                    )
                                 )
-                            )
 
-            if card.rank == '4':
-                for marble in active_player.list_marble:
-                    if marble.pos not in self.KENNEL_POSITIONS[active_player_idx]:
-                        pos_to_backwards = (marble.pos - 4) % 64 
-                        pos_to_forwards = (marble.pos + 4) % 64  
-
-                        # Check if backwards is allowed
-                        test_state_backwards = self.state.model_copy(deep=True)
-                        test_state_backwards.list_player[active_player_idx].list_marble[marble_idx].pos = pos_to_backwards
-
-                        # Check if forwards is allowed
-                        test_state_forwards = self.state.model_copy(deep=True)
-                        test_state_forwards.list_player[active_player_idx].list_marble[marble_idx].pos = pos_to_forwards
-
-                        if self.check_move_validity(test_state_backwards, active_player_idx, marble_idx):
-                            actions.append(
-                                Action(
-                                    card=card,
-                                    pos_from=marble.pos,
-                                    pos_to=pos_to_backwards,
-                                    card_swap=None
+                            if self.check_move_validity(test_state_forwards, active_player_idx, marble_idx):
+                                actions.append(
+                                    Action(
+                                        card=card,
+                                        pos_from=marble.pos,
+                                        pos_to=pos_to_forwards,
+                                        card_swap=None
+                                    )
                                 )
-                            )
-
-                        if self.check_move_validity(test_state_forwards, active_player_idx, marble_idx):
-                            actions.append(
-                                Action(
-                                    card=card,
-                                    pos_from=marble.pos,
-                                    pos_to=pos_to_forwards,
-                                    card_swap=None
-                                )
-                            )
 
 
-            elif card.rank == 'K':
-                num_moves = 13
-            elif card.rank == 'Q':
-                num_moves = 12
-            else:
-                num_moves = int(card.rank)
+                elif card.rank == 'K':
+                    num_moves = 13
+                elif card.rank == 'Q':
+                    num_moves = 12
+                else:
+                    num_moves = int(card.rank)
 
         return actions
     
