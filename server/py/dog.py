@@ -98,6 +98,15 @@ class Dog(Game):
     # Define starting positions for each player
     START_POSITION = [0, 16, 32, 48]
 
+    #Define Finish Position
+    FINISH_POSITIONS = [
+        [71, 70, 69, 68],  #  Positions for player index 0
+        [79, 78, 77, 76],  #  Positions for player index 1
+        [87, 86, 85, 84],  #  Positions for player index 0
+        [95, 94, 93, 92],  #  Positions for player index 0
+    ]
+
+
     def __init__(self) -> None:
         """ Game initialization (set_state call not necessary, we expect 4 players) """
         # Initialize the game state
