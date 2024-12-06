@@ -107,10 +107,25 @@ class Dog(Game):
 
         Each player (i: range 0-3) has 4 marbles (j: range 0-3), initialized from unique positions (pos).
         """
-        # Initialize players with empty card hands and marbles in their starting positions
-        players = [PlayerState(name=f"Player {i+1}", 
-                               list_card=[], 
-                               list_marble=[Marble(pos=i*24 + j, is_save=True) for j in range(4)]) for i in range(4)]
+                # Define kennel positions for each player
+        kennels = {
+            0: [64, 65, 66, 67],  # Player 1's kennel positions
+            1: [72, 73, 74, 75],  # Player 2's kennel positions
+            2: [80, 81, 82, 83],  # Player 3's kennel positions
+            3: [88, 89, 90, 91]   # Player 4's kennel positions
+        }
+
+        # Initialize players with empty card hands and marbles in their kennel positions
+        players = [
+            PlayerState(
+                name=f"Player {i+1}",
+                list_card=[],
+                list_marble=[
+                    Marble(pos=kennels[i][j], is_save=True) for j in range(4)
+                ]
+            )
+            for i in range(4)
+        ]
        
         #prepare deck
         deck = GameState.LIST_CARD.copy()
@@ -174,16 +189,16 @@ class Dog(Game):
 
         board_size = 96
         kennels = {
-            0: [0, 1, 2, 3],     # Player 1's starting positions
-            1: [24, 25, 26, 27], # Player 2's starting positions
-            2: [48, 49, 50, 51], # Player 3's starting positions
-            3: [72, 73, 74, 75]  # Player 4's starting positions
+            0: [64, 65, 66, 67], # Player 1's starting positions, blue
+            1: [72, 73, 74, 75], # Player 2's starting positions, green
+            2: [80, 81, 82, 83], # Player 3's starting positions, red
+            3: [88, 89, 90, 91]  # Player 4's starting positions, yellow
         }
         safe_spaces = {
-            0: [92, 93, 94, 95],  # Player 1's safe spaces
-            1: [68, 69, 70, 71],  # Player 2's safe spaces
-            2: [44, 45, 46, 47],  # Player 3's safe spaces
-            3: [20, 21, 22, 23]   # Player 4's safe spaces
+            0: [68, 69, 70, 71],  # Player 1's safe spaces, blue
+            1: [76, 77, 78, 79],  # Player 2's safe spaces, green
+            2: [84, 85, 86, 87],  # Player 3's safe spaces, red
+            3: [92, 93, 94, 95]   # Player 4's safe spaces, yellow
         }
 
         board = ["." for _ in range(board_size)]
@@ -201,23 +216,23 @@ class Dog(Game):
         for i in range(0, board_size, 12):
             print(" ".join(board[i:i+12]))
     
-    def _get_card_value(self, card: Card) -> int:
-        """Map card rank to its movement value."""
+    def _get_card_value(self, card: Card) -> list[int]:
+        """Map card rank to its movement values."""
         if card.rank == 'A':
-            return 1
+            return [1, 11]  # As kann 1 oder 11 sein
         elif card.rank == 'Q':
-            return 12
+            return [12]
         elif card.rank == 'K':
-            return 13
+            return [13]
         elif card.rank.isdigit():
-            return int(card.rank)
+            return [int(card.rank)]
         elif card.rank == 'JKR':
-            return 1
+            return [-4, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13]  # Joker kann beliebigen Wert annehmen
         elif card.rank == '4':
-            return -4
+            return [-4,4]
         elif card.rank == '7':
-            return 7
-        return 0
+            return [7]
+        return [0]  # Fallback für ungültige Karten
 
     def _calculate_new_position(self, current_pos: int, move_value: int, forward: bool = True) -> int:
         """Calculate the new position of a marble on the board."""
@@ -264,43 +279,64 @@ class Dog(Game):
 
         actions = []
         active_player = self.state.list_player[self.state.idx_player_active]
+        current_cards = active_player.list_card  # cards of current player
+        active_marbles = active_player.list_marble  # marbels of current player
 
-        # Check if in first round (cnt_round = 0)
-        if self.state.cnt_round == 0:
-            # Only allow moves with start cards (A, K, JKR)
-            for card in active_player.list_card:
+        # Safe Spaces, Kennel and Startposition for all players
+        kennels = {
+            0: [64, 65, 66, 67], # Player 1's starting positions, blue
+            1: [72, 73, 74, 75], # Player 2's starting positions, green
+            2: [80, 81, 82, 83], # Player 3's starting positions, red
+            3: [88, 89, 90, 91]  # Player 4's starting positions, yellow
+        }
+        safe_spaces = {
+            0: [68, 69, 70, 71],  # Player 1's safe spaces, blue
+            1: [76, 77, 78, 79],  # Player 2's safe spaces, green
+            2: [84, 85, 86, 87],  # Player 3's safe spaces, red
+            3: [92, 93, 94, 95]   # Player 4's safe spaces, yellow
+        }
+        start_positions = {
+            0: 0,    # Player 1
+            1: 16,   # Player 2
+            2: 32,   # Player 3
+            3: 48    # Player 4
+        }
+
+        player_idx = self.state.idx_player_active
+        player_kennel = kennels[player_idx]
+        player_start_position = start_positions[player_idx]
+
+        # checks, if and how many marbels are in the kennel
+        marbles_in_kennel = [marble for marble in active_marbles if marble.pos in player_kennel]
+        num_in_kennel = len(marbles_in_kennel)
+
+        # Iterate through cards and determine possible actions
+        for card in current_cards:
+            card_values = self._get_card_value(card)  # Get the list of possible values for the card
+
+            # Check for starting moves & Ensure the starting position is free of the active player's own marbles
+            if num_in_kennel > 0 and not any(marble.pos == player_start_position for marble in active_marbles):
+                # Only `A`, `K`, `JKR` can perform starting moves
                 if card.rank in ['A', 'K', 'JKR']:
-                    # Add action to move from kennel to start
                     actions.append(Action(
                         card=card,
-                        pos_from=64,  # Kennel position
-                        pos_to=0,     # Start position
+                        pos_from=marbles_in_kennel[0].pos,  # Take one marble from the kennel
+                        pos_to=player_start_position,       # Move to the starting position
                         card_swap=None
                     ))
-            return actions
 
-        # Regular game moves
-        for card in active_player.list_card:
-            if card.rank in self.MOVEMENT_CARDS:
-                move_value = self._get_card_value(card)
-                for marble in active_player.list_marble:
-                    if marble.pos not in self.INVALID_POSITIONS:
-                        pos_to = self._calculate_new_position(marble.pos, move_value)
-                        actions.append(Action(
-                            card=card,
-                            pos_from=marble.pos,
-                            pos_to=pos_to,
-                            card_swap=None
-                        ))
-
-            # Handle specific rules for SEVEN (split moves)
-            if card.rank == '7':
-                # Generate all possible split combinations
-                for marble in active_player.list_marble:
-                    if marble.pos not in self.INVALID_POSITIONS:
-                        splits = self._generate_split_moves(7, marble.pos)
-                        for split_action in splits:
-                            actions.append(split_action)
+            # Check for other moves (only for marbles outside the kennel)
+            for marble in active_marbles:
+                if marble.pos in player_kennel:  # Skip marbles in the kennel
+                    continue
+                for card_value in card_values:  # Iterate over all possible values of the card
+                    pos_to = self._calculate_new_position(marble.pos, card_value)
+                    actions.append(Action(
+                        card=card,
+                        pos_from=marble.pos,
+                        pos_to=pos_to,
+                        card_swap=None
+                    )) 
 
         return actions
  
@@ -325,10 +361,10 @@ class Dog(Game):
 
             # Update marble position if applicable
             safe_spaces = {
-                0: [92, 93, 94, 95],  # Player 1's safe spaces
-                1: [68, 69, 70, 71],  # Player 2's safe spaces
-                2: [44, 45, 46, 47],  # Player 3's safe spaces
-                3: [20, 21, 22, 23]   # Player 4's safe spaces
+                0: [0, 68, 69, 70, 71],  # Player 1's safe spaces, blue
+                1: [16, 76, 77, 78, 79],  # Player 2's safe spaces, green
+                2: [32, 84, 85, 86, 87],  # Player 3's safe spaces, red
+                3: [48, 92, 93, 94, 95]   # Player 4's safe spaces, yellow
             }
             for marble in self.state.list_player[self.state.idx_player_active].list_marble:
                 if marble.pos == action.pos_from:
@@ -492,7 +528,7 @@ if __name__ == '__main__':
         # Display possible actions
         print("\nPossible Actions:")
         for idx, action in enumerate(actions):
-            print(f"{idx}: Play {action.card.rank} of {action.card.suit}")
+            print(f"{idx}: Play {action.card.rank} of {action.card.suit} from {action.pos_from} to {action.pos_to}")
 
         # Select an action (random in this example)
         selected_action = random.choice(actions) if actions else None
