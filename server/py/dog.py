@@ -355,6 +355,13 @@ class Dog(Game):
                             pos_one_forward = final_start + (pos_one_forward - queue_start) - 1
                         to_positions.append(pos_one_forward)
 
+                    if card.rank == 'Q':
+                        # Move 12 spots forward
+                        pos_one_forward = (marble.pos + 12) % self.TOTAL_STEPS
+                        if marble.pos < queue_start and pos_one_forward >= queue_start:
+                            pos_one_forward = final_start + (pos_one_forward - queue_start) - 1
+                        to_positions.append(pos_one_forward)
+
 
 
                     # checks for each possible position if the way is blocked. if it is not blocked, we add it to action.
