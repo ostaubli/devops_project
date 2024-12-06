@@ -358,7 +358,7 @@ class Dog(Game):
         # Handle the case where no action is provided (skip turn)
         if action is None:
             print("No action provided. Advancing the active player.")
-            self.state.list_card_draw.extend(active_player.list_card) # Add all cards from the player's hand to the draw pile
+            self.state.list_card_discard.extend(active_player.list_card) # Add all cards from the player's hand to the draw pile
             active_player.list_card = []
             self.state.idx_player_active = (self.state.idx_player_active + 1) % len(self.state.list_player)
             return  # Exit the function early
@@ -584,6 +584,6 @@ if __name__ == '__main__':
         game.validate_total_cards()
 
         # Optionally exit after a certain number of rounds (for testing)
-        if game.state.cnt_round > 16:  # Example limit
+        if game.state.cnt_round > 3:  # Example limit
             print(f"Ending game for testing after {game.state.cnt_round} rounds.")
             break
