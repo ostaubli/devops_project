@@ -481,21 +481,23 @@ class Dog(Game):
         """Apply the given action to the game."""
         if not self.state:
             raise ValueError("Game state is not set.")
+        
+        active_player = self.state.list_player[self.state.idx_player_active]
 
         # Handle the case where no action is provided (skip turn)
         if action is None:
             print("No action provided. Advancing the active player.")
+            self.state.list_card_draw.extend(active_player.list_card) # Add all cards from the player's hand to the draw pile
+            active_player.list_card = []
             self.state.idx_player_active = (self.state.idx_player_active + 1) % len(self.state.list_player)
             return  # Exit the function early
         
         # Get the list of valid actions for the current state
-        valid_actions = self.get_list_action()  # Fetch valid actions from get_list_action
+        # valid_actions = self.get_list_action()  # Fetch valid actions from get_list_action
 
         # Validate the provided action
-        #if action not in valid_actions:
-            #raise ValueError(f"Invalid action: {action}. Action is not in the list of valid actions.")
-
-        active_player = self.state.list_player[self.state.idx_player_active]
+        # if action not in valid_actions:
+            # raise ValueError(f"Invalid action: {action}. Action is not in the list of valid actions.")
 
         # Log the action being applied
         print(f"Player {active_player.name} plays {action.card.rank} of {action.card.suit} "
@@ -507,32 +509,43 @@ class Dog(Game):
         # Add the played card to the discard pile
         self.state.list_card_discard.append(action.card)
 
-        # Update marble position if applicable
-        for marble in active_player.list_marble:
-            if marble.pos == action.pos_from:
-                marble.pos = action.pos_to
-                marble.is_save = marble.pos in self.SAFE_SPACES[self.state.idx_player_active]
-                if marble.is_save:
-                    print(f"Marble moved to a safe space at position {marble.pos}.")
+    # Handle moving a marble from the kennel to the start position
+        if action.pos_from in self.KENNEL_POSITIONS[self.state.idx_player_active] and action.pos_to == 0:
+            for marble in active_player.list_marble:
+                if marble.pos == action.pos_from:
+                    marble.pos = action.pos_to
+                    marble.is_save = True  # Mark the marble as safe after leaving the kennel
+                    print(f"Marble moved from kennel to start position: {marble.pos}.")
+                    break
+        else:
+            # Update marble position for regular moves
+            for marble in active_player.list_marble:
+                if marble.pos == action.pos_from:
+                    marble.pos = action.pos_to
+                    marble.is_save = marble.pos in self.SAFE_SPACES[self.state.idx_player_active]
+                    if marble.is_save:
+                        print(f"Marble moved to a safe space at position {marble.pos}.")
+                    break
+            else:
+                raise ValueError(f"No marble found at position {action.pos_from} for Player {active_player.name}.")
 
-                # Check for collision with other players' marbles
-                for other_idx, other_player in enumerate(self.state.list_player):
-                    if other_idx == self.state.idx_player_active:
-                        continue  # Skip the active player
-                    
-                    for other_marble in other_player.list_marble:
-                        if other_marble.pos == marble.pos:  # Collision detected
-                            print(f"Collision! Player {other_player.name}'s marble at position {other_marble.pos} "
-                                "is sent back to the kennel.")
-                            # Send the marble back to its kennel
-                            # Use the KENNEL_POSITIONS constant
-                            for pos in self.KENNEL_POSITIONS[other_idx]:
-                                # Ensure the kennel position is unoccupied
-                                if all(marble.pos != pos for player in self.state.list_player for marble in player.list_marble):
-                                    other_marble.pos = pos
-                                    other_marble.is_save = False
-                                    break
-                break  # Exit loop after updating the correct marble
+        # Check for collision with other players' marbles
+        for other_idx, other_player in enumerate(self.state.list_player):
+            if other_idx == self.state.idx_player_active:
+                continue  # Skip the active player
+
+            for other_marble in other_player.list_marble:
+                if other_marble.pos == action.pos_to:  # Collision detected
+                    print(f"Collision! Player {other_player.name}'s marble at position {other_marble.pos} "
+                        "is sent back to the kennel.")
+
+                    # Send the marble back to the kennel
+                    for pos in self.KENNEL_POSITIONS[other_idx]:
+                        # Ensure the kennel position is unoccupied
+                        if all(marble.pos != pos for player in self.state.list_player for marble in player.list_marble):
+                            other_marble.pos = pos
+                            other_marble.is_save = False
+                            break
 
         # Advance to the next active player
         self.state.idx_player_active = (self.state.idx_player_active + 1) % len(self.state.list_player)
@@ -678,32 +691,37 @@ class RandomPlayer(Player):
 if __name__ == '__main__':
 
     game = Dog()
-    game.draw_board()  # Draw the initial board
 
-    game.validate_total_cards()
+    # Ensure the game state is initialized before proceeding
+    if game.state is None:
+        print("Error: Game state is not initialized. Exiting...")
 
-    while game.state.phase != GamePhase.FINISHED:
-        game.print_state()
+    else:
+        game.draw_board()  # Draw the initial board
 
-        # Get the list of possible actions for the active player
-        actions = game.get_list_action()
-        # Display possible actions
-        print("\nPossible Actions:")
-        for idx, action in enumerate(actions):
-            print(f"{idx}: Play {action.card.rank} of {action.card.suit} from {action.pos_from} to {action.pos_to}")
-
-        # Select an action (random in this example)
-        selected_action = random.choice(actions) if actions else None
-
-        # Apply the selected action
-        game.apply_action(selected_action)
-        game.draw_board()  # Update the board after each action
-
-        #debuging for deck management to see how many cards are in different piles
         game.validate_total_cards()
 
-        # Optionally exit after a certain number of rounds (for testing)
-        if game.state.cnt_round > 3:  # Example limit
-            game.state.phase = GamePhase.FINISHED
-            print(f"Ending game for testing after {game.state.cnt_round} rounds.")
-            break
+        while game.state.phase != GamePhase.FINISHED:
+            game.print_state()
+
+            # Get the list of possible actions for the active player
+            actions = game.get_list_action()
+            # Display possible actions
+            print("\nPossible Actions:")
+            for idx, action in enumerate(actions):
+                print(f"{idx}: Play {action.card.rank} of {action.card.suit} from {action.pos_from} to {action.pos_to}")
+
+            # Select an action (random in this example)
+            selected_action = random.choice(actions) if actions else None
+
+            # Apply the selected action
+            game.apply_action(selected_action)
+            game.draw_board()  # Update the board after each action
+
+            #debuging for deck management to see how many cards are in different piles
+            game.validate_total_cards()
+
+            # Optionally exit after a certain number of rounds (for testing)
+            if game.state.cnt_round > 5:  # Example limit
+                print(f"Ending game for testing after {game.state.cnt_round} rounds.")
+                break
