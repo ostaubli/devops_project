@@ -325,28 +325,46 @@ class Dog(Game):
                         # Generate swap actions
                         for marble_own in active_player_marbles:
                             for player_idx, marble_other in other_players_marbles:
-                                # Add a valid swap action
-                                actions.append(
-                                    Action(
-                                        card=card,
-                                        pos_from=marble_own.pos,  # Position of the active player's marble
-                                        pos_to=marble_other.pos,  # Position of the other player's marble
-                                        card_swap=None  # Specify that the action involves a swap
+                                if marble_own.pos != marble_other.pos:
+                                    # Add a valid swap action
+                                    actions.append(
+                                        Action(
+                                            card=card,
+                                            pos_from=marble_own.pos,  # Position of the active player's marble
+                                            pos_to=marble_other.pos,  # Position of the other player's marble
+                                            card_swap=None  # Specify that the action involves a swap
+                                        )
                                     )
-                                )
+                                    actions.append(Action(
+                                        card=card,
+                                        pos_from=marble_other.pos,
+                                        pos_to=marble_own.pos,
+                                        card_swap=None
+                                    ))
 
                         # If no actions exist, allow swapping two of the active player's marbles (which does not make a difference, but we do it for the test
                         if not actions:
                             for i, marble_own in enumerate(active_player_marbles):
-                                for marble_partner in active_player_marbles[i+1:]:  # Avoid duplicate swaps
-                                    actions.append(
-                                        Action(
-                                            card=card,
-                                            pos_from=marble_own.pos,  # Position of the first marble
-                                            pos_to=marble_partner.pos,  # Position of the second marble
-                                            card_swap=None  # Specify that the action involves a swap
+                                for marble_partner in active_player_marbles[i:]:
+                                    if marble_own.pos != marble_partner.pos:
+                                        actions.append(
+                                            Action(
+                                                card=card,
+                                                pos_from=marble_own.pos,  # Position of the first marble
+                                                pos_to=marble_partner.pos,  # Position of the second marble
+                                                card_swap=None  # Specify that the action involves a swap
+                                            )
                                         )
-                                    )
+
+                            # Allow swaps between two of the active player's marbles
+                            for marble_partner in active_player_marbles:  # CHANGE: Removed avoidance of duplicate swaps
+                                if marble_own != marble_partner:
+                                    actions.append(Action(
+                                        card=card,
+                                        pos_from=marble_own.pos,
+                                        pos_to=marble_partner.pos,
+                                        card_swap=None
+                                    ))  # CHANGE: Allow both directions of swaps
 
 
                     if card.rank == 'K':
