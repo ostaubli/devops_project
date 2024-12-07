@@ -369,61 +369,135 @@ class Dog(Game):
 
         return actions
 
-    # def get_actions_for_7(self, card: Card, player: PlayerState) -> List[Action]:
-    #     """
-    #     Function that generates all possible moves for the card '7' based on splitting the 7 points across marbles.
-    #     """
-    #     actions = []
-    #     marbles = player.list_marble
-    #     player_idx = self.state.idx_player_active
-    #     kennel_positions = self.board["kennel_positions"][player_idx]
-    #
-    #     # Filter marbles that are outside the kennel
-    #     active_marbles = [marble for marble in marbles if marble.pos not in kennel_positions]
-    #
-    #     if not active_marbles:
-    #         return []  # No actions possible if all marbles are in the kennel
-    #
-    #     def generate_splitting_combinations_7(remaining: int, moves: List[int], marble_indices: List[int],
-    #                                           results: List[List[Tuple[int, int]]]):
-    #         """Function to generate all splits of the card 7."""
-    #         if remaining == 0:
-    #             # Validate the split and add it to results
-    #             valid_split = True
-    #             for i, steps in enumerate(moves):
-    #                 if steps > 0:  # Only check active moves
-    #                     marble = active_marbles[marble_indices[i]]
-    #                     pos_to = (marble.pos + steps) % len(self.board["circular_path"])
-    #                     if pos_to in kennel_positions:  # Invalid if it lands in the kennel
-    #                         valid_split = False
-    #                         break
-    #             if valid_split:
-    #                 results.append([(marble_indices[i], moves[i]) for i in range(len(moves)) if moves[i] > 0])
-    #             return
-    #
-    #         for i in range(len(moves)):
-    #             # Increment move for the current marble
-    #             moves[i] += 1
-    #             generate_splitting_combinations_7(remaining - 1, moves, marble_indices, results)
-    #             moves[i] -= 1  # Backtrack
-    #
-    #     # Generate combinations
-    #     marble_indices = list(range(len(active_marbles)))
-    #     results = []
-    #     generate_splitting_combinations_7(7, [0] * len(active_marbles), marble_indices, results)
-    #
-    #     # Convert valid splits into actions
-    #     for split in results:
-    #         actions.append(
-    #             Action(
-    #                 card=card,
-    #                 pos_from=[marble.pos for marble_idx, _ in split],
-    #                 pos_to=[(active_marbles[marble_idx].pos + steps) % len(self.board["circular_path"]) for
-    #                         marble_idx, steps in split],
-    #                 card_swap=None
-    #             )
-    #         )
-    #     return actions
+    def generate_splitting_combinations(self, marbles: List[Marble], points: int) -> List[List[tuple]]:
+        """
+        Generate all possible ways to split movement points among marbles.
+        :param marbles: List of marbles that are out of the kennel.
+        :param points: Total points to distribute (e.g., 7 for card '7').
+        :return: List of splitting combinations as lists of (marble_index, steps).
+        """
+        if not marbles:
+            return []
+
+        # Get the indices of marbles that can move
+        marble_indices = [i for i, marble in enumerate(marbles) if marble.is_save]
+
+        if not marble_indices:
+            return []
+
+        # Generate all ways to distribute `points` among the marbles
+        possible_distributions = [
+            comb for comb in combinations_with_replacement(range(points + 1), len(marble_indices))
+            if sum(comb) == points
+        ]
+
+        # Map distributions to marble indices and generate permutations for order
+        splitting_combinations = []
+        for dist in possible_distributions:
+            for perm in permutations(dist):
+                splitting_combinations.append([(marble_indices[i], steps) for i, steps in enumerate(perm)])
+
+        return splitting_combinations
+
+    def get_actions_for_4(self, player: PlayerState) -> List[Action]:
+        """
+        Generate all possible moves for the card '4', where the player can move a marble
+        4 steps forward or 4 steps backward.
+        """
+        actions = []  # List to store possible actions
+
+        # Iterate through all marbles of the player
+        for marble in player.list_marble:
+            if marble.is_save:  # Only consider marbles that are out of the kennel
+                # Calculate positions for forward and backward moves
+                target_pos_forward = (marble.pos + 4) % len(self.board["circular_path"])
+                target_pos_backward = (marble.pos - 4) % len(self.board["circular_path"])
+
+                # Forward move action
+                actions.append(Action(
+                    card=Card(suit='', rank='4'),
+                    pos_from=marble.pos,
+                    pos_to=target_pos_forward,
+                    card_swap=None
+                ))
+
+                # Backward move action
+                actions.append(Action(
+                    card=Card(suit='', rank='4'),
+                    pos_from=marble.pos,
+                    pos_to=target_pos_backward,
+                    card_swap=None
+                ))
+
+        return actions
+
+    def get_actions_for_7(self, player: PlayerState) -> List[Action]:
+        """
+        Generate all possible moves for the card '7' based on splitting the 7 points across marbles.
+        """
+        actions = []
+        marbles = player.list_marble
+
+        # Generate all possible splitting combinations for marbles
+        splitting_combinations = self.generate_splitting_combinations(marbles, 7)
+
+        for combination in splitting_combinations:
+            move_actions = []
+            valid = True  # To validate the combination
+            for marble_idx, steps in combination:
+                marble = marbles[marble_idx]
+
+                if not marble.is_save:  # Ensure the marble is out of the kennel
+                    valid = False
+                    break
+
+                target_pos = (marble.pos + steps) % len(self.board["circular_path"])
+                move_actions.append(
+                    Action(card=Card(suit='', rank='7'), pos_from=marble.pos, pos_to=target_pos, card_swap=None)
+                )
+
+            if valid:
+                # Create one Action object per splitting combination
+                actions.append(
+                    Action(card=Card(suit='', rank='7'), pos_from=None, pos_to=None, card_swap=combination)
+                )
+
+        return actions
+
+    def get_actions_jack(self, player: PlayerState) -> None:
+        """
+        Handle the playing of a Jack (J) card.
+        This method will ensure that the player must exchange a marble with another player.
+        """
+        marbles_to_swap = [marble for marble in player.list_marble if
+                           marble.is_save and not self.is_protected_marble(marble)]
+
+        if len(marbles_to_swap) == 0:
+            print(f"{player.name} has no valid marbles to exchange. The Jack card will have no effect.")
+            return
+
+        # Choose a marble to swap (we'll simply pick the first available one for simplicity)
+        marble_to_swap = marbles_to_swap[0]
+
+        # Now find a valid opponent or teammate to exchange with.
+        # For simplicity, we assume the player can swap with any other player who has an "out" marble.
+        other_player = None
+        for other in self.state.list_player:
+            if other != player:
+                other_marbles = [marble for marble in other.list_marble if
+                                 marble.is_save and not self.is_protected_marble(marble)]
+                if other_marbles:
+                    other_player = other
+                    marble_from_other = other_marbles[0]  # Pick the first available marble
+                    break
+
+        if other_player:
+            print(f"{player.name} will exchange a marble with {other_player.name}.")
+            # Perform the exchange
+            marble_to_swap.pos, marble_from_other.pos = marble_from_other.pos, marble_to_swap.pos
+            marble_to_swap.is_save, marble_from_other.is_save = marble_from_other.is_save, marble_to_swap.is_save
+        else:
+            print(f"No valid player found to exchange marbles with. The Jack card will have no effect.")
 
     def apply_action(self, action: Action) -> None:
         """ Apply the given action to the game """
@@ -434,18 +508,24 @@ class Dog(Game):
 
         # Apply move of basic cards
         if action.card.rank in self._BASIC_RANKS:
-            for marble in player.list_marble:
+          for marble in player.list_marble:
                 if marble.pos == action.pos_from and marble.is_save:
                     # Check for collisions before moving the marble and send home if so
                     if action.pos_to is not None and self.position_is_occupied(action.pos_to) and not self.is_in_any_finish_area(action.pos_to):
                         self.send_home(marble)
                     marble.pos = action.pos_to
                     marble.is_save = False
-
-        #         print(f"{player.name}'s marble at position {pos} sent back to the kennel.")
+                    
+                    #         print(f"{player.name}'s marble at position {pos} sent back to the kennel.")
         # print(f"{player.name}'s marble at position {pos} is in the finish and cannot be sent home."
         # if :
         # self.send_home
+
+        elif action.card.rank == 'J':
+            self.get_actions_jack(player)
+
+        elif action.card.rank == "4":
+            self.get_actions_for_4(player)            
 
         elif action.card.rank == 'JKR':  # Joker: use as any card
             # Action can be anything based on the game rules, e.g., swap a card or move a marble
@@ -494,6 +574,8 @@ class Dog(Game):
             #
             # if remaining_points > 0:
             #     print(f"{player.name} left {remaining_points} points unused for card 7.")
+            
+        else:  # Regular behavior for moving marbles based on card rank
 
         # Update the cards: if it's a move action, discard the played card
         player.list_card.remove(action.card)
