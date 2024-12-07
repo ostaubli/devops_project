@@ -576,6 +576,7 @@ class Dog(Game):
             #     print(f"{player.name} left {remaining_points} points unused for card 7.")
             
         else:  # Regular behavior for moving marbles based on card rank
+            pass
 
         # Update the cards: if it's a move action, discard the played card
         player.list_card.remove(action.card)
