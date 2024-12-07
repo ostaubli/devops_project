@@ -256,6 +256,7 @@ async def uno_random_player_ws(websocket: WebSocket):
 async def dog_simulation(request: Request):
     return templates.TemplateResponse("game/dog/simulation.html", {"request": request})
 
+
 @app.websocket("/dog/simulation/ws")
 async def dog_simulation_ws(websocket: WebSocket):
     await websocket.accept()
@@ -295,9 +296,11 @@ async def dog_simulation_ws(websocket: WebSocket):
     except WebSocketDisconnect:
         print("Disconnected")
 
+
 @app.get("/dog/singleplayer", response_class=HTMLResponse)
 async def dog_singleplayer(request: Request):
     return templates.TemplateResponse("game/dog/singleplayer.html", {"request": request})
+
 
 @app.websocket("/dog/singleplayer/ws")
 async def dog_singleplayer_ws(websocket: WebSocket):
