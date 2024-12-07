@@ -368,7 +368,7 @@ class Dog(Game):
                         actions.append(Action(card=card, pos_from=marble.pos, pos_to=target_pos, card_swap=None))
         return actions
 
-    def get_actions_for_4(self, player: PlayerState) -> List[List[Action]]:
+    def get_actions_for_4(self, player: PlayerState) -> List[Action]:
         """
         Generate all possible moves for the card '4', where the player can move a marble
         4 steps forward or 4 steps backward.
