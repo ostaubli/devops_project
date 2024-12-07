@@ -243,6 +243,9 @@ class Uno(Game):
             self.state.list_card_discard.append(state.list_card_draw.pop())
         if top_card.symbol == 'reverse':
             self.state.direction *= -1
+        if top_card.symbol == 'skip':
+            self.state.idx_player_active += 1
+            self.state.idx_player_active %= self.state.cnt_player
 
 
         for i in range(self.state.CNT_HAND_CARDS):
