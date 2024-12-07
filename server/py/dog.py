@@ -331,6 +331,38 @@ class Dog(Game):
 
         return splitting_combinations
 
+    def get_actions_for_4(self, player: PlayerState) -> List[Action]:
+        """
+        Generate all possible moves for the card '4', where the player can move a marble
+        4 steps forward or 4 steps backward.
+        """
+        actions = []  # List to store possible actions
+
+        # Iterate through all marbles of the player
+        for marble in player.list_marble:
+            if marble.is_save:  # Only consider marbles that are out of the kennel
+                # Calculate positions for forward and backward moves
+                target_pos_forward = (marble.pos + 4) % len(self.board["circular_path"])
+                target_pos_backward = (marble.pos - 4) % len(self.board["circular_path"])
+
+                # Forward move action
+                actions.append(Action(
+                    card=Card(suit='', rank='4'),
+                    pos_from=marble.pos,
+                    pos_to=target_pos_forward,
+                    card_swap=None
+                ))
+
+                # Backward move action
+                actions.append(Action(
+                    card=Card(suit='', rank='4'),
+                    pos_from=marble.pos,
+                    pos_to=target_pos_backward,
+                    card_swap=None
+                ))
+
+        return actions
+
     def get_actions_for_7(self, player: PlayerState) -> List[Action]:
         """
         Generate all possible moves for the card '7' based on splitting the 7 points across marbles.
@@ -408,8 +440,10 @@ class Dog(Game):
             pass
 
         elif action.card.rank == 'J':
-            # Handle the Jack card: Exchange marbles
             self.get_actions_jack(player)
+
+        elif action.card.rank == "4":
+            self.get_actions_for_4(player)
 
         elif action.card.rank == '7':
             # For card '7', split movements among marbles
