@@ -42,21 +42,35 @@ class GameState(BaseModel):
         'J', 'Q', 'K', 'A', 'JKR'
     ]
     LIST_CARD: ClassVar[List[Card]] = [
-        Card(suit='♠', rank='2'), Card(suit='♥', rank='2'), Card(suit='♦', rank='2'), Card(suit='♣', rank='2'),
-        Card(suit='♠', rank='3'), Card(suit='♥', rank='3'), Card(suit='♦', rank='3'), Card(suit='♣', rank='3'),
-        Card(suit='♠', rank='4'), Card(suit='♥', rank='4'), Card(suit='♦', rank='4'), Card(suit='♣', rank='4'),
-        Card(suit='♠', rank='5'), Card(suit='♥', rank='5'), Card(suit='♦', rank='5'), Card(suit='♣', rank='5'),
-        Card(suit='♠', rank='6'), Card(suit='♥', rank='6'), Card(suit='♦', rank='6'), Card(suit='♣', rank='6'),
-        Card(suit='♠', rank='7'), Card(suit='♥', rank='7'), Card(suit='♦', rank='7'), Card(suit='♣', rank='7'),
-        Card(suit='♠', rank='8'), Card(suit='♥', rank='8'), Card(suit='♦', rank='8'), Card(suit='♣', rank='8'),
-        Card(suit='♠', rank='9'), Card(suit='♥', rank='9'), Card(suit='♦', rank='9'), Card(suit='♣', rank='9'),
-        Card(suit='♠', rank='10'), Card(suit='♥', rank='10'), Card(suit='♦', rank='10'), Card(suit='♣', rank='10'),
-        Card(suit='♠', rank='J'), Card(suit='♥', rank='J'), Card(suit='♦', rank='J'), Card(suit='♣', rank='J'),
-        Card(suit='♠', rank='Q'), Card(suit='♥', rank='Q'), Card(suit='♦', rank='Q'), Card(suit='♣', rank='Q'),
-        Card(suit='♠', rank='K'), Card(suit='♥', rank='K'), Card(suit='♦', rank='K'), Card(suit='♣', rank='K'),
-        Card(suit='♠', rank='A'), Card(suit='♥', rank='A'), Card(suit='♦', rank='A'), Card(suit='♣', rank='A'),
-        Card(suit='', rank='JKR'), Card(suit='', rank='JKR'), Card(suit='', rank='JKR')
-    ] * 2
+                                          Card(suit='♠', rank='2'), Card(suit='♥', rank='2'), Card(suit='♦', rank='2'),
+                                          Card(suit='♣', rank='2'),
+                                          Card(suit='♠', rank='3'), Card(suit='♥', rank='3'), Card(suit='♦', rank='3'),
+                                          Card(suit='♣', rank='3'),
+                                          Card(suit='♠', rank='4'), Card(suit='♥', rank='4'), Card(suit='♦', rank='4'),
+                                          Card(suit='♣', rank='4'),
+                                          Card(suit='♠', rank='5'), Card(suit='♥', rank='5'), Card(suit='♦', rank='5'),
+                                          Card(suit='♣', rank='5'),
+                                          Card(suit='♠', rank='6'), Card(suit='♥', rank='6'), Card(suit='♦', rank='6'),
+                                          Card(suit='♣', rank='6'),
+                                          Card(suit='♠', rank='7'), Card(suit='♥', rank='7'), Card(suit='♦', rank='7'),
+                                          Card(suit='♣', rank='7'),
+                                          Card(suit='♠', rank='8'), Card(suit='♥', rank='8'), Card(suit='♦', rank='8'),
+                                          Card(suit='♣', rank='8'),
+                                          Card(suit='♠', rank='9'), Card(suit='♥', rank='9'), Card(suit='♦', rank='9'),
+                                          Card(suit='♣', rank='9'),
+                                          Card(suit='♠', rank='10'), Card(suit='♥', rank='10'),
+                                          Card(suit='♦', rank='10'), Card(suit='♣', rank='10'),
+                                          Card(suit='♠', rank='J'), Card(suit='♥', rank='J'), Card(suit='♦', rank='J'),
+                                          Card(suit='♣', rank='J'),
+                                          Card(suit='♠', rank='Q'), Card(suit='♥', rank='Q'), Card(suit='♦', rank='Q'),
+                                          Card(suit='♣', rank='Q'),
+                                          Card(suit='♠', rank='K'), Card(suit='♥', rank='K'), Card(suit='♦', rank='K'),
+                                          Card(suit='♣', rank='K'),
+                                          Card(suit='♠', rank='A'), Card(suit='♥', rank='A'), Card(suit='♦', rank='A'),
+                                          Card(suit='♣', rank='A'),
+                                          Card(suit='', rank='JKR'), Card(suit='', rank='JKR'),
+                                          Card(suit='', rank='JKR')
+                                      ] * 2
 
     cnt_player: int = 4
     phase: GamePhase
@@ -137,18 +151,40 @@ class Dog(Game):
         # Logic for "Jake" (J) cards: Swapping actions
         for card in cards:
             if card.rank == 'J':  # Jake card logic
+                found_valid_target = False  # Track if any valid target exists
                 for marble in active_player.list_marble:
                     if marble.pos < 64:  # Active player's marble must not be in the kennel
                         for opponent in self.state.list_player:
                             if opponent != active_player:
                                 for opp_marble in opponent.list_marble:
-                                    if not opp_marble.is_save and opp_marble.pos < 64:  # Refactor for better readability
+                                    if not opp_marble.is_save and opp_marble.pos < 64:  # Unsaved opponent marbles
+                                        found_valid_target = True
                                         actions.append(Action(
                                             card=card,
                                             pos_from=marble.pos,
                                             pos_to=opp_marble.pos,
                                             card_swap=None
                                         ))
+
+                # If no valid opponents, generate self-swapping actions
+                if not found_valid_target:
+                    marbles_on_board = [
+                        marble for marble in active_player.list_marble if marble.pos < 64
+                    ]
+                    for i in range(len(marbles_on_board)):
+                        for j in range(i + 1, len(marbles_on_board)):
+                            actions.append(Action(
+                                card=card,
+                                pos_from=marbles_on_board[i].pos,
+                                pos_to=marbles_on_board[j].pos,
+                                card_swap=None
+                            ))
+                            actions.append(Action(
+                                card=card,
+                                pos_from=marbles_on_board[j].pos,
+                                pos_to=marbles_on_board[i].pos,
+                                card_swap=None
+                            ))
 
         return actions
 
@@ -232,6 +268,7 @@ class Dog(Game):
 
     def get_player_view(self, idx_player: int) -> GameState:
         return self.state
+
 
 class RandomPlayer(Player):
     def select_action(self, state: GameState, actions: List[Action]) -> Optional[Action]:
