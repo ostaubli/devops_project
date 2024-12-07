@@ -8,6 +8,10 @@ from pydantic import BaseModel
 from enum import Enum
 import random
 
+LIST_COLOR: List[str] = ['red', 'green', 'yellow', 'blue']
+# draw2 = draw two cards, wild = chose color, wilddraw4 = chose color and draw 4
+LIST_SYMBOL: List[str] = ['skip', 'reverse', 'draw2', 'wild', 'wilddraw4']
+
 class Card(BaseModel):
     color: Optional[str] = None   # color of the card (see LIST_COLOR)
     number: Optional[int] = None  # number of the card (if not a symbol card)
@@ -32,6 +36,15 @@ class Card(BaseModel):
             return v1 < v2
 
         return False
+
+    def __eq__(self, other):
+        if not isinstance(other, Card): return False
+        other: Card = other
+
+        t1 = (self.color, self.number, self.symbol,)
+        t2 = (other.color, other.number, other.symbol,)
+
+        return t1 == t2
 
 class Action(BaseModel):
     card: Optional[Card] = None  # the card to play
@@ -143,30 +156,9 @@ class GameState(BaseModel):
     # numbers of cards for each player to start with
     CNT_HAND_CARDS: int = 0
     # any = for wild cards
-    LIST_COLOR: List[str] = ['red', 'green', 'yellow', 'blue', 'any']
-    # draw2 = draw two cards, wild = chose color, wilddraw4 = chose color and draw 4
-    LIST_SYMBOL: List[str] = ['skip', 'reverse', 'draw2', 'wild', 'wilddraw4']
-    LIST_CARD: List[Card] = [
-        # 76 Numbered Cards
-        Card(color='red', number=0), Card(color='green', number=0), Card(color='yellow', number=0),
-        Card(color='blue', number=0),
-        *[Card(color=color, number=number) for color in ['red', 'green', 'yellow', 'blue'] for number in
-          range(1, 10)] * 2,  # Two copies of each 1-9
-        # 8 Skip Cards
-        *[Card(color=color, symbol='skip') for color in ['red', 'green', 'yellow', 'blue']],
-        # 8 Reverse Cards
-        *[Card(color=color, symbol='reverse') for color in ['red', 'green', 'yellow', 'blue']],
-        # 8 Draw 2 Cards
-        *[Card(color=color, symbol='draw2') for color in ['red', 'green', 'yellow', 'blue']],
-        # 4 Wild Cards
-        Card(color='any', symbol='wild'), Card(color='any', symbol='wild'),
-        # 4 Wild Draw 4 Cards
-        Card(color='any', symbol='wilddraw4'), Card(color='any', symbol='wilddraw4'),
-    ]
-
-    list_card_draw: Optional[List[Card]] = []   # list of cards to draw
-    list_card_discard: Optional[List[Card]] = []# list of cards discarded
-    list_player: List[PlayerState] = []         # list of player-states
+    list_card_draw: Optional[List[Card]] = field(default_factory=create_deck)  # list of cards to draw
+    list_card_discard: Optional[List[Card]] = field(default_factory=list)  # list of cards discarded
+    list_player: List[PlayerState] = field(default_factory=list)  # list of player-states
     phase: GamePhase = GamePhase.SETUP          # the current game-phase ("setup"|"running"|"finished")
     cnt_player: int = 0                         # number of players N (to be set in the phase "setup")
     idx_player_active: Optional[int] = 0        # the index (0 to N-1) of active player
@@ -232,7 +224,9 @@ class Uno(Game):
         if len(self.state.list_card_discard) == 0:
             self.state.list_card_discard = [state.list_card_draw.pop()] if state.list_card_draw else []
 
-        self.state.list_player = [PlayerState() for i in range(state.cnt_player)]
+        if len(self.state.list_player) != self.state.cnt_player:
+            self.state.list_player = [PlayerState() for i in range(state.cnt_player)]
+
         self.state.idx_player_active = state.idx_player_active
         self.state.direction = 1
 
@@ -246,6 +240,7 @@ class Uno(Game):
         """ Get the complete, unmasked game state """
         return self.state
 
+
     def get_list_action(self) -> List[Action]:
         """ Get a list of possible actions for the active player """
         if not self.state:
@@ -255,26 +250,21 @@ class Uno(Game):
         possible_actions = []
 
         top_card = self.state.list_card_discard[-1]
-        # game rules
-        if top_card.symbol is None:
-            possible_actions.append(Action(card=top_card, color=top_card.color))
-            possible_actions.append(Action(draw=1))
-            print("----------")
-            print(f"{active_player.list_card=}")
-            print(f"{top_card=}")
-            print(f"{possible_actions=}")
-            print("----------")
+        # print(f"{top_card=}")
+        # print(f"{active_player.list_card=}")
+        possible_actions.append(Action(draw=1))
 
-        elif top_card.symbol is not None:
-            if top_card.symbol == 'skip':
-                possible_actions.append(Action(draw=1))
-                possible_actions.append(Action(card=top_card, color=top_card.color))
-            if top_card.symbol == 'reverse':
-                possible_actions.append(Action(draw=1))
-                possible_actions.append(Action(card=top_card, color=top_card.color))
-            if top_card.symbol == 'draw2':
-                possible_actions.append(Action(draw=1))
-                possible_actions.append(Action(card=top_card, color=top_card.color, draw=2))
+        for my_card in active_player.list_card:
+            # print(f"{my_card=}")
+            if my_card == top_card:
+                possible_actions.append(Action(card=my_card, color=my_card.color))
+
+            elif my_card.number == top_card.number:
+                # possible_actions.append(Action(draw=1))
+                possible_actions.append(Action(card=my_card, color=my_card.color))
+
+            elif my_card.color == top_card.color:
+                possible_actions.append(Action(card=my_card, color=my_card.color))
 
         return possible_actions
 
