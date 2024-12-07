@@ -2,13 +2,17 @@
 # runcmd: cd ../.. & venv\Scripts\python benchmark/benchmark_uno.py python uno.Uno
 from PIL.ImImagePlugin import number
 from dataclasses import field
+
+from PIL.ImageColor import colormap
+from numpy.ma.core import append
+
 from server.py.game import Game, Player #from server.py.game import Game, Player
 from typing import List, Optional
 from pydantic import BaseModel
 from enum import Enum
 import random
 
-LIST_COLOR: List[str] = ['red', 'green', 'yellow', 'blue']
+LIST_COLOR: List[str] = ['red', 'blue', 'yellow', 'green']
 # draw2 = draw two cards, wild = chose color, wilddraw4 = chose color and draw 4
 LIST_SYMBOL: List[str] = ['skip', 'reverse', 'draw2', 'wild', 'wilddraw4']
 
@@ -253,18 +257,56 @@ class Uno(Game):
         # print(f"{top_card=}")
         # print(f"{active_player.list_card=}")
         possible_actions.append(Action(draw=1))
-
-        for my_card in active_player.list_card:
+        if top_card.symbol is None:
+            for my_card in active_player.list_card:
             # print(f"{my_card=}")
-            if my_card == top_card:
-                possible_actions.append(Action(card=my_card, color=my_card.color))
+                if my_card == top_card:
+                    possible_actions.append(Action(card=my_card, color=my_card.color))
 
-            elif my_card.number == top_card.number:
+                elif my_card.number == top_card.number:
                 # possible_actions.append(Action(draw=1))
-                possible_actions.append(Action(card=my_card, color=my_card.color))
+                    possible_actions.append(Action(card=my_card, color=my_card.color))
 
-            elif my_card.color == top_card.color:
-                possible_actions.append(Action(card=my_card, color=my_card.color))
+                elif my_card.color == top_card.color:
+                    possible_actions.append(Action(card=my_card, color=my_card.color))
+
+                if my_card.symbol == "wilddraw4":
+                    for color in LIST_COLOR:
+                        possible_actions.append(Action(card=my_card, color=color, draw=4))
+
+                if my_card.symbol == "wild":
+                    for color in LIST_COLOR:
+                        possible_actions.append(Action(card=my_card, color=color))
+
+        if top_card.symbol is not None:
+            for my_card in active_player.list_card:
+                if top_card.symbol == 'skip':
+                    if my_card.symbol == "skip":
+                        possible_actions.append(Action(card=my_card, color=my_card.color))
+                    if my_card.symbol == "reverse" and my_card.color == top_card.color:
+                        possible_actions.append(Action(card=my_card, color=my_card.color))
+
+                elif top_card.symbol == "reverse":
+
+                    if my_card.symbol == "reverse":
+                        possible_actions.append(Action(card=my_card, color= my_card.color))
+                    if my_card.symbol == 'skip' and my_card.color == top_card.color:
+                        possible_actions.append(Action(card=my_card, color=my_card.color))
+                    if my_card.symbol == "draw2" and my_card.color == top_card.color:
+                        possible_actions.append(Action(card=my_card, color=my_card.color, draw = 2))
+
+                elif top_card.symbol == "draw2":
+
+                    if my_card.symbol == "draw2":
+                        possible_actions.append(Action(card=my_card, color=my_card.color, draw =2))
+                    if my_card.symbol == 'skip' and my_card.color == top_card.color:
+                        possible_actions.append(Action(card=my_card, color=my_card.color))
+
+                elif top_card.symbol == "wilddraw4":
+
+                    if my_card.symbol == "wilddraw4":
+                       for color in LIST_COLOR:
+                           possible_actions.append(Action(card=my_card, color=color, draw=4))
 
         return possible_actions
 
