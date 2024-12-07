@@ -145,7 +145,12 @@ class Dog(Game):
     def get_list_action(self) -> List[Action]:
         actions = []
         active_player = self.state.list_player[self.state.idx_player_active]
-        cards = active_player.list_card
+        
+        # Determine which cards to process
+        if self.state.card_active:
+            cards = [self.state.card_active]
+        else:
+            cards = active_player.list_card
 
         for card in cards:
             # Handle Joker card
@@ -242,7 +247,17 @@ class Dog(Game):
             # Get the active player
             active_player = self.state.list_player[self.state.idx_player_active]
 
-            if action.card.rank == 'J':  # Jake (Jack) card: Handle swapping
+            # Handle Joker swap
+            if action.card.rank == 'JKR' and action.card_swap:
+                active_player.list_card.remove(action.card)
+                # Set swapped card as active
+                self.state.card_active = action.card_swap
+                return
+            
+            # Use active card if it exists, otherwise use the action card
+            card_to_use = self.state.card_active if self.state.card_active else action.card
+
+            if card_to_use.rank == 'J':  # Jake (Jack) card: Handle swapping
                 # Find the active player's marble
                 moving_marble = next(
                     (marble for marble in active_player.list_marble if marble.pos == action.pos_from), None
@@ -286,8 +301,12 @@ class Dog(Game):
                     moving_marble.is_save = True
 
             # Remove the card used from the active player's hand
-            if action.card in active_player.list_card:
+            if not self.state.card_active and action.card in active_player.list_card:
                 active_player.list_card.remove(action.card)
+
+            # Clear card_active if we used it
+            if self.state.card_active:
+                self.state.card_active = None
 
         # Proceed to the next player's turn
         self.state.idx_player_active = (self.state.idx_player_active + 1) % self.state.cnt_player
