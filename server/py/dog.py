@@ -539,10 +539,14 @@ class Dog(Game):
         if action.card.rank in self._BASIC_RANKS:
           for marble in player.list_marble:
                 if marble.pos == action.pos_from and marble.is_save:
-                    # Check for collisions before moving the marble and send home if so
-                    if action.pos_to is not None and self.position_is_occupied(action.pos_to) and not self.is_in_any_finish_area(action.pos_to):
-                        self.send_home(marble)
-                    marble.pos = action.pos_to
+                    steps = action.pos_to - action.pos_from
+                    if self.move_to_finish(marble, self.state.idx_player_active, steps):
+                        print(f"{player.name}'s marble moved to the finish area.")
+                    else:
+                        # Check for collisions before moving the marble and send home if so
+                        if action.pos_to is not None and self.position_is_occupied(action.pos_to) and not self.is_in_any_finish_area(action.pos_to):
+                            self.send_home(marble)
+                        marble.pos = action.pos_to
                     marble.is_save = False
                     
                     #         print(f"{player.name}'s marble at position {pos} sent back to the kennel.")
