@@ -263,8 +263,9 @@ async def dog_simulation_ws(websocket: WebSocket):
     await websocket.accept()
 
     try:
-
-        pass
+        game = dog.Dog()
+        player = dog.RandomPlayer()
+        
 
     except WebSocketDisconnect:
         print('DISCONNECTED')
@@ -280,11 +281,9 @@ async def dog_singleplayer_ws(websocket: WebSocket):
     await websocket.accept()
 
     try:
-        game = battleship.Battleship()
-        player = battleship.RandomPlayer()
-        game.get_player_view()
-
-        pass
+        game = dog.Dog()
+        
+        
 
     except WebSocketDisconnect:
         print('DISCONNECTED')
