@@ -99,6 +99,7 @@ class GameState(BaseModel):
 
 class Dog(Game):
     def __init__(self) -> None:
+        self.steps_remaining = None  # Track steps for card SEVEN
         self.reset()
 
     def reset(self) -> None:
@@ -260,9 +261,37 @@ class Dog(Game):
                 # Set swapped card as active
                 self.state.card_active = action.card_swap
                 return
-            
+
             # Use active card if it exists, otherwise use the action card
             card_to_use = self.state.card_active if self.state.card_active else action.card
+
+            if card_to_use.rank == '7':  # Seven card: Handle split movements
+                if self.steps_remaining is None:  # Initialize for Seven card
+                    self.steps_remaining = 7
+                    self.state.card_active = card_to_use
+
+                # Calculate steps used in this action
+                steps_used = abs(action.pos_to - action.pos_from)
+                if steps_used > self.steps_remaining:
+                    raise ValueError("Exceeded remaining steps for SEVEN.")
+
+                # Move the marble and decrement steps remaining
+                moving_marble = next(
+                    (marble for marble in active_player.list_marble if marble.pos == action.pos_from), None
+                )
+                if moving_marble:
+                    moving_marble.pos = action.pos_to
+                    self.steps_remaining -= steps_used
+
+                    # If the steps are complete, finalize the turn
+                    if self.steps_remaining == 0:
+                        self.steps_remaining = None
+                        self.state.card_active = None
+                        active_player.list_card.remove(card_to_use)
+
+                        # Advance to the next player
+                        self.state.idx_player_active = (self.state.idx_player_active + 1) % self.state.cnt_player
+                return  # Prevent further turn advancement for incomplete SEVEN
 
             if card_to_use.rank == 'J':  # Jake (Jack) card: Handle swapping
                 # Find the active player's marble
@@ -316,7 +345,8 @@ class Dog(Game):
                 self.state.card_active = None
 
         # Proceed to the next player's turn
-        self.state.idx_player_active = (self.state.idx_player_active + 1) % self.state.cnt_player
+        if self.steps_remaining is None:  # Skip advancing if steps are still remaining
+            self.state.idx_player_active = (self.state.idx_player_active + 1) % self.state.cnt_player
 
         # Check if the round is complete
         if self.state.idx_player_active == self.state.idx_player_started:
