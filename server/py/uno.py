@@ -4,6 +4,7 @@ from PIL.ImImagePlugin import number
 from dataclasses import field
 
 from PIL.ImageColor import colormap
+from fontTools.cffLib import topDictOperators
 from numpy.ma.core import append
 
 from server.py.game import Game, Player #from server.py.game import Game, Player
@@ -240,6 +241,9 @@ class Uno(Game):
             self.state.cnt_to_draw += 2
         if top_card.symbol == 'wilddraw4' and len(self.state.list_card_discard) == 1:
             self.state.list_card_discard.append(state.list_card_draw.pop())
+        if top_card.symbol == 'reverse':
+            self.state.direction *= -1
+
 
         for i in range(self.state.CNT_HAND_CARDS):
             for player in self.state.list_player:
