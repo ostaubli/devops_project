@@ -1,5 +1,3 @@
-# Code that passed 29 and 30 but failed previously passed test 02,06, (47, 48 , 49)
-
 
 # runcmd: cd ../.. & venv\Scripts\python server/py/dog_template.py
 from server.py.game import Game, Player
