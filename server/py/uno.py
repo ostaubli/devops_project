@@ -247,7 +247,6 @@ class Uno(Game):
             self.state.idx_player_active += 1
             self.state.idx_player_active %= self.state.cnt_player
 
-
         for i in range(self.state.CNT_HAND_CARDS):
             for player in self.state.list_player:
                 player.list_card.append(state.list_card_draw.pop())
@@ -268,6 +267,13 @@ class Uno(Game):
         possible_actions = []
 
         top_card = self.state.list_card_discard[-1]
+
+        if top_card.symbol == 'wild' and len(self.state.list_card_discard) == 1:
+            for my_card in active_player.list_card:
+                possible_actions.append(Action(card=my_card, color=my_card.color))
+
+            return possible_actions
+
         # print(f"{top_card=}")
         # print(f"{active_player.list_card=}")
         possible_actions.append(Action(draw=1))
