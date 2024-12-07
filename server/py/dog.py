@@ -302,7 +302,13 @@ class GameState(BaseModel):
             # Reset the active card for regular actions
             self.card_active = None
 
+    def can_leave_kennel(self) -> bool:
+        if self.card_active is None:
+            return False
 
+        if self.card_active.rank in ["A", "K", "JKR"]:
+            return True
+        return False
 
     def check_final_pos(self, pos_to: int, pos_from: int, marble: Marble) -> None:
         '''
