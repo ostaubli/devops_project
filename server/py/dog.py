@@ -587,7 +587,7 @@ class Dog(Game):
         self.state.list_card_discard.append(action.card)
 
     # Handle moving a marble from the kennel to the start position
-        if action.pos_from in self.KENNEL_POSITIONS[self.state.idx_player_active] and action.pos_to == 0:
+        if action.pos_from in self.KENNEL_POSITIONS[self.state.idx_player_active] and action.pos_to in self.START_POSITIONS:
             for marble in active_player.list_marble:
                 if marble.pos == action.pos_from:
                     marble.pos = action.pos_to
