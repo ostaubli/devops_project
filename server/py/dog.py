@@ -10,6 +10,20 @@ class Card(BaseModel):
     suit: str
     rank: str
 
+    def __lt__(self, other):
+        if not isinstance(other, Card):
+            return NotImplemented
+        # Convert to strings for comparison
+        return str(self) < str(other)
+    
+    def __eq__(self, other):
+        if not isinstance(other, Card):
+            return NotImplemented
+        return self.suit == other.suit and self.rank == other.rank
+    
+    def __str__(self):
+        return f"{self.suit}{self.rank}"
+
 
 class Marble(BaseModel):
     pos: int
@@ -133,11 +147,38 @@ class Dog(Game):
         active_player = self.state.list_player[self.state.idx_player_active]
         cards = active_player.list_card
 
-        # Define start cards that allow moving out of kennel
-        start_cards = ['A', 'K', 'JKR']
-
-        # Logic for start cards
         for card in cards:
+            # Handle Joker card
+            if card.rank == 'JKR':
+                # Action 1: Moving from kennel to start position
+                for marble in active_player.list_marble:
+                    if marble.pos == 64:  # Marble in the kennel
+                        actions.append(Action(
+                            card=card,
+                            pos_from=64,
+                            pos_to=0,
+                            card_swap=None
+                        ))
+            
+                # Action 2 & 3: Card swap options for Joker
+                actions.append(Action(
+                    card=card,
+                    pos_from=-1,
+                    pos_to=-1,
+                    card_swap=Card(suit='♥', rank='A')
+                ))
+                actions.append(Action(
+                    card=card,
+                    pos_from=-1,
+                    pos_to=-1,
+                    card_swap=Card(suit='♥', rank='K')
+                ))
+                continue  # Skip other card logic for Joker
+
+            # Define start cards that allow moving out of kennel
+            start_cards = ['A', 'K']
+
+            # Logic for start cards
             if card.rank in start_cards:
                 for marble in active_player.list_marble:
                     if marble.pos == 64:  # Marble in the kennel
@@ -148,10 +189,9 @@ class Dog(Game):
                             card_swap=None
                         ))
 
-        # Logic for "Jake" (J) cards: Swapping actions
-        for card in cards:
+            # Logic for "Jake" (J) cards: Swapping actions
             if card.rank == 'J':  # Jake card logic
-                found_valid_target = False  # Track if any valid target exists
+                found_valid_target = False
                 for marble in active_player.list_marble:
                     if marble.pos < 64:  # Active player's marble must not be in the kennel
                         for opponent in self.state.list_player:
