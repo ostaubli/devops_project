@@ -232,7 +232,12 @@ class Uno(Game):
             self.state.list_player = [PlayerState() for i in range(state.cnt_player)]
 
         self.state.idx_player_active = state.idx_player_active
+        active_player = self.state.list_player[self.state.idx_player_active]
         self.state.direction = 1
+
+        top_card = self.state.list_card_discard[-1]
+        if top_card.symbol == 'draw2':
+            self.state.cnt_to_draw += 2
 
         for i in range(self.state.CNT_HAND_CARDS):
             for player in self.state.list_player:
