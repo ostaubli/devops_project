@@ -331,6 +331,38 @@ class Dog(Game):
 
         return splitting_combinations
 
+    def get_actions_for_4(self, player: PlayerState) -> List[Action]:
+        """
+        Generate all possible moves for the card '4', where the player can move a marble
+        4 steps forward or 4 steps backward.
+        """
+        actions = []  # List to store possible actions
+
+        # Iterate through all marbles of the player
+        for marble in player.list_marble:
+            if marble.is_save:  # Only consider marbles that are out of the kennel
+                # Calculate positions for forward and backward moves
+                target_pos_forward = (marble.pos + 4) % len(self.board["circular_path"])
+                target_pos_backward = (marble.pos - 4) % len(self.board["circular_path"])
+
+                # Forward move action
+                actions.append(Action(
+                    card=Card(suit='', rank='4'),
+                    pos_from=marble.pos,
+                    pos_to=target_pos_forward,
+                    card_swap=None
+                ))
+
+                # Backward move action
+                actions.append(Action(
+                    card=Card(suit='', rank='4'),
+                    pos_from=marble.pos,
+                    pos_to=target_pos_backward,
+                    card_swap=None
+                ))
+
+        return actions
+
     def get_actions_for_7(self, player: PlayerState) -> List[Action]:
         """
         Generate all possible moves for the card '7' based on splitting the 7 points across marbles.
@@ -364,6 +396,41 @@ class Dog(Game):
 
         return actions
 
+    def get_actions_jack(self, player: PlayerState) -> None:
+        """
+        Handle the playing of a Jack (J) card.
+        This method will ensure that the player must exchange a marble with another player.
+        """
+        marbles_to_swap = [marble for marble in player.list_marble if
+                           marble.is_save and not self.is_protected_marble(marble)]
+
+        if len(marbles_to_swap) == 0:
+            print(f"{player.name} has no valid marbles to exchange. The Jack card will have no effect.")
+            return
+
+        # Choose a marble to swap (we'll simply pick the first available one for simplicity)
+        marble_to_swap = marbles_to_swap[0]
+
+        # Now find a valid opponent or teammate to exchange with.
+        # For simplicity, we assume the player can swap with any other player who has an "out" marble.
+        other_player = None
+        for other in self.state.list_player:
+            if other != player:
+                other_marbles = [marble for marble in other.list_marble if
+                                 marble.is_save and not self.is_protected_marble(marble)]
+                if other_marbles:
+                    other_player = other
+                    marble_from_other = other_marbles[0]  # Pick the first available marble
+                    break
+
+        if other_player:
+            print(f"{player.name} will exchange a marble with {other_player.name}.")
+            # Perform the exchange
+            marble_to_swap.pos, marble_from_other.pos = marble_from_other.pos, marble_to_swap.pos
+            marble_to_swap.is_save, marble_from_other.is_save = marble_from_other.is_save, marble_to_swap.is_save
+        else:
+            print(f"No valid player found to exchange marbles with. The Jack card will have no effect.")
+
     def apply_action(self, action: Action) -> None:
         """ Apply the given action to the game """
         player = self.state.list_player[self.state.idx_player_active]
@@ -371,6 +438,12 @@ class Dog(Game):
         if action.card.rank == 'JKR':  # Joker: use as any card
             # Action can be anything based on the game rules, e.g., swap a card or move a marble
             pass
+
+        elif action.card.rank == 'J':
+            self.get_actions_jack(player)
+
+        elif action.card.rank == "4":
+            self.get_actions_for_4(player)
 
         elif action.card.rank == '7':
             # For card '7', split movements among marbles
