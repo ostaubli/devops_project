@@ -1,3 +1,8 @@
+"""
+Dog game implementation module.
+This module contains the core game logic and data structures for the Dog card game.
+"""
+
 # runcmd: cd ../.. & venv\Scripts\python server/py/dog_template.py
 import random
 from enum import Enum
@@ -91,20 +96,41 @@ class GameState(BaseModel):
     card_active: Optional[Card]        # active card (for 7 and JKR with sequence of actions)
 
 class Dog(Game):
+    """
+    Dog board game implementation.
+    
+    Constants define board layout, card values, and game rules.
+    """
+        
     # Constants
+    BOARD_SIZE = 96
     STARTING_CARDS = {'A', 'K', 'JKR'}
     MOVEMENT_CARDS = {'2', '3', '4', '5', '6', '8', '9', '10', 'Q', 'K', 'A', 'JKR'}
     SAFE_SPACES = {
-            0: [68, 69, 70, 71],  # Player 1's safe spaces, blue
-            1: [76, 77, 78, 79],  # Player 2's safe spaces, green
-            2: [84, 85, 86, 87],  # Player 3's safe spaces, red
-            3: [92, 93, 94, 95]   # Player 4's safe spaces, yellow
+        0: [68, 69, 70, 71],  # Player 1's safe spaces, blue
+        1: [76, 77, 78, 79],  # Player 2's safe spaces, green
+        2: [84, 85, 86, 87],  # Player 3's safe spaces, red
+        3: [92, 93, 94, 95]   # Player 4's safe spaces, yellow
         }
     KENNEL_POSITIONS = {
         0: [64, 65, 66, 67],  # Player 1's kennel positions
         1: [72, 73, 74, 75],  # Player 2's kennel positions
         2: [80, 81, 82, 83],  # Player 3's kennel positions
         3: [88, 89, 90, 91]   # Player 4's kennel positions
+    }
+    START_POSITIONS = {
+        0: 0,    # Player 1
+        1: 16,   # Player 2
+        2: 32,   # Player 3
+        3: 48    # Player 4
+    }
+    CARD_VALUES = {
+        'A': [1, 11],
+        'Q': [12],
+        'K': [13],
+        'JKR': [-4] + list(range(1, 14)),  # Joker can take on any value
+        '4': [-4, 4],
+        '7': [7]
     }
 
     def __init__(self) -> None:
@@ -191,52 +217,31 @@ class Dog(Game):
         if self.state is None:
             raise ValueError("Game state is not set.")
 
-        board_size = 96
-        kennels = {
-            0: [64, 65, 66, 67], # Player 1's starting positions, blue
-            1: [72, 73, 74, 75], # Player 2's starting positions, green
-            2: [80, 81, 82, 83], # Player 3's starting positions, red
-            3: [88, 89, 90, 91]  # Player 4's starting positions, yellow
-        }
-        safe_spaces = {
-            0: [68, 69, 70, 71],  # Player 1's safe spaces, blue
-            1: [76, 77, 78, 79],  # Player 2's safe spaces, green
-            2: [84, 85, 86, 87],  # Player 3's safe spaces, red
-            3: [92, 93, 94, 95]   # Player 4's safe spaces, yellow
-        }
-
-        board = ["." for _ in range(board_size)]
+        board = ["." for _ in range(self.BOARD_SIZE)]
 
         for player_idx, player in enumerate(self.state.list_player):
             for marble in player.list_marble:
-                if marble.pos in safe_spaces[player_idx]:
+                if marble.pos in self.SAFE_SPACES[player_idx]:
                     board[marble.pos] = f"S{player_idx+1}"
-                elif marble.pos in kennels[player_idx]:
+                elif marble.pos in self.KENNEL_POSITIONS[player_idx]:
                     board[marble.pos] = f"K{player_idx+1}"
                 else:
                     board[marble.pos] = f"M{player_idx+1}"
 
         print("Board:")
-        for i in range(0, board_size, 12):
+        for i in range(0, self.BOARD_SIZE, 12):
             print(" ".join(board[i:i+12]))
     
-    def _get_card_value(self, card: Card) -> list[int]:
-        """Map card rank to its movement values."""
-        if card.rank == 'A':
-            return [1, 11]  # As kann 1 oder 11 sein
-        elif card.rank == 'Q':
-            return [12]
-        elif card.rank == 'K':
-            return [13]
+    def _get_card_value(self, card: Card) -> List[int]:
+        """Map card rank to its movement values using CARD_VALUES and handle numeric ranks."""
+        # Check if the card is in the predefined CARD_VALUES dictionary
+        if card.rank in self.CARD_VALUES:
+            return self.CARD_VALUES[card.rank]
+        # Dynamically handle numeric ranks (excluding 4 and 7, as they are special cases)
         elif card.rank.isdigit():
             return [int(card.rank)]
-        elif card.rank == 'JKR':
-            return [-4, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13]  # Joker kann beliebigen Wert annehmen
-        elif card.rank == '4':
-            return [-4,4]
-        elif card.rank == '7':
-            return [7]
-        return [0]  # Fallback für ungültige Karten
+        # Default to [0] for invalid cards
+        return [0]
 
     def _calculate_new_position(self, current_pos: int, move_value: int, player_idx: int) -> Optional[int]:
         """
@@ -372,8 +377,6 @@ class Dog(Game):
                     ))
         return actions
 
-
-
     def get_list_action(self) -> List[Action]:
         """Get list of possible actions for active player"""
         if not self.state:
@@ -388,12 +391,7 @@ class Dog(Game):
         # Safe Spaces, Kennel and Startposition for all players
         kennels = self.KENNEL_POSITIONS
         safe_spaces = self.SAFE_SPACES
-        start_positions = {
-            0: 0,    # Player 1
-            1: 16,   # Player 2
-            2: 32,   # Player 3
-            3: 48    # Player 4
-        }
+        start_positions = self.START_POSITIONS
 
         player_idx = self.state.idx_player_active
         player_kennel = kennels[player_idx]
@@ -487,13 +485,6 @@ class Dog(Game):
             active_player.list_card = []
             self.state.idx_player_active = (self.state.idx_player_active + 1) % len(self.state.list_player)
             return  # Exit the function early
-        
-        # Get the list of valid actions for the current state
-        # valid_actions = self.get_list_action()  # Fetch valid actions from get_list_action
-
-        # Validate the provided action
-        # if action not in valid_actions:
-            # raise ValueError(f"Invalid action: {action}. Action is not in the list of valid actions.")
 
         # Log the action being applied
         print(f"Player {active_player.name} plays {action.card.rank} of {action.card.suit} "
@@ -609,7 +600,6 @@ class Dog(Game):
                 # Give one card to the current player
                 card = self.state.list_card_draw.pop()
                 player.list_card.append(card)
-
 
 
     def validate_game_state(self) -> None:
