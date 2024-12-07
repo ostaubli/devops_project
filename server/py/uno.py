@@ -238,6 +238,8 @@ class Uno(Game):
         top_card = self.state.list_card_discard[-1]
         if top_card.symbol == 'draw2':
             self.state.cnt_to_draw += 2
+        if top_card.symbol == 'wilddraw4' and len(self.state.list_card_discard) == 1:
+            self.state.list_card_discard.append(state.list_card_draw.pop())
 
         for i in range(self.state.CNT_HAND_CARDS):
             for player in self.state.list_player:
