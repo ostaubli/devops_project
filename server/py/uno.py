@@ -1,7 +1,7 @@
 # -runcmd: cd ../.. & venv\Scripts\python server/py/uno.py
 # runcmd: cd ../.. & venv\Scripts\python benchmark/benchmark_uno.py python uno.Uno
 from PIL.ImImagePlugin import number
-
+from dataclasses import field
 from server.py.game import Game, Player #from server.py.game import Game, Player
 from typing import List, Optional
 from pydantic import BaseModel
@@ -63,7 +63,7 @@ class Action(BaseModel):
 
 class PlayerState(BaseModel):
     name: Optional[str] = None  # name of player
-    list_card: List[Card] = []  # list of cards
+    list_card: List[Card] = field(default_factory=list)  # list of cards
 
     @staticmethod
     def _display_deco(function):
