@@ -393,8 +393,7 @@ class DogBenchmark(benchmark.Benchmark):
     def test_swap_with_JAKE_1(self):
         """Test 021: Test swap list_actions with card JAKE and oponents [1 point]"""
 
-        list_card = [Card(suit='♣', rank='J'), Card(suit='♦', rank='J'), Card(suit='♥', rank='J'),
-                     Card(suit='♠', rank='J')]
+        list_card = [Card(suit='♣', rank='J'), Card(suit='♦', rank='J'), Card(suit='♥', rank='J'), Card(suit='♠', rank='J')]
 
         for card in list_card:
             self.game_server.reset()
@@ -451,14 +450,12 @@ class DogBenchmark(benchmark.Benchmark):
             hint += f'\nFound:'
             hint += f'\n{self.get_list_action_as_str(self.get_sorted_list_action(list_action_found))}'
             hint += f'\nHint: Oponents that are save on start can not be swaped'
-            assert self.get_sorted_list_action(list_action_found) == self.get_sorted_list_action(
-                list_action_expected), hint
+            assert self.get_sorted_list_action(list_action_found) == self.get_sorted_list_action(list_action_expected), hint
 
     def test_swap_with_JAKE_2(self):
         """Test 022: Test swap list_actions with card JAKE no oponents and no other actions [1 point]"""
 
-        list_card = [Card(suit='♣', rank='J'), Card(suit='♦', rank='J'), Card(suit='♥', rank='J'),
-                     Card(suit='♠', rank='J')]
+        list_card = [Card(suit='♣', rank='J'), Card(suit='♦', rank='J'), Card(suit='♥', rank='J'), Card(suit='♠', rank='J')]
 
         for card in list_card:
             self.game_server.reset()
@@ -505,14 +502,12 @@ class DogBenchmark(benchmark.Benchmark):
             hint += f'\nFound:'
             hint += f'\n{self.get_list_action_as_str(list_action_found)}'
             hint += f'\nHint: Oponents that are save on start can not be swaped'
-            assert self.get_sorted_list_action(list_action_found) == self.get_sorted_list_action(
-                list_action_expected), hint
+            assert self.get_sorted_list_action(list_action_found) == self.get_sorted_list_action(list_action_expected), hint
 
     def test_swap_with_JAKE_3(self):
         """Test 023: Test swap action with card JAKE and oponents [1 point]"""
 
-        list_card = [Card(suit='♣', rank='J'), Card(suit='♦', rank='J'), Card(suit='♥', rank='J'),
-                     Card(suit='♠', rank='J')]
+        list_card = [Card(suit='♣', rank='J'), Card(suit='♦', rank='J'), Card(suit='♥', rank='J'), Card(suit='♠', rank='J')]
 
         for card in list_card:
             self.game_server.reset()
@@ -546,7 +541,7 @@ class DogBenchmark(benchmark.Benchmark):
             player1 = state.list_player[idx_player_active]
             player2 = state.list_player[idx_player_active + 1]
             is_swapped = self.get_idx_marble(player=player1, pos=17) != -1 and \
-                         self.get_idx_marble(player=player2, pos=0) != -1
+                self.get_idx_marble(player=player2, pos=0) != -1
 
             hint = str_state_1 + str_action + str_state_2
             hint += 'Error: Player 1\'s marble on pos=0 should be swapped with Player 2\'s marble on pos=17'
@@ -555,8 +550,7 @@ class DogBenchmark(benchmark.Benchmark):
     def test_swap_with_JAKE_4(self):
         """Test 024: Test swap action with card JAKE and no oponent and no other actions [1 point]"""
 
-        list_card = [Card(suit='♣', rank='J'), Card(suit='♦', rank='J'), Card(suit='♥', rank='J'),
-                     Card(suit='♠', rank='J')]
+        list_card = [Card(suit='♣', rank='J'), Card(suit='♦', rank='J'), Card(suit='♥', rank='J'), Card(suit='♠', rank='J')]
 
         for card in list_card:
             self.game_server.reset()
@@ -609,8 +603,8 @@ class DogBenchmark(benchmark.Benchmark):
             list_action_found = self.game_server.get_list_action()
             list_action_expected = [
                 Action(card=Card(suit='', rank='JKR'), pos_from=64, pos_to=0),
-                Action(card=Card(suit='', rank='JKR'), pos_from=-1, pos_to=-1, card_swap=Card(suit='♥', rank='A')),
-                Action(card=Card(suit='', rank='JKR'), pos_from=-1, pos_to=-1, card_swap=Card(suit='♥', rank='K')),
+                Action(card=Card(suit='', rank='JKR'), pos_from=None, pos_to=None, card_swap=Card(suit='♥', rank='A')),
+                Action(card=Card(suit='', rank='JKR'), pos_from=None, pos_to=None, card_swap=Card(suit='♥', rank='K')),
             ]
 
             hint = str_state
@@ -653,19 +647,19 @@ class DogBenchmark(benchmark.Benchmark):
 
             list_action_found = self.game_server.get_list_action()
             list_action_expected = [
-                Action(card=Card(suit='', rank='JKR'), pos_from=-1, pos_to=-1, card_swap=Card(suit='♥', rank='2')),
-                Action(card=Card(suit='', rank='JKR'), pos_from=-1, pos_to=-1, card_swap=Card(suit='♥', rank='3')),
-                Action(card=Card(suit='', rank='JKR'), pos_from=-1, pos_to=-1, card_swap=Card(suit='♥', rank='4')),
-                Action(card=Card(suit='', rank='JKR'), pos_from=-1, pos_to=-1, card_swap=Card(suit='♥', rank='5')),
-                Action(card=Card(suit='', rank='JKR'), pos_from=-1, pos_to=-1, card_swap=Card(suit='♥', rank='6')),
-                Action(card=Card(suit='', rank='JKR'), pos_from=-1, pos_to=-1, card_swap=Card(suit='♥', rank='7')),
-                Action(card=Card(suit='', rank='JKR'), pos_from=-1, pos_to=-1, card_swap=Card(suit='♥', rank='8')),
-                Action(card=Card(suit='', rank='JKR'), pos_from=-1, pos_to=-1, card_swap=Card(suit='♥', rank='9')),
-                Action(card=Card(suit='', rank='JKR'), pos_from=-1, pos_to=-1, card_swap=Card(suit='♥', rank='10')),
-                Action(card=Card(suit='', rank='JKR'), pos_from=-1, pos_to=-1, card_swap=Card(suit='♥', rank='A')),
-                Action(card=Card(suit='', rank='JKR'), pos_from=-1, pos_to=-1, card_swap=Card(suit='♥', rank='J')),
-                Action(card=Card(suit='', rank='JKR'), pos_from=-1, pos_to=-1, card_swap=Card(suit='♥', rank='K')),
-                Action(card=Card(suit='', rank='JKR'), pos_from=-1, pos_to=-1, card_swap=Card(suit='♥', rank='Q')),
+                Action(card=Card(suit='', rank='JKR'), pos_from=None, pos_to=None, card_swap=Card(suit='♥', rank='2')),
+                Action(card=Card(suit='', rank='JKR'), pos_from=None, pos_to=None, card_swap=Card(suit='♥', rank='3')),
+                Action(card=Card(suit='', rank='JKR'), pos_from=None, pos_to=None, card_swap=Card(suit='♥', rank='4')),
+                Action(card=Card(suit='', rank='JKR'), pos_from=None, pos_to=None, card_swap=Card(suit='♥', rank='5')),
+                Action(card=Card(suit='', rank='JKR'), pos_from=None, pos_to=None, card_swap=Card(suit='♥', rank='6')),
+                Action(card=Card(suit='', rank='JKR'), pos_from=None, pos_to=None, card_swap=Card(suit='♥', rank='7')),
+                Action(card=Card(suit='', rank='JKR'), pos_from=None, pos_to=None, card_swap=Card(suit='♥', rank='8')),
+                Action(card=Card(suit='', rank='JKR'), pos_from=None, pos_to=None, card_swap=Card(suit='♥', rank='9')),
+                Action(card=Card(suit='', rank='JKR'), pos_from=None, pos_to=None, card_swap=Card(suit='♥', rank='10')),
+                Action(card=Card(suit='', rank='JKR'), pos_from=None, pos_to=None, card_swap=Card(suit='♥', rank='A')),
+                Action(card=Card(suit='', rank='JKR'), pos_from=None, pos_to=None, card_swap=Card(suit='♥', rank='J')),
+                Action(card=Card(suit='', rank='JKR'), pos_from=None, pos_to=None, card_swap=Card(suit='♥', rank='K')),
+                Action(card=Card(suit='', rank='JKR'), pos_from=None, pos_to=None, card_swap=Card(suit='♥', rank='Q')),
             ]
             hint = str_state
             hint += f'Error 1: "get_list_action" must return {len(list_action_expected)} not {len(list_action_found)} actions'
@@ -677,8 +671,7 @@ class DogBenchmark(benchmark.Benchmark):
             hint += f'\n{self.get_list_action_as_str(list_action_expected)}'
             hint += f'\nFound:'
             hint += f'\n{self.get_list_action_as_str(list_action_found)}'
-            assert self.get_sorted_list_action(list_action_found) == self.get_sorted_list_action(
-                list_action_expected), hint
+            assert self.get_sorted_list_action(list_action_found) == self.get_sorted_list_action(list_action_expected), hint
 
         list_card = [Card(suit='♦', rank='A'), Card(suit='♥', rank='K'), Card(suit='', rank='JKR')]
 
@@ -692,8 +685,7 @@ class DogBenchmark(benchmark.Benchmark):
             state.idx_player_active = idx_player_active
             state.bool_card_exchanged = True
             player = state.list_player[idx_player_active]
-            player.list_card = [Card(suit='♣', rank='10'), Card(suit='♥', rank='Q'), Card(suit='♠', rank='7'),
-                                Card(suit='♣', rank='J'), card]
+            player.list_card = [Card(suit='♣', rank='10'), Card(suit='♥', rank='Q'), Card(suit='♠', rank='7'), Card(suit='♣', rank='J'), card]
             self.game_server.set_state(state)
             str_state = str(state)
 
@@ -722,7 +714,7 @@ class DogBenchmark(benchmark.Benchmark):
         self.game_server.set_state(state)
         str_state_1 = str(state)
 
-        action = Action(card=Card(suit='', rank='JKR'), pos_from=-1, pos_to=-1, card_swap=card_swap)
+        action = Action(card=Card(suit='', rank='JKR'), pos_from=None, pos_to=None, card_swap=card_swap)
         self.game_server.apply_action(action)
         str_action = f'Action: {action}\n'
 
@@ -762,7 +754,7 @@ class DogBenchmark(benchmark.Benchmark):
         self.game_server.set_state(state)
         str_state_1 = str(state)
 
-        action = Action(card=Card(suit='', rank='JKR'), pos_from=-1, pos_to=-1, card_swap=card_swap)
+        action = Action(card=Card(suit='', rank='JKR'), pos_from=None, pos_to=None, card_swap=card_swap)
         self.game_server.apply_action(action)
         str_action = f'Action: {action}\n'
 
@@ -1602,7 +1594,7 @@ class DogBenchmark(benchmark.Benchmark):
 
         player = state.list_player[idx_player_active]
         for card in player.list_card:
-            action = Action(card=card, pos_from=-1, pos_to=-1)
+            action = Action(card=card, pos_from=None, pos_to=None)
             if action not in list_action_expected:
                 list_action_expected.append(action)
 
@@ -1631,7 +1623,7 @@ class DogBenchmark(benchmark.Benchmark):
         for player in state.list_player:
             card = player.list_card[0]  # first card
             list_card.append(card)
-            action = Action(card=card, pos_from=-1, pos_to=-1)
+            action = Action(card=card, pos_from=None, pos_to=None)
             self.game_server.apply_action(action)
             str_states += f'Action: {action}\n'
 
@@ -1929,7 +1921,7 @@ class DogBenchmark(benchmark.Benchmark):
         return cnt_in_kennel
 
     def get_sorted_list_action(self, list_action):
-        return sorted(list_action, key=lambda x: (str(x.card), x.pos_from, x.pos_to, x.card_swap))
+        return sorted(list_action, key=lambda x: (str(x.card), -1 if x.pos_from is None else x.pos_from, -1 if x.pos_to is None else x.pos_to, x.card_swap))
 
     def get_list_action_as_str(self, list_action):
         return json.dumps([str(action) for action in list_action], indent=4, ensure_ascii=False)
@@ -2175,5 +2167,6 @@ if __name__ == '__main__':
     if True:  # Run all tests
         benchmark.run_tests()
 
-    else: # Run specific test(s)
-        benchmark.test_stock_out_of_cards()
+    else:  # Run specific test(s)
+        benchmark.test_swap_with_JAKE_1()
+        benchmark.test_swap_with_JAKE_2()
