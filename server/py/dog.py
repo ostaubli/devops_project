@@ -142,7 +142,7 @@ class Dog(Game):
                         for opponent in self.state.list_player:
                             if opponent != active_player:
                                 for opp_marble in opponent.list_marble:
-                                    if not opp_marble.is_save:  # Only swap with unsaved opponent marbles
+                                    if not opp_marble.is_save and opp_marble.pos < 64:  # Refactor for better readability
                                         actions.append(Action(
                                             card=card,
                                             pos_from=marble.pos,
@@ -158,10 +158,12 @@ class Dog(Game):
             active_player = self.state.list_player[self.state.idx_player_active]
 
             if action.card.rank == 'J':  # Jake (Jack) card: Handle swapping
-                # Find the marbles to swap
+                # Find the active player's marble
                 moving_marble = next(
                     (marble for marble in active_player.list_marble if marble.pos == action.pos_from), None
                 )
+
+                # Find the opponent's marble to swap with
                 opponent_marble = None
                 for player in self.state.list_player:
                     if player != active_player:
@@ -174,9 +176,8 @@ class Dog(Game):
                 if moving_marble and opponent_marble:
                     # Swap positions
                     moving_marble.pos, opponent_marble.pos = opponent_marble.pos, moving_marble.pos
-
             else:
-                # Existing logic for handling other card types
+                # Handle other card types
                 moving_marble = next(
                     (marble for marble in active_player.list_marble if marble.pos == action.pos_from), None
                 )
@@ -206,13 +207,13 @@ class Dog(Game):
         # Proceed to the next player's turn
         self.state.idx_player_active = (self.state.idx_player_active + 1) % self.state.cnt_player
 
-        # Existing logic for end-of-round handling
+        # Check if the round is complete
         if self.state.idx_player_active == self.state.idx_player_started:
             self.state.cnt_round += 1
             self.state.bool_card_exchanged = False
             self.state.idx_player_started = (self.state.idx_player_started + 1) % self.state.cnt_player
 
-            # Determine number of cards to deal
+            # Determine the number of cards to deal
             if 1 <= self.state.cnt_round <= 5:
                 cards_per_player = 7 - self.state.cnt_round  # 6, 5, 4, 3, 2 cards
             elif self.state.cnt_round == 6:
@@ -231,7 +232,6 @@ class Dog(Game):
 
     def get_player_view(self, idx_player: int) -> GameState:
         return self.state
-
 
 class RandomPlayer(Player):
     def select_action(self, state: GameState, actions: List[Action]) -> Optional[Action]:
