@@ -160,20 +160,29 @@ class Dog(Game):
                             card_swap=None
                         ))
             
-                # Action 2 & 3: Card swap options for Joker
-                actions.append(Action(
-                    card=card,
-                    pos_from=-1,
-                    pos_to=-1,
-                    card_swap=Card(suit='♥', rank='A')
-                ))
-                actions.append(Action(
-                    card=card,
-                    pos_from=-1,
-                    pos_to=-1,
-                    card_swap=Card(suit='♥', rank='K')
-                ))
-                continue  # Skip other card logic for Joker
+                # Check if any marbles are on the board (not in kennel)
+                has_marbles_on_board = any(marble.pos < 64 for marble in active_player.list_marble)
+            
+                if has_marbles_on_board:
+                    # Later game scenario - allow all ranks 
+                    for rank in GameState.LIST_RANK:
+                        if rank != 'JKR':
+                            actions.append(Action(
+                                card=card,
+                                pos_from=-1,
+                                pos_to=-1,
+                                card_swap=Card(suit='♥', rank=rank)
+                            ))
+                else:
+                    # Beginning of game - only allow A and K swaps
+                    for rank in ['A', 'K']:
+                        actions.append(Action(
+                            card=card,
+                            pos_from=-1,
+                            pos_to=-1,
+                            card_swap=Card(suit='♥', rank=rank)
+                        ))
+                continue
 
             # Define start cards that allow moving out of kennel
             start_cards = ['A', 'K']
