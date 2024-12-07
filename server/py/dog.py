@@ -276,6 +276,35 @@ class Dog(Game):
                     marble.is_save = False
                     print(f"{player.name}'s marble at position {target_pos} sent back to the kennel.")
 
+    def move_to_finish(self, marble: Marble, player_index: int, steps: int) -> bool:
+        """
+        Attempt to move a marble into the finish area.
+        """
+        finish_positions = self.board["finish_positions"][player_index]
+        start_pos = self.board["start_positions"][player_index][0]
+
+        # Check if the marble has passed the start at least twice
+        if marble.pos <= start_pos and marble.is_save:
+            print(f"Marble at position {marble.pos} has not passed the start twice.")
+            return False
+
+        # Calculate target position
+        target_pos = marble.pos + steps
+
+        # Check if the marble can enter the finish area
+        if target_pos in finish_positions:
+            # Place in the next available finish spot (inside to outside)
+            for pos in finish_positions:
+                if all(m.pos != pos for p in self.state.list_player for m in p.list_marble):
+                    marble.pos = pos
+                    print(f"Marble moved to finish at position {pos}.")
+                    return True
+
+        # Otherwise, move normally
+        marble.pos = target_pos % len(self.board["circular_path"])
+        print(f"Marble moved to position {marble.pos}.")
+        return False
+
     def is_in_player_finish_area(self, pos: int, player_index: int) -> bool:
         """
         Check if a marble is in the finish area for the given player.
