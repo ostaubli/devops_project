@@ -253,43 +253,88 @@ class Dog(Game):
             return [int(card.rank)]
         # Default to [0] for invalid cards
         return [0]
-
-    def _calculate_new_position(self, current_pos: int, move_value: int, player_idx: int) -> Optional[int]:
+    
+    def _calculate_new_position(self, marble: Marble, move_value: int, player_idx: int) -> Optional[int]:
         """
-        Calculate the new position of a marble, considering safe space entry rules and blocking.
-        Returns None if the move is invalid (e.g., safe space entry not allowed due to extra steps).
+        Calculate the new position of a marble, considering:
+        - Safe space entry rules for each player
+        - Blocking due to marbles
+        - Blockage at starting positions when occupied by a marble of the corresponding player.
+        Returns None if the move is invalid.
         """
-        safe_spaces = self.SAFE_SPACES[player_idx]
-        entry_point = safe_spaces[0]  # Entry point for the player's safe space
-        board_size = 96  # Total positions on the main track
-        blocked_positions = {marble["position"] for marble in self.get_all_marbles()}  # Get positions of all marbles
 
-        # If the marble is already in the safe space, check for overtaking
-        if current_pos in safe_spaces:
+        safe_spaces_active_player = self.SAFE_SPACES[player_idx]
+        starting_point_active_player = self.START_POSITIONS[player_idx]
+        board_size_main_track = 64  # Total positions on the main track
+        starting_points = self.START_POSITIONS
+        
+        #get current position of the marble
+        current_pos = marble.pos
+
+        # Collect all marbles on the field
+        blocked_positions = {
+            marble["position"]
+            for marble in self.get_all_marbles()
+            if marble["position"] in self.SAFE_SPACES[player_idx]
+        }
+
+        # Check movement within the safe space
+        if current_pos in safe_spaces_active_player:
             new_pos = current_pos + move_value
-            if new_pos > safe_spaces[-1]:
-                return None  # Cannot move beyond the last safe space
+            if new_pos > safe_spaces_active_player[-1]:  # Beyond the safe space
+                return None
+            
+            # Check if the target position in the safe space is already occupied
+            if new_pos in blocked_positions:
+                return None  # Safe space is occupied; cannot move here
 
-            # Check for blocking within the safe space
-            for pos in range(current_pos + 1, new_pos + 1):  # Range of positions to cross
-                if pos in blocked_positions:
-                    return None  # Move is invalid due to overtaking
+            # Ensure no overtaking in the safe space
+            for other_marble in self.state.list_player[player_idx].list_marble:
+                if other_marble.pos in safe_spaces_active_player and current_pos < other_marble.pos <= new_pos:
+                    return None  # Blocked by another marble in safe space
             return new_pos
+        
+        #temporal new position
+        new_pos = (current_pos + move_value) % board_size_main_track
 
-        # Calculate the tentative new position on the main track
-        new_pos = (current_pos + move_value) % board_size
+        # Check if any starting position is blocked by a marble
+        for idx, start_pos in starting_points.items():
+            # Loop through all players' marbles to see if any is on their respective starting position
+            if any(
+                marble.pos == start_pos and marble.is_save
+                for marble in self.state.list_player[idx].list_marble
+            ):
+                # Prevent crossing this starting position
+                if current_pos < start_pos <= new_pos:
+                    return None  # Starting position is blocked
 
-        # Check if the marble reaches or overshoots the safe space entry point
-        if current_pos < entry_point <= new_pos or (new_pos < current_pos and entry_point <= new_pos + board_size):
-            if current_pos + move_value == entry_point:  # Exact steps required to enter
-                return safe_spaces[0]  # Enter the safe space
-            return None  # Move is invalid if steps overshoot entry point
+        # Check for entering the safe space
+        if current_pos <= starting_point_active_player and new_pos >= starting_point_active_player:
+            # Explicitly check if your own starting position is blocked by your marble
+            if any(
+                other_marble.pos == starting_point_active_player and other_marble.is_save
+                for other_marble in self.state.list_player[player_idx].list_marble
+            ):
+                if current_pos < starting_point_active_player <= new_pos:
+                    return None  # Blocked by own marble at starting position
 
-        # Check for blocking on the main track
-        for pos in range(current_pos + 1, current_pos + move_value + 1):
-            if pos % board_size in blocked_positions:  # Use modulo for circular movement
-                return None  # Move is invalid due to overtaking
+            # Handle safe space entry
+            if marble.is_save is False:
+                steps_into_safe_space = new_pos - starting_point_active_player
+                if steps_into_safe_space < len(safe_spaces_active_player):
+                    # Check if the target position in the safe space is already occupied
+                    if safe_spaces_active_player[steps_into_safe_space] in blocked_positions:
+                        return None  # Safe space position is occupied
 
+                    # Ensure no overtaking in the safe space
+                    for other_marble in self.state.list_player[player_idx].list_marble:
+                        if other_marble.pos in safe_spaces_active_player and current_pos < other_marble.pos <= new_pos:
+                            return None  # Blocked in safe space
+                    return safe_spaces_active_player[steps_into_safe_space]
+                return None  # Exceeds safe space limit
+
+        if new_pos > self.BOARD_SIZE:
+            return None
         return new_pos
 
 
@@ -325,9 +370,10 @@ class Dog(Game):
     
     def _handle_seven_card(self, card: Card, active_marbles: List[Marble]) -> List[Action]:
         """Generate all possible split actions for the `7` card."""
-        # Filter out marbles in the kennel
         player_idx = self.state.idx_player_active
         kennels = self.KENNEL_POSITIONS
+
+        # Filter out marbles in the kennel
         marbles_outside_kennel = [
             marble for marble in active_marbles if marble.pos not in kennels[player_idx]
         ]
@@ -338,19 +384,20 @@ class Dog(Game):
         def dfs(remaining: int, moves: List[int], marble_indices: List[int], results: List[List[tuple[int, int]]]):
             """Recursive helper to generate splits."""
             if remaining == 0:
-                # Check if all moves in the split are valid
-                valid_split = True
-                for i, steps in enumerate(moves):
-                    if steps > 0:  # Check only marbles with non-zero moves
-                        marble = marbles_outside_kennel[marble_indices[i]]
-                        pos_to = self._calculate_new_position(marble.pos, steps, player_idx)
-                        if pos_to is None:
-                            valid_split = False  # Invalidate the entire split if one move fails
-                            break
-                
-                # If valid, append the current split result
-                if valid_split:
-                    results.append([(marble_indices[i], moves[i]) for i in range(len(moves)) if moves[i] > 0])
+                # Check if all moves in the split are valid and use exactly 7 points
+                if sum(moves) == 7:  # Ensure the full 7 points are used
+                    valid_split = True
+                    for i, steps in enumerate(moves):
+                        if steps > 0:  # Check only marbles with non-zero moves
+                            marble = marbles_outside_kennel[marble_indices[i]]
+                            pos_to = self._calculate_new_position(marble, steps, player_idx)
+                            if pos_to is None:
+                                valid_split = False  # Invalidate the entire split if one move fails
+                                break
+                    
+                    # If valid, append the current split result
+                    if valid_split:
+                        results.append([(marble_indices[i], moves[i]) for i in range(len(moves)) if moves[i] > 0])
                 return
 
             for i in range(len(moves)):
@@ -359,7 +406,7 @@ class Dog(Game):
 
                 # Validate the move using `_calculate_new_position`
                 marble = marbles_outside_kennel[marble_indices[i]]
-                pos_to = self._calculate_new_position(marble.pos, moves[i], player_idx)
+                pos_to = self._calculate_new_position(marble, moves[i], player_idx)
 
                 if pos_to is not None:  # Only proceed if the move is valid
                     dfs(remaining - 1, moves, marble_indices, results)
@@ -377,7 +424,7 @@ class Dog(Game):
         for split in results:
             for marble_idx, steps in split:
                 marble = marbles_outside_kennel[marble_idx]
-                pos_to = self._calculate_new_position(marble.pos, steps, player_idx)
+                pos_to = self._calculate_new_position(marble, steps, player_idx)
 
                 if pos_to is not None:
                     actions.append(Action(
@@ -402,7 +449,7 @@ class Dog(Game):
         if self.state.bool_card_exchanged is False:
             # Generate actions for the active player to exchange a card
             for card in active_player.list_card:
-                actions.append(Action(card=card, pos_from=-1, pos_to=-1, card_swap=None))  # pos_from and pos_to not applicable
+                actions.append(Action(card=card, pos_from=None, pos_to=None, card_swap=None))  # pos_from and pos_to not applicable
             return actions
 
 
@@ -476,7 +523,7 @@ class Dog(Game):
 
                 # all cases with cards
                 for card_value in card_values:  # Iterate over all possible values of the card, #check if we can move this far!!
-                    pos_to = self._calculate_new_position(marble.pos, card_value, self.state.idx_player_active)
+                    pos_to = self._calculate_new_position(marble, card_value, self.state.idx_player_active)
                     if pos_to is None:
                         continue
                     actions.append(Action(
@@ -544,7 +591,7 @@ class Dog(Game):
         self.state.list_card_discard.append(action.card)
 
     # Handle moving a marble from the kennel to the start position
-        if action.pos_from in self.KENNEL_POSITIONS[self.state.idx_player_active] and action.pos_to == 0:
+        if action.pos_from in self.KENNEL_POSITIONS[self.state.idx_player_active] and action.pos_to in self.START_POSITIONS:
             for marble in active_player.list_marble:
                 if marble.pos == action.pos_from:
                     marble.pos = action.pos_to
@@ -765,6 +812,6 @@ if __name__ == '__main__':
             game.validate_total_cards()
 
             # Optionally exit after a certain number of rounds (for testing)
-            if game.state.cnt_round > 8:  # Example limit
+            if game.state.cnt_round > 15:  # Example limit
                 print(f"Ending game for testing after {game.state.cnt_round} rounds.")
                 break
