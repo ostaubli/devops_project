@@ -488,15 +488,27 @@ class Dog(Game):
 
         return actions
  
-    def apply_action(self, action: Action) -> None:
+    def apply_action(self, action: Optional[Action]) -> None:
         """Apply the given action to the game."""
         if not self.state:
             raise ValueError("Game state is not set.")
         
         active_player = self.state.list_player[self.state.idx_player_active]
 
+        # Handle the case where no action is provided (skip turn)
+        if action is None:
+            print("No action provided. Advancing the active player.")
+            self.state.list_card_discard.extend(active_player.list_card) # Add all cards from the player's hand to the draw pile
+            active_player.list_card = []
+            self.state.idx_player_active = (self.state.idx_player_active + 1) % len(self.state.list_player)
+            
+            # If all players are out of cards, advance to the next round
+            if all(len(player.list_card) == 0 for player in self.state.list_player):
+                self.next_round()    
+            return  # Exit the function early
+
         # Card exchange phase
-        if self.state.bool_card_exchanged is False:
+        if not self.state.bool_card_exchanged:
             # Find the partner's index
             idx_partner = (self.state.idx_player_active + 2) % self.state.cnt_player
             partner = self.state.list_player[idx_partner]
@@ -520,14 +532,6 @@ class Dog(Game):
         if all(len(player.list_card) == 0 for player in self.state.list_player):
             self.next_round()
             return
-
-        # Handle the case where no action is provided (skip turn)
-        if action is None:
-            print("No action provided. Advancing the active player.")
-            self.state.list_card_discard.extend(active_player.list_card) # Add all cards from the player's hand to the draw pile
-            active_player.list_card = []
-            self.state.idx_player_active = (self.state.idx_player_active + 1) % len(self.state.list_player)
-            return  # Exit the function early
 
         # Log the action being applied
         print(f"Player {active_player.name} plays {action.card.rank} of {action.card.suit} "
