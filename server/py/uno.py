@@ -268,15 +268,20 @@ class Uno(Game):
 
         top_card = self.state.list_card_discard[-1]
 
+        #  test12
+        # if top_card.symbol == 'draw2':
+        #     possible_actions.append(Action(draw=2))
+        #     return possible_actions
+
         if top_card.symbol == 'wild' and len(self.state.list_card_discard) == 1:
             for my_card in active_player.list_card:
                 possible_actions.append(Action(card=my_card, color=my_card.color))
 
             return possible_actions
 
-        # print(f"{top_card=}")
-        # print(f"{active_player.list_card=}")
         possible_actions.append(Action(draw=1))
+
+
         if top_card.symbol is None:
             for my_card in active_player.list_card:
             # print(f"{my_card=}")
@@ -327,6 +332,22 @@ class Uno(Game):
                     if my_card.symbol == "wilddraw4":
                        for color in LIST_COLOR:
                            possible_actions.append(Action(card=my_card, color=color, draw=4))
+
+        #                     test 11
+        # for my_card in active_player.list_card:
+        #     if (my_card.color != top_card.color or my_card.number != top_card.number or my_card.symbol != top_card.symbol):
+        #         possible_actions.append(Action(draw=1))
+        #         if self.state.list_card_draw:  # Ensure there are cards to draw
+        #             drawn_card = self.state.list_card_draw.pop(0)  # Draw the top card
+        #             active_player.list_card.append(drawn_card)  # Add the drawn card to the player's hand
+        #
+        #            If the drawn card is playable, add it as a possible action to play
+                    # if (
+                    #         drawn_card.color == top_card.color
+                    #         or drawn_card.number == top_card.number
+                    #         or drawn_card.symbol == top_card.symbol
+                    # ):
+                    #     possible_actions.append(Action(card=drawn_card, color=drawn_card.color))
 
         return possible_actions
 
