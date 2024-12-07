@@ -1,5 +1,6 @@
 # -runcmd: cd ../.. & venv\Scripts\python server/py/uno.py
 # runcmd: cd ../.. & venv\Scripts\python benchmark/benchmark_uno.py python uno.Uno
+from PIL.ImImagePlugin import number
 
 from server.py.game import Game, Player #from server.py.game import Game, Player
 from typing import List, Optional
@@ -34,6 +35,7 @@ class Card(BaseModel):
 
 class Action(BaseModel):
     card: Optional[Card] = None  # the card to play
+    number:Optional[int] = None
     color: Optional[str] = None  # the chosen color to play (for wild cards)
     draw: Optional[int] = None   # the number of cards to draw for the next player
     uno: bool = False            # true to announce "UNO" with the second last card
@@ -105,38 +107,37 @@ class GamePhase(str, Enum):
     FINISHED = 'finished'      # when the game is finished
 
 
-def create_deck():
-    initial_deck = []
-    initial_deck.extend(
-        [Card(color=color, number=0) for color in LIST_COLOR]
-    )
+def create_deck() -> List[Card]:
+    """Creates the initial game deck."""
+    deck = []
 
-    initial_deck.extend(
-        [
-            Card(color=color, number=number)
-            for _ in range(2)
-            for color in LIST_COLOR
-            for number in range(1, 10)
-        ]
-    )
-    initial_deck.extend(
-        [
-            Card(color=color, symbol=symbol)
-            for _ in range(2)
-            for color in LIST_COLOR
-            for symbol in ['skip', 'reverse', 'draw2']
-        ]
-    )
+    # Add one zero card for each color
+    deck.extend([Card(color=color, number=0) for color in LIST_COLOR])
 
-    initial_deck.extend(
-        [
-            Card(color='any', symbol=symbol)
-            for _ in range(4)
-            for symbol in ['wild', 'wilddraw4']
-        ]
-    )
+    # Add two copies of each numbered card (1–9) for each color
+    deck.extend([
+        Card(color=color, number=number)
+        for color in LIST_COLOR
+        for number in range(1, 10)
+        for _ in range(2)
+    ])
 
-    return initial_deck
+    # Add two copies of each action card (skip, reverse, draw2) for each color
+    deck.extend([
+        Card(color=color, symbol=symbol)
+        for color in LIST_COLOR
+        for symbol in ['skip', 'reverse', 'draw2']
+        for _ in range(2)
+    ])
+
+    # Add four copies of wild cards (wild, wilddraw4)
+    deck.extend([
+        Card(color='any', symbol=symbol)
+        for symbol in ['wild', 'wilddraw4']
+        for _ in range(4)
+    ])
+
+    return deck
 
 class GameState(BaseModel):
     # numbers of cards for each player to start with
@@ -256,8 +257,14 @@ class Uno(Game):
         top_card = self.state.list_card_discard[-1]
         # game rules
         if top_card.symbol is None:
-            possible_actions.append(Action(draw=1))
             possible_actions.append(Action(card=top_card, color=top_card.color))
+            possible_actions.append(Action(draw=1))
+            print("----------")
+            print(f"{active_player.list_card=}")
+            print(f"{top_card=}")
+            print(f"{possible_actions=}")
+            print("----------")
+
         elif top_card.symbol is not None:
             if top_card.symbol == 'skip':
                 possible_actions.append(Action(draw=1))
@@ -268,12 +275,6 @@ class Uno(Game):
             if top_card.symbol == 'draw2':
                 possible_actions.append(Action(draw=1))
                 possible_actions.append(Action(card=top_card, color=top_card.color, draw=2))
-
-        print("----------")
-        print(f"{active_player.list_card=}")
-        print(f"{top_card=}")
-        print(f"{possible_actions=}")
-        print("----------")
 
         return possible_actions
 
