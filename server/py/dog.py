@@ -249,25 +249,7 @@ class GameState(BaseModel):
 
 
     def set_action_to_game(self, action: Action):  # Kened
-
-
-        # Discard the played card
-        active_player.list_card.remove(action.card)
-        self.list_card_discard.append(action.card)
-
-        # Handle special cards
-        if action.card.rank == '7':
-            # 7 allows multiple movements; the game logic should track additional actions
-            self.card_active = action.card
-        elif action.card.rank == 'J':
-            # J allows swapping marbles (specific logic to be implemented separately)
-            pass
-        elif action.card.rank == 'JKR':
-            # Joker allows flexibility, which may require additional rules
-            pass
-        else:
-            # Reset the active card for regular actions
-            self.card_active = None
+        self.action = action
 
 
 
