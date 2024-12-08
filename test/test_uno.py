@@ -1,15 +1,18 @@
 import unittest
 import sys
 import os
+import random
 
 # Add the root project directory to the Python path
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 
-from server.py.uno import Uno, Action
+from server.py.uno import Uno, Action, GameState, create_deck
+
+# UNIT TESTS
 
 class TestUnoGame(unittest.TestCase):
     '''
-    This test class contains unit tests for the Uno game logic.
+    This test class contains all unit tests for the Uno game logic.
     It validates that the methods in the Uno class are working as expected.
     '''
 
@@ -19,8 +22,9 @@ class TestUnoGame(unittest.TestCase):
         This method is called before every test case to create a fresh game instance.
         '''
         self.uno = Uno()
-        # Explicitly set up the deck since LIST_CARD is not an attribute
+        # Populate list_card_draw with a shuffled deck
         self.uno.state.list_card_draw = create_deck()
+        random.shuffle(self.uno.state.list_card_draw)
 
     def test_setup_game(self):
         '''
@@ -72,7 +76,7 @@ class TestUnoGame(unittest.TestCase):
         - Check the active player index before and after calling next_player.
         - Validate behavior when the game direction changes.
         '''
-        players = ["Alice", "Bob", "Charlie"]
+        players = ["Daniel", "Chris", "Ramon"]
         self.uno.state.CNT_HAND_CARDS = 7
         self.uno.state.setup_game(players)
 
@@ -92,7 +96,7 @@ class TestUnoGame(unittest.TestCase):
         - Validate that the game direction is reversed.
         - Ensure that the next player's index reflects the change in direction.
         '''
-        players = ["Alice", "Bob", "Charlie"]
+        players = ["Natasha", "Chris", "Carlos"]
         self.uno.state.CNT_HAND_CARDS = 7
         self.uno.state.setup_game(players)
 
@@ -119,7 +123,7 @@ class TestUnoGame(unittest.TestCase):
         - Simulate an empty draw pile.
         - Ensure that the discard pile is reshuffled into the draw pile.
         '''
-        players = ["Daniel", "Ramon"]
+        players = ["Carlos", "Daniel"]
         self.uno.state.CNT_HAND_CARDS = 7
         self.uno.state.setup_game(players)
 
