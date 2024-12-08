@@ -296,40 +296,8 @@ class GameState(BaseModel):
 
 
 
-    def set_action_to_game(self, action: Action):
-        """
-        Apply the given action to the game state.
-        Moves the marble from pos_from to pos_to based on the action,
-        and handles special cases like sending marbles home and marking marbles as safe.
-        """
-        # Get the active player
-        active_player = self.list_player[self.idx_player_active]
+    def set_action_to_game(self, action: Action):  # Kened
 
-        # Ensure the card played is in the player's hand
-        if action.card not in active_player.list_card:
-            raise ValueError("The card played is not in the active player's hand.")
-
-        # Ensure pos_from and pos_to are defined
-        if action.pos_from is None or action.pos_to is None:
-            raise ValueError("Both pos_from and pos_to must be specified for the action.")
-
-        # Find the marble to move based on pos_from
-        marble_to_move = next((m for m in active_player.list_marble if m.pos == str(action.pos_from)), None)
-        if not marble_to_move:
-            raise ValueError(f"No marble found at the specified pos_from: {action.pos_from}")
-
-        # Update the marble's position
-        marble_to_move.pos = str(action.pos_to)
-
-        # Check if the marble's new position is in a final or safe zone
-        self.check_final_pos(pos_to=action.pos_to, pos_from=action.pos_from, marble=marble_to_move)
-
-        # Handle cases where another player's marble occupies the destination
-        for player in self.list_player:
-            if player != active_player:
-                opponent_marble = next((m for m in player.list_marble if m.pos == str(action.pos_to)), None)
-                if opponent_marble:
-                    self.sending_home(opponent_marble)  # Send the opponent's marble home
 
         # Discard the played card
         active_player.list_card.remove(action.card)
@@ -457,7 +425,11 @@ class Dog(Game):
         pass
 
     def apply_action(self, action: Action) -> None:
-        """ Apply the given action to the game 
+        """
+        Apply the given action to the game state.
+        Moves the marble from pos_from to pos_to based on the action,
+        and handles special cases like sending marbles home and marking marbles as safe.
+        Apply the given action to the game
         Aktion auf das spielbrett übertragen ==> Gamestate verändern
         Logiken:
         1.1 Normaler Zug von ausgangspos zu zielpos gilt für alle karte ausser JKR, 7 und Jack
@@ -467,18 +439,38 @@ class Dog(Game):
 
         2. Wenn Zug abgeschlossen Aktiver spieler weitergeben
         """
-        # TODO: Logik 1.1
 
-        # TODO: Logik 1.2
 
-        # TODO: Logik 1.3
+        # Get the active player
+        active_player = self.list_player[self.idx_player_active]
 
-        # TODO: Logik 1.4
+        # Ensure the card played is in the player's hand
+        if action.card not in active_player.list_card:
+            raise ValueError("The card played is not in the active player's hand.")
+
+        # Ensure pos_from and pos_to are defined
+        if action.pos_from is None or action.pos_to is None:
+            raise ValueError("Both pos_from and pos_to must be specified for the action.")
+
+        # Find the marble to move based on pos_from
+        marble_to_move = next((m for m in active_player.list_marble if m.pos == str(action.pos_from)), None)
+        if not marble_to_move:
+            raise ValueError(f"No marble found at the specified pos_from: {action.pos_from}")
+
+        # Update the marble's position
+        marble_to_move.pos = str(action.pos_to)
+
+        # Check if the marble's new position is in a final or safe zone
+        self.check_final_pos(pos_to=action.pos_to, pos_from=action.pos_from, marble=marble_to_move)
+
+        # Handle cases where another player's marble occupies the destination
+        for player in self.list_player:
+            if player != active_player:
+                opponent_marble = next((m for m in player.list_marble if m.pos == str(action.pos_to)), None)
+                if opponent_marble:
+                    self.sending_home(opponent_marble)  # Send the opponent's marble home
         
-        # TODO: Logik 2
-
-        self.state.set_action_to_game(action)
-
+        pass
 
     def get_player_view(self, idx_player: int) -> GameState:
         """ Get the masked state for the active player (e.g. the oppontent's cards are face down)"""
