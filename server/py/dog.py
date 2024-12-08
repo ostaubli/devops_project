@@ -549,7 +549,6 @@ class Dog(Game):
             print("No action provided. Advancing the active player.")
             # Add all cards from the player's hand to the draw pile
             self.state.list_card_discard.extend(active_player.list_card)
-            active_player.list_card = []
             self.state.idx_player_active = (self.state.idx_player_active + 1) % len(self.state.list_player)
 
             # If all players are out of cards, advance to the next round
