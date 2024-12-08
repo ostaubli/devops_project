@@ -682,8 +682,6 @@ class Dog(Game):
                     marble.is_save = marble.position in self.SAFE_SPACES[self.state.idx_player_active]
                     break
 
-
-
     def get_cards_per_round(self) -> int:
         """Determine the number of cards to be dealt based on the round."""
         # Round numbers repeat in cycles of 5: 6, 5, 4, 3, 2
