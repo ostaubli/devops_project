@@ -196,3 +196,50 @@ def test_no_duplicate_cards_in_deck():
         f"Total cards: {len(all_cards)}, Expected: {len(GameState.LIST_CARD)}"
     )
 
+def test_collision_with_self_is_invalid():
+    """Test that a marble cannot collide with another marble of the same player."""
+    game = Dog()
+    game.reset()
+
+    state = game.get_state()
+    idx_player_active = 0
+    state.idx_player_active = idx_player_active
+    player = state.list_player[idx_player_active]
+
+    # Set up two marbles in positions that could collide
+    player.list_marble[0].pos = 9
+    player.list_marble[1].pos = 10
+    player.list_card = [Card(suit='♠', rank='1')]
+
+    game.set_state(state)
+
+    actions = game.get_list_action()
+
+    # Check that no actions attempt to move to an occupied position by the same player
+    for action in actions:
+        assert action.pos_to != player.list_marble[1].pos, (
+            f"Invalid action: Marble attempted to collide with another marble of the same player at {player.list_marble[1].pos}."
+        )
+
+def test_round_continues_with_remaining_players():
+    """Test that the round continues when one player is out of cards but others still have moves."""
+    game = Dog()
+    game.reset()
+
+    state = game.get_state()
+    idx_player_active = 0
+    state.idx_player_active = idx_player_active
+    player = state.list_player[idx_player_active]
+
+    # Empty the active player's hand and ensure others have cards
+    player.list_card = []
+    state.list_player[1].list_card = [Card(suit='♠', rank='3')]
+    game.set_state(state)
+
+    game.apply_action(None)  # Skip the active player's turn
+
+    assert game.state.idx_player_active == 1, (
+        f"Game did not correctly pass the turn to the next player. Expected player 1, found {game.state.idx_player_active}."
+    )
+
+
