@@ -585,6 +585,7 @@ class DogBenchmark(benchmark.Benchmark):
         """Test 025: Test JOKER card at beginning [5 point]"""
 
         list_card = [Card(suit='', rank='JKR')]
+        LIST_SUIT: List[str] = ['♠', '♥', '♦', '♣']
 
         for card in list_card:
             self.game_server.reset()
@@ -603,9 +604,12 @@ class DogBenchmark(benchmark.Benchmark):
             list_action_found = self.game_server.get_list_action()
             list_action_expected = [
                 Action(card=Card(suit='', rank='JKR'), pos_from=64, pos_to=0),
-                Action(card=Card(suit='', rank='JKR'), pos_from=None, pos_to=None, card_swap=Card(suit='♥', rank='A')),
-                Action(card=Card(suit='', rank='JKR'), pos_from=None, pos_to=None, card_swap=Card(suit='♥', rank='K')),
             ]
+            for suit in LIST_SUIT:
+                list_action_expected.extend([
+                    Action(card=Card(suit='', rank='JKR'), pos_from=None, pos_to=None, card_swap=Card(suit=suit, rank='A')),
+                    Action(card=Card(suit='', rank='JKR'), pos_from=None, pos_to=None, card_swap=Card(suit=suit, rank='K')),
+                ])
 
             hint = str_state
             hint += f'Error 1: "get_list_action" must return {len(list_action_expected)} not {len(list_action_found)} actions'
@@ -623,6 +627,7 @@ class DogBenchmark(benchmark.Benchmark):
         """Test 026: Test JOKER card in later game [5 point]"""
 
         list_card = [Card(suit='', rank='JKR')]
+        LIST_SUIT: List[str] = ['♠', '♥', '♦', '♣']
 
         for card in list_card:
             self.game_server.reset()
@@ -646,21 +651,23 @@ class DogBenchmark(benchmark.Benchmark):
             str_state = str(state)
 
             list_action_found = self.game_server.get_list_action()
-            list_action_expected = [
-                Action(card=Card(suit='', rank='JKR'), pos_from=None, pos_to=None, card_swap=Card(suit='♥', rank='2')),
-                Action(card=Card(suit='', rank='JKR'), pos_from=None, pos_to=None, card_swap=Card(suit='♥', rank='3')),
-                Action(card=Card(suit='', rank='JKR'), pos_from=None, pos_to=None, card_swap=Card(suit='♥', rank='4')),
-                Action(card=Card(suit='', rank='JKR'), pos_from=None, pos_to=None, card_swap=Card(suit='♥', rank='5')),
-                Action(card=Card(suit='', rank='JKR'), pos_from=None, pos_to=None, card_swap=Card(suit='♥', rank='6')),
-                Action(card=Card(suit='', rank='JKR'), pos_from=None, pos_to=None, card_swap=Card(suit='♥', rank='7')),
-                Action(card=Card(suit='', rank='JKR'), pos_from=None, pos_to=None, card_swap=Card(suit='♥', rank='8')),
-                Action(card=Card(suit='', rank='JKR'), pos_from=None, pos_to=None, card_swap=Card(suit='♥', rank='9')),
-                Action(card=Card(suit='', rank='JKR'), pos_from=None, pos_to=None, card_swap=Card(suit='♥', rank='10')),
-                Action(card=Card(suit='', rank='JKR'), pos_from=None, pos_to=None, card_swap=Card(suit='♥', rank='A')),
-                Action(card=Card(suit='', rank='JKR'), pos_from=None, pos_to=None, card_swap=Card(suit='♥', rank='J')),
-                Action(card=Card(suit='', rank='JKR'), pos_from=None, pos_to=None, card_swap=Card(suit='♥', rank='K')),
-                Action(card=Card(suit='', rank='JKR'), pos_from=None, pos_to=None, card_swap=Card(suit='♥', rank='Q')),
-            ]
+            list_action_expected = []
+            for suit in LIST_SUIT:
+                list_action_expected.extend([
+                    Action(card=Card(suit='', rank='JKR'), pos_from=None, pos_to=None, card_swap=Card(suit=suit, rank='2')),
+                    Action(card=Card(suit='', rank='JKR'), pos_from=None, pos_to=None, card_swap=Card(suit=suit, rank='3')),
+                    Action(card=Card(suit='', rank='JKR'), pos_from=None, pos_to=None, card_swap=Card(suit=suit, rank='4')),
+                    Action(card=Card(suit='', rank='JKR'), pos_from=None, pos_to=None, card_swap=Card(suit=suit, rank='5')),
+                    Action(card=Card(suit='', rank='JKR'), pos_from=None, pos_to=None, card_swap=Card(suit=suit, rank='6')),
+                    Action(card=Card(suit='', rank='JKR'), pos_from=None, pos_to=None, card_swap=Card(suit=suit, rank='7')),
+                    Action(card=Card(suit='', rank='JKR'), pos_from=None, pos_to=None, card_swap=Card(suit=suit, rank='8')),
+                    Action(card=Card(suit='', rank='JKR'), pos_from=None, pos_to=None, card_swap=Card(suit=suit, rank='9')),
+                    Action(card=Card(suit='', rank='JKR'), pos_from=None, pos_to=None, card_swap=Card(suit=suit, rank='10')),
+                    Action(card=Card(suit='', rank='JKR'), pos_from=None, pos_to=None, card_swap=Card(suit=suit, rank='A')),
+                    Action(card=Card(suit='', rank='JKR'), pos_from=None, pos_to=None, card_swap=Card(suit=suit, rank='J')),
+                    Action(card=Card(suit='', rank='JKR'), pos_from=None, pos_to=None, card_swap=Card(suit=suit, rank='K')),
+                    Action(card=Card(suit='', rank='JKR'), pos_from=None, pos_to=None, card_swap=Card(suit=suit, rank='Q')),
+                ])
             hint = str_state
             hint += f'Error 1: "get_list_action" must return {len(list_action_expected)} not {len(list_action_found)} actions'
             assert len(list_action_found) == len(list_action_expected), hint
@@ -1921,9 +1928,15 @@ class DogBenchmark(benchmark.Benchmark):
         return cnt_in_kennel
 
     def get_sorted_list_action(self, list_action):
-        return sorted(list_action, key=lambda x: (str(x.card), -1 if x.pos_from is None else x.pos_from, -1 if x.pos_to is None else x.pos_to, x.card_swap))
+        return sorted(list_action, key=lambda x: (
+            str(x.card),
+            -1 if x.pos_from is None else x.pos_from,
+            -1 if x.pos_to is None else x.pos_to,
+            str(x.card_swap))
+        )
 
     def get_list_action_as_str(self, list_action):
+        list_action = self.get_sorted_list_action(list_action)
         return json.dumps([str(action) for action in list_action], indent=4, ensure_ascii=False)
 
     def start_game_state_at_round_2(self):
@@ -2168,5 +2181,4 @@ if __name__ == '__main__':
         benchmark.run_tests()
 
     else:  # Run specific test(s)
-        benchmark.test_swap_with_JAKE_1()
-        benchmark.test_swap_with_JAKE_2()
+        benchmark.test_chose_card_with_JOKER_1()
