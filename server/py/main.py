@@ -368,7 +368,20 @@ async def dog_random_player_ws(websocket: WebSocket):
 
     try:
 
-        pass
+        game = dog.Dog()
+        player = dog.RandomPlayer()
+
+        while True:
+
+            state = game.get_state()
+            if state.phase == dog.GamePhase.FINISHED:
+                break
+
+            list_action = game.get_list_action()
+            action = player.select_action(state, list_action)
+            if action is not None:
+                await asyncio.sleep(1)
+            game.apply_action(action)
 
     except WebSocketDisconnect:
         print('DISCONNECTED')
