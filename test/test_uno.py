@@ -1,4 +1,10 @@
 import unittest
+import sys
+import os
+
+# Add the root project directory to the Python path
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
+
 from server.py.uno import Uno, Action
 
 class TestUnoGame(unittest.TestCase):
@@ -13,6 +19,8 @@ class TestUnoGame(unittest.TestCase):
         This method is called before every test case to create a fresh game instance.
         '''
         self.uno = Uno()
+        # Explicitly set up the deck since LIST_CARD is not an attribute
+        self.uno.state.list_card_draw = create_deck()
 
     def test_setup_game(self):
         '''
@@ -21,6 +29,7 @@ class TestUnoGame(unittest.TestCase):
         - Ensure that each player is dealt the correct number of cards.
         '''
         players = ["Daniel", "Ramon"]
+        self.uno.state.CNT_HAND_CARDS = 7  # Ensure players get 7 cards
         self.uno.state.setup_game(players)
 
         # Assert that the correct number of players are set up
@@ -30,18 +39,23 @@ class TestUnoGame(unittest.TestCase):
         for player in self.uno.state.list_player:
             self.assertEqual(len(player.list_card), 7, f'{player.name} should have 7 cards.')
 
-    def test_apply_action(self):
+        # Assert that the draw pile has been reduced
+        expected_draw_pile_size = len(create_deck()) - (7 * len(players)) - 1  # 1 for the discard pile's initial card
+        self.assertEqual(len(self.uno.state.list_card_draw), expected_draw_pile_size, 'Draw pile size should match the remaining cards.')
+
+    def test_apply_action_draw_card(self):
         '''
         Test the apply_action method to ensure that player actions are applied correctly.
         - Simulate a player drawing a card.
         - Check if the game state is updated properly after the action.
         '''
         players = ["Daniel", "Ramon"]
+        self.uno.state.CNT_HAND_CARDS = 7
         self.uno.state.setup_game(players)
 
         # Simulate a player action: drawing one card
-        initial_card_count = len(self.uno.state.list_player[0].list_card)
-        
+        initial_card_count = len(self.uno.state.list_player[self.uno.state.idx_player_active].list_card)
+
         # Apply action via action object
         action = Action(draw=1)
         self.uno.apply_action(action)
@@ -59,6 +73,7 @@ class TestUnoGame(unittest.TestCase):
         - Validate behavior when the game direction changes.
         '''
         players = ["Alice", "Bob", "Charlie"]
+        self.uno.state.CNT_HAND_CARDS = 7
         self.uno.state.setup_game(players)
 
         # Save the initial active player index
@@ -78,6 +93,7 @@ class TestUnoGame(unittest.TestCase):
         - Ensure that the next player's index reflects the change in direction.
         '''
         players = ["Alice", "Bob", "Charlie"]
+        self.uno.state.CNT_HAND_CARDS = 7
         self.uno.state.setup_game(players)
 
         # Set the initial direction and active player index
@@ -96,6 +112,31 @@ class TestUnoGame(unittest.TestCase):
 
         # Assert that the turn moved in the opposite direction
         self.assertEqual(next_index, (initial_index - 1) % len(players), 'The turn should move to the previous player after a reverse.')
+
+    def test_reshuffle_discard_pile(self):
+        '''
+        Test the reshuffling of the discard pile into the draw pile.
+        - Simulate an empty draw pile.
+        - Ensure that the discard pile is reshuffled into the draw pile.
+        '''
+        players = ["Daniel", "Ramon"]
+        self.uno.state.CNT_HAND_CARDS = 7
+        self.uno.state.setup_game(players)
+
+        # Empty the draw pile
+        self.uno.state.list_card_draw = []
+
+        # Add cards to the discard pile
+        self.uno.state.list_card_discard = create_deck()[:10]
+
+        # Reshuffle the discard pile
+        self.uno.state.reshuffle_discard_pile()
+
+        # Assert that the draw pile is populated
+        self.assertGreater(len(self.uno.state.list_card_draw), 0, 'The draw pile should be populated after reshuffling.')
+
+        # Assert that only the last card remains in the discard pile
+        self.assertEqual(len(self.uno.state.list_card_discard), 1, 'Only the top card should remain in the discard pile.')
 
 if __name__ == "__main__":
     unittest.main()
