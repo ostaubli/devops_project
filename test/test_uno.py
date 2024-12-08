@@ -1,5 +1,5 @@
 import unittest
-from server.py.uno import Uno, GameState, PlayerState
+from server.py.uno import Uno, Action
 
 class TestUnoGame(unittest.TestCase):
     '''
@@ -41,8 +41,13 @@ class TestUnoGame(unittest.TestCase):
 
         # Simulate a player action: drawing one card
         initial_card_count = len(self.uno.state.list_player[0].list_card)
-        self.uno.apply_action({'draw': 1})  # Replace this with a properly formatted Action object
-        new_card_count = len(self.uno.state.list_player[0].list_card)
+        
+        # Apply action via action object
+        action = Action(draw=1)
+        self.uno.apply_action(action)
+
+        # Get the updated card count for the active player
+        new_card_count = len(self.uno.state.list_player[self.uno.state.idx_player_active].list_card)
 
         # Assert that the player has one additional card
         self.assertEqual(new_card_count, initial_card_count + 1, 'Player should have one more card after drawing.')
@@ -65,6 +70,32 @@ class TestUnoGame(unittest.TestCase):
 
         # Assert that the index has incremented
         self.assertEqual(next_index, (initial_index + 1) % len(players), 'The turn should move to the next player.')
+
+    def test_reverse_direction(self):
+        '''
+        Test the reverse direction functionality.
+        - Validate that the game direction is reversed.
+        - Ensure that the next player's index reflects the change in direction.
+        '''
+        players = ["Alice", "Bob", "Charlie"]
+        self.uno.state.setup_game(players)
+
+        # Set the initial direction and active player index
+        initial_direction = self.uno.state.direction
+        initial_index = self.uno.state.idx_player_active
+
+        # Apply a reverse action
+        self.uno.state.reverse_direction()
+
+        # Assert that the direction has been reversed
+        self.assertEqual(self.uno.state.direction, -initial_direction, 'The game direction should be reversed.')
+
+        # Move to the next player
+        self.uno.state.next_player()
+        next_index = self.uno.state.idx_player_active
+
+        # Assert that the turn moved in the opposite direction
+        self.assertEqual(next_index, (initial_index - 1) % len(players), 'The turn should move to the previous player after a reverse.')
 
 if __name__ == "__main__":
     unittest.main()
