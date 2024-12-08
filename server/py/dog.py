@@ -1,4 +1,3 @@
-
 from server.py.game import Game, Player
 from typing import List, Optional, ClassVar
 from pydantic import BaseModel
@@ -256,6 +255,8 @@ class Dog(Game):
             # Get the active player
             active_player = self.state.list_player[self.state.idx_player_active]
 
+
+
             # Handle Joker swap
             if action.card.rank == 'JKR' and action.card_swap:
                 # Remove the Joker card from the player's hand
@@ -268,15 +269,14 @@ class Dog(Game):
             card_to_use = self.state.card_active if self.state.card_active else action.card
 
             if card_to_use.rank == '7':  # SEVEN card: Handle split movements
-                # Initialize steps remaining for SEVEN if it's the first move
-                if self.steps_remaining is None:
+                if self.steps_remaining is None:  # Initialize for SEVEN card
+
                     self.steps_remaining = 7
                     self.state.card_active = card_to_use
 
                 # Calculate the number of steps used in the current action
                 steps_used = abs(action.pos_to - action.pos_from)
 
-                # Validate that the steps used do not exceed the remaining steps
                 if steps_used > self.steps_remaining:
                     raise ValueError("Exceeded remaining steps for SEVEN.")
 
@@ -285,11 +285,10 @@ class Dog(Game):
                     (marble for marble in active_player.list_marble if marble.pos == action.pos_from), None
                 )
                 if moving_marble:
-                    # Move the marble to the target position
-                    moving_marble.pos = action.pos_to
 
-                    # Check if the marble passed through or landed on an opponent's marble
+                    # Handle intermediate positions (for opponent's and own marbles)
                     for intermediate_pos in range(action.pos_from + 1, action.pos_to + 1):
+                        # Check for opponent's marble in the path
                         opponent_marble = None
                         for player in self.state.list_player:
                             if player != active_player:
@@ -297,12 +296,23 @@ class Dog(Game):
                                     (marble for marble in player.list_marble if marble.pos == intermediate_pos), None
                                 )
                                 if opponent_marble:
-                                    # Send the opponent's marble to the kennel
-                                    opponent_marble.pos = 72  # Kennel position
+                                    opponent_marble.pos = 72  # Send to kennel
                                     opponent_marble.is_save = False
                                     break  # Only one opponent marble can be kicked at a time
 
-                    # Decrement the remaining steps after the move
+                        # Check for own marble in the path (specific to test 032)
+                        if not opponent_marble:
+                            own_marble = next(
+                                (marble for marble in active_player.list_marble if marble.pos == intermediate_pos), None
+                            )
+                            if own_marble and own_marble != moving_marble:
+                                own_marble.pos = 72  # Send to kennel
+                                own_marble.is_save = False
+                                break  # Only one marble can be kicked at a time
+
+                    # Move the active player's marble
+                    moving_marble.pos = action.pos_to
+
                     self.steps_remaining -= steps_used
 
                     # Finalize the turn if all steps are used
@@ -311,12 +321,14 @@ class Dog(Game):
                         self.state.card_active = None
                         active_player.list_card.remove(card_to_use)
 
-                        # Advance to the next player's turn
                         self.state.idx_player_active = (self.state.idx_player_active + 1) % self.state.cnt_player
                 return  # Prevent further turn advancement for incomplete SEVEN moves
 
-            if card_to_use.rank == 'J':  # JACK card: Handle swapping
-                # Locate the active player's marble to swap
+
+
+            if card_to_use.rank == 'J':  # Jake (Jack) card: Handle swapping
+                # Find the active player's marble
+
                 moving_marble = next(
                     (marble for marble in active_player.list_marble if marble.pos == action.pos_from), None
                 )
@@ -332,7 +344,7 @@ class Dog(Game):
                             break
 
                 if moving_marble and opponent_marble:
-                    # Swap the positions of the active player's and opponent's marbles
+
                     moving_marble.pos, opponent_marble.pos = opponent_marble.pos, moving_marble.pos
             else:
                 # Handle all other card types
