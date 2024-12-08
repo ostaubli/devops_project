@@ -84,7 +84,7 @@ class GameState(BaseModel):
     cnt_round: int = 0                              # current round
     bool_card_exchanged: bool = False               # true if cards was exchanged in round
     idx_player_started: int = random.randint(0,3)   # index of player that started the round
-    idx_player_active: int =idx_player_started      # index of active player in round
+    idx_player_active: int = idx_player_started      # index of active player in round
     list_player: List[PlayerState] = []             # list of players
     list_card_draw: List[Card] = LIST_CARD       # list of cards to draw ==> Was list_id_card_draw in given Template
     list_card_discard: List[Card] = []              # list of cards discarded
@@ -97,7 +97,10 @@ class GameState(BaseModel):
                 list_marble=[Marble(pos="64", is_save=True), 
                              Marble(pos="65", is_save=True),
                              Marble(pos="66", is_save=True),
-                             Marble(pos="67", is_save=True)]
+                             Marble(pos="67", is_save=True)],
+                list_kennel_pos = [64,65,66,67],
+                list_finish_pos = [68,69,70,71],
+                start_pos = 0
                 )
         player_green = PlayerState(
                 name="PlayerGreen",
@@ -105,7 +108,10 @@ class GameState(BaseModel):
                 list_marble=[Marble(pos="72", is_save=True), 
                              Marble(pos="73", is_save=True),
                              Marble(pos="74", is_save=True),
-                             Marble(pos="75", is_save=True)]
+                             Marble(pos="75", is_save=True)],
+                list_kennel_pos = [72,73,74,75],
+                list_finish_pos = [76,77,78,79],
+                start_pos = 16
                 )
         player_red = PlayerState(
                 name="PlayerRed",
@@ -113,7 +119,10 @@ class GameState(BaseModel):
                 list_marble=[Marble(pos="80", is_save=True), 
                              Marble(pos="81", is_save=True),
                              Marble(pos="82", is_save=True),
-                             Marble(pos="83", is_save=True)]
+                             Marble(pos="83", is_save=True)],
+                list_kennel_pos = [80,81,82,83],
+                list_finish_pos = [84,85,86,87],
+                start_pos = 32
                 )
         player_yellow = PlayerState(
                 name="PlayerYellow",
@@ -121,7 +130,10 @@ class GameState(BaseModel):
                 list_marble=[Marble(pos="88", is_save=True), 
                              Marble(pos="89", is_save=True),
                              Marble(pos="90", is_save=True),
-                             Marble(pos="91", is_save=True)]
+                             Marble(pos="91", is_save=True)],
+                list_kennel_pos = [88,89,90,91],
+                list_finish_pos = [92,93,94,95],
+                start_pos = 48
                 )
         self.list_player = [player_blue,player_green,player_red,player_yellow]
 
@@ -153,7 +165,19 @@ class GameState(BaseModel):
             for card in player.list_card :
                 self.list_card_draw.remove(card)
 
-        return True
+        return
+
+    def can_leave_kennel(self,player: PlayerState ) -> int: #Needs to be redone Technical limits due to python
+
+        for marble in player.list_marble:
+
+            if int(marble.pos) not in player.list_kennel_pos:
+
+                if not int(marble.pos) == player.start_pos and marble.is_save:
+
+                    return None
+                return None
+        return marble.pos
 
 
     def get_list_possible_action(self) -> List[Action]: #Nicolas
@@ -200,7 +224,8 @@ class GameState(BaseModel):
                     case '7':
                         for steps_split in list_steps_split_7:
                             for i, steps in enumerate(steps_split):
-                                action_list.append(Action(card = card,pos_from = marble.pos, pos_to = (marble.pos + steps) % 64))
+                                action_list.append(Action(card = card,pos_from = marble.pos,
+                                                          pos_to = (marble.pos + steps) % 64))
                     case '8':
                         action_list.append(Action(card=card, pos_from=marble.pos, pos_to=((marble.pos + 8) % 64)))
                     case '9':
@@ -214,17 +239,39 @@ class GameState(BaseModel):
                         action_list.append(Action(card=card, pos_from=marble.pos, pos_to=((marble.pos + 12) % 64)))
                     case 'K':
                         action_list.append(Action(card=card, pos_from=marble.pos, pos_to=((marble.pos + 13) % 64)))
-                        #TODO Going Out
+                        i = self.can_leave_kennel(active_player)
+                        if i:
+                            action_list.append(Action(card=card, pos_from= i, pos_to=active_player.start_pos))
+
                     case 'A':
                         action_list.append(Action(card=card, pos_from=marble.pos, pos_to=((marble.pos + 11) % 64)))
                         action_list.append(Action(card=card, pos_from=marble.pos, pos_to=((marble.pos + 1) % 64)))
-                        #TODO Going OUT
+                        i = self.can_leave_kennel(active_player)
+                        if i:
+                            action_list.append(Action(card=card, pos_from=i, pos_to=active_player.start_pos))
+
                     case 'JKR':
-                       pass
-
-
-
-
+                        action_list.append(Action(card=card, pos_from=marble.pos, pos_to=((marble.pos + 2) % 64)))
+                        action_list.append(Action(card=card, pos_from=marble.pos, pos_to=((marble.pos + 3) % 64)))
+                        action_list.append(Action(card=card, pos_from=marble.pos, pos_to=((marble.pos + 4) % 64)))
+                        action_list.append(Action(card=card, pos_from=marble.pos, pos_to=((marble.pos - 4) % 64)))
+                        action_list.append(Action(card=card, pos_from=marble.pos, pos_to=((marble.pos + 5) % 64)))
+                        action_list.append(Action(card=card, pos_from=marble.pos, pos_to=((marble.pos + 6) % 64)))
+                        for steps_split in list_steps_split_7:
+                            for i, steps in enumerate(steps_split):
+                                action_list.append(Action(card = card,pos_from = marble.pos,
+                                                          pos_to = (marble.pos + steps) % 64))
+                        action_list.append(Action(card=card, pos_from=marble.pos, pos_to=((marble.pos + 8) % 64)))
+                        action_list.append(Action(card=card, pos_from=marble.pos, pos_to=((marble.pos + 9) % 64)))
+                        action_list.append(Action(card=card, pos_from=marble.pos, pos_to=((marble.pos + 10) % 64)))
+                        #Todo Jake Copy Paste
+                        action_list.append(Action(card=card, pos_from=marble.pos, pos_to=((marble.pos + 12) % 64)))
+                        action_list.append(Action(card=card, pos_from=marble.pos, pos_to=((marble.pos + 13) % 64)))
+                        i = self.can_leave_kennel(active_player)
+                        if i:
+                            action_list.append(Action(card=card, pos_from=i, pos_to=active_player.start_pos))
+                        action_list.append(Action(card=card, pos_from=marble.pos, pos_to=((marble.pos + 11) % 64)))
+                        action_list.append(Action(card=card, pos_from=marble.pos, pos_to=((marble.pos + 1) % 64)))
 
 
         #
@@ -402,6 +449,11 @@ class Dog(Game):
 
     def get_list_action(self) -> List[Action]:
         """ Get a list of possible actions for the active player """
+
+
+        if self.state.phase == GamePhase.FINISHED:              #Needs to be finished
+            return []
+
         pass
 
     def apply_action(self, action: Action) -> None:
@@ -424,8 +476,9 @@ class Dog(Game):
         # TODO: Logik 1.4
         
         # TODO: Logik 2
-        
-        pass
+
+        self.state.set_action_to_game(action)
+
 
     def get_player_view(self, idx_player: int) -> GameState:
         """ Get the masked state for the active player (e.g. the oppontent's cards are face down)"""
