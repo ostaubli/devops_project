@@ -104,7 +104,6 @@ class Dog(Game):
         [95, 94, 93, 92],  #  Positions for player index 0
     ]
 
-
     def __init__(self) -> None:
         """ Game initialization (set_state call not necessary, we expect 4 players) """
         # Initialize the game state
@@ -137,7 +136,7 @@ class Dog(Game):
             for marble_idx in range(4):  # 4 marbles per player
                 marble = Marble(
                     pos = self.KENNEL_POSITIONS[idx][marble_idx],  # get the position from the kennel
-                    is_save  = False)
+                    is_save = False)
                 player_state.list_marble.append(marble)
 
             # Add the player state to the game state
@@ -151,26 +150,26 @@ class Dog(Game):
         self.state.bool_card_exchanged = False
 
         # Initialize the number of rounds
+        # (Stefan) Is this necessary? we already initialized cnt_round to 1 in INIT
         self.state.cnt_round = 1
 
-        # TODO: deal cards as an action ?? -> probably make a separate function for this outside the init
-        # Deal initial cards to players
-        num_cards_per_player = 6  # Number of cards per player in the first round
-        total_cards_to_deal = num_cards_per_player * self.state.cnt_player
-        assert len(self.state.list_card_draw) >= total_cards_to_deal, (
-            f"Not enough cards to deal: required {total_cards_to_deal}, "
-            f"but only {len(self.state.list_card_draw)} available."
-        )
-
-        for _ in range(num_cards_per_player):
-            for player_state in self.state.list_player:
-                # Draw a card for the player
-                card = self.state.list_card_draw.pop()
-                player_state.list_card.append(card)
-
-        # Set the game phase to RUNNING
+        # # TODO: deal cards as an action ?? -> probably make a separate function for this outside the init
+        # num_cards_per_player = 6  # Number of cards per player in the first round
+        # total_cards_to_deal = num_cards_per_player * self.state.cnt_player
+        # assert len(self.state.list_card_draw) >= total_cards_to_deal, (
+        #     f"Not enough cards to deal: required {total_cards_to_deal}, "
+        #     f"but only {len(self.state.list_card_draw)} available."
+        # )
+        #
+        # for _ in range(num_cards_per_player):
+        #     for player_state in self.state.list_player:
+        #         # Draw a card for the player
+        #         card = self.state.list_card_draw.pop()
+        #         player_state.list_card.append(card)
         self.state.phase = GamePhase.RUNNING
 
+        # Deal initial cards for the first round (6 cards per player)
+        self.deal_cards(num_cards_per_player=6)
 
     def set_state(self, state: GameState) -> None:
         """ Set the game to a given state """
@@ -216,18 +215,9 @@ class Dog(Game):
         active_player = self.state.list_player[active_player_idx]
         start_position = self.START_POSITION[active_player_idx]
 
-        
         # shuffle cards and distribute, when all cards are played
         # TODO: I dont think this should be in the get_list_action function (Pascal)
-        if not self.state.list_card_draw:
-            reshuffle_action = Action(
-                card=None,  # no specific card, because it is a shuffle action
-                # TODO: Not compatible (card needs to be of type CARD) (Pascal)
-            )
-            actions.append(reshuffle_action)
-
-            return actions
-
+        # Moved to start_new_round function. Each round, it checks if draw pile needs to be shuffled.
         
         # Check if cards have to be exchanged
         if not self.state.bool_card_exchanged:
@@ -276,6 +266,10 @@ class Dog(Game):
                         )
                         actions.append(action)
 
+                        # After playing the card, add it to the discard pile
+                        self.state.list_card_discard.append(card)
+                        active_player.list_card.remove(card)  # Remove card from player's hand
+
         # Check possible move actions for each marble
         for card in active_player.list_card:
             if card.rank not in ['7', 'J', 'JKR', '4']:
@@ -315,6 +309,11 @@ class Dog(Game):
                                     card_swap=None
                                 )
                             )
+
+                            # After playing the card, add it to the discard pile
+                            self.state.list_card_discard.append(card)
+                            active_player.list_card.remove(card)  # Remove card from player's hand
+
                 # --- Card 7 ---
                 if card.rank == '7':
                     for split1 in range(1, 8):  # First Action
@@ -344,6 +343,10 @@ class Dog(Game):
                                             )
                                         )
 
+                                        # After playing the card, add it to the discard pile
+                                        self.state.list_card_discard.append(card)
+                                        active_player.list_card.remove(card)  # Remove card from player's hand
+
                 # --- Joker ---
                 if card.rank == 'JKR':
                     for possible_card in range(1, 14):
@@ -371,6 +374,10 @@ class Dog(Game):
                                         )
                                     )
 
+                                    # After playing the card, add it to the discard pile
+                                    self.state.list_card_discard.append(card)
+                                    active_player.list_card.remove(card)  # Remove card from player's hand
+
                 # --- Jack ---
                 if card.rank == 'J':
                     all_marbles = [
@@ -388,6 +395,10 @@ class Dog(Game):
                                         card_swap=None
                                     )
                                 )
+
+                                # After playing the card, add it to the discard pile
+                                self.state.list_card_discard.append(card)
+                                active_player.list_card.remove(card)  # Remove card from player's hand
 
                 if card.rank == '4':
                     for marble in active_player.list_marble:
@@ -423,54 +434,77 @@ class Dog(Game):
                                     )
                                 )
 
+                                # After playing the card, add it to the discard pile
+                                self.state.list_card_discard.append(card)
+                                active_player.list_card.remove(card)  # Remove card from player's hand
+
         return actions
-    
+
+    # (Stefan): deal cards as new action
+    def deal_cards(self, num_cards_per_player: int):
+        """Deal a specified number of cards to each player."""
+        total_cards_to_deal = num_cards_per_player * self.state.cnt_player
+        assert len(self.state.list_card_draw) >= total_cards_to_deal, (
+            f"Not enough cards to deal: required {total_cards_to_deal}, "
+            f"but only {len(self.state.list_card_draw)} available."
+        )
+
+        # Clear players' hands before dealing new cards
+        for player_state in self.state.list_player:
+            player_state.list_card.clear()
+
+        # Deal the cards to each player
+        for _ in range(num_cards_per_player):
+            for player_state in self.state.list_player:
+                card = self.state.list_card_draw.pop()  # Pop a card from the deck
+                player_state.list_card.append(card)
+
+        # If there aren't enough cards left to deal, reshuffle the discard pile into the draw pile
+        if len(self.state.list_card_draw) < total_cards_to_deal:
+            print("Not enough cards in draw pile. Reshuffling discard pile into draw pile.")
+            self.state.list_card_draw.extend(self.state.list_card_discard)
+            self.state.list_card_discard.clear()
+            random.shuffle(self.state.list_card_draw)
+
+    # (Stefan): I tested new round with a helper method start_new_round to simplify code in apply action.
+    def start_new_round(self):
+        """ Begin a new round by reshuffling and distributing cards. """
+        # Increment round number
+        self.state.cnt_round += 1
+        if self.state.cnt_round > 5:
+            self.state.cnt_round = 1  # Reset after round 5 to round 1
+
+        # Set number of cards per player based on round
+        if 1 <= self.state.cnt_round <= 5:
+            num_cards_per_player = 7 - self.state.cnt_round  # 6, 5, 4, 3, 2 cards
+        elif self.state.cnt_round == 6:
+            num_cards_per_player = 6  # Reset to 6 cards
+        else:
+            num_cards_per_player = max(7 - ((self.state.cnt_round - 1) % 5 + 1), 2)
+
+        # Deal the correct number of cards to each player for the current round
+        self.deal_cards(num_cards_per_player)
+
+        # Reset the exchange state and set active player
+        self.state.bool_card_exchanged = False
+        self.state.idx_player_active = 0
+
+        # Set the game phase to RUNNING
+        self.state.phase = GamePhase.RUNNING
+
     def apply_action(self, action: Action) -> None:
-        """ Apply the given action to the game """
+        """Apply the given action to the game."""
         active_player_index = self.state.idx_player_active
 
-        # Handle the case where action is None (reshuffle and distribute cards)
-        if action.card is None:
-            # update the round number
-            self.state.cnt_round += 1
-            # circle back to round 1 so the players get again 6 cards.
-            if self.state.cnt_round > 5:
-                self.state.cnt_round = 1
-            num_cards_per_player = 6 - ((self.state.cnt_round - 1) % 6)
-            total_cards_to_deal = num_cards_per_player * 4
-
-            # Ensure enough cards in the draw pile by reshuffling discarded cards if needed
-            if len(self.state.list_card_draw) < total_cards_to_deal:
-                print("Not enough cards in draw pile. Reshuffling discard pile into draw pile.")
-                self.state.list_card_draw.extend(self.state.list_card_discard)
-                self.state.list_card_discard.clear()
-                random.shuffle(self.state.list_card_draw)
-
-            # Assert there are now enough cards after reshuffling
-            assert len(self.state.list_card_draw) >= total_cards_to_deal, (
-                f"Not enough cards to deal even after reshuffling: "
-                f"required {total_cards_to_deal}, available {len(self.state.list_card_draw)}"
-             )
-
-            # Move all remaining cards from players to discard pile -> I am not sure if we need this since the players shouldn't have cards anyway
-            for player in self.state.list_player:
-                self.state.list_card_discard.extend(player.list_card)
-                player.list_card.clear()
-
-            # Distribute new cards
-            for _ in range(num_cards_per_player):
-                for player in self.state.list_player:
-                    card = self.state.list_card_draw.pop()
-                    player.list_card.append(card)
-
-            # Update exchange status
-            self.state.bool_card_exchanged = False
+        # Handle the case where action is None (start a new round)
+        # handles errors in benchmark file. all tests running without errors.
+        if action is None:
+            self.start_new_round()
             return
 
         # Check input of pos_from and pos_to
         if (action.pos_from is not None and action.pos_from != -1 and
                 action.pos_to is not None and action.pos_to != -1):
-
             # Move a marble
             for idx_marble, marble in enumerate(self.state.list_player[active_player_index].list_marble):
                 if marble.pos == action.pos_from:
@@ -480,13 +514,11 @@ class Dog(Game):
                     if action.pos_from in self.KENNEL_POSITIONS[active_player_index]:
                         self.state.list_player[active_player_index].list_marble[idx_marble].is_save = True
 
-        # TODO: I think with the card swap it is meant that the Joker card can be used as any other card (Pascal)
+        # Handle card swapping
         elif action.card_swap is not None:
-            # Swap a card
-            # target player (diagonal player)
             target_player_idx = (active_player_index + 2) % 4
 
-            # Active player gives their card and the target player receives the card from the active player
+            # Active player gives their card and the target player receives it
             self.state.list_player[active_player_index].list_card.remove(action.card)
             self.state.list_player[target_player_idx].list_card.append(action.card)
 
@@ -496,7 +528,16 @@ class Dog(Game):
 
             self.state.bool_card_exchanged = True
 
-        # TODO: Moving to the next player is still missing
+        # move played card from hand to discard pile
+        if action.card in self.state.list_player[active_player_index].list_card:
+            self.state.list_player[active_player_index].list_card.remove(action.card)
+            self.state.list_card_discard.append(action.card)
+
+        # Check if all players have finished their hands (end of round)
+        if all(len(player.list_card) == 0 for player in self.state.list_player):
+            self.start_new_round()
+
+
 
     def get_player_view(self, idx_player: int) -> GameState:
         """ Get the masked state for the active player (e.g. the opponent's cards are face down)"""
@@ -527,6 +568,17 @@ class Dog(Game):
             if marble.pos in kennel_pos:
                 return False
 
+        # Prevent moving out of the kennel if an opponent's marble is at the start position
+        if marble.pos in kennel_pos and new_pos == start_pos:
+            # Check if any opponent's marble is at the active player's starting position
+            for opponent_idx in range(4):  # Assuming 4 players
+                if opponent_idx != active_player_idx:
+                    opponent_start_pos = self.START_POSITION[opponent_idx]
+                    # If an opponent's marble is at the active player's starting position, block the move
+                    for opponent_marble in test_state.list_player[opponent_idx].list_marble:
+                        if opponent_marble.pos == opponent_start_pos:
+                            return False
+
         # Check that marble do not enter in finish direct from kennel or start
         if new_pos in finish_pos:
             if marble.pos not in kennel_pos or marble.pos == start_pos:
@@ -541,6 +593,7 @@ class Dog(Game):
             return False
 
         return True
+
 
 class RandomPlayer(Player):
 
