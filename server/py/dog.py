@@ -12,7 +12,7 @@ class Card(BaseModel):
 
 
 class Marble(BaseModel):
-    pos: int       # position on board (0 to 95)
+    pos: Optional[int] = None       # position on board (0 to 95)
     is_save: bool  # true if marble was moved out of kennel and was not yet moved
 
 
@@ -89,6 +89,7 @@ class Dog(Game):
 
     def __init__(self, cnt_players: int = 4) -> None:
         """ Game initialization (set_state call not necessary, we expect 4 players) """
+        self.state = None
         self._initialize_game(cnt_players)
 
     def _initialize_game(self, cnt_players: int) -> None:
@@ -186,6 +187,26 @@ class Dog(Game):
         """ Get the masked state for the active player (e.g. the oppontent's cards are face down)"""
         pass
 
+    def swap_cards(self, player1_idx: int, player2_idx: int, card1: Card, card2: Card) -> None:
+        # Hole die Spielerobjekte
+        player1 = self.state.list_player[player1_idx]
+        player2 = self.state.list_player[player2_idx]
+
+        # Überprüfe, ob Spieler 1 die angegebene Karte hat
+        if card1 not in player1.list_card:
+            raise ValueError(f"Player {player1_idx} does not have the card {card1}.")
+
+        # Überprüfe, ob Spieler 2 die angegebene Karte hat
+        if card2 not in player2.list_card:
+            raise ValueError(f"Player {player2_idx} does not have the card {card2}.")
+
+        # Entferne die Karte von Spieler 1 und füge sie zu Spieler 2 hinzu
+        player1.list_card.remove(card1)
+        player2.list_card.append(card1)
+
+        # Entferne die Karte von Spieler 2 und füge sie zu Spieler 1 hinzu
+        player2.list_card.remove(card2)
+        player1.list_card.append(card2)
 
 class RandomPlayer(Player):
 
