@@ -7,7 +7,9 @@ import json
 import asyncio
 
 import server.py.hangman as hangman
-import server.py.battleship as battleship
+import server.py.battleship_solution as battleship
+#import server.py.battleship as battleship
+import server.py.dog as dog
 
 import random
 
@@ -261,8 +263,9 @@ async def dog_simulation_ws(websocket: WebSocket):
     await websocket.accept()
 
     try:
-
-        pass
+        game = dog.Dog()
+        player = dog.RandomPlayer()
+        
 
     except WebSocketDisconnect:
         print('DISCONNECTED')
@@ -278,8 +281,9 @@ async def dog_singleplayer_ws(websocket: WebSocket):
     await websocket.accept()
 
     try:
-
-        pass
+        game = dog.Dog()
+        
+        
 
     except WebSocketDisconnect:
         print('DISCONNECTED')

@@ -17,8 +17,9 @@ class Card(BaseModel):
 
 
 class Marble(BaseModel):
-    pos: str       # position on board (0 to 95)
+    pos: int       # position on board (0 to 95)
     is_save: bool  # true if marble was moved out of kennel and was not yet moved
+    start_pos : int # 
 
 
 class PlayerState(BaseModel):
@@ -251,7 +252,13 @@ class GameState(BaseModel):
     def set_action_to_game(self, action: Action):  # Kened
         self.action = action
 
+    def can_leave_kennel(self) -> bool:
+        if self.card_active is None:
+            return False
 
+        if self.card_active.rank in ["A", "K", "JKR"]:
+            return True
+        return False
 
     def check_final_pos(self, pos_to: int, pos_from: int, marble: Marble) -> None:
         '''
@@ -264,7 +271,7 @@ class GameState(BaseModel):
             marble.is_save = True
 
         last_positions: list = [64, 65, 66, 67, 72, 73, 74, 75, 80, 81, 82, 83, 88, 89, 90, 91]
-        if pos_from in last_position:
+        if pos_from in last_positions:
             marble.is_save = True
 
     def sending_home(self, murmel: Marble) -> None:  # Set player X Marvel home
@@ -362,11 +369,11 @@ class Dog(Game):
 
     def __init__(self) -> None:
         """ Game initialization (set_state call not necessary, we expect 4 players) """
-
+        print("Starting up DOG")
         self.state = GameState()
-        self.state.setup_players()
-        self.state.phase = GamePhase.RUNNING
-        self.state.deal_cards() # deal first cards to players
+        #self.state.setup_players()
+        #self.state.phase = GamePhase.RUNNING
+        #self.state.deal_cards() # deal first cards to players
       
     def set_state(self, state: GameState) -> None:
         """ Set the game to a given state """
@@ -464,8 +471,63 @@ class RandomPlayer(Player):
 
 
 if __name__ == '__main__':
-
+    idx_player_you = 0
     game = Dog()
-    print(len(game.state.list_card_draw))
-    print("Neue Karten Vergeben mit bestehenden Karten? ", game.state.deal_cards())
-    print
+    player = RandomPlayer()
+
+    while True:
+
+        state = game.get_state()
+        if state.phase == GamePhase.FINISHED:
+            break
+
+        #game.print_state()
+
+        if state.idx_player_active == idx_player_you:
+
+            state = game.get_player_view(idx_player_you)
+            list_action = game.get_list_action()
+            dict_state = state.model_dump() # <=== Method of BaseModel !! 
+            dict_state['idx_player_you'] = idx_player_you
+            dict_state['list_action'] = [action.model_dump() for action in list_action]
+            data = {'type': 'update', 'state': dict_state}
+            #await websocket.send_json(data)
+            print(data)
+
+            if len(list_action) == 0:
+                game.apply_action(None)
+            else:
+                action = random.choice(list_action) #data = 
+                #data = await websocket.receive_json()
+                if isinstance(action,'action'):
+                    #action = Dog.model_validate(data['action']) # Checks if Action is Valid (only Valid aktion for our game?
+                    game.apply_action(action)
+                    print(action)
+
+            state = game.get_player_view(idx_player_you)
+            dict_state = state.model_dump()
+            dict_state['idx_player_you'] = idx_player_you
+            dict_state['list_action'] = []
+
+            data = {'type': 'update', 'state': dict_state}
+            print(data)
+            #await websocket.send_json(data)
+
+        else:
+
+            state = game.get_player_view(state.idx_player_active)
+            list_action = game.get_list_action()
+            action = player.select_action(state, list_action)
+            if action is not None:
+                print(f"Player {state.idx_player_active} is playing")
+                #await asyncio.sleep(1)
+            game.apply_action(action)
+            state = game.get_player_view(idx_player_you) # Abbildung für Person zeigen
+            dict_state = state.model_dump()
+            dict_state['idx_player_you'] = idx_player_you
+            dict_state['list_action'] = []
+            data = {'type': 'update', 'state': dict_state}
+            print(data)
+            #await websocket.send_json(data)    
+
+
