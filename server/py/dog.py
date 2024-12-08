@@ -421,6 +421,15 @@ class Dog(Game):
             else:
                 cards_per_player = max(7 - ((self.state.cnt_round - 1) % 5 + 1), 2)
 
+            # Check if we need to reshuffle
+            total_cards_needed = cards_per_player * self.state.cnt_player
+            if len(self.state.list_card_draw) < total_cards_needed:
+                # Create a new complete deck of cards
+                new_deck = list(GameState.LIST_CARD)
+                random.shuffle(new_deck)
+                self.state.list_card_draw = new_deck
+                self.state.list_card_discard = []
+
             # Deal cards to players
             draw_pile = self.state.list_card_draw
             for player in self.state.list_player:
