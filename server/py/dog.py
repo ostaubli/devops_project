@@ -410,6 +410,23 @@ class Dog(Game):
                 opponent_marble = next((m for m in player.list_marble if m.pos == str(action.pos_to)), None)
                 if opponent_marble:
                     self.sending_home(opponent_marble)  # Send the opponent's marble home
+                # Discard the played card
+                active_player.list_card.remove(action.card)
+                self.list_card_discard.append(action.card)
+
+                # Handle special cards
+                if action.card.rank == '7':
+                    # 7 allows multiple movements; the game logic should track additional actions
+                    self.card_active = action.card
+                elif action.card.rank == 'J':
+                    # J allows swapping marbles (specific logic to be implemented separately)
+                    pass
+                elif action.card.rank == 'JKR':
+                    # Joker allows flexibility, which may require additional rules
+                    pass
+                else:
+                    # Reset the active card for regular actions
+                    self.card_active = None
         
         pass
 
