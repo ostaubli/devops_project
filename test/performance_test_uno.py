@@ -1,8 +1,5 @@
 import time
-import sys
-print("Python module search paths:", sys.path)
 from server.py.uno import Uno
-
 
 # GAME SETUP
 def benchmark_game_setup():
