@@ -1,3 +1,4 @@
+
 from typing import Any
 import abc
 import os
@@ -8,6 +9,8 @@ import traceback
 import pylint.lint
 from mypy import api
 
+#This a comment from Moritz
+#Comment gj
 
 class Benchmark:
 
@@ -183,3 +186,7 @@ class Python_Game_Server(Game_Server):
 
     def apply_action(self, action: Any) -> None:
         self.game.apply_action(action)
+
+
+# Danijel test
+
