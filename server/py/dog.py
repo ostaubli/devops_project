@@ -186,7 +186,6 @@ class GameState(BaseModel):
 
         TODO: Home Handling to do
         TODO: Marble blocks the way (RULE) if new on start
-
         '''
         '''        
         Define Each Action for Each Card
@@ -200,6 +199,7 @@ class GameState(BaseModel):
         Card Jake -> Marble position Exchange
         Card Joker -> Card Swap
         '''
+
         list_steps_split_7 = [
             [1, 1, 1, 1, 1, 1, 1],
             [2, 1, 1, 1, 1, 1],
@@ -287,17 +287,24 @@ class GameState(BaseModel):
                         action_list.append(Action(card=card, pos_from=marble.pos, pos_to=((marble.pos + 1) % 64)))
         return action_list
 
+        #
+
+
+
+
+
+
 
     def set_action_to_game(self, action: Action):  # Kened
         self.action = action
 
-    def can_leave_kennel(self) -> bool:
-        if self.card_active is None:
-            return False
+    # def can_leave_kennel(self) -> bool: # <============= DOPPELT
+    #     if self.card_active is None:
+    #         return False
 
-        if self.card_active.rank in ["A", "K", "JKR"]:
-            return True
-        return False
+    #     if self.card_active.rank in ["A", "K", "JKR"]:
+    #         return True
+    #     return False
 
     def check_final_pos(self, pos_to: int, pos_from: int, marble: Marble) -> None:
         '''
@@ -498,12 +505,13 @@ class Dog(Game):
         #         else:
         #             # Reset the active card for regular actions
         #             self.card_active = None
+        
         pass
 
 
     def get_player_view(self, idx_player: int) -> GameState:
         """ Get the masked state for the active player (e.g. the oppontent's cards are face down)"""
-        pass
+        
 
 
 class RandomPlayer(Player):
