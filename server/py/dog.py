@@ -272,26 +272,10 @@ class GameState(BaseModel):
                             action_list.append(Action(card=card, pos_from=i, pos_to=active_player.start_pos))
                         action_list.append(Action(card=card, pos_from=marble.pos, pos_to=((marble.pos + 11) % 64)))
                         action_list.append(Action(card=card, pos_from=marble.pos, pos_to=((marble.pos + 1) % 64)))
+        return action_list
 
 
-        #
 
-
-        '''        
-        Define Each Action for Each Card
-        
-        Cards 2-10 Ex 7/4 -> Move One Marble the Amount of Value
-        Card 4 -> Move one Marble +4 or -4
-        Card 7 -> Move one to four Marbles in total of 7
-        Card Ace -> Move one Marble 1 or 11 or get out
-        Card Queen -> Move one Marble 12
-        Card King -> Move one Marble 13 or get out
-        Card Jake -> Marble position Exchange
-        Card Joker -> Card Swap
-        
-        
-        
-        '''
 
 
 
