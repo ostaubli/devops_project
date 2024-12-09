@@ -242,7 +242,7 @@ class Uno(Game):
             self.state.list_card_discard.append(state.list_card_draw.pop())
         if top_card.symbol == 'reverse':
             self.state.direction *= -1
-        if top_card.symbol == 'skip':
+        if top_card.symbol == 'skip':  # check this <<<<<==
             self.state.idx_player_active += 1
             self.state.idx_player_active %= self.state.cnt_player
 
@@ -267,11 +267,6 @@ class Uno(Game):
 
         top_card = self.state.list_card_discard[-1]
 
-        #  test12
-        # if top_card.symbol == 'draw2':
-        #     possible_actions.append(Action(draw=2))
-        #     return possible_actions
-
         if top_card.symbol == 'wild' and len(self.state.list_card_discard) == 1:
             for my_card in active_player.list_card:
                 possible_actions.append(Action(card=my_card, color=my_card.color))
@@ -280,8 +275,6 @@ class Uno(Game):
 
         if not self.state.has_drawn:
             possible_actions.append(Action(draw=1))
-
-
 
         if top_card.symbol is None:
             for my_card in active_player.list_card:
@@ -308,6 +301,16 @@ class Uno(Game):
                     if my_card.color == top_card.color:
                         possible_actions.append(Action(card=my_card, color=color, draw=2))
 
+                if my_card.symbol == "skip":
+                    if my_card.color == top_card.color:
+                        possible_actions.append(Action(card=my_card, color=color))
+        #                  idx_player_next = (idx_player_active + 2 * direction + cnt_player) % cnt_player
+        #  rule for apply action test 014
+                if my_card.symbol == "reverse":
+                    if my_card.color == top_card.color:
+                        possible_actions.append(Action(card=my_card, color=color))
+
+
         if top_card.symbol is not None:
             if top_card.symbol == 'skip':
                 for my_card in active_player.list_card:
@@ -315,17 +318,19 @@ class Uno(Game):
                         possible_actions.append(Action(card=my_card, color=my_card.color))
                     if my_card.symbol == "reverse" and my_card.color == top_card.color:
                         possible_actions.append(Action(card=my_card, color=my_card.color))
+                    if my_card.symbol is None and my_card.color == top_card.color:
+                        possible_actions.append(Action(card=my_card, color=my_card.color))
 
             elif top_card.symbol == "reverse":
                 for my_card in active_player.list_card:
-
                     if my_card.symbol == "reverse":
                         possible_actions.append(Action(card=my_card, color= my_card.color))
                     if my_card.symbol == 'skip' and my_card.color == top_card.color:
                         possible_actions.append(Action(card=my_card, color=my_card.color))
                     if my_card.symbol == "draw2" and my_card.color == top_card.color:
                         possible_actions.append(Action(card=my_card, color=my_card.color, draw = 2))
-
+                    if my_card.symbol is None and my_card.color == top_card.color:
+                        possible_actions.append(Action(card=my_card, color=my_card.color))
 
             elif top_card.symbol == "draw2":
 
@@ -337,6 +342,9 @@ class Uno(Game):
                     if my_card.symbol == 'skip' and my_card.color == top_card.color:
                         can_we_cover_this = True
                         possible_actions.append(Action(card=my_card, color=my_card.color))
+                    if my_card.symbol is None and my_card.color == top_card.color:
+                        can_we_cover_this = True
+                        possible_actions.append(Action(card=my_card, color=my_card.color))
 
                 if not can_we_cover_this:
                     possible_actions[0].draw = 2
@@ -346,6 +354,9 @@ class Uno(Game):
                 if my_card.symbol == "wilddraw4":
                    for color in LIST_COLOR:
                        possible_actions.append(Action(card=my_card, color=color, draw=4))
+                if my_card.symbol is None and my_card.color == top_card.color:
+                    possible_actions.append(Action(card=my_card, color=my_card.color))
+
 
 
 
@@ -408,6 +419,16 @@ class Uno(Game):
         """ Apply the given action to the game """
         if not self.state: # in case game state has not been initialized
             raise ValueError("Game state has not been initialized")
+
+        # print(f"\t\t WE TRY TO APPLY THIS ACTION: {action=}")
+        # Test 11 Try
+        if action.draw != 0 and not self.state.has_drawn:
+            self.state.has_drawn = True
+            card = self.state.list_card_draw.pop()
+            # print(f"\t\tWE GET THIS CARD {card=}")
+            self.state.list_player[self.state.idx_player_active].list_card.append(card)
+
+        actions = self.get_list_action()
 
         # Case 1: Play a card
         if action.card:
