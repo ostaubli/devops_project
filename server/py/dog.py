@@ -581,6 +581,8 @@ class Dog(Game):
             self.handle_jack(action)
         elif action.card.rank == 'JKR':
             self.handle_joker(action)
+        # elif action.card.rank == '7':
+          #   self._handle_seven_card(action.card, active_player.list_marble)
         else:
             self._handle_normal_move(action, active_player)
 
