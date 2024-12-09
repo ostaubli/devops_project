@@ -59,7 +59,7 @@ class DogBenchmark(benchmark.Benchmark):
         for player in state.list_player:
             assert len(player.list_marble) == 4, f'{state}Error: len("list_player.list_marble") must be 4 initially'
 
-    def test_get_list_action_without_start_cards(self):
+    def test_get_list_action_without_start_cards(self)-> None:
         """Test 003: Test get_list_action without start-cards [1 point]"""
         self.game_server.reset()
         state = self.game_server.get_state()

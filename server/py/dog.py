@@ -98,7 +98,6 @@ class GameState(BaseModel):
                              Marble(pos=65, is_save=True, start_pos=65),
                              Marble(pos=66, is_save=True, start_pos=66),
                              Marble(pos=67, is_save=True, start_pos=67)],
-                list_kennel_pos = [64,65,66,67],
                 list_finish_pos = [68,69,70,71],
                 start_pos = 0
                 )
@@ -109,7 +108,6 @@ class GameState(BaseModel):
                              Marble(pos=73, is_save=True, start_pos=73),
                              Marble(pos=74, is_save=True, start_pos=74),
                              Marble(pos=75, is_save=True, start_pos=75)],
-                list_kennel_pos = [72,73,74,75],
                 list_finish_pos = [76,77,78,79],
                 start_pos = 16
                 )
@@ -120,7 +118,6 @@ class GameState(BaseModel):
                              Marble(pos=81, is_save=True, start_pos=81),
                              Marble(pos=82, is_save=True, start_pos=82),
                              Marble(pos=83, is_save=True, start_pos=83)],
-                list_kennel_pos = [80,81,82,83],
                 list_finish_pos = [84,85,86,87],
                 start_pos = 32
                 )
@@ -131,7 +128,6 @@ class GameState(BaseModel):
                              Marble(pos=89, is_save=True, start_pos=89),
                              Marble(pos=90, is_save=True, start_pos=90),
                              Marble(pos=91, is_save=True, start_pos=91)],
-                list_kennel_pos = [88,89,90,91],
                 list_finish_pos = [92,93,94,95],
                 start_pos = 48
                 )
@@ -144,7 +140,7 @@ class GameState(BaseModel):
                 continue
             else:
                 print(f"{player.name} has still {len(player.list_card)} card's")
-                return
+                return None
 
         # Go to next Gameround
         self.cnt_round +=1
@@ -187,6 +183,9 @@ class GameState(BaseModel):
         TODO: Home Handling to do
         TODO: Marble blocks the way (RULE) if new on start
         '''
+
+
+
         '''        
         Define Each Action for Each Card
 
@@ -285,26 +284,72 @@ class GameState(BaseModel):
                             action_list.append(Action(card=card, pos_from=i, pos_to=active_player.start_pos))
                         action_list.append(Action(card=card, pos_from=marble.pos, pos_to=((marble.pos + 11) % 64)))
                         action_list.append(Action(card=card, pos_from=marble.pos, pos_to=((marble.pos + 1) % 64)))
+
+            # ist ausführbar?
+            # for action in action_list:
+                # fun1 (action, marble)
+                # fun2 
+                # fun2 
         return action_list
-
-        #
-
-
-
-
-
 
 
     def set_action_to_game(self, action: Action):  # Kened
-        self.action = action
+        # Get the active player
+        active_player = self.list_player[self.idx_player_active]
 
-    # def can_leave_kennel(self) -> bool: # <============= DOPPELT
-    #     if self.card_active is None:
-    #         return False
 
-    #     if self.card_active.rank in ["A", "K", "JKR"]:
-    #         return True
-    #     return False
+        # Ensure the card played is in the player's hand
+        if action.card not in active_player.list_card:
+            raise ValueError("The card played is not in the active player's hand.")
+
+        # Ensure pos_from and pos_to are defined
+        if action.pos_from is None or action.pos_to is None:
+            raise ValueError("Both pos_from and pos_to must be specified for the action.")
+
+        # Find the marble to move based on pos_from
+        marble_to_move = next((m for m in active_player.list_marble if m.pos == str(action.pos_from)), None)
+        if not marble_to_move:
+            raise ValueError(f"No marble found at the specified pos_from: {action.pos_from}")
+
+        # Update the marble's position
+        marble_to_move.pos = str(action.pos_to)
+
+        # Check if the marble's new position is in a final or safe zone
+        self.check_final_pos(pos_to=action.pos_to, pos_from=action.pos_from, marble=marble_to_move)
+
+        # Handle cases where another player's marble occupies the destination
+        for player in self.list_player:
+            if player != active_player:
+                opponent_marble = next((m for m in player.list_marble if m.pos == str(action.pos_to)), None)
+                if opponent_marble:
+                    self.sending_home(opponent_marble)  # Send the opponent's marble home
+                # Discard the played card
+                active_player.list_card.remove(action.card)
+                self.list_card_discard.append(action.card)
+
+                # Handle special cards
+                if action.card.rank == '7':
+                    # 7 allows multiple movements; the game logic should track additional actions
+                    self.card_active = action.card
+                elif action.card.rank == 'J':
+                    # J allows swapping marbles (specific logic to be implemented separately)
+                    pass
+                elif action.card.rank == 'JKR':
+                    # Joker allows flexibility, which may require additional rules
+                    pass
+                else:
+                    # Reset the active card for regular actions
+                    self.card_active = None
+        
+        pass
+
+    def can_leave_kennel(self) -> bool: # <============= DOPPELT
+        if self.card_active is None:
+            return False
+
+        if self.card_active.rank in ["A", "K", "JKR"]:
+            return True
+        return False
 
     def check_final_pos(self, pos_to: int, pos_from: int, marble: Marble) -> None:
         '''
@@ -319,6 +364,8 @@ class GameState(BaseModel):
         last_positions: list = [64, 65, 66, 67, 72, 73, 74, 75, 80, 81, 82, 83, 88, 89, 90, 91]
         if pos_from in last_positions:
             marble.is_save = True
+
+        
 
     def sending_home(self, murmel: Marble) -> None:  # Set player X Marvel home
         '''
@@ -342,7 +389,7 @@ class GameState(BaseModel):
                         marble.pos = 0 # Anpassen. Marble zurück auf Startposition. Wie definieren wir die Startposition? Fix zuweisen oder Logik?
                         marble.is_save = True
 
-    def marble_switch_jake(self, player_idx: int, opponent_idx: int, player_marble_pos: int, opponent_marble_pos: int):  #Kened
+    def marble_switch_jake(self, player_idx: int, opponent_idx: int, player_marble_pos: int, opponent_marble_pos: int) :  #Kened
         """
         Handle the marble switch action when the Jake card is played.
 
@@ -437,8 +484,6 @@ class Dog(Game):
         """ Get a list of possible actions for the active player """
 
 
-        if self.state.phase == GamePhase.FINISHED:              #Needs to be finished
-            return []
 
         pass
 
@@ -457,61 +502,19 @@ class Dog(Game):
 
         2. Wenn Zug abgeschlossen Aktiver spieler weitergeben
         """
-
-
-        # # Get the active player
-        # active_player = self.list_player[self.idx_player_active]
-
-
-        # # Ensure the card played is in the player's hand
-        # if action.card not in active_player.list_card:
-        #     raise ValueError("The card played is not in the active player's hand.")
-
-        # # Ensure pos_from and pos_to are defined
-        # if action.pos_from is None or action.pos_to is None:
-        #     raise ValueError("Both pos_from and pos_to must be specified for the action.")
-
-        # # Find the marble to move based on pos_from
-        # marble_to_move = next((m for m in active_player.list_marble if m.pos == str(action.pos_from)), None)
-        # if not marble_to_move:
-        #     raise ValueError(f"No marble found at the specified pos_from: {action.pos_from}")
-
-        # # Update the marble's position
-        # marble_to_move.pos = str(action.pos_to)
-
-        # # Check if the marble's new position is in a final or safe zone
-        # self.check_final_pos(pos_to=action.pos_to, pos_from=action.pos_from, marble=marble_to_move)
-
-        # # Handle cases where another player's marble occupies the destination
-        # for player in self.list_player:
-        #     if player != active_player:
-        #         opponent_marble = next((m for m in player.list_marble if m.pos == str(action.pos_to)), None)
-        #         if opponent_marble:
-        #             self.sending_home(opponent_marble)  # Send the opponent's marble home
-        #         # Discard the played card
-        #         active_player.list_card.remove(action.card)
-        #         self.list_card_discard.append(action.card)
-
-        #         # Handle special cards
-        #         if action.card.rank == '7':
-        #             # 7 allows multiple movements; the game logic should track additional actions
-        #             self.card_active = action.card
-        #         elif action.card.rank == 'J':
-        #             # J allows swapping marbles (specific logic to be implemented separately)
-        #             pass
-        #         elif action.card.rank == 'JKR':
-        #             # Joker allows flexibility, which may require additional rules
-        #             pass
-        #         else:
-        #             # Reset the active card for regular actions
-        #             self.card_active = None
-        
+        # 1 Apply action
+        self.state.set_action_to_game(action)
+        # 2 check if game is finished
         pass
 
 
     def get_player_view(self, idx_player: int) -> GameState:
         """ Get the masked state for the active player (e.g. the oppontent's cards are face down)"""
-        
+        # masked_state = self.state
+        # for i in range(4):
+        #     if i != idx_player:
+        #         masked_state.list_player[i].list_card = [Card()]
+        # return masked_state
 
 
 class RandomPlayer(Player):
