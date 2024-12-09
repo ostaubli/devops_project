@@ -558,23 +558,7 @@ class Dog(Game):
 
         # Card exchange phase
         if not self.state.bool_card_exchanged:
-            # Find the partner's index
-            idx_partner = (self.state.idx_player_active + 2) % self.state.cnt_player
-            partner = self.state.list_player[idx_partner]
-
-            # Remove the selected card from the active player
-            if action.card not in active_player.list_card:
-                raise ValueError(f"Card {action.card} not found in active player's hand.")
-            active_player.list_card.remove(action.card)
-            partner.list_card.append(action.card)
-
-            # Advance to the next active player
-            self.state.idx_player_active = (self.state.idx_player_active + 1) % self.state.cnt_player
-
-            # Check if all players have completed their exchange
-            if self.state.idx_player_active == self.state.idx_player_started:
-                self.state.bool_card_exchanged = True  # Mark exchange phase as completed
-                print("All players have completed their card exchanges.")
+            self._handle_card_exchange(action, active_player)
             return
 
         # Check if all players are out of cards
@@ -592,50 +576,155 @@ class Dog(Game):
         # Add the played card to the discard pile
         self.state.list_card_discard.append(action.card)
 
-    # Handle moving a marble from the kennel to the start position
-        if (action.pos_to is not None and
-            action.pos_from in self.KENNEL_POSITIONS[self.state.idx_player_active] and
-            action.pos_to in self.START_POSITIONS):
+        # Handle special cards
+        if action.card.rank == 'J':
+            self.handle_jack(action)
+        elif action.card.rank == 'JKR':
+            self.handle_joker(action)
+        else:
+            self._handle_normal_move(action, active_player)
+
+        # Check for collision with other players' marbles
+        self._check_collisions(action)
+
+        # Advance to the next active player
+        self.state.idx_player_active = (self.state.idx_player_active + 1) % len(self.state.list_player)
+
+    def handle_jack(self, move_action: Action) -> None:
+        """Handle the Jack card action (swap marbles)."""
+
+        # Ensure the game state is not None
+        if self.state is None:
+            raise ValueError("Game state is not set.")
+
+        # Ensure pos_from and pos_to are not None
+        if move_action.pos_from is None or move_action.pos_to is None:
+            raise ValueError("Both pos_from and pos_to must be specified for the Jack action.")
+
+        # Find the marble to swap from the active player
+        marble_from: Optional[Marble] = None
+        active_player_index = self.state.idx_player_active
+        active_player = self.state.list_player[active_player_index]
+
+        for marble in active_player.list_marble:
+            if marble.pos == move_action.pos_from:
+                marble_from = marble
+                break
+
+        # Find the marble to swap from the opponent
+        marble_to: Optional[Marble] = None
+        for player in self.state.list_player:
+            if player != active_player:
+                for marble in player.list_marble:
+                    if marble.pos == move_action.pos_to:
+                        marble_to = marble
+                        break
+                if marble_to:
+                    break
+
+        # Swap the positions of the marbles if both marbles were found
+        if marble_from and marble_to:
+            marble_from.pos, marble_to.pos = marble_to.pos, marble_from.pos
+            print(f"Swapped marbles: {marble_from.pos} with {marble_to.pos}")
+        else:
+            raise ValueError("Could not find marbles to swap for the Jack action.")
+
+
+
+    def handle_joker(self, move_action: Action) -> None:
+        """Handle the Joker card action (wild card)."""
+        if self.state is None:
+            raise ValueError("Game state is not set.")
+
+        if move_action.pos_from is not None and move_action.pos_to is not None:
+            idx_active = self.state.idx_player_active
+            active_player = self.state.list_player[idx_active]
 
             for marble in active_player.list_marble:
-                if marble.pos == action.pos_from:
-                    marble.pos = action.pos_to
+                if marble.pos == move_action.pos_from:
+                    marble.pos = move_action.pos_to
+                    marble.is_save = marble.pos in self.SAFE_SPACES[idx_active]
+                    break
+
+
+    def _handle_normal_move(self, move_action: Action, active_player: PlayerState) -> None:
+        """Handle a normal move action (non-special card)."""
+        if self.state is None:
+            raise ValueError("Game state is not set.")
+
+        # Provide a default value if pos_to is None (e.g., -1)
+        pos_to = move_action.pos_to if move_action.pos_to is not None else -1
+
+        idx_active: int = self.state.idx_player_active
+
+        if move_action.pos_from in self.KENNEL_POSITIONS[idx_active] and pos_to in self.START_POSITIONS:
+            for marble in active_player.list_marble:
+                if marble.pos == move_action.pos_from:
+                    marble.pos = pos_to  # Assign the (default or valid) pos_to
                     marble.is_save = True  # Mark the marble as safe after leaving the kennel
                     print(f"Marble moved from kennel to start position: {marble.pos}.")
                     break
         else:
-            # Update marble position for regular moves
             for marble in active_player.list_marble:
-                if marble.pos == action.pos_from:
-                    if action.pos_to is not None:
-                        marble.pos = action.pos_to
-                        marble.is_save = marble.pos in self.SAFE_SPACES[self.state.idx_player_active]
-                        if marble.is_save:
-                            print(f"Marble moved to a safe space at position {marble.pos}.")
+                if marble.pos == move_action.pos_from:
+                    marble.pos = pos_to  # Assign the (default or valid) pos_to
+                    marble.is_save = marble.pos in self.SAFE_SPACES[idx_active]
+                    if marble.is_save:
+                        print(f"Marble moved to a safe space at position {marble.pos}.")
                     break
             else:
-                raise ValueError(f"No marble found at position {action.pos_from} for Player {active_player.name}.")
+                raise ValueError(f"No marble found at position {move_action.pos_from} for Player {active_player.name}.")
 
-        # Check for collision with other players' marbles
+
+
+
+
+
+    def _handle_card_exchange(self, move_action: Action, active_player: PlayerState) -> None:
+        """Handle the card exchange phase."""
+        if self.state is None:
+            raise ValueError("Game state is not set.")
+
+        idx_active = self.state.idx_player_active
+        idx_partner = (idx_active + 2) % self.state.cnt_player
+        partner = self.state.list_player[idx_partner]
+
+        if move_action.card not in active_player.list_card:
+            raise ValueError(f"Card {move_action.card} not found in active player's hand.")
+
+        active_player.list_card.remove(move_action.card)
+        partner.list_card.append(move_action.card)
+
+        # Advance to the next active player
+        self.state.idx_player_active = (idx_active + 1) % self.state.cnt_player
+
+        if self.state.idx_player_active == self.state.idx_player_started:
+            self.state.bool_card_exchanged = True
+            print("All players have completed their card exchanges.")
+
+
+    def _check_collisions(self, move_action: Action) -> None:
+        """Check for collisions with other players' marbles."""
+        if self.state is None:
+            raise ValueError("Game state is not set.")
+
+        idx_active = self.state.idx_player_active
+
         for other_idx, other_player in enumerate(self.state.list_player):
-            if other_idx == self.state.idx_player_active:
+            if other_idx == idx_active:
                 continue  # Skip the active player
 
             for other_marble in other_player.list_marble:
-                if other_marble.pos == action.pos_to:  # Collision detected
+                if other_marble.pos == move_action.pos_to:  # Collision detected
                     print(f"Collision! Player {other_player.name}'s marble at position {other_marble.pos} "
                         "is sent back to the kennel.")
 
-                    # Send the marble back to the kennel
                     for pos in self.KENNEL_POSITIONS[other_idx]:
-                        # Ensure the kennel position is unoccupied
                         if all(marble.pos != pos for player in self.state.list_player for marble in player.list_marble):
                             other_marble.pos = pos
                             other_marble.is_save = False
                             break
 
-        # Advance to the next active player
-        self.state.idx_player_active = (self.state.idx_player_active + 1) % len(self.state.list_player)
 
     def get_cards_per_round(self) -> int:
         """Determine the number of cards to be dealt based on the round."""
