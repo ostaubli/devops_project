@@ -578,9 +578,9 @@ class Dog(Game):
 
         # Handle special cards
         if action.card.rank == 'J':
-            self.handle_jack(action)
+            self._handle_jack(action)
         elif action.card.rank == 'JKR':
-            self.handle_joker(action)
+            self._handle_joker(action)
         # elif action.card.rank == '7':
           #   self._handle_seven_card(action.card, active_player.list_marble)
         else:
@@ -592,7 +592,7 @@ class Dog(Game):
         # Advance to the next active player
         self.state.idx_player_active = (self.state.idx_player_active + 1) % len(self.state.list_player)
 
-    def handle_jack(self, move_action: Action) -> None:
+    def _handle_jack(self, move_action: Action) -> None:
         """Handle the Jack card action (swap marbles)."""
 
         # Ensure the game state is not None
@@ -633,7 +633,7 @@ class Dog(Game):
 
 
 
-    def handle_joker(self, move_action: Action) -> None:
+    def _handle_joker(self, move_action: Action) -> None:
         """Handle the Joker card action (wild card)."""
         if self.state is None:
             raise ValueError("Game state is not set.")
