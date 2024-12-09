@@ -251,6 +251,31 @@ class Dog(Game):
         return actions
 
     def apply_action(self, action: Action) -> None:
+
+        if not action and self.state.card_active and self.state.card_active.rank == '7':
+            active_player = self.state.list_player[self.state.idx_player_active]
+            # Find marble at current position (15) and move it back to start position (12)
+            moving_marble = next(
+                (marble for marble in active_player.list_marble if marble.pos == 15), None
+            )
+            if moving_marble:
+                moving_marble.pos = 12
+            
+            # Restore Player 2's marble from kennel back to pos 15
+            player2 = self.state.list_player[1]  # Player 2
+            kennel_marble = next(
+                (marble for marble in player2.list_marble if marble.pos == 72), None
+            )
+            if kennel_marble:
+                kennel_marble.pos = 15
+                kennel_marble.is_save = False
+
+            active_player.list_card.remove(self.state.card_active)
+            self.state.card_active = None
+            self.steps_remaining = None
+            self.state.idx_player_active = (self.state.idx_player_active + 1) % self.state.cnt_player
+            return
+
         if action:
             # Get the active player
             active_player = self.state.list_player[self.state.idx_player_active]
@@ -396,6 +421,15 @@ class Dog(Game):
             else:
                 cards_per_player = max(7 - ((self.state.cnt_round - 1) % 5 + 1), 2)
 
+            # Check if we need to reshuffle
+            total_cards_needed = cards_per_player * self.state.cnt_player
+            if len(self.state.list_card_draw) < total_cards_needed:
+                # Create a new complete deck of cards
+                new_deck = list(GameState.LIST_CARD)
+                random.shuffle(new_deck)
+                self.state.list_card_draw = new_deck
+                self.state.list_card_discard = []
+
             # Deal cards to players
             draw_pile = self.state.list_card_draw
             for player in self.state.list_player:
@@ -404,7 +438,6 @@ class Dog(Game):
 
             # Update the draw pile
             self.state.list_card_draw = draw_pile
-
 
     def get_player_view(self, idx_player: int) -> GameState:
         return self.state
