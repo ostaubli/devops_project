@@ -241,14 +241,12 @@ class Dog(Game):
 
         # Check possible move actions for each card in the player's hand
         for card in active_player.list_card:
-            if card.rank not in ['7', 'J', 'JKR']:
+            if card.rank not in ['7', 'J', 'A', 'JKR']:
                 # "normal" Cards
                 for marble_idx, marble in enumerate(active_player.list_marble):
                     if marble.pos not in self.KENNEL_POSITIONS[active_player_idx]:
                         # Total moves allowed by the card
-                        if card.rank == 'A':
-                            num_moves = 1 # TODO: Need to implement the logic for 1 or 11
-                        elif card.rank == 'K':
+                        if card.rank == 'K':
                             num_moves = 13
                         elif card.rank == 'Q':
                             num_moves = 12
@@ -337,6 +335,36 @@ class Dog(Game):
                                         card_swap=None
                                     )
                                 )
+            # --- Ass ---
+            if card.rank == 'A':
+                for marble in active_player.list_marble:
+                    if marble.pos not in self.KENNEL_POSITIONS[active_player_idx]:
+                        # Move 1 forward
+                        pos_to_1 = (marble.pos + 1) % 64
+                        if self.check_move_validity(test_state=self.state, active_player_idx=active_player_idx, marble_idx=marble.pos):
+                            actions.append(
+                                Action(
+                                    card=card,
+                                    pos_from=marble.pos,
+                                    pos_to=pos_to_1,
+                                    card_swap=None
+                                )
+                            )
+
+                        # Move 11 forward
+                        pos_to_11 = (marble.pos + 11) % 64  
+                        if self.check_move_validity(test_state=self.state, active_player_idx=active_player_idx, marble_idx=marble.pos):
+                            actions.append(
+                                Action(
+                                    card=card,
+                                    pos_from=marble.pos,
+                                    pos_to=pos_to_11,
+                                    card_swap=None
+                                )
+                            )
+
+
+
 
             if card.rank == '4':
                 # Add action for backwards motion
