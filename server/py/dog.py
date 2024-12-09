@@ -556,6 +556,51 @@ class Dog(Game):
 
         return actions
 
+    def get_actions_for_ace(self, player: PlayerState) -> List[Action]:
+        """
+        Generate all possible moves for the card 'Ace', where the player can:
+        - Move a marble 1 step forward.
+        - Move a marble 11 steps forward.
+        - Bring a marble out of the kennel to the start position.
+        """
+        actions = []
+        start_position = self.board["start_positions"][player.index]  # Player's start position
+        kennel_positions = self.board["kennel_positions"][player.index]  # Player's kennel positions
+
+        # Option 1: Move a marble 1 step forward
+        for marble in player.list_marble:
+            if marble.is_save:  # Only consider marbles that are out of the kennel
+                target_pos_forward = (marble.pos + 1) % len(self.board["circular_path"])
+                actions.append(Action(
+                    card=Card(suit='', rank='A'),
+                    pos_from=marble.pos,
+                    pos_to=target_pos_forward,
+                    card_swap=None
+                ))
+
+        # Option 2: Move a marble 11 steps forward
+        for marble in player.list_marble:
+            if marble.is_save:  # Only consider marbles that are out of the kennel
+                target_pos_forward = (marble.pos + 11) % len(self.board["circular_path"])
+                actions.append(Action(
+                    card=Card(suit='', rank='A'),
+                    pos_from=marble.pos,
+                    pos_to=target_pos_forward,
+                    card_swap=None
+                ))
+
+        # Option 3: Bring a marble out of the kennel
+        for marble in player.list_marble:
+            if not marble.is_save and marble.pos in kennel_positions:  # Marble is in the kennel
+                actions.append(Action(
+                    card=Card(suit='', rank='A'),
+                    pos_from=marble.pos,  # Current kennel position
+                    pos_to=start_position,  # Move to player's start position
+                    card_swap=None
+                ))
+
+        return actions
+
     def apply_action(self, action: Action) -> None:
         """ Apply the given action to the game """
         if action is None:
