@@ -625,6 +625,21 @@ class Dog(Game):
         elif action.card.rank == 'J':
             self.get_actions_jack(player)
 
+        elif action.card.rank == 'K':
+            if action.pos_from in self.board["kennel_positions"][player.index]:  # Leaving the kennel
+                for marble in player.list_marble:
+                    if marble.pos == action.pos_from:
+                        marble.pos = action.pos_to
+                        marble.is_save = True
+                        print(f"{player.name}'s marble moved out of the kennel to position {action.pos_to}.")
+                        break
+            else:  # Moving 13 steps forward
+                for marble in player.list_marble:
+                    if marble.pos == action.pos_from and marble.is_save:
+                        marble.pos = action.pos_to
+                        print(f"{player.name}'s marble moved 13 steps forward to position {action.pos_to}.")
+                        break
+
         elif action.card.rank == 'JKR':  # Joker: use as any card
             # Action can be anything based on the game rules, e.g., swap a card or move a marble
             pass
