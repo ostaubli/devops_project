@@ -525,9 +525,8 @@ class Dog(Game):
 
     def get_actions_for_king(self, player: PlayerState) -> List[Action]:
         """
-        Generate all possible moves for the card 'King', where the player can:
-        - Move a marble 13 steps forward.
-        - Bring a marble out of the kennel to the start position.
+        Generate all possible moves for the card 'King', where the player can move a marble
+        13 steps forward or bring a marble out of the kennel to the start position.
         """
         actions = []
         start_position = self.board["start_positions"][player.index]  # Player's start position
