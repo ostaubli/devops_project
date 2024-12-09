@@ -297,25 +297,7 @@ class GameState(BaseModel):
 
 
     def set_action_to_game(self, action: Action):  # Kened
-
-
-        # Discard the played card
-        active_player.list_card.remove(action.card)
-        self.list_card_discard.append(action.card)
-
-        # Handle special cards
-        if action.card.rank == '7':
-            # 7 allows multiple movements; the game logic should track additional actions
-            self.card_active = action.card
-        elif action.card.rank == 'J':
-            # J allows swapping marbles (specific logic to be implemented separately)
-            pass
-        elif action.card.rank == 'JKR':
-            # Joker allows flexibility, which may require additional rules
-            pass
-        else:
-            # Reset the active card for regular actions
-            self.card_active = None
+        self.action = action
 
     def can_leave_kennel(self) -> bool:
         if self.card_active is None:
@@ -361,6 +343,43 @@ class GameState(BaseModel):
                         marble.pos = 0 # Anpassen. Marble zurück auf Startposition. Wie definieren wir die Startposition? Fix zuweisen oder Logik?
                         marble.is_save = True
 
+    def marble_switch_jake(self, player_idx: int, opponent_idx: int, player_marble_pos: int, opponent_marble_pos: int):  #Kened
+        """
+        Handle the marble switch action when the Jake card is played.
+
+        Args:
+            player_idx (int): Index of the active player (initiator of the swap).
+            opponent_idx (int): Index of the opponent player (target of the swap).
+            player_marble_pos (int): Position of the active player's marble to swap.
+            opponent_marble_pos (int): Position of the opponent's marble to swap.
+
+        Raises:
+            ValueError: If the specified positions do not match any marbles or if the swap is invalid.
+        """
+        # Get the players
+        active_player = self.list_player[player_idx]
+        opponent_player = self.list_player[opponent_idx]
+
+        # Find the marbles to swap
+        player_marble = next((m for m in active_player.list_marble if m.pos == str(player_marble_pos)), None)
+        opponent_marble = next((m for m in opponent_player.list_marble if m.pos == str(opponent_marble_pos)), None)
+
+        # Validate the selected marbles
+        if not player_marble:
+            raise ValueError(f"No marble found at position {player_marble_pos} for the active player.")
+        if not opponent_marble:
+            raise ValueError(f"No marble found at position {opponent_marble_pos} for the opponent player.")
+
+        # Perform the swap
+        player_marble.pos, opponent_marble.pos = opponent_marble.pos, player_marble.pos
+
+        # Log the swap
+        print(
+            f"Swapped active player's marble from {player_marble_pos} with opponent's marble at {opponent_marble_pos}.")
+
+        # Mark marbles as no longer in a safe state if applicable
+        player_marble.is_save = False
+        opponent_marble.is_save = False
 
     def init_next_turn(self) -> None: # Kägi
         '''
@@ -470,6 +489,23 @@ class Dog(Game):
                 opponent_marble = next((m for m in player.list_marble if m.pos == str(action.pos_to)), None)
                 if opponent_marble:
                     self.sending_home(opponent_marble)  # Send the opponent's marble home
+                # Discard the played card
+                active_player.list_card.remove(action.card)
+                self.list_card_discard.append(action.card)
+
+                # Handle special cards
+                if action.card.rank == '7':
+                    # 7 allows multiple movements; the game logic should track additional actions
+                    self.card_active = action.card
+                elif action.card.rank == 'J':
+                    # J allows swapping marbles (specific logic to be implemented separately)
+                    pass
+                elif action.card.rank == 'JKR':
+                    # Joker allows flexibility, which may require additional rules
+                    pass
+                else:
+                    # Reset the active card for regular actions
+                    self.card_active = None
         
         pass
 
