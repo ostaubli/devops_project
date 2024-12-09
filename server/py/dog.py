@@ -562,9 +562,7 @@ class Dog(Game):
         - Move a marble 11 steps forward.
         - Bring a marble out of the kennel to the start position.
         """
-        actions = []
-        start_position = self.board["start_positions"][player.index]  # Player's start position
-        kennel_positions = self.board["kennel_positions"][player.index]  # Player's kennel positions
+        actions = []  # List to store possible actions
 
         # Option 1: Move a marble 1 step forward
         for marble in player.list_marble:
