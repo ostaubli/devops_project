@@ -215,7 +215,6 @@ class GameState(BaseModel):
         random.shuffle(self.list_card_draw)
         self.list_card_discard = [self.list_card_discard[-1]]
 
-
 class Uno(Game):
 
     def __init__(self) -> None:
@@ -279,7 +278,9 @@ class Uno(Game):
 
             return possible_actions
 
-        possible_actions.append(Action(draw=1))
+        if not self.state.has_drawn:
+            possible_actions.append(Action(draw=1))
+
 
 
         if top_card.symbol is None:
@@ -303,15 +304,20 @@ class Uno(Game):
                     for color in LIST_COLOR:
                         possible_actions.append(Action(card=my_card, color=color))
 
+                if my_card.symbol == "draw2":
+                    if my_card.color == top_card.color:
+                        possible_actions.append(Action(card=my_card, color=color, draw=2))
+
         if top_card.symbol is not None:
-            for my_card in active_player.list_card:
-                if top_card.symbol == 'skip':
+            if top_card.symbol == 'skip':
+                for my_card in active_player.list_card:
                     if my_card.symbol == "skip":
                         possible_actions.append(Action(card=my_card, color=my_card.color))
                     if my_card.symbol == "reverse" and my_card.color == top_card.color:
                         possible_actions.append(Action(card=my_card, color=my_card.color))
 
-                elif top_card.symbol == "reverse":
+            elif top_card.symbol == "reverse":
+                for my_card in active_player.list_card:
 
                     if my_card.symbol == "reverse":
                         possible_actions.append(Action(card=my_card, color= my_card.color))
@@ -320,34 +326,28 @@ class Uno(Game):
                     if my_card.symbol == "draw2" and my_card.color == top_card.color:
                         possible_actions.append(Action(card=my_card, color=my_card.color, draw = 2))
 
-                elif top_card.symbol == "draw2":
 
+            elif top_card.symbol == "draw2":
+
+                can_we_cover_this = False
+                for my_card in active_player.list_card:
                     if my_card.symbol == "draw2":
-                        possible_actions.append(Action(card=my_card, color=my_card.color, draw =2))
+                        can_we_cover_this = True
+                        possible_actions.append(Action(card=my_card, color=my_card.color, draw=2))
                     if my_card.symbol == 'skip' and my_card.color == top_card.color:
+                        can_we_cover_this = True
                         possible_actions.append(Action(card=my_card, color=my_card.color))
 
-                elif top_card.symbol == "wilddraw4":
+                if not can_we_cover_this:
+                    possible_actions[0].draw = 2
 
-                    if my_card.symbol == "wilddraw4":
-                       for color in LIST_COLOR:
-                           possible_actions.append(Action(card=my_card, color=color, draw=4))
+            elif top_card.symbol == "wilddraw4":
 
-        #                     test 11
-        # for my_card in active_player.list_card:
-        #     if (my_card.color != top_card.color or my_card.number != top_card.number or my_card.symbol != top_card.symbol):
-        #         possible_actions.append(Action(draw=1))
-        #         if self.state.list_card_draw:  # Ensure there are cards to draw
-        #             drawn_card = self.state.list_card_draw.pop(0)  # Draw the top card
-        #             active_player.list_card.append(drawn_card)  # Add the drawn card to the player's hand
-        #
-        #            If the drawn card is playable, add it as a possible action to play
-                    # if (
-                    #         drawn_card.color == top_card.color
-                    #         or drawn_card.number == top_card.number
-                    #         or drawn_card.symbol == top_card.symbol
-                    # ):
-                    #     possible_actions.append(Action(card=drawn_card, color=drawn_card.color))
+                if my_card.symbol == "wilddraw4":
+                   for color in LIST_COLOR:
+                       possible_actions.append(Action(card=my_card, color=color, draw=4))
+
+
 
         return possible_actions
 
