@@ -19,7 +19,7 @@ class Card(BaseModel):
 class Marble(BaseModel):
     pos: int       # position on board (0 to 95)
     is_save: bool  # true if marble was moved out of kennel and was not yet moved
-    start_pos : int # 
+    start_pos : int # Kennel Position for sending home
 
 
 class PlayerState(BaseModel):
@@ -94,10 +94,10 @@ class GameState(BaseModel):
         player_blue = PlayerState(
                 name="PlayerBlue",
                 list_card=[],
-                list_marble=[Marble(pos="64", is_save=True), 
-                             Marble(pos="65", is_save=True),
-                             Marble(pos="66", is_save=True),
-                             Marble(pos="67", is_save=True)],
+                list_marble=[Marble(pos=64, is_save=True, start_pos=64), 
+                             Marble(pos=65, is_save=True, start_pos=65),
+                             Marble(pos=66, is_save=True, start_pos=66),
+                             Marble(pos=67, is_save=True, start_pos=67)],
                 list_kennel_pos = [64,65,66,67],
                 list_finish_pos = [68,69,70,71],
                 start_pos = 0
@@ -105,10 +105,10 @@ class GameState(BaseModel):
         player_green = PlayerState(
                 name="PlayerGreen",
                 list_card=[],
-                list_marble=[Marble(pos="72", is_save=True), 
-                             Marble(pos="73", is_save=True),
-                             Marble(pos="74", is_save=True),
-                             Marble(pos="75", is_save=True)],
+                list_marble=[Marble(pos=72, is_save=True, start_pos=72), 
+                             Marble(pos=73, is_save=True, start_pos=73),
+                             Marble(pos=74, is_save=True, start_pos=74),
+                             Marble(pos=75, is_save=True, start_pos=75)],
                 list_kennel_pos = [72,73,74,75],
                 list_finish_pos = [76,77,78,79],
                 start_pos = 16
@@ -116,10 +116,10 @@ class GameState(BaseModel):
         player_red = PlayerState(
                 name="PlayerRed",
                 list_card=[],
-                list_marble=[Marble(pos="80", is_save=True), 
-                             Marble(pos="81", is_save=True),
-                             Marble(pos="82", is_save=True),
-                             Marble(pos="83", is_save=True)],
+                list_marble=[Marble(pos=80, is_save=True, start_pos=80), 
+                             Marble(pos=81, is_save=True, start_pos=81),
+                             Marble(pos=82, is_save=True, start_pos=82),
+                             Marble(pos=83, is_save=True, start_pos=83)],
                 list_kennel_pos = [80,81,82,83],
                 list_finish_pos = [84,85,86,87],
                 start_pos = 32
@@ -127,10 +127,10 @@ class GameState(BaseModel):
         player_yellow = PlayerState(
                 name="PlayerYellow",
                 list_card=[],
-                list_marble=[Marble(pos="88", is_save=True), 
-                             Marble(pos="89", is_save=True),
-                             Marble(pos="90", is_save=True),
-                             Marble(pos="91", is_save=True)],
+                list_marble=[Marble(pos=88, is_save=True, start_pos=88), 
+                             Marble(pos=89, is_save=True, start_pos=89),
+                             Marble(pos=90, is_save=True, start_pos=90),
+                             Marble(pos=91, is_save=True, start_pos=91)],
                 list_kennel_pos = [88,89,90,91],
                 list_finish_pos = [92,93,94,95],
                 start_pos = 48
@@ -152,7 +152,7 @@ class GameState(BaseModel):
         # get number of Cards
         cards_per_round = [6, 5, 4, 3, 2]
         num_cards = cards_per_round[(self.cnt_round - 1) % len(cards_per_round)]
-        
+
         # Check if there are enough cards in the draw deck; if not, add a new card deck.
         if num_cards*4 > len(self.list_card_draw):
             ## reshuffle the Deck
@@ -167,7 +167,7 @@ class GameState(BaseModel):
 
         return
 
-    def can_leave_kennel(self,player: PlayerState ) -> int: #Needs to be redone Technical limits due to python
+    def can_leave_kennel(self, player: PlayerState ) -> int: #Needs to be redone Technical limits due to python
 
         for marble in player.list_marble:
 
@@ -399,9 +399,9 @@ class Dog(Game):
         """ Game initialization (set_state call not necessary, we expect 4 players) """
         print("Starting up DOG")
         self.state = GameState()
-        #self.state.setup_players()
-        #self.state.phase = GamePhase.RUNNING
-        #self.state.deal_cards() # deal first cards to players
+        self.state.setup_players()
+        self.state.phase = GamePhase.RUNNING
+        self.state.deal_cards() # deal first cards to players
       
     def set_state(self, state: GameState) -> None:
         """ Set the game to a given state """
