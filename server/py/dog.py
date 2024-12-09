@@ -607,6 +607,7 @@ class Dog(Game):
             return
 
         player = self.state.list_player[self.state.idx_player_active]
+        player_index = self.state.idx_player_active  # CHANGED: Use active player index directly
 
         # Apply move of basic cards
         if action.card.rank in self._BASIC_RANKS or action.card.rank == '4':
