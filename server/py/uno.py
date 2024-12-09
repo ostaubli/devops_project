@@ -1,4 +1,4 @@
-from server.py.game import Game, Player
+from game import Game, Player
 from typing import List, Optional
 from pydantic import BaseModel
 from enum import Enum
@@ -292,3 +292,36 @@ if __name__ == "__main__":
     uno = Uno()
     state = GameState(cnt_player=3)
     uno.set_state(state)
+
+    LIST_COLOR = ['red', 'blue', 'yellow', 'green']
+
+    def is_card_valid(card: Card):
+        okay = True
+        okay = okay and card.number in [None, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9]
+        okay = okay and card.symbol in [None, 'skip', 'reverse', 'draw2', 'wild', 'wilddraw4']
+        okay = okay and card.color in LIST_COLOR + ['any']
+        if card.color == 'any':
+            okay = okay and card.symbol in ['wild', 'wilddraw4']
+        if card.symbol in ['skip', 'reverse', 'draw2']:
+            okay = okay and card.color != 'any'
+        return okay
+# def test_card_values(self):
+        """Test 002: Validate card values [1 points]"""
+    game_server = Uno()
+    
+    state = GameState(cnt_player=2)
+    game_server.set_state(state)
+    game_server.get_state()
+    str_state = f'GameState:\n{state}\n'
+#######################################################
+
+    for card in state.list_card_draw + state.list_card_discard:
+        hint = str_state
+        hint += f'Error: Card values not valid {card}.'
+        assert is_card_valid(card), hint  #adjust to print if you want
+
+    for player in state.list_player:
+        for card in player.list_card:
+            hint = str_state
+            hint += f'Error: Card values not valid {card}.'
+            assert is_card_valid(card), hint #adjust
