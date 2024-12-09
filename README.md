@@ -57,7 +57,7 @@ python benchmark/benchmark_dog.py python dog.Dog
 python benchmark/benchmark_dog.py python dog.Dog > benchmark.log  
 python benchmark/benchmark_dog.py python dog.Dog > benchmark.log 2>&1
 python benchmark/benchmark_dog.py python dog.Dog > "benchmark_$(date +%Y%m%d_%H%M%S).log" 2>&1
-python benchmark/benchmark_dog.py python dog.Dog > logs\benchmark_%DATE:~10,4%%DATE:~7,2%%DATE:~4,2%_%TIME:~0,2%%TIME:~3,2%%TIME:~6,2%.log 2>&   
+python benchmark/benchmark_dog.py python dog.Dog > logs\benchmark_%DATE:~10,4%%DATE:~7,2%%DATE:~4,2%_%TIME:~0,2%%TIME:~3,2%%TIME:~6,2%.log 2>&1
 
 ````
 

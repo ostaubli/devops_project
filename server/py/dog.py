@@ -186,6 +186,19 @@ class GameState(BaseModel):
 
         TODO: Home Handling to do
         TODO: Marble blocks the way (RULE) if new on start
+
+        '''
+        '''        
+        Define Each Action for Each Card
+
+        Cards 2-10 Ex 7/4 -> Move One Marble the Amount of Value
+        Card 4 -> Move one Marble +4 or -4
+        Card 7 -> Move one to four Marbles in total of 7
+        Card Ace -> Move one Marble 1 or 11 or get out
+        Card Queen -> Move one Marble 12
+        Card King -> Move one Marble 13 or get out
+        Card Jake -> Marble position Exchange
+        Card Joker -> Card Swap
         '''
         list_steps_split_7 = [
             [1, 1, 1, 1, 1, 1, 1],
@@ -273,27 +286,6 @@ class GameState(BaseModel):
                         action_list.append(Action(card=card, pos_from=marble.pos, pos_to=((marble.pos + 11) % 64)))
                         action_list.append(Action(card=card, pos_from=marble.pos, pos_to=((marble.pos + 1) % 64)))
         return action_list
-
-        #
-
-
-'''        
-Define Each Action for Each Card
-
-Cards 2-10 Ex 7/4 -> Move One Marble the Amount of Value
-Card 4 -> Move one Marble +4 or -4
-Card 7 -> Move one to four Marbles in total of 7
-Card Ace -> Move one Marble 1 or 11 or get out
-Card Queen -> Move one Marble 12
-Card King -> Move one Marble 13 or get out
-Card Jake -> Marble position Exchange
-Card Joker -> Card Swap
-
-
-
-'''
-
-
 
 
     def set_action_to_game(self, action: Action):  # Kened
@@ -460,53 +452,52 @@ class Dog(Game):
         """
 
 
-        # Get the active player
-        active_player = self.list_player[self.idx_player_active]
+        # # Get the active player
+        # active_player = self.list_player[self.idx_player_active]
 
 
-        # Ensure the card played is in the player's hand
-        if action.card not in active_player.list_card:
-            raise ValueError("The card played is not in the active player's hand.")
+        # # Ensure the card played is in the player's hand
+        # if action.card not in active_player.list_card:
+        #     raise ValueError("The card played is not in the active player's hand.")
 
-        # Ensure pos_from and pos_to are defined
-        if action.pos_from is None or action.pos_to is None:
-            raise ValueError("Both pos_from and pos_to must be specified for the action.")
+        # # Ensure pos_from and pos_to are defined
+        # if action.pos_from is None or action.pos_to is None:
+        #     raise ValueError("Both pos_from and pos_to must be specified for the action.")
 
-        # Find the marble to move based on pos_from
-        marble_to_move = next((m for m in active_player.list_marble if m.pos == str(action.pos_from)), None)
-        if not marble_to_move:
-            raise ValueError(f"No marble found at the specified pos_from: {action.pos_from}")
+        # # Find the marble to move based on pos_from
+        # marble_to_move = next((m for m in active_player.list_marble if m.pos == str(action.pos_from)), None)
+        # if not marble_to_move:
+        #     raise ValueError(f"No marble found at the specified pos_from: {action.pos_from}")
 
-        # Update the marble's position
-        marble_to_move.pos = str(action.pos_to)
+        # # Update the marble's position
+        # marble_to_move.pos = str(action.pos_to)
 
-        # Check if the marble's new position is in a final or safe zone
-        self.check_final_pos(pos_to=action.pos_to, pos_from=action.pos_from, marble=marble_to_move)
+        # # Check if the marble's new position is in a final or safe zone
+        # self.check_final_pos(pos_to=action.pos_to, pos_from=action.pos_from, marble=marble_to_move)
 
-        # Handle cases where another player's marble occupies the destination
-        for player in self.list_player:
-            if player != active_player:
-                opponent_marble = next((m for m in player.list_marble if m.pos == str(action.pos_to)), None)
-                if opponent_marble:
-                    self.sending_home(opponent_marble)  # Send the opponent's marble home
-                # Discard the played card
-                active_player.list_card.remove(action.card)
-                self.list_card_discard.append(action.card)
+        # # Handle cases where another player's marble occupies the destination
+        # for player in self.list_player:
+        #     if player != active_player:
+        #         opponent_marble = next((m for m in player.list_marble if m.pos == str(action.pos_to)), None)
+        #         if opponent_marble:
+        #             self.sending_home(opponent_marble)  # Send the opponent's marble home
+        #         # Discard the played card
+        #         active_player.list_card.remove(action.card)
+        #         self.list_card_discard.append(action.card)
 
-                # Handle special cards
-                if action.card.rank == '7':
-                    # 7 allows multiple movements; the game logic should track additional actions
-                    self.card_active = action.card
-                elif action.card.rank == 'J':
-                    # J allows swapping marbles (specific logic to be implemented separately)
-                    pass
-                elif action.card.rank == 'JKR':
-                    # Joker allows flexibility, which may require additional rules
-                    pass
-                else:
-                    # Reset the active card for regular actions
-                    self.card_active = None
-        
+        #         # Handle special cards
+        #         if action.card.rank == '7':
+        #             # 7 allows multiple movements; the game logic should track additional actions
+        #             self.card_active = action.card
+        #         elif action.card.rank == 'J':
+        #             # J allows swapping marbles (specific logic to be implemented separately)
+        #             pass
+        #         elif action.card.rank == 'JKR':
+        #             # Joker allows flexibility, which may require additional rules
+        #             pass
+        #         else:
+        #             # Reset the active card for regular actions
+        #             self.card_active = None
         pass
 
 
