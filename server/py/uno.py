@@ -14,20 +14,15 @@ from enum import Enum
 import random
 
 LIST_COLOR: List[str] = ['red', 'blue', 'yellow', 'green']
-# draw2 = draw two cards, wild = chose color, wilddraw4 = chose color and draw 4
+# draw2 = draw two cards, wild = chose color, 
+# wilddraw4 = chose color and draw 4
 LIST_SYMBOL: List[str] = ['skip', 'reverse', 'draw2', 'wild', 'wilddraw4']
 
-class Card(BaseModel):
-    color: Optional[str] = None   # color of the card (see LIST_COLOR)
-    number: Optional[int] = None  # number of the card (if not a symbol card)
-    symbol: Optional[str] = None  # special cards (see LIST_SYMBOL)
-
-    def __lt__(self, other):
-        if not isinstance(other, Card): return False
-        other: Action = other
-        t1 = (self.color, self.number, self.symbol,)
-        t2 = (other.color, other.number, other.symbol,)
-
+def compare_tuples_for_lt(t1:tuple, t2:tuple) -> other:
+        """ Compares two tuples element-wise for less-than ordering.
+        Handles 'None' values as less than any other
+        """
+        
         for v1, v2 in zip(t1, t2):
             if v1 is None and v2 is None:
                 continue
@@ -37,12 +32,34 @@ class Card(BaseModel):
 
             if v2 is None:
                 return False
+            
+            if v1 < v2:
+                return True
 
-            return v1 < v2
+            if v1 > v2:
+                return False
 
         return False
 
+
+class Card(BaseModel):
+    color: Optional[str] = None   # color of the card (see LIST_COLOR)
+    number: Optional[int] = None  # number of the card (if not a symbol card)
+    symbol: Optional[str] = None  # special cards (see LIST_SYMBOL)
+
+    def __lt__(self, other):
+        """ This method checks if one Card object is less than another,
+        using the global method compare_tuples_for_lt()
+        """
+        if not isinstance(other, Card):
+            return False
+        t1 = (self.color, self.number, self.symbol)
+        t2 = (other.color, other.number, other.symbol)
+        return compare_tuples_for_lt(t1, t2)
+
     def __eq__(self, other):
+        """ Checks to see if two Card objects are equal
+        """
         if not isinstance(other, Card): return False
         other: Card = other
 
@@ -59,25 +76,12 @@ class Action(BaseModel):
     uno: bool = False            # true to announce "UNO" with the second last card
 
     def __lt__(self, other):
-        if not isinstance(other, Action): return False
-        other: Action = other
-
-        t1 = (self.card, self.color, self.draw, self.uno,)
-        t2 = (other.card, other.color, other.draw, other.uno,)
-
-        for v1, v2 in zip(t1, t2):
-            if v1 is None and v2 is None:
-                continue
-
-            if v1 is None:
-                return True
-
-            if v2 is None:
-                return False
-
-            return v1 < v2
-
-        return False
+        """ Method checks if one Action object is less than another one,
+        uses the global method ocmpare_tuples_for_lt()
+        """
+        t1 = (self.card, self.color, self.draw, self.uno)
+        t2 = (other.card, other.color, other.draw, other.uno)
+        return compare_tuples_for_lt(t1, t2)
 
 class PlayerState(BaseModel):
     name: Optional[str] = None  # name of player
