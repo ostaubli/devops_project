@@ -427,6 +427,7 @@ class GameState(BaseModel):
         player_marble.is_save = False
         opponent_marble.is_save = False
 
+
     def init_next_turn(self) -> None: # Kägi
         '''
         If action is finished, set the next player active.
@@ -476,12 +477,15 @@ class Dog(Game):
         """ Get the complete, unmasked game state """
         return self.state
 
-    def print_state(self) -> None:
+    def print_state(self) -> None:  #Kened
         """ Print the current game state """
+        print(self.state)
+
         pass
 
     def get_list_action(self) -> List[Action]:
         """ Get a list of possible actions for the active player """
+
 
 
 
