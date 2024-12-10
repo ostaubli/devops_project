@@ -71,8 +71,8 @@ class Action(BaseModel):
     card: Optional[Card] = None  # the card to play
     number:Optional[int] = None
     color: Optional[str] = None  # the chosen color to play (for wild cards)
-    draw: Optional[int] = None   # the number of cards to draw for the next player
-    uno: bool = False            # true to announce "UNO" with the second last card
+    draw: Optional[int] = None   # number of cards to draw for the next player
+    uno: bool = False            # announce "UNO" with the second last card
 
     def __lt__(self, other):
         """ Method checks if one Action object is less than another one,
@@ -88,7 +88,8 @@ class PlayerState(BaseModel):
 
     @staticmethod
     def _display_deco(function):
-        """ Decorator to format the output of the display method, created within this class. """
+        """ Decorator to format the output of the display method, 
+        created within this class. """
         def inner(*args, **kwargs):
             print("---- Player State ----")
             result = function(*args, **kwargs)
@@ -97,11 +98,13 @@ class PlayerState(BaseModel):
         return inner 
 
     def add_card(self, card: Card):
-        """ Add a card to the player's hand card-stack, when the player pulls a card. """
+        """ Add a card to the player's hand card-stack, 
+        when the player pulls a card. """
         self.list_card.append(card)
 
     def play_card(self, card: Card):
-        """ Remove a card from the player's hand stack, when the player plays a card. """
+        """ Remove a card from the player's hand stack, 
+        when the player plays a card. """
         if card in self.list_card:
             self.list_card.remove(card)
 
@@ -111,7 +114,8 @@ class PlayerState(BaseModel):
         return uno_card
     
     def check_no_cards(self) -> bool:
-        """ Check whether the player has no cards to play anymore. Then the player won the game. """
+        """ Check whether the player has no cards to play anymore. 
+        Then the player won the game. """
         no_card = len(self.list_card) == 0
         return no_card
     
@@ -119,7 +123,9 @@ class PlayerState(BaseModel):
     def display_player_state(self):
         """ Display the player's current state and hand card stack. """
         print(f"Player: {self.name}")
-        print("Current cards in hand: ", [str(card) for card in self.list_card])
+        print("Current cards in hand: ", 
+            [str(card) for card in self.list_card]
+            )
     
 
 class GamePhase(str, Enum):
@@ -164,22 +170,38 @@ class GameState(BaseModel):
     # numbers of cards for each player to start with
     CNT_HAND_CARDS: int = 0
     # any = for wild cards
-    list_card_draw: Optional[List[Card]] = field(default_factory=create_deck)  # list of cards to draw
-    list_card_discard: Optional[List[Card]] = field(default_factory=list)  # list of cards discarded
-    list_player: List[PlayerState] = field(default_factory=list)  # list of player-states
-    phase: GamePhase = GamePhase.SETUP          # the current game-phase ("setup"|"running"|"finished")
-    cnt_player: int = 0                         # number of players N (to be set in the phase "setup")
-    idx_player_active: Optional[int] = 0        # the index (0 to N-1) of active player
-    direction: int = 1                          # direction of the game, +1 to the left, -1 to right
-    color: str = ''                             # active color (last card played or the chosen color after a wild cards)
-    cnt_to_draw: int = 0                        # accumulated number of cards to draw for the next player
-    has_drawn: bool = False                     # flag to indicate if the last player has alreay drawn cards or not
+    list_card_draw: Optional[List[Card]] = field(
+        default_factory=create_deck
+        )  # list of cards to draw
+    list_card_discard: Optional[List[Card]] = field(
+        default_factory=list
+        )  # list of cards discarded
+    list_player: List[PlayerState] = field(
+        default_factory=list
+        )  # list of player-states
+
+    # the current game-phase ("setup"|"running"|"finished")
+    phase: GamePhase = GamePhase.SETUP
+    # number of players N (to be set in the phase "setup")
+    cnt_player: int = 0
+    # the index (0 to N-1) of active player
+    idx_player_active: Optional[int] = 0
+    # direction of the game, +1 to the left, -1 to right
+    direction: int = 1
+    # active color (last card played or the chosen color after a wild cards)
+    color: str = ''
+    # accumulated number of cards to draw for the next player
+    cnt_to_draw: int = 0
+    # flag to indicate if the last player has alreay drawn cards or not
+    has_drawn: bool = False
 
     def setup_game(self, players: List[str]) -> None:
         """Initialize the game with players."""
         self.list_player = [PlayerState(name=player) for player in players]
         self.cnt_player = len(players)
-        self.list_card_draw = random.sample(self.LIST_CARD, len(self.LIST_CARD))
+        self.list_card_draw = random.sample(
+            self.LIST_CARD, len(self.LIST_CARD)
+            )
         self.phase = GamePhase.SETUP
         self.deal_cards()
     
@@ -196,7 +218,9 @@ class GameState(BaseModel):
 
     def next_player(self) -> None:
         """Advance to the next player."""
-        self.idx_player_active = (self.idx_player_active + self.direction) % self.cnt_player
+        self.idx_player_active = (
+            self.idx_player_active + self.direction
+            ) % self.cnt_player
 
     def reverse_direction(self) -> None:
         """Reverse the direction of play."""
@@ -213,7 +237,9 @@ class GameState(BaseModel):
     def reshuffle_discard_pile(self) -> None:
         """Reshuffle the discard pile into the draw pile."""
         if len(self.list_card_discard) <= 1:
-            raise ValueError("Not enough cards in the discard pile to reshuffle.")
+            raise ValueError(
+                "Not enough cards in the discard pile to reshuffle."
+                )
         self.list_card_draw = self.list_card_discard[:-1]
         random.shuffle(self.list_card_draw)
         self.list_card_discard = [self.list_card_discard[-1]]
@@ -221,7 +247,8 @@ class GameState(BaseModel):
 class Uno(Game):
 
     def __init__(self) -> None:
-        """ Important: Game initialization also requires a set_state call to set the number of players """
+        """ Important: Game initialization also requires a 
+        set_state call to set the number of players """
         self.state = GameState()
 
     def set_state(self, state: GameState) -> None:
@@ -229,10 +256,14 @@ class Uno(Game):
         self.state = state
 
         if len(self.state.list_card_discard) == 0:
-            self.state.list_card_discard = [state.list_card_draw.pop()] if state.list_card_draw else []
+            self.state.list_card_discard = [
+                state.list_card_draw.pop()
+                ] if state.list_card_draw else []
 
         if len(self.state.list_player) != self.state.cnt_player:
-            self.state.list_player = [PlayerState() for i in range(state.cnt_player)]
+            self.state.list_player = [
+                PlayerState() for i in range(state.cnt_player)
+                ]
 
         self.state.idx_player_active = state.idx_player_active
         active_player = self.state.list_player[self.state.idx_player_active]
@@ -241,7 +272,10 @@ class Uno(Game):
         top_card = self.state.list_card_discard[-1]
         if top_card.symbol == 'draw2':
             self.state.cnt_to_draw += 2
-        if top_card.symbol == 'wilddraw4' and len(self.state.list_card_discard) == 1:
+        if top_card.symbol == 'wilddraw4' and len(
+            self.state.list_card_discard
+            ) == 1:
+
             self.state.list_card_discard.append(state.list_card_draw.pop())
         if top_card.symbol == 'reverse':
             self.state.direction *= -1
@@ -270,9 +304,12 @@ class Uno(Game):
 
         top_card = self.state.list_card_discard[-1]
 
-        if top_card.symbol == 'wild' and len(self.state.list_card_discard) == 1:
+        if (top_card.symbol == 'wild' and
+        len(self.state.list_card_discard) == 1):
             for my_card in active_player.list_card:
-                possible_actions.append(Action(card=my_card, color=my_card.color))
+                possible_actions.append(
+                    Action(card=my_card, color=my_card.color)
+                    )
 
             return possible_actions
 
@@ -283,57 +320,95 @@ class Uno(Game):
             for my_card in active_player.list_card:
             # print(f"{my_card=}")
                 if my_card == top_card:
-                    possible_actions.append(Action(card=my_card, color=my_card.color))
+                    possible_actions.append(
+                        Action(card=my_card, color=my_card.color)
+                        )
 
                 elif my_card.number == top_card.number:
                 # possible_actions.append(Action(draw=1))
-                    possible_actions.append(Action(card=my_card, color=my_card.color))
+                    possible_actions.append(
+                        Action(card=my_card, color=my_card.color)
+                        )
 
                 elif my_card.color == top_card.color:
-                    possible_actions.append(Action(card=my_card, color=my_card.color))
+                    possible_actions.append(
+                        Action(card=my_card, color=my_card.color)
+                        )
 
                 if my_card.symbol == "wilddraw4":
                     for color in LIST_COLOR:
-                        possible_actions.append(Action(card=my_card, color=color, draw=4))
+                        possible_actions.append(
+                            Action(card=my_card, color=color, draw=4)
+                        )
 
                 if my_card.symbol == "wild":
                     for color in LIST_COLOR:
-                        possible_actions.append(Action(card=my_card, color=color))
+                        possible_actions.append(
+                            Action(card=my_card, color=color)
+                        )
 
                 if my_card.symbol == "draw2":
                     if my_card.color == top_card.color:
-                        possible_actions.append(Action(card=my_card, color=color, draw=2))
+                        possible_actions.append(
+                            Action(card=my_card, color=color, draw=2)
+                        )
 
                 if my_card.symbol == "skip":
                     if my_card.color == top_card.color:
-                        possible_actions.append(Action(card=my_card, color=color))
-        #                  idx_player_next = (idx_player_active + 2 * direction + cnt_player) % cnt_player
+                        possible_actions.append(
+                            Action(card=my_card, color=color)
+                        )
+        #                  idx_player_next = (idx_player_active + 2 * 
+        #                   direction + cnt_player) % cnt_player
         #  rule for apply action test 014
                 if my_card.symbol == "reverse":
                     if my_card.color == top_card.color:
-                        possible_actions.append(Action(card=my_card, color=color))
+                        possible_actions.append(
+                            Action(card=my_card, color=color)
+                        )
 
 
         if top_card.symbol is not None:
             if top_card.symbol == 'skip':
                 for my_card in active_player.list_card:
                     if my_card.symbol == "skip":
-                        possible_actions.append(Action(card=my_card, color=my_card.color))
-                    if my_card.symbol == "reverse" and my_card.color == top_card.color:
-                        possible_actions.append(Action(card=my_card, color=my_card.color))
-                    if my_card.symbol is None and my_card.color == top_card.color:
-                        possible_actions.append(Action(card=my_card, color=my_card.color))
+                        possible_actions.append(
+                            Action(card=my_card, color=my_card.color)
+                            )
+                    if (my_card.symbol == "reverse" and 
+                    my_card.color == top_card.color):
+                        possible_actions.append(
+                            Action(card=my_card, color=my_card.color)
+                            )
+                    if (my_card.symbol is None and
+                    my_card.color == top_card.color):
+                        possible_actions.append(
+                            Action(card=my_card, color=my_card.color)
+                            )
 
             elif top_card.symbol == "reverse":
                 for my_card in active_player.list_card:
                     if my_card.symbol == "reverse":
-                        possible_actions.append(Action(card=my_card, color= my_card.color))
-                    if my_card.symbol == 'skip' and my_card.color == top_card.color:
-                        possible_actions.append(Action(card=my_card, color=my_card.color))
-                    if my_card.symbol == "draw2" and my_card.color == top_card.color:
-                        possible_actions.append(Action(card=my_card, color=my_card.color, draw = 2))
-                    if my_card.symbol is None and my_card.color == top_card.color:
-                        possible_actions.append(Action(card=my_card, color=my_card.color))
+                        possible_actions.append(
+                            Action(card=my_card, color= my_card.color)
+                            )
+                    if (my_card.symbol == 'skip' and
+                    my_card.color == top_card.color):
+                        possible_actions.append(
+                            Action(card=my_card, color=my_card.color)
+                            )
+                    if (my_card.symbol == "draw2" and
+                    my_card.color == top_card.color):
+                        possible_actions.append(
+                            Action(
+                                card=my_card, color=my_card.color, draw = 2
+                                )
+                            )
+                    if (my_card.symbol is None and
+                    my_card.color == top_card.color):
+                        possible_actions.append(
+                            Action(card=my_card, color=my_card.color)
+                            )
 
             elif top_card.symbol == "draw2":
 
@@ -341,13 +416,21 @@ class Uno(Game):
                 for my_card in active_player.list_card:
                     if my_card.symbol == "draw2":
                         can_we_cover_this = True
-                        possible_actions.append(Action(card=my_card, color=my_card.color, draw=2))
-                    if my_card.symbol == 'skip' and my_card.color == top_card.color:
+                        possible_actions.append(
+                            Action(card=my_card, color=my_card.color, draw=2)
+                            )
+                    if (my_card.symbol == 'skip' and
+                    my_card.color == top_card.color):
                         can_we_cover_this = True
-                        possible_actions.append(Action(card=my_card, color=my_card.color))
-                    if my_card.symbol is None and my_card.color == top_card.color:
+                        possible_actions.append(
+                            Action(card=my_card, color=my_card.color)
+                            )
+                    if (my_card.symbol is None and
+                    my_card.color == top_card.color):
                         can_we_cover_this = True
-                        possible_actions.append(Action(card=my_card, color=my_card.color))
+                        possible_actions.append(
+                            Action(card=my_card, color=my_card.color)
+                            )
 
                 if not can_we_cover_this:
                     possible_actions[0].draw = 2
@@ -356,9 +439,14 @@ class Uno(Game):
 
                 if my_card.symbol == "wilddraw4":
                    for color in LIST_COLOR:
-                       possible_actions.append(Action(card=my_card, color=color, draw=4))
-                if my_card.symbol is None and my_card.color == top_card.color:
-                    possible_actions.append(Action(card=my_card, color=my_card.color))
+                       possible_actions.append(
+                        Action(card=my_card, color=color, draw=4)
+                        )
+                if (my_card.symbol is None and
+                my_card.color == top_card.color):
+                    possible_actions.append(
+                        Action(card=my_card, color=my_card.color)
+                        )
 
 
 
@@ -393,7 +481,9 @@ class Uno(Game):
 
         print("\n==== Game State ====")
         print(f"Phase: {self.state.phase}")
-        print(f"Direction: {'Clockwise' if self.state.direction == 1 else 'Counterclockwise'}")
+        print(f"""Direction: {
+            'Clockwise' if self.state.direction == 1 else 'Counterclockwise'
+            }""")
         print(f"Active Player Index: {self.state.idx_player_active}")
         print(f"Active Color: {self.state.color}")
         print(f"Cards to Draw: {self.state.cnt_to_draw}")
@@ -401,7 +491,9 @@ class Uno(Game):
 
         print("\n-- Players --")
         for idx, player in enumerate(self.state.list_player):
-            active_marker = " (Active)" if idx == self.state.idx_player_active else ""
+            active_marker = (
+                " (Active)" if idx == self.state.idx_player_active else ""
+            )
             print(f"Player {idx + 1}{active_marker}: {player.name}")
             print(f"  Cards: {[str(card) for card in player.list_card]}")
 
@@ -429,7 +521,9 @@ class Uno(Game):
             self.state.has_drawn = True
             card = self.state.list_card_draw.pop()
             # print(f"\t\tWE GET THIS CARD {card=}")
-            self.state.list_player[self.state.idx_player_active].list_card.append(card)
+            self.state.list_player[
+                self.state.idx_player_active
+                ].list_card.append(card)
 
         actions = self.get_list_action()
 
@@ -447,7 +541,9 @@ class Uno(Game):
             # Update the active color (for wildcards)
             if action.card.symbol in ['wild', 'wilddraw4']:
                 if not action.color:
-                    raise ValueError("A color must be chosen when playing a wildcard")
+                    raise ValueError(
+                        "A color must be chosen when playing a wildcard"
+                        )
                 self.state.color = action.color
             else:
                 self.state.color = action.card.color
@@ -499,11 +595,15 @@ class Uno(Game):
 
     def _advance_to_next_player(self) -> None:
         """Advance to the next player in the correct direction"""
-        self.state.idx_player_active = (self.state.idx_player_active + self.state.direction % self.state.cnt_player)
+        self.state.idx_player_active = (
+            self.state.idx_player_active + self.state.direction %
+            self.state.cnt_player
+            )
 
 
     def get_player_view(self, idx_player: int) -> GameState:
-        """ Get the masked state for the active player (e.g. the oppontent's cards are face down)"""
+        """ Get the masked state for the active player 
+        (e.g. the oppontent's cards are face down)"""
         if not self.state:
             raise ValueError("Game state has not been initialized")
 
@@ -514,13 +614,19 @@ class Uno(Game):
         for i, player in enumerate(masked_state.list_player):
             if i != idx.player:
                 # replace the list of cards with a placeholder showing card count
-                player.list_card = [Card() for _ in range(len(player.list_card))]
+                player.list_card = [
+                    Card() for _ in range(len(player.list_card))
+                    ]
 
         # reveal current player's hand
-        masked_state.list_player[idx_player].list_card = self.state.list_player[idx_player].list_card
+        masked_state.list_player[
+            idx_player
+            ].list_card = self.state.list_player[idx_player].list_card
 
         # mask draw pile (size can be revealed but not cards)
-        masked_state.list_card_draw = [Card() * len(self.state.list_card_draw)]
+        masked_state.list_card_draw = [
+            Card() * len(self.state.list_card_draw)
+            ]
 
         # return masked state
         return masked_state
@@ -531,15 +637,19 @@ class RandomPlayer(Player):
         self.state=PlayerState(name= name)
 
     def select_action(self, state: GameState, actions: List[Action]) -> Optional[Action]:
-        """ Given masked game state and possible actions, select the next action """
+        """ Given masked game state and possible actions,
+        select the next action """
         if not actions:
-            print(f"{self.state.name} hase no valid actions to undertake and must wither draw or skip.")
+            print(f"""{self.state.name} hase no valid actions 
+            to undertake and must wither draw or skip.""")
 
         action = random.choice(actions) # randomly chooses an action
 
         # wildcard case action
-        if action.card and action.card.symbol in ["wild", "wildcard4"]:
-            action.color = random.choice(state.LIST_COLOR[:-1]) # chooses a color not 'any'
+        if (action.card and 
+        action.card.symbol in ["wild", "wildcard4"]):
+            action.color = random.choice(
+                state.LIST_COLOR[:-1]) # chooses a color not 'any'
 
         # UNO case action
         if len(self.state.list_card)==1:
