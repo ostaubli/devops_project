@@ -677,11 +677,6 @@ class Dog(Game):
             else:
                 raise ValueError(f"No marble found at position {move_action.pos_from} for Player {active_player.name}.")
 
-
-
-
-
-
     def _handle_card_exchange(self, move_action: Action, active_player: PlayerState) -> None:
         """Handle the card exchange phase."""
         if self.state is None:
@@ -771,7 +766,7 @@ class Dog(Game):
             raise ValueError("Game state is not set.")
 
         num_cards = self.get_cards_per_round()
-        total_needed = num_cards * (len(self.state.list_player)+1)
+        total_needed = num_cards * (len(self.state.list_player))
 
         # Reshuffle if necessary
         while len(self.state.list_card_draw) < total_needed:
