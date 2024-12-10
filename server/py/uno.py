@@ -18,7 +18,7 @@ LIST_COLOR: List[str] = ['red', 'blue', 'yellow', 'green']
 # wilddraw4 = chose color and draw 4
 LIST_SYMBOL: List[str] = ['skip', 'reverse', 'draw2', 'wild', 'wilddraw4']
 
-def compare_tuples_for_lt(t1:tuple, t2:tuple) -> other:
+def compare_tuples_for_lt(t1:tuple, t2:tuple) -> bool:
     """ Compares two tuples element-wise for less-than ordering.
     Handles 'None' values as less than any other
     """
@@ -36,9 +36,9 @@ def compare_tuples_for_lt(t1:tuple, t2:tuple) -> other:
             return True
 
         if v1 > v2:
-                return False
+            return False
 
-        return False
+    return False
 
 
 class Card(BaseModel):
@@ -298,9 +298,9 @@ class Uno(Game):
         """ Get a list of possible actions for the active player """
         if not self.state:
             raise ValueError("GameState not initialized")
-
-        active_player = self.state.list_player[self.state.idx_player_active]
         possible_actions = []
+        active_player = self.state.list_player[self.state.idx_player_active]
+        #possible_actions = []
 
         top_card = self.state.list_card_discard[-1]
 
@@ -515,17 +515,26 @@ class Uno(Game):
         if not self.state: # in case game state has not been initialized
             raise ValueError("Game state has not been initialized")
 
+        active_player = self.state.list_player[self.state.idx_player_active]
         # print(f"\t\t WE TRY TO APPLY THIS ACTION: {action=}")
         # Test 11 Try
-        if action.draw != 0 and not self.state.has_drawn:
+        # if action.draw != 0 and not self.state.has_drawn:
+        #     self.state.has_drawn = True
+        #     card = self.state.list_card_draw.pop()
+        #     # print(f"\t\tWE GET THIS CARD {card=}")
+        #     self.state.list_player[
+        #         self.state.idx_player_active
+        #         ].list_card.append(card)
+
+        # actions = self.get_list_action()
+
+        if action.draw and not self.state.has_drawn:
             self.state.has_drawn = True
             card = self.state.list_card_draw.pop()
-            # print(f"\t\tWE GET THIS CARD {card=}")
-            self.state.list_player[
-                self.state.idx_player_active
-                ].list_card.append(card)
+            active_player.add_card(card)
 
-        actions = self.get_list_action()
+        # Do not advance the turn if only drawing
+            return
 
         # Case 1: Play a card
         if action.card:
@@ -562,8 +571,8 @@ class Uno(Game):
             if len(active_player.list_card) == 1 and not action.uno:
                 print(f"Player {active.player.name} failed to call UNO!")
 
-        elif action.draw:
-            self._draw_cards(self.state.idx_player_active, action.draw)
+        #elif action.draw:
+        #    self._draw_cards(self.state.idx_player_active, action.draw)
 
         # Move to the next player
         self._advance_to_next_player()
