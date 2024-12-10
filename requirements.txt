@@ -1,4 +1,4 @@
-fastapi
+fastapi~=0.115.5
 uvicorn
 websockets
 jinja2
@@ -13,3 +13,4 @@ scikit-learn
 matplotlib
 seaborn
 python-multipart
+pydantic~=2.9.2
