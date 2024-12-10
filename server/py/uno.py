@@ -316,6 +316,17 @@ class Uno(Game):
         if not self.state.has_drawn:
             possible_actions.append(Action(draw=1))
 
+        else:
+            new_card = active_player.list_card[-1]
+            if(
+                new_card.color == top_card.color or
+                new_card.number == top_card.number or
+                new_card.symbol == top_card.symbol or
+                new_card.color == 'any'
+            ):
+                possible_actions.append(Action(card=new_card,color=new_card.color))
+
+
         if top_card.symbol is None:
             for my_card in active_player.list_card:
             # print(f"{my_card=}")
