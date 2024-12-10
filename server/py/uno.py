@@ -613,7 +613,8 @@ class Uno(Game):
         # Mask the cards of all other players
         for i, player in enumerate(masked_state.list_player):
             if i != idx.player:
-                # replace the list of cards with a placeholder showing card count
+                # replace the list of cards with a 
+                # placeholder showing card count
                 player.list_card = [
                     Card() for _ in range(len(player.list_card))
                     ]
@@ -636,7 +637,8 @@ class RandomPlayer(Player):
     def __init__(self, name: str = "Player") -> None:
         self.state=PlayerState(name= name)
 
-    def select_action(self, state: GameState, actions: List[Action]) -> Optional[Action]:
+    def select_action(self, state: GameState,
+                actions: List[Action]) -> Optional[Action]:
         """ Given masked game state and possible actions,
         select the next action """
         if not actions:
