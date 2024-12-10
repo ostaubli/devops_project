@@ -19,24 +19,23 @@ LIST_COLOR: List[str] = ['red', 'blue', 'yellow', 'green']
 LIST_SYMBOL: List[str] = ['skip', 'reverse', 'draw2', 'wild', 'wilddraw4']
 
 def compare_tuples_for_lt(t1:tuple, t2:tuple) -> other:
-        """ Compares two tuples element-wise for less-than ordering.
-        Handles 'None' values as less than any other
-        """
-        
-        for v1, v2 in zip(t1, t2):
-            if v1 is None and v2 is None:
-                continue
+    """ Compares two tuples element-wise for less-than ordering.
+    Handles 'None' values as less than any other
+    """
+    for v1, v2 in zip(t1, t2):
+        if v1 is None and v2 is None:
+            continue
 
-            if v1 is None:
-                return True
+        if v1 is None:
+            return True
 
-            if v2 is None:
-                return False
+        if v2 is None:
+            return False
             
-            if v1 < v2:
-                return True
+        if v1 < v2:
+            return True
 
-            if v1 > v2:
+        if v1 > v2:
                 return False
 
         return False
