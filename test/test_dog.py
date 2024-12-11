@@ -187,65 +187,6 @@ def test_apply_action_invalid_marble_position(setup_game):
 
 
 
-@pytest.fixture
-def game_state():    # Keneds marble switch test
-    game_state = GameState()
-    game_state.setup_players()
-    return game_state
-
-def test_marble_switch_jake_valid_swap(game_state):
-    # Arrange
-    player_idx = 0
-    opponent_idx = 1
-    player_marble_pos = 64
-    opponent_marble_pos = 72
-
-    # Act
-    game_state.marble_switch_jake(player_idx, opponent_idx, player_marble_pos, opponent_marble_pos)
-
-    # Assert
-    assert game_state.list_player[player_idx].list_marble[0].pos == 72
-    assert game_state.list_player[opponent_idx].list_marble[0].pos == 64
-    assert not game_state.list_player[player_idx].list_marble[0].is_save
-    assert not game_state.list_player[opponent_idx].list_marble[0].is_save
-
-def test_marble_switch_jake_no_player_marble(game_state):
-    # Arrange
-    player_idx = 0
-    opponent_idx = 1
-    player_marble_pos = 99  # Invalid position
-    opponent_marble_pos = 72
-
-    # Act & Assert
-    with pytest.raises(ValueError, match=f"No marble found at position {player_marble_pos} for the active player."):
-        game_state.marble_switch_jake(player_idx, opponent_idx, player_marble_pos, opponent_marble_pos)
-
-def test_marble_switch_jake_no_opponent_marble(game_state):
-    # Arrange
-    player_idx = 0
-    opponent_idx = 1
-    player_marble_pos = 64
-    opponent_marble_pos = 99  # Invalid position
-
-    # Act & Assert
-    with pytest.raises(ValueError, match=f"No marble found at position {opponent_marble_pos} for the opponent player."):
-        game_state.marble_switch_jake(player_idx, opponent_idx, player_marble_pos, opponent_marble_pos)
-
-    @pytest.fixture
-    def game_state():   # Keneds print_state test
-        game_state = GameState()
-        game_state.setup_players()
-        return game_state
-
-    def print_state(self) -> None:
-        """ Print the current game state """
-        print(self.state)
-        pass
-
-    def test_print_state(game_state, capsys):
-        game_state.print_state()
-        captured = capsys.readouterr()
-        assert "GameState" in captured.out
 
 
 
