@@ -209,119 +209,119 @@ class GameState(BaseModel):
         ]
         active_player = self.list_player[self.idx_player_active]
         cards = active_player.list_card
+        if not cards:
+            return []
+
         marbles = active_player.list_marble
-        oponent_players = self.list_player[not self.idx_player_active]
+        oponent_players = [oponent for oponent in self.list_player if oponent.name != active_player.name]
         action_list = []
 
-        # for i, oponent in enumerate(self.list_player):  #Jake Check
-        #    if i == self.idx_player_active:
-        #        continue
-        #    for oponent_marble in oponent.list_marble:
-        #        for player_marble in marbles:
-        #            self.marble_switch_jake(self.idx_player_active, i, player_marble.pos, oponent_marble.pos)
 
         #  Todo Home Check
-
+        leaving_marble = None
         for marble in marbles:
-            for card in cards:
-                match card.rank:
-                    case '2':
-                        action_list.append(
-                            Action(card=card, pos_from=marble.pos, pos_to=(marble.pos + 2) % 64, card_swap=None))
-                    case '3':
-                        action_list.append(
-                            Action(card=card, pos_from=marble.pos, pos_to=(marble.pos + 3) % 64, card_swap=None))
-                    case '4':
-                        action_list.append(
-                            Action(card=card, pos_from=marble.pos, pos_to=(marble.pos + 4) % 64, card_swap=None))
-                        action_list.append(
-                            Action(card=card, pos_from=marble.pos, pos_to=(marble.pos - 4) % 64, card_swap=None))
-                    case '5':
-                        action_list.append(
-                            Action(card=card, pos_from=marble.pos, pos_to=(marble.pos + 5) % 64, card_swap=None))
-                    case '6':
-                        action_list.append(
-                            Action(card=card, pos_from=marble.pos, pos_to=(marble.pos + 6) % 64, card_swap=None))
-                    case '7':
-                        for steps_split in list_steps_split_7:
-                            for i, steps in enumerate(steps_split):
-                                action_list.append(Action(card=card, pos_from=marble.pos,
-                                                          pos_to=(marble.pos + steps) % 64, card_swap=None))
-                    case '8':
-                        action_list.append(
-                            Action(card=card, pos_from=marble.pos, pos_to=(marble.pos + 8) % 64, card_swap=None))
-                    case '9':
-                        action_list.append(
-                            Action(card=card, pos_from=marble.pos, pos_to=(marble.pos + 9) % 64, card_swap=None))
-                    case '10':
-                        action_list.append(
-                            Action(card=card, pos_from=marble.pos, pos_to=(marble.pos + 10) % 64, card_swap=None))
-                    case 'J':
-                        pass
-                        # for oponent_player in oponent_players: for oponent_marble in oponent_player.list_marble: if
-                        # not oponent_marble.is_save: action_list.append(Action(card = card,pos_from = marble.pos,
-                        # pos_to = oponent_marble.pos, card_swap = None))
-                    case 'Q':
-                        action_list.append(
-                            Action(card=card, pos_from=marble.pos, pos_to=(marble.pos + 12) % 64, card_swap=None))
-                    case 'K':
-                        action_list.append(
-                            Action(card=card, pos_from=marble.pos, pos_to=(marble.pos + 13) % 64, card_swap=None))
-                        i = self.can_marble_leave_kennel(active_player)
-                        if i:
+            if marble.pos in active_player.list_kennel_pos:
+                if leaving_marble is None:
+                    for card in cards:
+                        match card.rank:
+                            case 'K':
+                                leaving_marble = marble
+                                action_list.append(Action(card=card, pos_from=marble.pos, pos_to=active_player.start_pos, card_swap=None))
+                            case 'A':
+                                leaving_marble = marble
+                                action_list.append(Action(card=card, pos_from=marble.pos, pos_to=active_player.start_pos, card_swap=None))
+                            case 'JKR':
+                                leaving_marble = marble
+                                action_list.append(Action(card=card, pos_from=marble.pos, pos_to=active_player.start_pos, card_swap=None))
+                            case _:
+                                pass
+            else:
+                for card in cards:
+                    match card.rank:
+                        case '2':
                             action_list.append(
-                                Action(card=card, pos_from=i, pos_to=active_player.start_pos, card_swap=None))
-
-                    case 'A':
-                        action_list.append(
-                            Action(card=card, pos_from=marble.pos, pos_to=(marble.pos + 11) % 64, card_swap=None))
-                        action_list.append(
-                            Action(card=card, pos_from=marble.pos, pos_to=(marble.pos + 1) % 64, card_swap=None))
-                        i = self.can_marble_leave_kennel(active_player)
-                        if i:
+                                Action(card=card, pos_from=marble.pos, pos_to=(marble.pos + 2) % 64, card_swap=None))
+                        case '3':
                             action_list.append(
-                                Action(card=card, pos_from=i, pos_to=active_player.start_pos, card_swap=None))
-
-                    case 'JKR':
-                        action_list.append(
-                            Action(card=card, pos_from=marble.pos, pos_to=(marble.pos + 2) % 64, card_swap=None))
-                        action_list.append(
-                            Action(card=card, pos_from=marble.pos, pos_to=(marble.pos + 3) % 64, card_swap=None))
-                        action_list.append(
-                            Action(card=card, pos_from=marble.pos, pos_to=(marble.pos + 4) % 64, card_swap=None))
-                        action_list.append(
-                            Action(card=card, pos_from=marble.pos, pos_to=(marble.pos - 4) % 64, card_swap=None))
-                        action_list.append(
-                            Action(card=card, pos_from=marble.pos, pos_to=(marble.pos + 5) % 64, card_swap=None))
-                        action_list.append(
-                            Action(card=card, pos_from=marble.pos, pos_to=(marble.pos + 6) % 64, card_swap=None))
-                        for steps_split in list_steps_split_7:
-                            for i, steps in enumerate(steps_split):
-                                action_list.append(Action(card=card, pos_from=marble.pos,
-                                                          pos_to=(marble.pos + steps) % 64, card_swap=None))
-                        action_list.append(
-                            Action(card=card, pos_from=marble.pos, pos_to=(marble.pos + 8) % 64, card_swap=None))
-                        action_list.append(
-                            Action(card=card, pos_from=marble.pos, pos_to=(marble.pos + 9) % 64, card_swap=None))
-                        action_list.append(
-                            Action(card=card, pos_from=marble.pos, pos_to=(marble.pos + 10) % 64, card_swap=None))
-                        action_list.append(
-                            Action(card=card, pos_from=marble.pos, pos_to=(marble.pos + 12) % 64, card_swap=None))
-                        action_list.append(
-                            Action(card=card, pos_from=marble.pos, pos_to=(marble.pos + 13) % 64, card_swap=None))
-                        i = self.can_marble_leave_kennel(active_player)
-                        if i:
+                                Action(card=card, pos_from=marble.pos, pos_to=(marble.pos + 3) % 64, card_swap=None))
+                        case '4':
                             action_list.append(
-                                Action(card=card, pos_from=i, pos_to=active_player.start_pos, card_swap=None))
-                        action_list.append(
-                            Action(card=card, pos_from=marble.pos, pos_to=(marble.pos + 11) % 64, card_swap=None))
-                        action_list.append(
-                            Action(card=card, pos_from=marble.pos, pos_to=(marble.pos + 1) % 64, card_swap=None))
-                        # for oponent_player in oponent_players: for oponent_marble in oponent_player.list_marble: if
-                        # not oponent_marble.is_save: action_list.append(Action(card = card,pos_from = marble.pos,
-                        # pos_to = oponent_marble.pos, card_swap = None))
-                    case _:
-                        pass
+                                Action(card=card, pos_from=marble.pos, pos_to=(marble.pos + 4) % 64, card_swap=None))
+                            action_list.append(
+                                Action(card=card, pos_from=marble.pos, pos_to=(marble.pos - 4) % 64, card_swap=None))
+                        case '5':
+                            action_list.append(
+                                Action(card=card, pos_from=marble.pos, pos_to=(marble.pos + 5) % 64, card_swap=None))
+                        case '6':
+                            action_list.append(
+                                Action(card=card, pos_from=marble.pos, pos_to=(marble.pos + 6) % 64, card_swap=None))
+                        case '7':
+                            for steps_split in list_steps_split_7:
+                                for i, steps in enumerate(steps_split):
+                                    action_list.append(Action(card=card, pos_from=marble.pos,
+                                                              pos_to=(marble.pos + steps) % 64, card_swap=None))
+                        case '8':
+                            action_list.append(
+                                Action(card=card, pos_from=marble.pos, pos_to=(marble.pos + 8) % 64, card_swap=None))
+                        case '9':
+                            action_list.append(
+                                Action(card=card, pos_from=marble.pos, pos_to=(marble.pos + 9) % 64, card_swap=None))
+                        case '10':
+                            action_list.append(
+                                Action(card=card, pos_from=marble.pos, pos_to=(marble.pos + 10) % 64, card_swap=None))
+                        case 'J':
+                            for oponent_player in oponent_players:
+                                for oponent_marble in oponent_player.list_marble:
+                                    if not oponent_marble.is_save: action_list.append(Action(card = card,pos_from = marble.pos,
+                                                                                            pos_to = oponent_marble.pos, card_swap = None))
+                        case 'Q':
+                            action_list.append(
+                                Action(card=card, pos_from=marble.pos, pos_to=(marble.pos + 12) % 64, card_swap=None))
+                        case 'K':
+                            action_list.append(
+                                Action(card=card, pos_from=marble.pos, pos_to=(marble.pos + 13) % 64, card_swap=None))
+                        case 'A':
+                            action_list.append(
+                                Action(card=card, pos_from=marble.pos, pos_to=(marble.pos + 11) % 64, card_swap=None))
+                            action_list.append(
+                                Action(card=card, pos_from=marble.pos, pos_to=(marble.pos + 1) % 64, card_swap=None))
+                        case 'JKR':
+                            action_list.append(
+                                Action(card=card, pos_from=marble.pos, pos_to=(marble.pos + 2) % 64, card_swap=None))
+                            action_list.append(
+                                Action(card=card, pos_from=marble.pos, pos_to=(marble.pos + 3) % 64, card_swap=None))
+                            action_list.append(
+                                Action(card=card, pos_from=marble.pos, pos_to=(marble.pos + 4) % 64, card_swap=None))
+                            action_list.append(
+                                Action(card=card, pos_from=marble.pos, pos_to=(marble.pos - 4) % 64, card_swap=None))
+                            action_list.append(
+                                Action(card=card, pos_from=marble.pos, pos_to=(marble.pos + 5) % 64, card_swap=None))
+                            action_list.append(
+                                Action(card=card, pos_from=marble.pos, pos_to=(marble.pos + 6) % 64, card_swap=None))
+                            for steps_split in list_steps_split_7:
+                                for i, steps in enumerate(steps_split):
+                                    action_list.append(Action(card=card, pos_from=marble.pos,
+                                                              pos_to=(marble.pos + steps) % 64, card_swap=None))
+                            action_list.append(
+                                Action(card=card, pos_from=marble.pos, pos_to=(marble.pos + 8) % 64, card_swap=None))
+                            action_list.append(
+                                Action(card=card, pos_from=marble.pos, pos_to=(marble.pos + 9) % 64, card_swap=None))
+                            action_list.append(
+                                Action(card=card, pos_from=marble.pos, pos_to=(marble.pos + 10) % 64, card_swap=None))
+                            action_list.append(
+                                Action(card=card, pos_from=marble.pos, pos_to=(marble.pos + 12) % 64, card_swap=None))
+                            action_list.append(
+                                Action(card=card, pos_from=marble.pos, pos_to=(marble.pos + 13) % 64, card_swap=None))
+                            action_list.append(
+                                Action(card=card, pos_from=marble.pos, pos_to=(marble.pos + 11) % 64, card_swap=None))
+                            action_list.append(
+                                Action(card=card, pos_from=marble.pos, pos_to=(marble.pos + 1) % 64, card_swap=None))
+                            for oponent_player in oponent_players:
+                                for oponent_marble in oponent_player.list_marble:
+                                    if not oponent_marble.is_save: action_list.append(Action(card = card,pos_from = marble.pos,
+                                                                                            pos_to = oponent_marble.pos, card_swap = None))
+                        case _:
+                            pass
 
             # ist ausführbar?
             # for action in action_list:
