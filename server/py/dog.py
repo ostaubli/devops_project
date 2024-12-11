@@ -482,6 +482,7 @@ class Dog(Game):
 
     def print_state(self) -> None:
         """ Print the current game state """
+        print(self.state)
         pass
 
     def get_list_action(self) -> List[Action]:
