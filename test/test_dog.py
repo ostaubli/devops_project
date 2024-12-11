@@ -77,8 +77,24 @@ class TestGameActions:
                 ]
 
             def marble_switch_jake(self, player_idx, opponent_idx, player_marble_pos, opponent_marble_pos):
-                # Paste the marble_switch_jake code here
-                pass
+                # Please the test case using assert for the marble_switch_jake function
+
+                # Find the player and opponent
+                player = self.list_player[player_idx]
+                opponent = self.list_player[opponent_idx]
+
+                # Find the marbles to switch
+                player_marble = next((m for m in player.list_marble if m.pos == str(player_marble_pos)), None)
+                opponent_marble = next((m for m in opponent.list_marble if m.pos == str(opponent_marble_pos)), None)
+
+                # Check if the marbles exist
+                if player_marble is None:
+                    raise ValueError(f"No marble found at position {player_marble_pos} for the active player.")
+                if opponent_marble is None:
+                    raise ValueError(f"No marble found at position {opponent_marble_pos} for the opponent player.")
+
+                # Switch the marbles
+                player_marble.pos, opponent_marble.pos = opponent_marble.pos, player_marble.pos
 
         return Game()
 
