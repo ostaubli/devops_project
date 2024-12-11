@@ -1,5 +1,6 @@
 # -runcmd: cd ../.. & venv\Scripts\python server/py/uno.py
-# runcmd: cd ../.. & venv\Scripts\python benchmark/benchmark_uno.py python uno.Uno
+# runcmd: cd ../.. & 
+# venv\Scripts\python benchmark/benchmark_uno.py python uno.Uno
 from PIL.ImImagePlugin import number
 from dataclasses import field
 
@@ -7,7 +8,8 @@ from PIL.ImageColor import colormap
 from fontTools.cffLib import topDictOperators
 from numpy.ma.core import append
 
-from server.py.game import Game, Player #from server.py.game import Game, Player
+#from server.py.game import Game, Player
+from server.py.game import Game, Player
 from typing import List, Optional
 from pydantic import BaseModel
 from enum import Enum
@@ -324,7 +326,9 @@ class Uno(Game):
                 new_card.symbol == top_card.symbol or
                 new_card.color == 'any'
             ):
-                possible_actions.append(Action(card=new_card,color=new_card.color))
+                possible_actions.append(
+                    Action(card=new_card,color=new_card.color)
+                    )
 
 
         if top_card.symbol is None:
@@ -527,17 +531,6 @@ class Uno(Game):
             raise ValueError("Game state has not been initialized")
 
         active_player = self.state.list_player[self.state.idx_player_active]
-        # print(f"\t\t WE TRY TO APPLY THIS ACTION: {action=}")
-        # Test 11 Try
-        # if action.draw != 0 and not self.state.has_drawn:
-        #     self.state.has_drawn = True
-        #     card = self.state.list_card_draw.pop()
-        #     # print(f"\t\tWE GET THIS CARD {card=}")
-        #     self.state.list_player[
-        #         self.state.idx_player_active
-        #         ].list_card.append(card)
-
-        # actions = self.get_list_action()
 
         if action.draw and not self.state.has_drawn:
             self.state.has_drawn = True
