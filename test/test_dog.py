@@ -1,5 +1,61 @@
 import pytest
 
+from pydantic import BaseModel
+from typing import List, Optional, Dict
+
+from server.py.dog import Card, Marble, PlayerState, Action, GameState, GamePhase, Dog
+
+class TestKaegisDogParts:
+
+    def test_deal_cards(self) -> None:
+        game = Dog()
+
+        state = game.get_state()
+        assert state.cnt_round == 1, "First Round"
+
+        for player in state.list_player:
+            assert len(player.list_card) == 6, "Should be 6 Cards for each player in firs Round"
+            player.list_card = []
+        
+        game.state.deal_cards()
+        state = game.get_state()
+        assert state.cnt_round == 2, "2 Round"
+        for player in state.list_player:
+            assert len(player.list_card) == 5, "Should be 5 Cards for each player in 2 Round"
+            player.list_card = []
+        
+        game.state.deal_cards()
+        state = game.get_state()
+        assert state.cnt_round == 3, "3 Round"
+        for player in state.list_player:
+            assert len(player.list_card) == 4, "Should be 4 Cards for each player in 3 Round"
+            player.list_card = []
+
+        game.state.deal_cards()
+        state = game.get_state()
+        assert state.cnt_round == 4, "4 Round"
+        for player in state.list_player:
+            assert len(player.list_card) == 3, "Should be 3 Cards for each player in 4 Round"
+            player.list_card = []
+
+        game.state.deal_cards()
+        state = game.get_state()
+        assert state.cnt_round == 5, "5 Round"
+        for player in state.list_player:
+            assert len(player.list_card) == 2, "Should be 2 Cards for each player in 5 Round"
+            player.list_card = []
+
+        game.state.deal_cards()
+        state = game.get_state()
+        assert state.cnt_round == 6, "6 Round"
+        for player in state.list_player:
+            assert len(player.list_card) == 6, "Should be 6 Cards for each player in 6 Round"
+            player.list_card = []
+
+
+        print("Compleeted Test deal_cards")
+ 
+
 class TestGameActions:
     @pytest.fixture
     def setup_game(self):
