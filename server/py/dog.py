@@ -398,6 +398,57 @@ class GameState(BaseModel):
         if pos_from in last_positions:
             marble.is_save = True
 
+    def exchange_cards(self) -> None:
+        player_blue = self.list_player[0]
+        player_red = self.list_player[2]
+
+        print(f"\n{player_blue.name}, bitte wähle eine Karte zum Tauschen aus:")
+        for idx, card in enumerate(player_blue.list_card):
+            print(f"{idx + 1}: {card}")
+
+        blue_choice = int(input("Gib die Nummer der Karte ein, die du tauschen möchtest: ")) - 1
+        card_blue = player_blue.list_card[blue_choice]
+
+        print(f"\n{player_red.name}, bitte wähle eine Karte zum Tauschen aus:")
+        for idx, card in enumerate(player_red.list_card):
+            print(f"{idx + 1}: {card}")
+
+        red_choice = int(input("Gib die Nummer der Karte ein, die du tauschen möchtest: ")) - 1
+        card_red = player_red.list_card[red_choice]
+
+        player_blue.list_card.remove(card_blue)
+        player_red.list_card.remove(card_red)
+
+        player_blue.list_card.append(card_red)
+        player_red.list_card.append(card_blue)
+
+        print(f"{player_blue.name} tauscht {card_blue} mit {player_red.name} für {card_red}")
+
+        player_yellow = self.list_player[3]
+        player_green = self.list_player[1]
+
+        print(f"\n{player_yellow.name}, bitte wähle eine Karte zum Tauschen aus:")
+        for idx, card in enumerate(player_yellow.list_card):
+            print(f"{idx + 1}: {card}")
+
+        yellow_choice = int(input("Gib die Nummer der Karte ein, die du tauschen möchtest: ")) - 1
+        card_yellow = player_yellow.list_card[yellow_choice]
+
+        print(f"\n{player_green.name}, bitte wähle eine Karte zum Tauschen aus:")
+        for idx, card in enumerate(player_green.list_card):
+            print(f"{idx + 1}: {card}")
+
+        green_choice = int(input("Gib die Nummer der Karte ein, die du tauschen möchtest: ")) - 1
+        card_green = player_green.list_card[green_choice]
+
+        player_yellow.list_card.remove(card_yellow)
+        player_green.list_card.remove(card_green)
+
+        player_yellow.list_card.append(card_green)
+        player_green.list_card.append(card_yellow)
+
+        print(f"{player_yellow.name} tauscht {card_yellow} mit {player_green.name} für {card_green}")
+
     def sending_home(self, murmel: Marble) -> None:  # Set player X Marvel home
         """
         Function to send a player home. There are two possibilities:
@@ -461,7 +512,36 @@ class GameState(BaseModel):
         player_marble.is_save = False
         opponent_marble.is_save = False
 
-    def init_next_turn(self) -> None:  # Kägi
+    def is_player_finished(self, player: PlayerState) -> bool:
+        if not player.list_marble:  # Falls der Spieler keine Murmeln hat
+            print(f"{player.name} hat keine Murmeln.")
+            return False
+
+        # Überprüfen, ob alle Murmeln des Spielers im Zielbereich sind
+        finished = all(marble.pos in player.list_finish_pos for marble in player.list_marble)
+
+        if finished:
+            print(f"{player.name} hat alle Murmeln im Ziel und ist fertig!")
+        else:
+            print(f"{player.name} hat noch nicht alle Murmeln im Ziel.")
+
+        return finished
+
+    def check_game_end(self) -> bool:
+        finished_players = 0
+        for player in self.state.list_player:
+            if self.is_player_finished(player):
+                finished_players += 1
+
+        if finished_players >= 2:
+            self.state.phase = GamePhase.FINISHED  # Setzt den Status auf 'finished', wenn 2 Spieler fertig sind
+            print("Spiel ist zu Ende!")
+            return True
+
+        return False
+
+
+    def init_next_turn(self) -> None: # Kägi
         """
         If action is finished, set the next player active.
 
