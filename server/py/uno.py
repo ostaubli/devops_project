@@ -1,3 +1,7 @@
+# Tests: 15/21 valid
+# Mark:  31/52 points
+
+
 from typing import List, Optional
 from enum import Enum
 import random
