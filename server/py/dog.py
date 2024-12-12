@@ -446,7 +446,7 @@ class Dog(Game):
         if card.rank in self._BASIC_RANKS:
             found_actions.extend(self.get_actions_for_basic_card(card, player.list_marble))
         elif card.rank == 'JKR':  # Joker can be played as any card
-            pass
+            actions.extend(self.get_actions_for_jkr(card, player))
         elif card.rank == '4':
             found_actions.extend(self.get_actions_for_4(player))
         elif card.rank == '7':  # Special case for card "7"
@@ -626,6 +626,35 @@ class Dog(Game):
                 ))
 
         return actions
+
+    def get_actions_for_jkr(self, card: Card, player: PlayerState) -> List[Action]:
+        jkr_actions = []  # List to store possible actions
+
+        # get basic actions
+        basic_cards = ['2', '3', '5', '6', '8', '9', '10', 'Q']
+        for rank in basic_cards:
+            if rank in self._BASIC_RANKS:
+                for marble in player.list_marble:
+                    if marble.is_save:  # Marble must be out of the kennel
+                        new_pos = (marble.pos + self._RANK_TO_VALUE[card.rank]) % 96  # Modular board movement
+                        jkr_actions.append(Action(card=card, pos_from=marble.pos, pos_to=new_pos, card_swap=None))
+
+        # get actions for 4
+        jkr_actions.extend(self.get_actions_for_4(player))
+
+        # get actions for 7
+        jkr_actions.extend(self.get_actions_for_7(player))
+
+        # get actions for jack
+        jkr_actions.extend(self.get_actions_jack(player))
+
+        # get actions for king
+        jkr_actions.extend(self.get_actions_for_king(player))
+
+        # get actions for ace
+        jkr_actions.extend(self.get_actions_for_ace(player))
+
+        return jkr_actions
 
     def apply_action(self, action: Action) -> None:
         """ Apply the given action to the game """
