@@ -264,67 +264,113 @@ class Dog(Game):
         """
         Calculate the new position of a marble, considering:
         - Safe space entry rules for each player
-        - Blocking due to marbles
-        - Blockage at starting positions when occupied by a marble of the corresponding player.
+        - Blocking due to marbles on starting points
+        - not moving out of kennel 
         Returns None if the move is invalid.
         """
 
-        def _is_safe_space_blocked(new_pos: Optional[int],
-                                safe_spaces: list,
-                                blocked_positions: set, marbles: list) -> bool:
-
-            """Check if the target safe space is blocked or overtaking occurs."""
-            if new_pos in blocked_positions:
-                return True
-            for other_marble in marbles:
-                if other_marble.pos in safe_spaces and current_pos < other_marble.pos <= new_pos:
-                    return True
-            return False
-
-        def _is_start_blocked(temp_pos: int, current_pos: int, starting_points: dict) -> bool:
-            """Check if crossing any player's starting position is blocked."""
-            for player_idx_loop, start_pos in starting_points.items():
-                if current_pos < start_pos <= temp_pos and self.state:
-                    marbles_at_start = self.state.list_player[player_idx_loop].list_marble
-                    if any(marble.pos == start_pos and marble.is_save for marble in marbles_at_start):
-                        return True
-            return False
-
-        safe_spaces = self.SAFE_SPACES[player_idx]
-        start_pos = self.START_POSITIONS[player_idx]
-        current_pos = marble.pos
-        temp_pos = (current_pos + move_value) % 64  # Board size for the main track
-
-        blocked_positions = {m["position"] for m in self._get_all_marbles()}
-
-        if not self.state:
+        if self.state is None:
             raise ValueError("Game state is not set.")
 
-        player_marbles = self.state.list_player[player_idx].list_marble
+        # Define helper functions
+        def is_blocked_start_position(pos: int) -> bool:
+            # A start position is blocked if there's a marble with is_save=True on it
+            return any(m["position"] == pos and m["is_save"] for m in all_marbles)
+        
+        start_positions = self.START_POSITIONS
+        safe_spaces = self.SAFE_SPACES
+        kennel_positions = self.KENNEL_POSITIONS
 
-        # Case 1: Movement within safe space
-        if current_pos in safe_spaces:
-            new_pos = current_pos + move_value
-            if (new_pos <= safe_spaces[-1] and not
-                _is_safe_space_blocked(new_pos, safe_spaces, blocked_positions, player_marbles)):
-                return new_pos
+        # Current position of the marble
+        current_pos = marble.pos
+
+        # Create a list of all marbles for checking occupancy
+        all_marbles = self._get_all_marbles()
+
+        # Rule 1: Marble in the kennel cannot move
+        if current_pos in kennel_positions[player_idx]:
             return None
+        
+        # calculate new tentantive position
+        tentative_pos = (current_pos + move_value) % 64
 
-        # Case 2: General movement on the track
-        if _is_start_blocked(temp_pos, current_pos, self.START_POSITIONS):
-            return None
+        #create a list of all passing fields
+        if current_pos <= tentative_pos:
+            positions_to_check = range(current_pos + 1, tentative_pos + 1)
+        else:
+            positions_to_check = list(range(current_pos + 1, 64)) + list(range(0, tentative_pos + 1))
 
-        # Case 3: Entering the safe space
-        if current_pos <= start_pos <= temp_pos and not marble.is_save:
-            steps_into_safe_space = temp_pos - start_pos
-            if steps_into_safe_space < len(safe_spaces):
-                target_safe_space = safe_spaces[steps_into_safe_space]
-                if not _is_safe_space_blocked(target_safe_space, safe_spaces, blocked_positions, player_marbles):
-                    return target_safe_space
-            return None
+        # Rule 2: check if starting position is inbetween
+        for pos in positions_to_check:
+            if pos in list(start_positions.values()):
+                # We have encountered a start position, check if blocked
+                if is_blocked_start_position(pos):
+                    # If the position is blocked and this is not our final destination, we're trying to jump over it
+                    if pos != tentative_pos:
+                        return None
+                    else:
+                        # If we end exactly on a blocked start position, also invalid
+                        return None
+                    
+        #Rule 3: move within save space
+        if current_pos in safe_spaces[player_idx]:
+            # Find the current index of the marble in the safe_spaces list
+            player_safe_spaces = safe_spaces[player_idx]
+            current_index = player_safe_spaces.index(current_pos)
+            target_index = current_index + move_value
 
-        # Default case: Valid position on the main track
-        return temp_pos if temp_pos <= self.BOARD_SIZE else None
+            # Check if target_index is within the bounds of the safe_spaces
+            if target_index < 0 or target_index >= len(player_safe_spaces):
+                # Overshoot beyond safe space boundaries
+                return None
+            # Extract positions we must pass through (including the final one)
+            path_positions = player_safe_spaces[current_index+1:target_index+1] if target_index > current_index else player_safe_spaces[target_index:current_index]
+
+            # Gather all marble positions for quick lookup
+            positions_occupied = {m["position"] for m in all_marbles}
+
+            # Check each position in the path for blocking marbles
+            for pos in path_positions:
+                if pos in positions_occupied:
+                    # We hit a marble in the path or final position -> cannot overjump or land on it
+                    return None
+            
+            # If no block, we can safely move the marble to the target position
+            return player_safe_spaces[target_index]
+        
+        # Rule 4: move to the save spaces
+        if start_positions[player_idx] == 0:
+            if current_pos != 0:
+                current_pos = current_pos - 64
+        if current_pos <= start_positions[player_idx] <= tentative_pos and not marble.is_save:
+            steps_into_safe_space = tentative_pos - start_positions[player_idx]
+          
+            player_safe_spaces = safe_spaces[player_idx]
+            if steps_into_safe_space < 0 or steps_into_safe_space > len(player_safe_spaces):
+                # Either we don't actually step into safe spaces or we overshoot them
+                return None
+            
+            # Determine the final safe space position
+            final_safe_pos = player_safe_spaces[steps_into_safe_space - 1]
+
+            # Collect all marble positions for quick lookup
+            positions_occupied = {m["position"] for m in all_marbles}
+
+            # The path in safe spaces is from player_safe_spaces[0] up to final_safe_pos if steps_into_safe_space > 0
+            # For example, if steps_into_safe_space == 2, we are moving into player_safe_spaces[1]
+            path_positions = player_safe_spaces[:steps_into_safe_space]
+
+            # Check each position in the safe space path for blocking marbles
+            for pos in path_positions:
+                if pos in positions_occupied:
+                    # If a marble is found on the path (including final position), we cannot jump over or land on it
+                    return None
+
+            # If no block found, we can safely move the marble to the final safe space position
+            return final_safe_pos
+
+                
+        return tentative_pos if tentative_pos <= self.BOARD_SIZE and tentative_pos >= 0 else None
 
 
     def validate_total_cards(self) -> None:
@@ -485,7 +531,7 @@ class Dog(Game):
                         actions_list_jkr.append(Action(
                             card=jkr,
                             pos_from=None,
-                            pos_to=None,  
+                            pos_to=None,
                             card_swap=card
                         ))
                     else: 
