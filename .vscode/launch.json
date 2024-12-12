@@ -1,0 +1,17 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "Debug Dog Game",
+      "type": "debugpy",
+      "request": "launch",
+      "program": "${workspaceFolder}/server/py/dog.py",
+      "cwd": "C:/Users/jaron/Documents/HSLU/4_semester/DevOps/devops/pushandpray",
+      "env": {
+        "PYTHONPATH": "C:/Users/jaron/Documents/HSLU/4_semester/DevOps/devops/pushandpray"
+      },
+      "console": "integratedTerminal",
+      "justMyCode": true
+    }
+  ]
+}
