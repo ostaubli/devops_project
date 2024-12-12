@@ -356,7 +356,8 @@ class Uno(Game):
                 elif top_card.symbol == "reverse":
                     self.state.direction = -1
                 elif top_card.symbol == "skip":
-                    self._advance_turn(skip=True)
+                    # Cambiar el skip inicial para sólo avanzar un jugador
+                    self._advance_turn(skip=False)
                 elif top_card.symbol == "wild":
                     self.state.color = 'blue'
         else:
@@ -384,12 +385,13 @@ class Uno(Game):
                 elif top_card.symbol == "reverse":
                     self.state.direction = -1
                 elif top_card.symbol == "skip":
-                    self._advance_turn(skip=True)
+                    # Cambiar el skip inicial para sólo avanzar un jugador
+                    self._advance_turn(skip=False)
                 elif top_card.symbol == "wild":
                     self.state.color = 'blue'
 
         self.state.phase = GamePhase.RUNNING
-
+        
     def _initialize_deck(self) -> List[Card]:
         deck = []
         colors = ['red', 'yellow', 'green', 'blue']
@@ -407,12 +409,14 @@ class Uno(Game):
             deck.append(Card(color='any', symbol='wilddraw4'))
         return deck
 
+
     def _advance_turn(self, skip=False) -> None:
         steps = 2 if skip else 1
         self.state.idx_player_active = (
             (self.state.idx_player_active + steps * self.state.direction) % self.state.cnt_player
         )
         self.state.has_drawn = False
+
 
     def _can_play_card(self, card: Card, top_discard: Optional[Card]) -> bool:
         if not top_discard:
