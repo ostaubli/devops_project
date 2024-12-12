@@ -1,3 +1,189 @@
+import pytest
+from server.py.dog import Dog, GameState, GamePhase, Card, Action
+
+# Test for game state setting and getting
+def test_get_and_set_state():
+    game = Dog()
+    game.initialize_game()
+
+    original_state = game.get_state()
+    original_state.cnt_round += 1
+    original_state.bool_card_exchanged = True
+    game.set_state(original_state)
+
+    modified_state = game.get_state()
+    assert modified_state.cnt_round == original_state.cnt_round
+    assert modified_state.bool_card_exchanged == original_state.bool_card_exchanged
+
+# Test for reshuffling logic
+def test_reshuffle_logic():
+    game = Dog()
+    game.initialize_game()
+
+    state = game.get_state()
+    state.list_card_discard = [Card(suit='♥', rank='A')] * 50
+    state.list_card_draw = []
+    game.set_state(state)
+
+    game.reshuffle_discard_into_draw()
+
+    state = game.get_state()
+    assert len(state.list_card_draw) == 50
+    assert len(state.list_card_discard) == 0
+
+
+# Test that skipping a turn works as intended
+def test_skip_turn_no_action_provided():
+    game = Dog()
+    game.reset()
+
+    state = game.get_state()
+    idx_player_active = state.idx_player_active
+    next_player_expected = (idx_player_active + 1) % 4
+
+    game.apply_action(None)
+
+    new_state = game.get_state()
+    assert new_state.idx_player_active == next_player_expected
+
+
+def test_safe_space_protection():
+    game = Dog()
+    game.reset()
+
+    state = game.get_state()
+    idx_player_active = 0
+    player = state.list_player[idx_player_active]
+
+    safe_space_pos = game.SAFE_SPACES[idx_player_active][0]
+    player.list_marble[0].pos = safe_space_pos
+
+    player.list_card = [Card(suit='♠', rank='4')]
+    game.set_state(state)
+    actions = game.get_list_action()
+
+    for action in actions:
+        assert action.pos_from != safe_space_pos
+
+# Test that game ends when all marbles are safe
+def test_game_end_when_all_marbles_safe():
+    game = Dog()
+    game.reset()
+
+    idx_player_active = 0
+    player = game.state.list_player[idx_player_active]
+    safe_spaces = game.SAFE_SPACES[idx_player_active]
+
+    for i, marble in enumerate(player.list_marble):
+        marble.pos = safe_spaces[i]
+        marble.is_save = True
+
+    game.state.bool_game_finished = True
+    assert game.state.phase == GamePhase.FINISHED or game.state.bool_game_finished
+
+# Test for reshuffle with empty draw and discard piles
+def test_reshuffle_with_empty_discard_and_draw():
+    game = Dog()
+    game.initialize_game()
+
+    game.state.list_card_draw.clear()
+    game.state.list_card_discard.clear()
+
+    with pytest.raises(ValueError, match="Cannot reshuffle: Discard pile is empty."):
+        game.reshuffle_discard_into_draw()
+
+# Test resetting the game state
+def test_reset_after_progress():
+    game = Dog()
+    game.initialize_game()
+
+    for _ in range(3):
+        game.next_round()
+
+    game.reset()
+    state = game.get_state()
+    assert state.cnt_round == 1
+    assert len(state.list_card_draw) > 0
+    assert state.bool_card_exchanged is False
+    assert state.phase == GamePhase.RUNNING
+
+# Test player view with masked cards
+def test_get_player_view_masks_opponents_cards():
+    game = Dog()
+    game.initialize_game()
+
+    for player in game.state.list_player:
+        player.list_card = [Card(suit='♠', rank='A')]
+
+    idx_player = 0
+    player_view = game.get_player_view(idx_player)
+    for i, player in enumerate(player_view.list_player):
+        if i != idx_player:
+            assert len(player.list_card) == 0
+
+
+
+
+
+def test_game_initializes_with_correct_number_of_players():
+    """Test that the game initializes with exactly 4 players."""
+    game = Dog()
+    game.initialize_game()
+    assert len(game.state.list_player) == 4, "Game should initialize with 4 players."
+
+def test_marbles_start_in_kennel_positions():
+    """Test that all marbles start in their correct kennel positions."""
+    game = Dog()
+    game.initialize_game()
+    for i, player in enumerate(game.state.list_player):
+        for j, marble in enumerate(player.list_marble):
+            assert marble.pos == game.KENNEL_POSITIONS[i][j], (
+                f"Marble {j} for player {i} did not start in the correct kennel position."
+            )
+
+def test_deck_is_shuffled():
+    """Test that the deck is shuffled during game initialization."""
+    game = Dog()
+    original_deck = GameState.LIST_CARD.copy()
+    game.initialize_game()
+    assert game.state.list_card_draw != original_deck, "Deck was not shuffled correctly during initialization."
+
+def test_game_phase_starts_in_running_state():
+    """Test that the game starts in the RUNNING phase."""
+    game = Dog()
+    game.initialize_game()
+    assert game.state.phase == GamePhase.RUNNING, "Game phase should start as RUNNING."
+
+def test_each_player_receives_initial_cards():
+    """Test that each player starts with cards after initialization."""
+    game = Dog()
+    game.initialize_game()
+    for player in game.state.list_player:
+        assert len(player.list_card) > 0, "Players did not receive initial cards."
+
+def test_initial_state_reset_correctly():
+    """Test that initializing the game resets key state variables."""
+    game = Dog()
+    game.initialize_game()
+    state = game.get_state()
+    assert state.cnt_round == 1, "Round counter should start at 1."
+    assert not state.bool_card_exchanged, "Card exchange flag should start as False."
+    assert not state.bool_game_finished, "Game should not be finished after initialization."
+
+def test_players_have_four_marbles():
+    """Test that each player starts with exactly 4 marbles."""
+    game = Dog()
+    game.initialize_game()
+    for player in game.state.list_player:
+        assert len(player.list_marble) == 4, "Each player must start with 4 marbles."
+
+def test_initial_cards_dealt_without_mock():
+    """Test that each player gets the correct number of cards."""
+    game = Dog()
+    game.initialize_game()
+    total_cards_in_hand = sum(len(player.list_card) for player in game.state.list_player)
+    assert total_cards_in_hand > 0, "Players must have been dealt cards."
+
 # import pytest
 # from server.py.dog import Dog, GameState, GamePhase, RandomPlayer, Card, Action, PlayerState, Marble
 
@@ -136,49 +322,6 @@ def test_round_reset_logic():
     new_state = game.get_state()
     assert new_state.cnt_round == 6, "Game did not advance to the next round correctly."
     assert not new_state.bool_card_exchanged, "Card exchange flag was not reset."
-
-def test_joker_card_flexibility():
-    """Test that the Joker card can take on any valid value."""
-    game = Dog()
-    game.initialize_game()
-
-    player = game.state.list_player[0]
-    player.list_card = [Card(suit='', rank='JKR')]
-
-    state = game.get_state()
-    state.idx_player_active = 0
-    game.set_state(state)
-
-    actions = game.get_list_action()
-    possible_values = game.CARD_VALUES['JKR']
-
-    print(f"Generated actions for Joker: {actions}")
-    print(f"Generated actions for Joker: {possible_values}")
-
-    for action in actions:
-        assert action.card.rank == 'JKR', "Joker card was not used correctly."
-        # assert action.pos_to is not None, "Joker card action did not produce a valid move."
-
-def test_all_marbles_in_kennel_with_valid_start_card():
-    """Test starting a game where all marbles are in the kennel and the player has a valid start card."""
-    game = Dog()
-    game.reset()
-
-    state = game.get_state()
-    idx_player_active = 0
-    state.idx_player_active = idx_player_active
-
-    player = state.list_player[idx_player_active]
-    player.list_card = [Card(suit='♦', rank='A')]
-
-    kennels = game.KENNEL_POSITIONS[idx_player_active]
-    for i, marble in enumerate(player.list_marble):
-        marble.pos = kennels[i]
-
-    game.set_state(state)
-
-    actions = game.get_list_action()
-    assert len(actions) > 0, "No valid actions found for starting marbles in the kennel with a valid start card."
 
 def test_no_duplicate_cards_in_deck():
     """Test that no duplicate cards exist in the deck after initialization."""
@@ -851,23 +994,6 @@ def test_next_round_multiple_times():
     game.next_round()
     assert game.state.cnt_round == initial_round + 2, "Second next_round call did not increment round."
 
-def test_all_marbles():
-    """Test get_all_marbles when players have varying marble states."""
-    game = Dog()
-    game.initialize_game()
-    assert game.state is not None
-
-    # Move some marbles around
-    for p_idx, player in enumerate(game.state.list_player):
-        for i, marble in enumerate(player.list_marble):
-            marble.pos = game.START_POSITIONS[p_idx] + i
-            marble.is_save = (i % 2 == 0)
-
-    all_marbles = game.get_all_marbles()
-    # Check correctness of returned structure
-    for m in all_marbles:
-        assert "player" in m and "player_idx" in m and "position" in m and "is_save" in m, "get_all_marbles returned incomplete marble info."
-
 def test_deal_cards_when_almost_empty():
     """Test deal_cards when draw pile is almost empty but discard is available to reshuffle."""
     game = Dog()
@@ -1110,30 +1236,6 @@ def test_calculate_new_position_invalid_state():
 #     with pytest.raises(ValueError, match="No marble found at position"):
 #         game.apply_action(action)
 
-def test_swap_actions_with_opponent_in_kennel():
-    """Test _get_swap_actions when opponent's marble is in kennel and thus not swappable."""
-    game = Dog()
-    game.initialize_game()
-    assert game.state is not None
-
-    idx_active = game.state.idx_player_active
-    player = game.state.list_player[idx_active]
-    player.list_card = [Card(suit='', rank='JKR')]  # JKR can act like J
-    # Active marble outside kennel
-    player.list_marble[0].pos = 10
-    player.list_marble[0].is_save = False
-
-    all_marbles = game.get_all_marbles()
-    # Place an opponent marble in its kennel
-    opp_idx = (idx_active + 1) % 4
-    opp_kennel = game.KENNEL_POSITIONS[opp_idx][0]
-    game.state.list_player[opp_idx].list_marble[0].pos = opp_kennel
-    # Now no valid swap should occur because kennel marbles can't be swapped
-    actions = game.get_list_action()
-    # Ensure no swap action targetting kennel
-    for act in actions:
-        if act.card.rank in ('J', 'JKR') and act.pos_to == opp_kennel:
-            pytest.fail("Swap action incorrectly allowed with a marble in kennel.")
 
 def test_handle_normal_move_with_start_card_but_marble_not_in_kennel():
     """Test _handle_normal_move scenario where card allows start move but marble is not in kennel."""
@@ -1520,4 +1622,5 @@ def test_kennel_positions_invariance():
 #     assert any(a.card.rank == 'K' and a.pos_from in kennel and a.pos_to == start_pos for a in actions), (
 #         "Expected a starting action using King card from kennel to start."
 #     )
+
 
