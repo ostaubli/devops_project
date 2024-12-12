@@ -126,6 +126,27 @@ def test_uno_call():
     assert len(game.state.list_player[0].list_card) == 1
     assert action.uno
 
+def test_reverse_card():
+    """Test if the reverse card updates direction and skips correctly for two players."""
+    game = Uno()
+    state = GameState(
+        cnt_player=2,
+        list_player=[
+            PlayerState(name="Player 1", list_card=[Card(color="blue", symbol="reverse")]),
+            PlayerState(name="Player 2", list_card=[]),
+        ],
+        list_card_discard=[Card(color="red", number=3)],
+        idx_player_active=0,
+        phase=GamePhase.RUNNING,
+    )
+    game.set_state(state)
+
+    action = Action(card=Card(color="blue", symbol="reverse"))
+    game.apply_action(action)
+
+    assert game.state.direction == -1
+    assert game.state.idx_player_active == 0
+
 def test_list_action_card_matching_1() -> None:
     """Test 003: Test player card matching with discard pile card - simple cards [3 points]"""
     # self.game_server.game = Uno()
