@@ -293,6 +293,30 @@ def test_apply_action_normal_card_play():
     # Turn should advance to Player 2
     assert game.state.idx_player_active == 1, "Turn should advance after a normal card is played."
 
+def test_game_end_condition():
+    """Test that if a player plays their last card, the game phase changes to FINISHED."""
+    game = Uno()
+    state = GameState(
+        cnt_player=2,
+        list_player=[
+            PlayerState(name="Player 1", list_card=[Card(color="red", number=1)]),
+            PlayerState(name="Player 2", list_card=[Card(color="blue", number=7), Card(color="green", number=5)])
+        ],
+        list_card_draw=[],
+        list_card_discard=[Card(color="red", number=3)],
+        idx_player_active=0,
+        phase=GamePhase.RUNNING,
+        color="red"
+    )
+    game.set_state(state)
+
+    # Player 1 plays their only card
+    action = Action(card=Card(color="red", number=1))
+    game.apply_action(action)
+
+    # Check if the game is finished
+    assert game.state.phase == GamePhase.FINISHED, "Game should finish when a player runs out of cards."
+
 def test_list_action_card_matching_1() -> None:
     """Test 003: Test player card matching with discard pile card - simple cards [3 points]"""
     # self.game_server.game = Uno()
