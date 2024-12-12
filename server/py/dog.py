@@ -327,11 +327,40 @@ class Dog(Game):
                 if pos in positions_occupied:
                     # We hit a marble in the path or final position -> cannot overjump or land on it
                     return None
-
+            
             # If no block, we can safely move the marble to the target position
             return player_safe_spaces[target_index]
         
+        # Rule 4: move to the save spaces
+        if start_positions[player_idx] == 0:
+            if current_pos != 0:
+                current_pos = current_pos - 64
+        if current_pos <= start_positions[player_idx] <= tentative_pos and not marble.is_save:
+            steps_into_safe_space = tentative_pos - start_positions[player_idx]
+          
+            player_safe_spaces = safe_spaces[player_idx]
+            if steps_into_safe_space < 0 or steps_into_safe_space > len(player_safe_spaces):
+                # Either we don't actually step into safe spaces or we overshoot them
+                return None
+            
+            # Determine the final safe space position
+            final_safe_pos = player_safe_spaces[steps_into_safe_space - 1]
 
+            # Collect all marble positions for quick lookup
+            positions_occupied = {m["position"] for m in all_marbles}
+
+            # The path in safe spaces is from player_safe_spaces[0] up to final_safe_pos if steps_into_safe_space > 0
+            # For example, if steps_into_safe_space == 2, we are moving into player_safe_spaces[1]
+            path_positions = player_safe_spaces[:steps_into_safe_space]
+
+            # Check each position in the safe space path for blocking marbles
+            for pos in path_positions:
+                if pos in positions_occupied:
+                    # If a marble is found on the path (including final position), we cannot jump over or land on it
+                    return None
+
+            # If no block found, we can safely move the marble to the final safe space position
+            return final_safe_pos
 
                 
         return tentative_pos if tentative_pos <= self.BOARD_SIZE and tentative_pos >= 0 else None
@@ -495,7 +524,7 @@ class Dog(Game):
                         actions_list_jkr.append(Action(
                             card=jkr,
                             pos_from=None,
-                            pos_to=None,  
+                            pos_to=None,
                             card_swap=card
                         ))
                     else: 
