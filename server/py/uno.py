@@ -220,15 +220,13 @@ class Uno(Game):
     def _initialize_game(self) -> None:
         """Initialize game state for players and draw cards."""
 
-        # If game already has a deck given (list_card_draw), do not recreate.
-        # Otherwise, create and shuffle a new deck.
+        # If we don't have a provided deck, create and shuffle a new one
         if not self.state.list_card_draw:
             deck = self._initialize_deck()
             random.shuffle(deck)
             self.state.list_card_draw = deck
 
-        # First, select the starting card for the discard pile
-        # Keep popping until we find a non-wilddraw4 card
+        # Find the starting card for the discard pile (not wilddraw4)
         starting_card = None
         while self.state.list_card_draw:
             candidate = self.state.list_card_draw.pop()
@@ -236,9 +234,8 @@ class Uno(Game):
                 starting_card = candidate
                 break
 
-        # If we somehow didn't find a valid starting card (extremely unlikely),
-        # just fallback to a random card from a newly initialized deck
         if not starting_card:
+            # Fallback scenario if none found
             deck = self._initialize_deck()
             random.shuffle(deck)
             starting_card = deck.pop()
@@ -246,38 +243,38 @@ class Uno(Game):
         self.state.list_card_discard = [starting_card]
         self.state.color = starting_card.color
 
-        # Apply special effects of the starting card before dealing cards
-        if starting_card.symbol == "draw2":
-            self.state.cnt_to_draw = 2
-        elif starting_card.symbol == "reverse" and self.state.cnt_player == 2:
-            # For two players, reverse should immediately change direction
-            self.state.direction = -1
-        elif starting_card.symbol == "skip":
-            # If skip is first, skip the first player
-            # We'll advance turn after we set up the players.
-            pass
-
-        # Now initialize players
+        # Initialize players
         self.state.list_player = [
-            PlayerState(name=f"Player {i + 1}", list_card=[])
+            PlayerState(name=f"Player {i+1}", list_card=[])
             for i in range(self.state.cnt_player)
         ]
 
-        # Deal cards to players AFTER choosing the starting discard card
+        # Deal cards to each player
         for player in self.state.list_player:
             for _ in range(self.state.CNT_HAND_CARDS):
                 if self.state.list_card_draw:
                     player.list_card.append(self.state.list_card_draw.pop())
 
-        # Set the active player if not defined
+        # If idx_player_active is not set, default to 0. Otherwise, use the test's given value
         if self.state.idx_player_active is None:
             self.state.idx_player_active = 0
 
-        # If the starting card was SKIP, apply that skip now
-        if starting_card.symbol == "skip":
-            self._advance_turn(skip=True)
+        # Apply effects of the starting card
+        if starting_card.symbol == "draw2":
+            self.state.cnt_to_draw = 2
+        elif starting_card.symbol == "reverse" and self.state.cnt_player == 2:
+            # For two players, a reverse acts like a skip: reverse direction
+            self.state.direction = -1
+        elif starting_card.symbol == "skip":
+            # The test expects that after a skip start card, 
+            # idx_player_active should be simply the next player,
+            # i.e., (idx_player_active + 1) % cnt_player
+            self.state.idx_player_active = (
+                (self.state.idx_player_active + 1) % self.state.cnt_player
+            )
 
         self.state.phase = GamePhase.RUNNING
+
 
     def _initialize_deck(self) -> List[Card]:
         """Create a full deck of UNO cards."""
