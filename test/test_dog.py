@@ -1520,3 +1520,4 @@ def test_kennel_positions_invariance():
 #     assert any(a.card.rank == 'K' and a.pos_from in kennel and a.pos_to == start_pos for a in actions), (
 #         "Expected a starting action using King card from kennel to start."
 #     )
+
