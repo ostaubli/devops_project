@@ -1,38 +1,76 @@
-# runcmd: cd ../.. & venv\Scripts\python server/py/dog_template.py
-from server.py.game import Game, Player
-from typing import List, Optional, ClassVar
-from pydantic import BaseModel
+from typing import List, Optional, ClassVar, Union, Tuple
 from enum import Enum
 import random
-
+import copy
+from pydantic import BaseModel
+from server.py.game import Game, Player
 
 class Card(BaseModel):
-    suit: str  # card suit (color)
-    rank: str  # card rank
+    suit: str
+    rank: str
+
+    def __eq__(self, other: object) -> bool:
+        if not isinstance(other, Card):
+            return False
+        return (self.suit, self.rank) == (other.suit, other.rank)
+
+    def __str__(self) -> str:
+        return f"Card(suit='{self.suit}', rank='{self.rank}')"
+
+    def __repr__(self) -> str:
+        return f"Card(suit='{self.suit}', rank='{self.rank}')"
+
+    def __lt__(self, other: object) -> bool:
+        if not isinstance(other, Card):
+            return NotImplemented
+        suit_order = ['♠', '♥', '♦', '♣', '']
+        rank_order = ['2','3','4','5','6','7','8','9','10','J','Q','K','A','JKR']
+        return ((suit_order.index(self.suit), rank_order.index(self.rank)) <
+                (suit_order.index(other.suit), rank_order.index(other.rank)))
 
 
 class Marble(BaseModel):
-    pos: Optional[int] = None       # position on board (0 to 95)
-    is_save: bool  # true if marble was moved out of kennel and was not yet moved
+    pos: int
+    is_save: bool
 
 
 class PlayerState(BaseModel):
-    name: str                  # name of player
-    list_card: List[Card]      # list of cards
-    list_marble: List[Marble]  # list of marbles
+    name: str
+    list_card: List[Card]
+    list_marble: List[Marble]
 
 
 class Action(BaseModel):
-    card: Card                 # card to play
-    pos_from: Optional[int]    # position to move the marble from
-    pos_to: Optional[int]      # position to move the marble to
-    card_swap: Optional[Card]  # optional card to swap ()
+    card: Optional[Card] = None
+    pos_from: Optional[int] = None
+    pos_to: Optional[int] = None
+    card_swap: Optional[Card] = None
+
+    def __eq__(self, other: object) -> bool:
+        if not isinstance(other, Action):
+            return False
+        other_action: Action = other
+        return (
+            self.card == other_action.card and
+            self.pos_from == other_action.pos_from and
+            self.pos_to == other_action.pos_to and
+            self.card_swap == other_action.card_swap
+        )
+
+    def __str__(self) -> str:
+        card_str = str(self.card) if self.card else "None"
+        swap_str = str(self.card_swap) if self.card_swap else "None"
+        return f"card={card_str} pos_from={self.pos_from} pos_to={self.pos_to} card_swap={swap_str}"
+
+    def __repr__(self) -> str:
+        return (f"Action(card={repr(self.card)}, pos_from={self.pos_from}, "
+                f"pos_to={self.pos_to}, card_swap={repr(self.card_swap)})")
 
 
 class GamePhase(str, Enum):
-    SETUP = 'setup'            # before the game has started
-    RUNNING = 'running'        # while the game is running
-    FINISHED = 'finished'      # when the game is finished
+    SETUP = 'setup'
+    RUNNING = 'running'
+    FINISHED = 'finished'
 
 
 class GameState(BaseModel):
