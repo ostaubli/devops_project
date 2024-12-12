@@ -66,7 +66,7 @@ def test_play_card():
     state = GameState(
         cnt_player=2,
         list_player=[
-            PlayerState(name="Player 1", list_card=[Card(color="red", number=5)]),
+            PlayerState(name="Player 1", list_card=[Card(color="red", number=5), Card(color="red", number=8)]),
             PlayerState(name="Player 2", list_card=[]),
         ],
         list_card_discard=[Card(color="red", number=3)],
