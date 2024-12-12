@@ -1,3 +1,5 @@
+# Tests: 15/21 valid
+# Mark:  31/52 points
 from typing import List, Optional
 from enum import Enum
 import random
@@ -541,3 +543,4 @@ class RandomPlayer(Player):
             Optional[Action]: A randomly chosen action, or None if no actions.
         """
         return random.choice(actions) if actions else None
+ 
