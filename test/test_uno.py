@@ -147,6 +147,29 @@ def test_reverse_card():
     assert game.state.direction == -1
     assert game.state.idx_player_active == 0
 
+def test_skip_card():
+    """Test if the skip card correctly skips the next player's turn."""
+    game = Uno()
+    state = GameState(
+        cnt_player=3,
+        list_player=[
+            PlayerState(name="Player 1", list_card=[Card(color="green", symbol="skip")]),
+            PlayerState(name="Player 2", list_card=[Card(color="red", number=5)]),
+            PlayerState(name="Player 3", list_card=[Card(color="blue", number=2)]),
+        ],
+        list_card_discard=[Card(color="yellow", number=9)],
+        idx_player_active=0,
+        phase=GamePhase.RUNNING,
+    )
+    game.set_state(state)
+
+    action = Action(card=Card(color="green", symbol="skip"))
+    game.apply_action(action)
+
+    assert len(game.state.list_card_discard) == 2
+    assert game.state.list_card_discard[-1].symbol == "skip"
+    assert game.state.idx_player_active == 2  # Player 2's turn is skipped
+
 def test_list_action_card_matching_1() -> None:
     """Test 003: Test player card matching with discard pile card - simple cards [3 points]"""
     # self.game_server.game = Uno()
