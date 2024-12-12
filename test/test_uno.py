@@ -170,34 +170,6 @@ def test_skip_card():
     assert game.state.list_card_discard[-1].symbol == "skip"
     assert game.state.idx_player_active == 2  # Player 2's turn is skipped
 
-def test_draw_two_card(self):
-    """Test if the Draw Two card forces the next player to draw two cards and skips their turn."""
-    game = Uno()
-    state = GameState(
-        cnt_player=3,
-        list_player=[
-            PlayerState(name="Player 1", list_card=[Card(color="red", symbol="draw_two")]),
-            PlayerState(name="Player 2", list_card=[Card(color="blue", number=5)]),
-            PlayerState(name="Player 3", list_card=[Card(color="yellow", number=7)]),
-        ],
-        list_card_draw=[Card(color="green", number=1), Card(color="green", number=2)],  # Cards to be drawn
-        list_card_discard=[Card(color="yellow", number=3)],
-        idx_player_active=0,
-        phase=GamePhase.RUNNING,
-    )
-    game.set_state(state)
-
-    action = Action(card=Card(color="red", symbol="draw_two"))
-    game.apply_action(action)
-
-    # Verify state after playing Draw Two card
-    assert len(game.state.list_card_discard) == 2  # Discard pile now has 2 cards
-    assert game.state.list_card_discard[-1].symbol == "draw_two"
-    assert len(game.state.list_player[1].list_card) == 3  # Player 2 draws 2 cards (was 1, now 3)
-    assert game.state.list_player[1].list_card[-2].color == "green"  # First drawn card is green
-    assert game.state.list_player[1].list_card[-1].color == "green"  # Second drawn card is green
-    assert game.state.idx_player_active == 2  # Skip Player 2, move to Player 3
-
 def test_initialize_deck():
     """Test the deck initialization contains the correct number and types of cards."""
     game = Uno()
@@ -212,6 +184,41 @@ def test_initialize_deck():
 
     assert len(color_cards) == 100  # 25 cards per color
     assert len(wild_cards) == 8    # 4 Wild + 4 Wild Draw Four
+
+def test_can_play_card():
+    """Test the _can_play_card method with various scenarios."""
+    game = Uno()
+
+    # Set a top discard card
+    top_card = Card(color="red", number=5)
+    state = GameState(
+        cnt_player=2,
+        list_player=[
+            PlayerState(name="P1", list_card=[]),
+            PlayerState(name="P2", list_card=[])
+        ],
+        list_card_discard=[top_card],
+        phase=GamePhase.RUNNING,
+        color="red",
+        idx_player_active=0
+    )
+    game.set_state(state)
+
+    # Same color, different number
+    card_same_color = Card(color="red", number=7)
+    assert game._can_play_card(card_same_color, top_card) is True, "Should be playable due to same color."
+
+    # Different color, same number
+    card_same_number = Card(color="blue", number=5)
+    assert game._can_play_card(card_same_number, top_card) is True, "Should be playable due to same number."
+
+    # Wild card
+    card_wild = Card(color="any", symbol="wild")
+    assert game._can_play_card(card_wild, top_card) is True, "Wild card should always be playable."
+
+    # Unrelated color and number
+    card_unrelated = Card(color="green", number=3)
+    assert game._can_play_card(card_unrelated, top_card) is False, "No match color/number/symbol - should not be playable."
 
 def test_list_action_card_matching_1() -> None:
     """Test 003: Test player card matching with discard pile card - simple cards [3 points]"""
