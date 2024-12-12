@@ -149,10 +149,10 @@ class Dog(Game):
         active_player = self.state.list_player[self.state.idx_player_active]
 
         # Determine which cards to process
-        if self.state.card_active:
-            cards = [self.state.card_active]
-        else:
-            cards = active_player.list_card
+        cards = active_player.list_card if not self.state.card_active else [self.state.card_active]
+
+        # Check if it's the beginning of the game (all marbles in kennel)
+        is_beginning_phase = all(marble.pos >= 64 for marble in active_player.list_marble)
 
         for card in cards:
             # Handle Joker card
@@ -166,6 +166,43 @@ class Dog(Game):
                             pos_to=0,
                             card_swap=None
                         ))
+
+                if is_beginning_phase:  # Beginning phase: Limited swap actions
+                    for suit in GameState.LIST_SUIT:
+                        for rank in ['A', 'K']:
+                            actions.append(Action(
+                                card=card,
+                                pos_from=None,
+                                pos_to=None,
+                                card_swap=Card(suit=suit, rank=rank)
+                            ))
+                else:  # Later phase: All valid swap actions
+                    for suit in GameState.LIST_SUIT:
+                        for rank in GameState.LIST_RANK:
+                            if rank != 'JKR':  # Cannot swap with another Joker
+                                actions.append(Action(
+                                    card=card,
+                                    pos_from=None,
+                                    pos_to=None,
+                                    card_swap=Card(suit=suit, rank=rank)
+                                ))
+
+                # Skip further processing for Joker
+                continue
+
+                # Define start cards that allow moving out of kennel
+                start_cards = ['A', 'K']
+
+                # Logic for start cards
+                if card.rank in start_cards:
+                    for marble in active_player.list_marble:
+                        if marble.pos == 64:  # Marble in the kennel
+                            actions.append(Action(
+                                card=card,
+                                pos_from=64,
+                                pos_to=0,
+                                card_swap=None
+                            ))
 
                 # Check if any marbles are on the board (not in kennel)
                 has_marbles_on_board = any(marble.pos < 64 for marble in active_player.list_marble)
