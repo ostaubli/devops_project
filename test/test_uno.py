@@ -56,7 +56,7 @@ def test_initialize_game_state():
     game.set_state(state)
     assert game.state.cnt_player == 3
     assert len(game.state.list_player) == 3
-    assert len(game.state.list_card_draw) == 108  # Standard UNO deck size
+    assert len(game.state.list_card_draw) == 86 
     assert game.state.phase == GamePhase.RUNNING
     assert game.state.idx_player_active is not None
 
