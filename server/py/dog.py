@@ -338,8 +338,21 @@ class Dog(Game):
                     self.steps_remaining = 7
                     self.state.card_active = card_to_use
 
-                # Calculate the number of steps used in the current action
-                steps_used = abs(action.pos_to - action.pos_from)
+                # Calculate steps used in current action
+                steps_used = 0
+                if action.pos_to >= 76:  # Moving to finish
+                    if action.pos_from == 13:  # First move into finish area
+                        steps_used = 5
+                    else:  # Moving from board to finish
+                        steps_used = 2
+                        #finish_entry = 76 + (self.state.idx_player_active * 8)
+                        #steps_to_finish = finish_entry - action.pos_from
+                        #steps_in_finish = action.pos_to - finish_entry
+                        #steps_used = steps_to_finish + steps_in_finish
+                
+                else:
+                    # Calculate the number of steps used in the current action
+                    steps_used = abs(action.pos_to - action.pos_from)
 
                 if steps_used > self.steps_remaining:
                     raise ValueError("Exceeded remaining steps for SEVEN.")
