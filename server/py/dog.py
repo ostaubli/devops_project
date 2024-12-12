@@ -488,7 +488,7 @@ class Dog(Game):
                 if marble.pos in player_kennel:  # Skip marbles in the kennel
                     continue
 
-                # Handle MARBEL SWAPPING with `J` or `JKR`: exchange with opponent's marble
+                # Handle MARBEL SWAPPING with `J` or `JKR`: exchange with opponent's marble (not seven card)
                 if card.rank in ('J', 'JKR'):
                     if marble.is_save is False:  # Active player's marble must not be in save state
                         for target in all_marbles:
