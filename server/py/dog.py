@@ -383,18 +383,18 @@ class GameState(BaseModel):
             return True
         return False
 
-    def check_final_pos(self, pos_to: int, pos_from: int, marble: Marble) -> None:
+    def check_final_pos(self, pos_to: int, pos_from: int, action: Action, marble: Marble) -> None:
         """
         Check whether the final position of the marble is a special position.
         1) The marble is save if it is in one of the four final spots of its color or
         2) if it is newly out of the kennel.
         """
         final_positions: list = [68, 69, 70, 71, 76, 77, 78, 79, 84, 85, 86, 87, 92, 93, 94, 95]
-        if pos_to in final_positions:
+        if action.pos_to in final_positions:
             marble.is_save = True
 
         last_positions: list = [64, 65, 66, 67, 72, 73, 74, 75, 80, 81, 82, 83, 88, 89, 90, 91]
-        if pos_from in last_positions:
+        if action.pos_from in last_positions:
             marble.is_save = True
 
     def exchange_cards(self) -> None:
