@@ -266,6 +266,33 @@ def test_initialize_deck_composition():
     colored_cards = [c for c in deck if c.color in colors]
     assert len(colored_cards) == 100, "There should be 100 colored cards in total."
 
+def test_apply_action_normal_card_play():
+    """Test that applying an action of playing a normal card updates discard and advances turn."""
+    game = Uno()
+    state = GameState(
+        cnt_player=2,
+        list_player=[
+            PlayerState(name="Player 1", list_card=[Card(color="red", number=5), Card(color="blue", number=7)]),
+            PlayerState(name="Player 2", list_card=[Card(color="yellow", number=3)])
+        ],
+        list_card_discard=[Card(color="red", number=3)],
+        idx_player_active=0,
+        phase=GamePhase.RUNNING,
+        color="red"
+    )
+    game.set_state(state)
+
+    # Player 1 plays a red 5 (matches by color)
+    action = Action(card=Card(color="red", number=5))
+    game.apply_action(action)
+
+    # Check that the card is now on the discard pile
+    assert game.state.list_card_discard[-1].number == 5
+    # Player 1 should have one card left (the blue 7)
+    assert len(game.state.list_player[0].list_card) == 1
+    # Turn should advance to Player 2
+    assert game.state.idx_player_active == 1, "Turn should advance after a normal card is played."
+
 def test_list_action_card_matching_1() -> None:
     """Test 003: Test player card matching with discard pile card - simple cards [3 points]"""
     # self.game_server.game = Uno()
