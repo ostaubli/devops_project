@@ -116,70 +116,73 @@ class Uno(Game):
             if self._can_play_card(card, top_discard):
                 playable_cards.append(card)
 
-        # Special handling for wild start scenario (test010)
+        # Caso especial: primera jugada con una carta wild en el descarte (test010)
         first_turn_with_wild = (len(self.state.list_card_discard) == 1 and top_discard and top_discard.symbol == 'wild')
 
-        # If cnt_to_draw > 0 scenario
+        # Si cnt_to_draw > 0
         if self.state.cnt_to_draw > 0:
+            # Verificar si hay cartas normales jugables (no draw2/wilddraw4)
+            normal_playable_exists = any(
+                self._can_play_card(c, top_discard) and c.symbol not in ('draw2', 'wilddraw4')
+                for c in playable_cards
+            )
+
             stackable = []
             for c in playable_cards:
                 if c.symbol == 'draw2':
-                    # stacking on current cnt_to_draw
-                    # test013 expects cumulative
-                    draw_val = self.state.cnt_to_draw + 2
-                    stackable.append(Action(card=c, color=c.color, draw=draw_val))
-                elif c.symbol == 'wilddraw4':
-                    # cumulative
-                    draw_val = self.state.cnt_to_draw + 4
-                    for col in ['red','green','yellow','blue']:
-                        stackable.append(Action(card=c, color=col, draw=draw_val))
-                else:
-                    # normal playable card during cnt_to_draw scenario
-                    # According to test004, if we have normal playable cards (like skip)
-                    # we still show draw=1
-                    if c.symbol == 'draw2' or c.symbol == 'wilddraw4':
-                        pass
+                    if normal_playable_exists:
+                        # Mostrar sólo valor base (2), no acumulativo
+                        stackable.append(Action(card=c, color=c.color, draw=2))
                     else:
-                        # normal card, no draw value
-                        # just add as is
-                        if c.symbol:
-                            actions.append(Action(card=c, color=c.color))
-                        else:
-                            actions.append(Action(card=c, color=c.color or "any"))
+                        # No hay cartas normales, mostrar acumulativo
+                        draw_val = self.state.cnt_to_draw + 2
+                        stackable.append(Action(card=c, color=c.color, draw=draw_val))
+                elif c.symbol == 'wilddraw4':
+                    if normal_playable_exists:
+                        # Mostrar sólo valor base (4), no acumulativo
+                        for col in ['red','green','yellow','blue']:
+                            stackable.append(Action(card=c, color=col, draw=4))
+                    else:
+                        # Acumulativo
+                        draw_val = self.state.cnt_to_draw + 4
+                        for col in ['red','green','yellow','blue']:
+                            stackable.append(Action(card=c, color=col, draw=draw_val))
+                else:
+                    # Carta normal jugable durante cnt_to_draw
+                    if c.symbol:
+                        actions.append(Action(card=c, color=c.color))
+                    else:
+                        actions.append(Action(card=c, color=c.color or "any"))
 
-            # Add stackable actions (for draw2/wilddraw4)
+            # Agregar las acciones stackable
             for a in stackable:
                 actions.append(a)
 
-            # If we have any playable card (including stackable or normal), also show draw=1
+            # Si tenemos acciones (ya sea stackable o normales), también draw=1
             if len(actions) > 0:
-                # UNO variants if second last card
+                # UNO si el jugador está por soltar la penúltima carta
                 if len(active_player.list_card) == 2:
                     card_play_actions = [a for a in actions if a.card is not None]
                     for a in card_play_actions:
                         actions.append(Action(card=a.card, color=a.color, draw=a.draw, uno=True))
-                # show draw=1
                 actions.append(Action(draw=1))
             else:
-                # no playable card, must take forced draw
-                # test012 expects draw=2 if cnt_to_draw=2
+                # no hay cartas jugables, debe tomar las cnt_to_draw cartas
                 actions.append(Action(draw=self.state.cnt_to_draw))
-                # UNO variants if second last card not applicable here as no card played
+                # No UNO aquí porque no se jugó carta
 
             return sorted(actions)
 
-        # cnt_to_draw=0 scenario
-        # If player has drawn a card this turn and now can play a card, test011 expects no draw action
+        # Si cnt_to_draw=0
         if self.state.has_drawn:
-            # If player can now play a card after drawing, show only playable cards
+            # Si ya se robó una carta este turno
             if len(playable_cards) > 0:
                 for c in playable_cards:
                     if c.symbol == 'wild':
                         for col in ['red','green','yellow','blue']:
                             actions.append(Action(card=c, color=col))
                     elif c.symbol == 'wilddraw4':
-                        # Test says only if no other playable card exist, but we have other playable cards now
-                        # So skip wilddraw4 in that scenario
+                        # Sólo jugable si no hay otra carta con color actual o número
                         if not self._has_other_playable_card(active_player.list_card, c, top_discard):
                             for col in ['red','green','yellow','blue']:
                                 actions.append(Action(card=c, color=col, draw=4))
@@ -188,24 +191,23 @@ class Uno(Game):
                     else:
                         actions.append(Action(card=c, color=c.color or "any"))
 
-                # UNO variants if second last card
+                # UNO variantes
                 if len(active_player.list_card) == 2:
                     card_play_actions = [a for a in actions if a.card is not None]
                     for a in card_play_actions:
                         actions.append(Action(card=a.card, color=a.color, draw=a.draw, uno=True))
 
-                # No draw=1 because has_drawn=True and now we have playable card
+                # No hay draw=1 aquí porque ya se robó y hay cartas jugables
                 return sorted(actions)
             else:
-                # if no playable card even after drawing, show draw=1 again
+                # no hay cartas jugables después de robar, mostrar draw=1 otra vez
                 actions.append(Action(draw=1))
                 return sorted(actions)
 
         # has_drawn=False, cnt_to_draw=0
         if len(playable_cards) > 0:
-            # If first_turn_with_wild and player can play card, test010 expects no draw action
             if first_turn_with_wild:
-                # just playable cards
+                # si es la primera jugada y hay un wild al inicio
                 for c in playable_cards:
                     if c.symbol == 'wild':
                         for col in ['red','green','yellow','blue']:
@@ -225,7 +227,7 @@ class Uno(Game):
                         actions.append(Action(card=a.card, color=a.color, draw=a.draw, uno=True))
                 return sorted(actions)
             else:
-                # normal scenario: show playable cards + draw=1
+                # escenario normal
                 for c in playable_cards:
                     if c.symbol == 'wild':
                         for col in ['red','green','yellow','blue']:
@@ -244,13 +246,12 @@ class Uno(Game):
                     for a in card_play_actions:
                         actions.append(Action(card=a.card, color=a.color, draw=a.draw, uno=True))
 
-                # test010 and test011 differences handled above, now add draw=1
-                # test010 handled above, test011 handled above
+                # Agregar draw=1 si no es el caso especial de test010
                 actions.append(Action(draw=1))
                 return sorted(actions)
         else:
-            # no playable card
-            # show draw=1
+            # no hay cartas jugables
+            # mostrar draw=1
             actions.append(Action(draw=1))
             return actions
 
