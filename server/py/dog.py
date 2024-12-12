@@ -538,17 +538,35 @@ class Dog(Game):
         return actions_list
 
     def apply_action(self, action: Optional[Action]) -> None:
-        """Apply the given action to the game."""
         if not self.state:
             raise ValueError("Game state is not set.")
+
+        # Attempt a reshuffle if the draw pile is empty and discard is not empty
+        # This ensures that if we run out of cards, we reshuffle before proceeding.
+        if not self.state.list_card_draw and self.state.list_card_discard:
+            self.reshuffle_discard_into_draw()
 
         active_player = self.state.list_player[self.state.idx_player_active]
 
         # Handle the case where no action is provided (skip turn)
         if action is None:
             print("No action provided. Advancing the active player.")
-            # Add all cards from the player's hand to the draw pile
-            self.state.list_card_discard.extend(active_player.list_card)
+            possible_actions = self.get_list_action()
+            if not possible_actions:
+                # No moves possible: fold scenario
+                self.state.list_card_discard.extend(active_player.list_card)
+                active_player.list_card.clear()
+            else:
+                # Moves are available, but player passed turn: do not discard/clear hand
+                pass
+
+            self.state.idx_player_active = (self.state.idx_player_active + 1) % len(self.state.list_player)
+
+            # If all players are out of cards, advance to the next round
+            if all(len(player.list_card) == 0 for player in self.state.list_player):
+                self.next_round()
+            return
+
             self.state.idx_player_active = (self.state.idx_player_active + 1) % len(self.state.list_player)
 
             # If all players are out of cards, advance to the next round
@@ -746,6 +764,7 @@ class Dog(Game):
         """
         Shuffle the discard pile back into the draw pile when the draw pile is empty.
         Ensures no cards are lost or duplicated in the process.
+        If more than 110 cards are detected, reset the entire deck.
         """
         if not self.state:
             raise ValueError("Game state is not set.")
@@ -764,6 +783,29 @@ class Dog(Game):
         # Shuffle the draw pile to randomize
         random.shuffle(self.state.list_card_draw)
         print(f"Debug: Reshuffle complete. Draw pile count: {len(self.state.list_card_draw)}.")
+
+        # Validate total card count
+        draw_count = len(self.state.list_card_draw)
+        discard_count = len(self.state.list_card_discard)
+        player_card_count = sum(len(player.list_card) for player in self.state.list_player)
+        total_cards = draw_count + discard_count + player_card_count
+
+        # If more than 110 cards are detected, reset the card deck
+        if total_cards > 110:
+            print("Warning: More than 110 cards detected. Resetting the card deck.")
+
+            # Clear all cards from draw pile, discard pile, and players' hands
+            self.state.list_card_draw.clear()
+            self.state.list_card_discard.clear()
+            for player in self.state.list_player:
+                player.list_card.clear()
+
+            # Re-initialize the deck with the original full set of cards
+            # Assuming GameState.LIST_CARD contains the original full deck
+            self.state.list_card_draw.extend(GameState.LIST_CARD)
+            random.shuffle(self.state.list_card_draw)
+
+            print("Deck has been reset to the original full set of cards.")
 
     def deal_cards(self) -> None:
         """Deal cards to each player for the current round."""
