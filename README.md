@@ -46,7 +46,7 @@ python server/py/dog.py
 ### Run the Benchmark
 ````
 "../.venv\Scripts\activate"
-set PYTHONPATH=%cd%                    # in Command Prompt
+"../.venv\Scripts\activate"              # in Command Prompt
 $env:PYTHONPATH = (Get-Location).Path  # in PowerShell
 python benchmark/benchmark_hangman.py python hangman.Hangman
 python benchmark/benchmark_battleship.py python battleship.Battleship
