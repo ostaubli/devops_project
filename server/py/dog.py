@@ -4,7 +4,6 @@ import random
 from typing import List, Optional, ClassVar
 from enum import Enum
 from pydantic import BaseModel
-
 if __name__ == '__main__':
     from game import Game, Player
 else:
@@ -542,34 +541,22 @@ class GameState(BaseModel):
 
 
     def init_next_turn(self) -> None: # Kägi
-        """
-        If action is finished, set the next player active.
-
-        Logic:
-        - Iterate over players starting from the one next to the current active player.
-        - Check if the next player has cards:
-        1. If True, leave the loop and set this player as the active one.
-        2. If False, skip to the next player.
-        3. If the loop completes a full cycle back to the active player without finding any player with cards, deal new cards and set the active player to the next in normal order.
-        """
-
-        # TODO: Kägi needs to test this (bedtime now)
-
-        # TODO: Laurcence alternative for going to the next turn in one Line
-        # self.state.idx_player_active = (self.state.idx_player_active + 1)%4
-
-        pass
+        # Start with the next player
         idx_next_player = self.idx_player_active + 1 if self.idx_player_active + 1 < 4 else 0
 
-        while not self.list_player[idx_next_player].list_card and idx_next_player != self.idx_player_active:  # logic 3
+        # Loop through players until a player with cards is found or the cycle returns to the active player
+        while not self.list_player[idx_next_player].list_card and idx_next_player != self.idx_player_active:
             idx_next_player = idx_next_player + 1 if idx_next_player + 1 < 4 else 0
 
-        else:
-            if not self.list_player[idx_next_player].list_card:  # logic 3
-                self.idx_player_active = self.idx_player_active + 1 if self.idx_player_active + 1 < 4 else 0
-                self.deal_cards()
-            else:  # logic 1 & 2
-                self.idx_player_active = idx_next_player
+        # Check if a player with cards was found
+        if self.list_player[idx_next_player].list_card:  # Logic 1 and 2
+            # Set the next player with cards as the active player
+            self.idx_player_active = idx_next_player
+        else:  # Logic 3: All players are out of cards
+            # Move to the next player in normal order
+            self.idx_player_active = self.idx_player_active + 1 if self.idx_player_active + 1 < 4 else 0
+            # Deal new cards to all players
+            self.deal_cards()
 
 
 class Dog(Game):
