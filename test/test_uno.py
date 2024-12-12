@@ -220,6 +220,33 @@ def test_can_play_card():
     card_unrelated = Card(color="green", number=3)
     assert game._can_play_card(card_unrelated, top_card) is False, "No match color/number/symbol - should not be playable."
 
+def test_advance_turn():
+    """Test that _advance_turn correctly updates the active player's index."""
+    game = Uno()
+    state = GameState(
+        cnt_player=3,
+        list_player=[
+            PlayerState(name="Player 1", list_card=[]),
+            PlayerState(name="Player 2", list_card=[]),
+            PlayerState(name="Player 3", list_card=[])
+        ],
+        list_card_draw=[],
+        list_card_discard=[Card(color="red", number=3)],
+        idx_player_active=0,
+        phase=GamePhase.RUNNING,
+        direction=1
+    )
+    game.set_state(state)
+
+    # Advance turn by one player
+    game._advance_turn()
+    assert game.state.idx_player_active == 1, "Turn should advance from Player 1 to Player 2."
+
+    # Change direction and advance turn
+    game.state.direction = -1
+    game._advance_turn()
+    assert game.state.idx_player_active == 0, "Turn should go back to Player 1 due to reverse direction."
+
 def test_list_action_card_matching_1() -> None:
     """Test 003: Test player card matching with discard pile card - simple cards [3 points]"""
     # self.game_server.game = Uno()
