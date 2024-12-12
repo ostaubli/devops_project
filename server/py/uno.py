@@ -544,4 +544,7 @@ class RandomPlayer(Player):
             Optional[Action]: A randomly chosen action, or None if no actions.
         """
         return random.choice(actions) if actions else None
+    
+
+    # 12.12 at 23.34
  
