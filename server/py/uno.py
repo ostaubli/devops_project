@@ -328,9 +328,11 @@ class RandomPlayer(Player):
 
 
 if __name__ == "__main__":
+
     # uno = Uno()
     # _state = GameState(cnt_player=3)
     # uno.set_state(_state)
+    
     LIST_COLOR = ['red', 'blue', 'yellow', 'green']
 
     def is_card_valid(card: Card):
@@ -344,21 +346,33 @@ if __name__ == "__main__":
             okay = okay and card.color != 'any'
         return okay
 
+# def test_card_values(self):
+    """Test 002: Validate card values [1 points]"""
     game_server = Uno()
+    
+
     state = GameState(cnt_player=2)
     game_server.set_state(state)
     game_server.get_state()
     str_state = f'GameState:\n{state}\n'
 
+    ######################################################
+
+
     for card in state.list_card_draw + state.list_card_discard:
         hint = str_state
         hint += f'Error: Card values not valid {card}.'
-        print( is_card_valid(card))
-        print(hint)
+
+        #print( is_card_valid(card))
+        #print(hint)
+        assert is_card_valid(card), hint  #adjust to print if you want
 
     for player in state.list_player:
         for card in player.list_card:
             hint = str_state
             hint += f'Error: Card values not valid {card}.'
-            print( is_card_valid(card))
-            print(hint)
+
+            #print( is_card_valid(card))
+            #print(hint)
+            assert is_card_valid(card), hint #adjust
+
