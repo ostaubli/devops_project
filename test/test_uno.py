@@ -59,7 +59,29 @@ def test_initialize_game_state():
     assert len(game.state.list_card_draw) == 108  # Standard UNO deck size
     assert game.state.phase == GamePhase.RUNNING
     assert game.state.idx_player_active is not None
-    
+
+def test_play_card():
+    """Test if a card is played correctly, including color and discard updates."""
+    game = Uno()
+    state = GameState(
+        cnt_player=2,
+        list_player=[
+            PlayerState(name="Player 1", list_card=[Card(color="red", number=5)]),
+            PlayerState(name="Player 2", list_card=[]),
+        ],
+        list_card_discard=[Card(color="red", number=3)],
+        idx_player_active=0,
+        phase=GamePhase.RUNNING,
+    )
+    game.set_state(state)
+
+    action = Action(card=Card(color="red", number=5))
+    game.apply_action(action)
+
+    assert len(game.state.list_card_discard) == 2
+    assert game.state.list_card_discard[-1].number == 5
+    assert game.state.idx_player_active == 1
+
 def test_list_action_card_matching_1() -> None:
     """Test 003: Test player card matching with discard pile card - simple cards [3 points]"""
     # self.game_server.game = Uno()
