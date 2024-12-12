@@ -134,6 +134,13 @@ class Dog(Game):
         '7': [7]
     }
 
+    TEAM_MAPPING = {
+    0: 2,  # Player 0 helps Player 2
+    1: 3,  # Player 1 helps Player 3
+    2: 0,  # Player 2 helps Player 0
+    3: 1   # Player 3 helps Player 1
+}
+
     def __init__(self) -> None:
         """ Game initialization (set_state call not necessary, we expect 4 players) """
         self.state: Optional[GameState] = None
@@ -827,12 +834,12 @@ class Dog(Game):
         if not self.state.bool_card_exchanged:
             self._handle_card_exchange(action, active_player)
             return
-        
+
         # Check if all players are out of cards
         if all(len(player.list_card) == 0 for player in self.state.list_player):
             self.next_round()
             return
-        
+
         #check if only a joker was swapped
         if action.card.rank == 'JKR' and action.card_swap is not None:
             print(f"{active_player.name} exchanges {action.card.rank} wit {action.card_swap.rank}.")
@@ -865,7 +872,7 @@ class Dog(Game):
 
         # Check for collision with other players' marbles
         self._check_collisions(action)
-        
+
         # Remove the played card from the player's hand
         active_player.list_card.remove(action.card)
 
@@ -874,6 +881,8 @@ class Dog(Game):
 
         # Advance to the next active player
         self.state.idx_player_active = (self.state.idx_player_active + 1) % len(self.state.list_player)
+        # Check if the game is finished or if a player needs to help their teammate
+        self._check_game_finished()
 
     def _handle_seven_card_logic(self, grouped_actions: List[List[Action]]) -> bool:
         """Process a SEVEN card by applying valid split actions."""
@@ -928,6 +937,31 @@ class Dog(Game):
 
         print("SEVEN card logic complete but not all steps were used.")
         return False
+
+    def _check_game_finished(self) -> None:
+        """Check if the game has finished or a player should help their teammate."""
+        if not self.state:
+            raise ValueError("Game state is not set.")
+
+        for player_idx, player in enumerate(self.state.list_player):
+            safe_spaces = self.SAFE_SPACES[player_idx]
+
+            # Check if all marbles are in the safe spaces
+            if all(marble.pos in safe_spaces for marble in player.list_marble):
+                teammate_idx = self.TEAM_MAPPING[player_idx]
+                teammate = self.state.list_player[teammate_idx]
+
+                # Check if the teammate has also finished
+                teammate_safe_spaces = self.SAFE_SPACES[teammate_idx]
+                if all(marble.pos in teammate_safe_spaces for marble in teammate.list_marble):
+                    print(f"Team {player_idx} and {teammate_idx} have won the game!")
+                    self.state.phase = GamePhase.FINISHED
+                    return
+
+                # Player now helps their teammate
+                print(f"Player {player.name} has finished and will help teammate {teammate.name}.")
+                self.state.idx_player_active = teammate_idx
+                return
 
 
     def _handle_kennel_to_start_action(self, action: Action) -> bool:
