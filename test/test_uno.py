@@ -198,6 +198,21 @@ def test_draw_two_card(self):
     assert game.state.list_player[1].list_card[-1].color == "green"  # Second drawn card is green
     assert game.state.idx_player_active == 2  # Skip Player 2, move to Player 3
 
+def test_initialize_deck():
+    """Test the deck initialization contains the correct number and types of cards."""
+    game = Uno()
+    deck = game._initialize_deck()
+
+    # Count total cards
+    assert len(deck) == 108
+
+    # Verify card composition
+    color_cards = [card for card in deck if card.color in LIST_COLOR]
+    wild_cards = [card for card in deck if card.symbol in ["wild", "wilddraw4"]]
+
+    assert len(color_cards) == 100  # 25 cards per color
+    assert len(wild_cards) == 8    # 4 Wild + 4 Wild Draw Four
+
 def test_list_action_card_matching_1() -> None:
     """Test 003: Test player card matching with discard pile card - simple cards [3 points]"""
     # self.game_server.game = Uno()
