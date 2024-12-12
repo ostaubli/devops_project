@@ -247,6 +247,25 @@ def test_advance_turn():
     game._advance_turn()
     assert game.state.idx_player_active == 0, "Turn should go back to Player 1 due to reverse direction."
 
+def test_initialize_deck_composition():
+    """Test that the deck initialized by _initialize_deck has the correct composition."""
+    game = Uno()
+    deck = game._initialize_deck()
+
+    # Basic checks
+    assert len(deck) == 108, "UNO deck should have 108 cards."
+
+    # Count wild cards
+    wild_cards = [c for c in deck if c.symbol == 'wild']
+    wild_draw4_cards = [c for c in deck if c.symbol == 'wilddraw4']
+    assert len(wild_cards) == 4, "There should be 4 'wild' cards."
+    assert len(wild_draw4_cards) == 4, "There should be 4 'wilddraw4' cards."
+
+    # Count color cards
+    colors = ['red', 'yellow', 'green', 'blue']
+    colored_cards = [c for c in deck if c.color in colors]
+    assert len(colored_cards) == 100, "There should be 100 colored cards in total."
+
 def test_list_action_card_matching_1() -> None:
     """Test 003: Test player card matching with discard pile card - simple cards [3 points]"""
     # self.game_server.game = Uno()
