@@ -82,6 +82,29 @@ def test_play_card():
     assert game.state.list_card_discard[-1].number == 5
     assert game.state.idx_player_active == 1
 
+def test_draw_card():
+    """Test if drawing a card adds it to the player's hand and updates the state."""
+    game = Uno()
+    state = GameState(
+        cnt_player=2,
+        list_player=[
+            PlayerState(name="Player 1", list_card=[]),
+            PlayerState(name="Player 2", list_card=[]),
+        ],
+        list_card_draw=[Card(color="blue", number=7)],
+        idx_player_active=0,
+        phase=GamePhase.RUNNING,
+    )
+    game.set_state(state)
+
+    action = Action(draw=1)
+    game.apply_action(action)
+
+    assert len(game.state.list_card_draw) == 0
+    assert len(game.state.list_player[0].list_card) == 1
+    assert game.state.list_player[0].list_card[0].number == 7
+    assert game.state.has_drawn
+
 def test_list_action_card_matching_1() -> None:
     """Test 003: Test player card matching with discard pile card - simple cards [3 points]"""
     # self.game_server.game = Uno()
