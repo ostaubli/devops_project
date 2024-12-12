@@ -1,11 +1,24 @@
-# Tests: 15/21 valid
-# Mark:  31/52 points
 from typing import List, Optional
 from enum import Enum
 import random
 from pydantic import BaseModel
-from server.py.game import Game, Player
 
+
+# --- Minimal stubs for Game and Player classes (originally from server.py.game) ---
+
+class Game:
+    def set_state(self, state):
+        pass
+
+    def get_state(self):
+        pass
+
+class Player:
+    def select_action(self, state, actions):
+        pass
+
+
+# --- UNO code begins here ---
 
 class Card(BaseModel):
     """Represents a UNO card with optional color, number, and/or symbol."""
@@ -95,7 +108,7 @@ class Uno(Game):
     def set_state(self, state: GameState) -> None:
         """
         Set the current game state.
-        
+
         If the phase is SETUP, initialize the game.
         """
         self.state = state
@@ -110,32 +123,22 @@ class Uno(Game):
                     list_card: bool = True) -> str:
         """
         Return a string representation of the current game state.
-        
-        Parameters:
-            list_color (bool): If False, omit LIST_COLOR from the output.
-            list_symbol (bool): If False, omit LIST_SYMBOL from the output.
-            list_card (bool): If False, omit LIST_CARD from the output.
-        
-        Returns:
-            str: A string describing the current state.
         """
         print_str = "Game State:"
-        for keys in self.state.model_fields.keys():
+        fields = self.state.__fields__.keys() if hasattr(self.state, '__fields__') else self.state.__dict__.keys()
+        for keys in fields:
             if not list_color and keys == 'LIST_COLOR':
                 continue
             if not list_symbol and keys == 'LIST_SYMBOL':
                 continue
             if not list_card and keys == 'LIST_CARD':
                 continue
-            print_str += f'\n{keys} : {self.state.__dict__[keys]}'
+            print_str += f'\n{keys} : {getattr(self.state, keys)}'
         return print_str
 
     def get_list_action(self) -> List[Action]:
         """
         Get the list of possible actions for the current active player.
-        
-        Returns:
-            List[Action]: The actions that the active player can perform.
         """
         if self.state.phase != GamePhase.RUNNING:
             return []
@@ -151,10 +154,7 @@ class Uno(Game):
                                 and top_discard and top_discard.symbol == 'wild')
 
         if self.state.cnt_to_draw > 0:
-            # Distinguish between initial forced draw (cnt_to_draw=2) and cumulative scenario (>2)
             cumulative_scenario = self.state.cnt_to_draw > 2
-
-            # Check if normal playable cards exist (not draw2/wilddraw4)
             normal_playable_exists = any(
                 c.symbol not in ('draw2', 'wilddraw4') and self._can_play_card(c, top_discard)
                 for c in playable_cards
@@ -164,7 +164,7 @@ class Uno(Game):
             normal_actions: List[Action] = []
             for c in playable_cards:
                 if c.symbol == 'draw2':
-                    draw_val = 2 if normal_playable_exists and not cumulative_scenario \
+                    draw_val = 2 if (normal_playable_exists and not cumulative_scenario) \
                         else self.state.cnt_to_draw + 2
                     stackable.append(Action(card=c, color=c.color, draw=draw_val))
                 elif c.symbol == 'wilddraw4':
@@ -174,53 +174,38 @@ class Uno(Game):
                     for col in ['red', 'green', 'yellow', 'blue']:
                         stackable.append(Action(card=c, color=col, draw=draw_val))
                 else:
-                    # Normal playable card
                     if not cumulative_scenario:
-                        # Only show normal cards if not in cumulative scenario
                         if c.symbol:
                             normal_actions.append(Action(card=c, color=c.color))
                         else:
                             normal_actions.append(Action(card=c, color=c.color or "any"))
 
-            # If cumulative_scenario is True, do not show normal_actions
             if cumulative_scenario:
-                # In cumulative scenario, show stackable if any, otherwise forced draw
                 if stackable:
                     actions.extend(stackable)
-                    # UNO option if second last card
                     if len(active_player.list_card) == 2:
                         card_play_actions = [a for a in stackable if a.card is not None]
                         for a in card_play_actions:
                             actions.append(Action(card=a.card, color=a.color, draw=a.draw, uno=True))
-                    # No draw=1 in cumulative scenario
                 else:
-                    # No stackable, must show forced draw
                     actions.append(Action(draw=self.state.cnt_to_draw))
             else:
-                # Not a cumulative scenario (likely cnt_to_draw=2)
-                # Show both normal_actions and stackable
                 actions.extend(normal_actions)
                 actions.extend(stackable)
-
                 if actions:
-                    # UNO if second last card
                     if len(active_player.list_card) == 2:
                         card_play_actions = [a for a in actions if a.card is not None]
                         for a in card_play_actions:
                             actions.append(Action(card=a.card, color=a.color, draw=a.draw, uno=True))
-
-                    # If normal_playable_exists, show draw=1
                     if normal_playable_exists:
                         actions.append(Action(draw=1))
                 else:
-                    # No actions, must show forced draw
                     actions.append(Action(draw=self.state.cnt_to_draw))
 
             return sorted(actions)
 
         # If cnt_to_draw=0
         if self.state.has_drawn:
-            # Already drew a card this turn
             if playable_cards:
                 for c in playable_cards:
                     if c.symbol == 'wild':
@@ -239,14 +224,10 @@ class Uno(Game):
                     card_play_actions = [a for a in actions if a.card is not None]
                     for a in card_play_actions:
                         actions.append(Action(card=a.card, color=a.color, draw=a.draw, uno=True))
-
-                # No draw=1 since we already drew and have playable cards
                 return sorted(actions)
 
-            # No playable cards after drawing, show draw=1 again
             actions.append(Action(draw=1))
             return sorted(actions)
-
 
         # has_drawn=False, cnt_to_draw=0
         if playable_cards:
@@ -270,7 +251,6 @@ class Uno(Game):
                         actions.append(Action(card=a.card, color=a.color, draw=a.draw, uno=True))
                 return sorted(actions)
 
-            # Normal scenario
             for c in playable_cards:
                 if c.symbol == 'wild':
                     for col in ['red', 'green', 'yellow', 'blue']:
@@ -289,21 +269,13 @@ class Uno(Game):
                 for a in card_play_actions:
                     actions.append(Action(card=a.card, color=a.color, draw=a.draw, uno=True))
 
-            # Add draw=1
             actions.append(Action(draw=1))
             return sorted(actions)
 
-        # No playable cards
         actions.append(Action(draw=1))
         return actions
 
     def apply_action(self, action: Action) -> None:
-        """
-        Apply the given action to the current game state.
-        
-        Parameters:
-            action (Action): The action selected by the active player.
-        """
         if self.state.phase != GamePhase.RUNNING:
             return
 
@@ -315,8 +287,6 @@ class Uno(Game):
 
             if action.card.symbol == "reverse":
                 self.state.direction *= -1
-                if self.state.cnt_player == 2:
-                    self._advance_turn(skip=True)
             elif action.card.symbol == "skip":
                 self._advance_turn(skip=True)
             elif action.card.symbol == "draw2":
@@ -335,17 +305,13 @@ class Uno(Game):
                 self.state.phase = GamePhase.FINISHED
                 return
 
-            # Advance turn only if it's a normal card
             if action.card.symbol not in ["skip", "reverse", "draw2", "wilddraw4"]:
                 self._advance_turn()
 
-            # No second turn advance for draw2 or wilddraw4
             self.state.has_drawn = False
 
         elif action.draw:
-            # Drawing cards
             if self.state.cnt_to_draw > 0:
-                # Forced draw scenario
                 draw_count = action.draw
                 for _ in range(draw_count):
                     if self.state.list_card_draw:
@@ -354,23 +320,12 @@ class Uno(Game):
                 self._advance_turn()
                 self.state.has_drawn = False
             else:
-                # Normal draw scenario
                 for _ in range(action.draw):
                     if self.state.list_card_draw:
                         active_player.list_card.append(self.state.list_card_draw.pop())
                 self.state.has_drawn = True
-                # Do not advance turn now
 
     def get_player_view(self, idx_player: int) -> GameState:
-        """
-        Return a masked state where other players' cards are hidden.
-        
-        Parameters:
-            idx_player (int): The index of the player requesting the view.
-        
-        Returns:
-            GameState: A copy of the game state with hidden cards for other players.
-        """
         masked_state = self.state.model_copy()
         for i, player in enumerate(masked_state.list_player):
             if i != idx_player:
@@ -378,7 +333,6 @@ class Uno(Game):
         return masked_state
 
     def _initialize_game(self) -> None:
-        """Initialize the game: shuffle deck, deal cards, and set up the discard pile."""
         if self.state.cnt_player == 0:
             return
 
@@ -388,6 +342,7 @@ class Uno(Game):
                 for i in range(self.state.cnt_player)
             ]
 
+        # Only initialize deck if both draw and discard are empty
         if not self.state.list_card_draw and not self.state.list_card_discard:
             deck = self._initialize_deck()
             random.shuffle(deck)
@@ -395,11 +350,14 @@ class Uno(Game):
             if self.state.idx_player_active is None:
                 self.state.idx_player_active = 0
 
-            for player in self.state.list_player:
-                for _ in range(self.state.CNT_HAND_CARDS):
-                    if self.state.list_card_draw:
-                        player.list_card.append(self.state.list_card_draw.pop())
+        if self.state.idx_player_active is None:
+            self.state.idx_player_active = 0
 
+        for player in self.state.list_player:
+            while len(player.list_card) < self.state.CNT_HAND_CARDS and self.state.list_card_draw:
+                player.list_card.append(self.state.list_card_draw.pop())
+
+        if not self.state.list_card_discard:
             valid_start_found = False
             while self.state.list_card_draw and not valid_start_found:
                 top_card = self.state.list_card_draw.pop()
@@ -409,56 +367,20 @@ class Uno(Game):
                 self.state.color = top_card.color
                 valid_start_found = True
 
-            if self.state.list_card_discard:
-                top_card = self.state.list_card_discard[-1]
-                if top_card.symbol == "draw2":
-                    self.state.cnt_to_draw = 2
-                elif top_card.symbol == "reverse":
-                    self.state.direction = -1
-                elif top_card.symbol == "skip":
-                    # When initial card is skip, advance only 1 player
-                    self._advance_turn(skip=False)
-                elif top_card.symbol == "wild":
-                    self.state.color = 'blue'
-        else:
-            if self.state.idx_player_active is None:
-                self.state.idx_player_active = 0
-
-            if not self.state.list_card_discard:
-                valid_start_found = False
-                while self.state.list_card_draw and not valid_start_found:
-                    top_card = self.state.list_card_draw.pop()
-                    if top_card.symbol == "wilddraw4":
-                        continue
-                    self.state.list_card_discard.append(top_card)
-                    self.state.color = top_card.color
-                    valid_start_found = True
-
-            for player in self.state.list_player:
-                while len(player.list_card) < self.state.CNT_HAND_CARDS and self.state.list_card_draw:
-                    player.list_card.append(self.state.list_card_draw.pop())
-
-            if len(self.state.list_card_discard) == 1:
-                top_card = self.state.list_card_discard[-1]
-                if top_card.symbol == "draw2":
-                    self.state.cnt_to_draw = 2
-                elif top_card.symbol == "reverse":
-                    self.state.direction = -1
-                elif top_card.symbol == "skip":
-                    # When initial card is skip, advance only 1 player
-                    self._advance_turn(skip=False)
-                elif top_card.symbol == "wild":
-                    self.state.color = 'blue'
+        if self.state.list_card_discard:
+            top_card = self.state.list_card_discard[-1]
+            if top_card.symbol == "draw2":
+                self.state.cnt_to_draw = 2
+            elif top_card.symbol == "reverse":
+                self.state.direction = -1
+            elif top_card.symbol == "skip":
+                self._advance_turn(skip=False)
+            elif top_card.symbol == "wild":
+                self.state.color = 'blue'
 
         self.state.phase = GamePhase.RUNNING
 
     def _initialize_deck(self) -> List[Card]:
-        """
-        Create and return a standard UNO deck.
-        
-        Returns:
-            List[Card]: A complete UNO deck.
-        """
         deck: List[Card] = []
         colors = ['red', 'yellow', 'green', 'blue']
         for color in colors:
@@ -476,12 +398,6 @@ class Uno(Game):
         return deck
 
     def _advance_turn(self, skip: bool = False) -> None:
-        """
-        Advance the turn to the next player, skipping if necessary.
-        
-        Parameters:
-            skip (bool): If True, skip the next player (2 steps if more than 2 players).
-        """
         steps = 2 if skip else 1
         self.state.idx_player_active = (
             (self.state.idx_player_active + steps * self.state.direction) % self.state.cnt_player
@@ -489,16 +405,6 @@ class Uno(Game):
         self.state.has_drawn = False
 
     def _can_play_card(self, card: Card, top_discard: Optional[Card]) -> bool:
-        """
-        Check if a given card can be played on the top of the discard pile.
-        
-        Parameters:
-            card (Card): The card to evaluate.
-            top_discard (Optional[Card]): The card currently on top of the discard pile.
-        
-        Returns:
-            bool: True if the card can be played, False otherwise.
-        """
         if not top_discard:
             return True
         return (
@@ -511,17 +417,6 @@ class Uno(Game):
 
     def _has_other_playable_card(self, hand: List[Card], exclude_card: Card,
                                  top_discard: Card) -> bool:
-        """
-        Check if there's another playable card in hand excluding a specific card.
-        
-        Parameters:
-            hand (List[Card]): The player's hand.
-            exclude_card (Card): A card to exclude from consideration.
-            top_discard (Card): The current top discard card.
-        
-        Returns:
-            bool: True if another playable card exists, False otherwise.
-        """
         for c in hand:
             if c == exclude_card:
                 continue
@@ -533,18 +428,15 @@ class Uno(Game):
 class RandomPlayer(Player):
     """A random player implementation that chooses actions at random."""
     def select_action(self, state: GameState, actions: List[Action]) -> Optional[Action]:
-        """
-        Select an action at random from the list of possible actions.
-        
-        Parameters:
-            state (GameState): The current game state.
-            actions (List[Action]): The available actions.
-        
-        Returns:
-            Optional[Action]: A randomly chosen action, or None if no actions.
-        """
         return random.choice(actions) if actions else None
-    
 
-    # 12.12 at 23.34
- 
+
+# Example usage:
+if __name__ == "__main__":
+    # Initialize a UNO game with 2 players
+    game = Uno()
+    initial_state = GameState(cnt_player=2)
+    game.set_state(initial_state)
+    print(game.print_state())
+    # You can now call game.get_list_action(), game.apply_action(), etc.
+
