@@ -1,5 +1,5 @@
 import pytest
-from server.py.dog import Dog, GameState, GamePhase, RandomPlayer, Card, Action
+from server.py.dog import Dog, GameState, GamePhase, RandomPlayer, Card, Action, PlayerState, Marble
 
 def test_get_and_set_state():
     """Test get and set state"""
@@ -242,4 +242,218 @@ def test_round_continues_with_remaining_players():
         f"Game did not correctly pass the turn to the next player. Expected player 1, found {game.state.idx_player_active}."
     )
 
+def test_apply_action_no_state():
+    """Test applying action when no state is set."""
+    game = Dog()
+    game.state = None
+    with pytest.raises(ValueError, match="Game state is not set"):
+        game.apply_action(None)
+
+# def test_apply_action_jack_no_marbles_to_swap():
+#     """Test the Jack action when no marbles can be swapped."""
+#     game = Dog()
+#     game.initialize_game()
+#     assert game.state is not None
+
+#     # Give the active player a Jack card and place marbles so no swap is possible
+#     idx_active = game.state.idx_player_active
+#     player = game.state.list_player[idx_active]
+#     player.list_card = [Card(suit='♠', rank='J')]
+
+#     # Marble in kennel and no other player marbles in reachable positions
+#     player.list_marble[0].pos = 64  # Kennel of player 1
+#     action = Action(card=Card(suit='♠', rank='J'), pos_from=64, pos_to=10)  # Attempt to swap with pos 10 (empty)
+
+#     with pytest.raises(ValueError, match="Could not find marbles to swap for the Jack action."):
+#         game.apply_action(action)
+
+# def test_apply_action_joker_regular_move():
+#     """Test the Joker card used as a normal move card."""
+#     game = Dog()
+#     game.initialize_game()
+#     assert game.state is not None
+
+#     idx_active = game.state.idx_player_active
+#     player = game.state.list_player[idx_active]
+
+#     # Place a marble on the main track and give Joker card
+#     player.list_marble[0].pos = 5
+#     player.list_marble[0].is_save = False
+#     player.list_card = [Card(suit='', rank='JKR')]
+
+#     # Joker can act like a K (13 forward) for instance
+#     # Check a valid move scenario
+#     pos_from = 5
+#     pos_to = 5 + 13  # hypothetical new position
+#     action = Action(card=Card(suit='', rank='JKR'), pos_from=pos_from, pos_to=pos_to)
+#     game.apply_action(action)
+
+#     # Verify that marble moved and possibly became safe if pos_to is in safe spaces
+#     moved_marble = [m for m in player.list_marble if m.pos == pos_to]
+#     assert len(moved_marble) == 1, "Joker card did not move the marble as expected."
+
+def test_invalid_apply_action_card_not_in_player_hand():
+    """Test applying an action with a card that is not in the active player's hand."""
+    game = Dog()
+    game.initialize_game()
+    assert game.state is not None
+
+    idx_active = game.state.idx_player_active
+    player = game.state.list_player[idx_active]
+
+    # Give player no cards, but try to play a card anyway
+    player.list_card.clear()
+    action = Action(card=Card(suit='♠', rank='A'), pos_from=64, pos_to=0)
+
+    with pytest.raises(ValueError, match="Card .* not found in active player's hand"):
+        game.apply_action(action)
+
+def test_handle_card_exchange():
+    """Test card exchange at the start of the game."""
+    game = Dog()
+    game.initialize_game()
+    assert game.state is not None
+    state = game.get_state()
+
+    # Simulate initial card exchange
+    idx_active = state.idx_player_active
+    player = state.list_player[idx_active]
+
+    # Ensure we have at least one card
+    if not player.list_card:
+        # In a normal game start player should have cards, but if not, deal them
+        game.deal_cards()
+        state = game.get_state()
+        player = state.list_player[idx_active]
+
+    exchange_card = player.list_card[0]
+    action = Action(card=exchange_card, pos_from=None, pos_to=None)
+    game.apply_action(action)
+
+    # After applying exchange, the active player should move to next player
+    assert game.state.idx_player_active != idx_active, "Active player did not advance after exchange."
+
+def test_invalid_state_in_is_in_kennel():
+    """Test _is_in_kennel when state is None."""
+    game = Dog()
+    game.state = None
+    with pytest.raises(AssertionError):
+        # Passing arbitrary marble
+        game._is_in_kennel(Marble(pos=64, is_save=True))
+
+def test_can_swap_with_target_in_eligible_marble():
+    """Test that _can_swap_with_target returns False for marbles in safe spaces."""
+    game = Dog()
+    game.initialize_game()
+    assert game.state is not None
+
+    # Opponent's marble in safe space
+    t_player_idx = (game.state.idx_player_active + 1) % 4
+    target_info = {
+        "player": "Opponent",
+        "player_idx": t_player_idx,
+        "position": game.SAFE_SPACES[t_player_idx][0],
+        "is_save": False
+    }
+
+    assert not game._can_swap_with_target(target_info), "Should not swap with a marble in safe space."
+
+def test_calculate_new_position_no_state():
+    """Test _calculate_new_position when state is None."""
+    game = Dog()
+    game.state = None
+    with pytest.raises(ValueError, match="Game state is not set."):
+        game._calculate_new_position(Marble(pos=0, is_save=False), 4, 0)
+
+def test_validate_game_state_no_state():
+    """Test validate_game_state when state is None."""
+    game = Dog()
+    game.state = None
+    with pytest.raises(ValueError, match="Game state is not set."):
+        game.validate_game_state()
+
+def test_draw_board_no_state():
+    """Test draw_board when state is None."""
+    game = Dog()
+    game.state = None
+    with pytest.raises(ValueError, match="Game state is not set."):
+        game.draw_board()
+
+def test_deal_cards_insufficient_cards():
+    """Test deal_cards when not enough cards are available and no discard pile to reshuffle."""
+    game = Dog()
+    game.initialize_game()
+    assert game.state is not None
+
+    # Drain the draw pile and empty the discard as well
+    game.state.list_card_draw.clear()
+    game.state.list_card_discard.clear()
+    # Attempt to deal cards should fail
+    with pytest.raises(ValueError, match="Not enough cards to reshuffle and deal."):
+        game.deal_cards()
+
+def test_next_round_increments_round():
+    """Test that next_round increments the round counter and resets necessary flags."""
+    game = Dog()
+    game.initialize_game()
+    assert game.state is not None
+
+    initial_round = game.state.cnt_round
+    game.next_round()
+    assert game.state.cnt_round == initial_round + 1, "next_round did not increment round."
+
+def test_get_player_view_masks_opponents_cards():
+    """Test that get_player_view returns a state where opponents' cards are masked."""
+    game = Dog()
+    game.initialize_game()
+    assert game.state is not None
+
+    # Give players some cards
+    for player in game.state.list_player:
+        player.list_card = [Card(suit='♠', rank='A')]
+
+    idx_player = 0
+    player_view = game.get_player_view(idx_player)
+    for i, player in enumerate(player_view.list_player):
+        if i != idx_player:
+            assert len(player.list_card) == 0, "Opponent's cards are not masked."
+
+def test_validate_total_cards_mismatch():
+    """Test that validate_total_cards raises an error if total cards mismatch."""
+    game = Dog()
+    game.initialize_game()
+    assert game.state is not None
+
+    # Remove one card from draw to cause mismatch
+    if game.state.list_card_draw:
+        game.state.list_card_draw.pop()
+
+    with pytest.raises(ValueError, match="Total cards mismatch"):
+        game.validate_total_cards()
+
+# def test_collision_opponent_marble_sent_back():
+#     """Test collision scenario where an opponent's marble is sent back to the kennel."""
+#     game = Dog()
+#     game.initialize_game()
+#     assert game.state is not None
+
+#     idx_active = game.state.idx_player_active
+#     player = game.state.list_player[idx_active]
+
+#     # Place opponent marble on a position and active player's marble moving onto it
+#     opponent_idx = (idx_active + 1) % 4
+#     opponent_player = game.state.list_player[opponent_idx]
+#     opponent_player.list_marble[0].pos = 10
+
+#     player.list_marble[0].pos = 9
+#     player.list_card = [Card(suit='♠', rank='2')]  # Move 2 steps forward
+
+#     # Apply action moving marble from 9 to 11 (which collides at pos_to=11 if pos_to is 10)
+#     action = Action(card=Card(suit='♠', rank='2'), pos_from=9, pos_to=10)
+#     game.apply_action(action)
+
+#     # Opponent's marble should be sent back to kennel
+#     new_pos = opponent_player.list_marble[0].pos
+#     kennel_positions = game.KENNEL_POSITIONS[opponent_idx]
+#     assert new_pos in kennel_positions, "Opponent's marble was not sent back to kennel on collision."
 
