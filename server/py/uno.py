@@ -439,3 +439,4 @@ if __name__ == "__main__":
     game.set_state(initial_state)
     print(game.print_state())
     # You can now call game.get_list_action(), game.apply_action(), etc.
+
