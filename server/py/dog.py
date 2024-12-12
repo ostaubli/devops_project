@@ -25,8 +25,8 @@ class Card(BaseModel):
 
 
 class Marble(BaseModel):
-    pos: int
-    is_save: bool
+    pos: int       # position on board (0 to 95)
+    is_save: bool  # true if marble was moved out of kennel and was not yet moved
 
 
 class PlayerState(BaseModel):
@@ -55,35 +55,35 @@ class GameState(BaseModel):
         'J', 'Q', 'K', 'A', 'JKR'
     ]
     LIST_CARD: ClassVar[List[Card]] = [
-                                          Card(suit='♠', rank='2'), Card(suit='♥', rank='2'), Card(suit='♦', rank='2'),
-                                          Card(suit='♣', rank='2'),
-                                          Card(suit='♠', rank='3'), Card(suit='♥', rank='3'), Card(suit='♦', rank='3'),
-                                          Card(suit='♣', rank='3'),
-                                          Card(suit='♠', rank='4'), Card(suit='♥', rank='4'), Card(suit='♦', rank='4'),
-                                          Card(suit='♣', rank='4'),
-                                          Card(suit='♠', rank='5'), Card(suit='♥', rank='5'), Card(suit='♦', rank='5'),
-                                          Card(suit='♣', rank='5'),
-                                          Card(suit='♠', rank='6'), Card(suit='♥', rank='6'), Card(suit='♦', rank='6'),
-                                          Card(suit='♣', rank='6'),
-                                          Card(suit='♠', rank='7'), Card(suit='♥', rank='7'), Card(suit='♦', rank='7'),
-                                          Card(suit='♣', rank='7'),
-                                          Card(suit='♠', rank='8'), Card(suit='♥', rank='8'), Card(suit='♦', rank='8'),
-                                          Card(suit='♣', rank='8'),
-                                          Card(suit='♠', rank='9'), Card(suit='♥', rank='9'), Card(suit='♦', rank='9'),
-                                          Card(suit='♣', rank='9'),
-                                          Card(suit='♠', rank='10'), Card(suit='♥', rank='10'),
-                                          Card(suit='♦', rank='10'), Card(suit='♣', rank='10'),
-                                          Card(suit='♠', rank='J'), Card(suit='♥', rank='J'), Card(suit='♦', rank='J'),
-                                          Card(suit='♣', rank='J'),
-                                          Card(suit='♠', rank='Q'), Card(suit='♥', rank='Q'), Card(suit='♦', rank='Q'),
-                                          Card(suit='♣', rank='Q'),
-                                          Card(suit='♠', rank='K'), Card(suit='♥', rank='K'), Card(suit='♦', rank='K'),
-                                          Card(suit='♣', rank='K'),
-                                          Card(suit='♠', rank='A'), Card(suit='♥', rank='A'), Card(suit='♦', rank='A'),
-                                          Card(suit='♣', rank='A'),
-                                          Card(suit='', rank='JKR'), Card(suit='', rank='JKR'),
-                                          Card(suit='', rank='JKR')
-                                      ] * 2
+        # 2: Move 2 spots forward
+        Card(suit='♠', rank='2'), Card(suit='♥', rank='2'), Card(suit='♦', rank='2'), Card(suit='♣', rank='2'),
+        # 3: Move 3 spots forward
+        Card(suit='♠', rank='3'), Card(suit='♥', rank='3'), Card(suit='♦', rank='3'), Card(suit='♣', rank='3'),
+        # 4: Move 4 spots forward or back
+        Card(suit='♠', rank='4'), Card(suit='♥', rank='4'), Card(suit='♦', rank='4'), Card(suit='♣', rank='4'),
+        # 5: Move 5 spots forward
+        Card(suit='♠', rank='5'), Card(suit='♥', rank='5'), Card(suit='♦', rank='5'), Card(suit='♣', rank='5'),
+        # 6: Move 6 spots forward
+        Card(suit='♠', rank='6'), Card(suit='♥', rank='6'), Card(suit='♦', rank='6'), Card(suit='♣', rank='6'),
+        # 7: Move 7 single steps forward
+        Card(suit='♠', rank='7'), Card(suit='♥', rank='7'), Card(suit='♦', rank='7'), Card(suit='♣', rank='7'),
+        # 8: Move 8 spots forward
+        Card(suit='♠', rank='8'), Card(suit='♥', rank='8'), Card(suit='♦', rank='8'), Card(suit='♣', rank='8'),
+        # 9: Move 9 spots forward
+        Card(suit='♠', rank='9'), Card(suit='♥', rank='9'), Card(suit='♦', rank='9'), Card(suit='♣', rank='9'),
+        # 10: Move 10 spots forward
+        Card(suit='♠', rank='10'), Card(suit='♥', rank='10'), Card(suit='♦', rank='10'), Card(suit='♣', rank='10'),
+        # Jake: A marble must be exchanged
+        Card(suit='♠', rank='J'), Card(suit='♥', rank='J'), Card(suit='♦', rank='J'), Card(suit='♣', rank='J'),
+        # Queen: Move 12 spots forward
+        Card(suit='♠', rank='Q'), Card(suit='♥', rank='Q'), Card(suit='♦', rank='Q'), Card(suit='♣', rank='Q'),
+        # King: Start or move 13 spots forward
+        Card(suit='♠', rank='K'), Card(suit='♥', rank='K'), Card(suit='♦', rank='K'), Card(suit='♣', rank='K'),
+        # Ass: Start or move 1 or 11 spots forward
+        Card(suit='♠', rank='A'), Card(suit='♥', rank='A'), Card(suit='♦', rank='A'), Card(suit='♣', rank='A'),
+        # Joker: Use as any other card you want
+        Card(suit='', rank='JKR'), Card(suit='', rank='JKR'), Card(suit='', rank='JKR')
+    ] * 2
 
     cnt_player: int = 4
     phase: GamePhase
@@ -98,6 +98,7 @@ class GameState(BaseModel):
 
 
 class Dog(Game):
+
     def __init__(self) -> None:
         self.steps_remaining = None  # Track steps for card SEVEN
         self.reset()
@@ -140,6 +141,7 @@ class Dog(Game):
         return self.state
 
     def print_state(self) -> None:
+        """ Print the current game state """
         pass
 
     def get_list_action(self) -> List[Action]:
@@ -260,7 +262,7 @@ class Dog(Game):
             )
             if moving_marble:
                 moving_marble.pos = 12
-            
+
             # Restore Player 2's marble from kennel back to pos 15
             player2 = self.state.list_player[1]  # Player 2
             kennel_marble = next(
@@ -444,7 +446,14 @@ class Dog(Game):
 
 
 class RandomPlayer(Player):
+
     def select_action(self, state: GameState, actions: List[Action]) -> Optional[Action]:
+        """ Given masked game state and possible actions, select the next action """
         if len(actions) > 0:
             return random.choice(actions)
         return None
+
+
+if __name__ == '__main__':
+
+    game = Dog()
