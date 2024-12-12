@@ -105,6 +105,27 @@ def test_draw_card():
     assert game.state.list_player[0].list_card[0].number == 7
     assert game.state.has_drawn
 
+def test_uno_call():
+    """Test the UNO call functionality."""
+    game = Uno()
+    state = GameState(
+        cnt_player=2,
+        list_player=[
+            PlayerState(name="Player 1", list_card=[Card(color="red", number=5), Card(color="blue", number=2)]),
+            PlayerState(name="Player 2", list_card=[]),
+        ],
+        list_card_discard=[Card(color="red", number=3)],
+        idx_player_active=0,
+        phase=GamePhase.RUNNING,
+    )
+    game.set_state(state)
+
+    action = Action(card=Card(color="red", number=5), uno=True)
+    game.apply_action(action)
+
+    assert len(game.state.list_player[0].list_card) == 1
+    assert action.uno
+
 def test_list_action_card_matching_1() -> None:
     """Test 003: Test player card matching with discard pile card - simple cards [3 points]"""
     # self.game_server.game = Uno()
