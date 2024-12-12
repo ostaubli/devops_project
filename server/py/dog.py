@@ -600,6 +600,10 @@ class Dog(Game):
         # If card exchange phase not completed, generate actions for exchanging cards
         if self._is_card_exchange_phase():
             return self._get_exchange_actions(active_player)
+        
+        if self.state.card_active is not None:
+            current_cards = [self.state.card_active]
+
 
         # After exchange phase, normal gameplay actions:
         all_marbles = self._get_all_marbles()
@@ -891,7 +895,8 @@ class Dog(Game):
             print(f"{active_player.name} exchanges {action.card.rank} wit {action.card_swap.rank}.")
             active_player.list_card.append(action.card_swap)
             active_player.list_card.remove(action.card)
-            return
+            self.state.card_active = action.card_swap
+            return  
 
         # Log the action being applied
         print(f"Player {active_player.name} plays {action.card.rank} of {action.card.suit} "
