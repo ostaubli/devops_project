@@ -49,6 +49,17 @@ def test_set_state_initial_setup() -> None:
     # check player
     print(game.state.list_player)
 
+def test_initialize_game_state():
+    """Test if the game state initializes correctly."""
+    game = Uno()
+    state = GameState(cnt_player=3)
+    game.set_state(state)
+    assert game.state.cnt_player == 3
+    assert len(game.state.list_player) == 3
+    assert len(game.state.list_card_draw) == 108  # Standard UNO deck size
+    assert game.state.phase == GamePhase.RUNNING
+    assert game.state.idx_player_active is not None
+    
 def test_list_action_card_matching_1() -> None:
     """Test 003: Test player card matching with discard pile card - simple cards [3 points]"""
     # self.game_server.game = Uno()
