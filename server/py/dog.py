@@ -333,11 +333,7 @@ class GameState(BaseModel):
             # fun2
         return action_list
 
-    def set_action_to_game(self, action: Action):
-        """
-        Applies the given action to the game state. Updates marble positions, handles special cards,
-        and manages interactions with other marbles on the board.
-        """
+    def set_action_to_game(self, action: Action):  # Kened
         # Get the active player
         active_player = self.list_player[self.idx_player_active]
 
@@ -354,32 +350,35 @@ class GameState(BaseModel):
         if not marble_to_move:
             return
 
-        # Update marble position
+        # Update the marble's position
         marble_to_move.pos = str(action.pos_to)
 
-        # Check if the new position is in a final or safe zone
+        # Check if the marble's new position is in a final or safe zone
         self.check_final_pos(pos_to=action.pos_to, pos_from=action.pos_from, marble=marble_to_move)
 
-        # Handle collision with another player's marble
+        # Handle cases where another player's marble occupies the destination
         for player in self.list_player:
             if player != active_player:
                 opponent_marble = next((m for m in player.list_marble if m.pos == str(action.pos_to)), None)
                 if opponent_marble:
-                    self.sending_home(opponent_marble)
-
+                    self.sending_home(opponent_marble)  # Send the opponent's marble home
         # Discard the played card
         active_player.list_card.remove(action.card)
         self.list_card_discard.append(action.card)
 
-        # Handle special card logic
+        # Handle special cards
         if action.card.rank == '7':
+            # 7 allows multiple movements; the game logic should track additional actions
             self.card_active = action.card
         elif action.card.rank == 'J':
-            pass  # Logic for swapping marbles can be added here
+            # J allows swapping marbles (specific logic to be implemented separately)
+            pass
         elif action.card.rank == 'JKR':
-            pass  # Logic for flexible rules can be added here
+            # Joker allows flexibility, which may require additional rules
+            pass
         else:
-            self.card_active = None  # Reset active card for regular actions
+            # Reset the active card for regular actions
+            self.card_active = None
 
     def can_leave_kennel(self) -> bool:  # <============= DOPPELT
         if self.card_active is None:
@@ -649,11 +648,6 @@ class Dog(Game):
 
         2. Wenn Zug abgeschlossen Aktiver spieler weitergeben
         """
-        # Check if exchange cards is needed
-        if self.state.bool_card_exchanged is False:
-            self.state.exchange_cards(action)
-
-
         # Check if exchange cards is needed
         if action is None:
             # Move to next player
