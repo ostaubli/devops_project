@@ -401,6 +401,14 @@ def test_get_player_view():
                for c in view_for_p1.list_player[1].list_card)
     assert all(c.color is None and c.number is None and c.symbol is None 
                for c in view_for_p1.list_player[2].list_card)
+    
+def test_print_state_no_cards():
+    """Test print_state method with no cards dealt."""
+    game = Uno()
+    state = GameState(cnt_player=0, phase=GamePhase.SETUP)
+    game.set_state(state)
+    s = game.print_state()
+    assert "Game State:" in s
 
 def test_list_action_card_matching_1() -> None:
     """Test 003: Test player card matching with discard pile card - simple cards [3 points]"""
