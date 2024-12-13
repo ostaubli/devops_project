@@ -341,6 +341,28 @@ def test_missed_uno_penalty():
     assert game.state.list_card_discard[-1].number == 5
     assert game.state.idx_player_active == 1
 
+def test_get_list_action_no_playable_cards_has_drawn():
+    """Test get_list_action when has_drawn is True and no cards are playable."""
+    game = Uno()
+    state = GameState(
+        cnt_player=2,
+        list_player=[
+            PlayerState(name="P1", list_card=[Card(color="red", number=1)]),
+            PlayerState(name="P2", list_card=[Card(color="blue", number=5)])
+        ],
+        list_card_draw=[Card(color="green", number=9)],
+        list_card_discard=[Card(color="yellow", number=3)],
+        idx_player_active=0,
+        phase=GamePhase.RUNNING,
+        color="yellow",
+        has_drawn=True
+    )
+    game.set_state(state)
+    actions = game.get_list_action()
+    assert len(actions) == 1
+    assert actions[0].draw == 1
+    assert actions[0].card is None
+
 def test_list_action_card_matching_1() -> None:
     """Test 003: Test player card matching with discard pile card - simple cards [3 points]"""
     # self.game_server.game = Uno()
