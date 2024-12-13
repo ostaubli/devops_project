@@ -411,6 +411,7 @@ class Uno(Game):
         if not top_discard:
             return True
 
+
         # Check by color first
         if card.color == self.state.color or self.state.color == 'any':
             return True
