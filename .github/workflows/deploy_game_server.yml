@@ -4,6 +4,10 @@ on:
   push:
     branches:
       - main  # Deploy only on pushes to the main branch
+steps:
+     - name: 'Checkout'
+       uses: 'actions/checkout@v3'
+
 
 jobs:
   deploy:
@@ -12,27 +16,34 @@ jobs:
     steps:
     # Step 1: Checkout the repository
     - name: Checkout code
-      uses: actions/checkout@v4
+      uses: actions/checkout@v3
 
-    # Step 2: Set up Google Cloud SDK
-    - name: Set up Google Cloud SDK
+    # Step 2:Auth for Google Cloud SDK
+    - name: 'Google auth'
+      id: 'auth'
+      uses: 'google-github-actions/auth@v1'
+      with:
+        workload_identity_provider: '${{ secrets.GCP_WORKLOAD_IDENTITY_PROVIDER }}'
+        service_account: '${{ secrets.GCP_SA_NAME }}'
+
+    # Step 3: Set up Google Cloud SDK
+    - name: Set up Cloud SDK
       uses: google-github-actions/setup-gcloud@v1
       with:
-        service_account_key: ${{ secrets.GCP_SERVICE_ACCOUNT_KEY }}
-        project_id: ${{ secrets.GCP_PROJECT_ID }}
+          project_id: '${{ secrets.GCP_PROJECT_ID }}'
 
-    # Step 3: Authenticate Docker with Google Container Registry (GCR)
+    # Step 4: Authenticate Docker with Google Container Registry (GCR)
     - name: Authenticate Docker
       run: gcloud auth configure-docker --quiet
 
-    # Step 4: Build and push Docker image
+    # Step 5: Build and push Docker image
     - name: Build and push Docker image
       run: |
         IMAGE_NAME=gcr.io/${{ secrets.GCP_PROJECT_ID }}/aaajp_gamer_server_from_git
         docker build -t $IMAGE_NAME .
         docker push $IMAGE_NAME
 
-    # Step 5: Deploy to Google Cloud Run
+    # Step 6: Deploy to Google Cloud Run
     - name: Deploy to Cloud Run
       run: |
         IMAGE_NAME=gcr.io/${{ secrets.GCP_PROJECT_ID }}/aaajp_gamer_server_from_git
