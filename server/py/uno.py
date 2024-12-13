@@ -70,7 +70,6 @@ class GameState(BaseModel):
     cnt_to_draw: int = 0
     has_drawn: bool = False
 
-
 class Uno(Game):
     """UNO game implementation."""
 
@@ -408,16 +407,30 @@ class Uno(Game):
         self.state.has_drawn = False
 
     def _can_play_card(self, card: Card, top_discard: Optional[Card]) -> bool:
+        # If there is no card on the discard pile, we can play anything
         if not top_discard:
             return True
-        return (
-            card.color == self.state.color
-            or self.state.color == 'any'
-            or (card.number is not None and top_discard.number is not None
-                and card.number == top_discard.number)
-            or (card.symbol is not None and top_discard.symbol == card.symbol)
-            or (card.symbol in ["wild", "wilddraw4"])
-        )
+
+        # Check by color first
+        if card.color == self.state.color or self.state.color == 'any':
+            return True
+
+        # Check by matching number (if both have numbers)
+        if card.number is not None and top_discard.number is not None:
+            if card.number == top_discard.number:
+                return True
+
+        # Check by matching symbol
+        if card.symbol is not None and top_discard.symbol == card.symbol:
+            return True
+
+        # Check if the card is a wildcard
+        if card.symbol in ["wild", "wilddraw4"]:
+            return True
+
+        # If none of the conditions are met, the card can’t be played
+        return False
+
 
     def _has_other_playable_card(self, hand: List[Card], exclude_card: Card,
                                  top_discard: Optional[Card]) -> bool:
