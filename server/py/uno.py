@@ -1,8 +1,10 @@
-from server.py.game import Game, Player
 from typing import List, Optional
 from enum import Enum
 import random
+
 from pydantic import BaseModel
+
+from .game import Game, Player
 
 class Card(BaseModel):
     """Represents a UNO card with optional color, number, and/or symbol."""
@@ -121,7 +123,9 @@ class Uno(Game):
                 continue
             if not list_card and keys == 'LIST_CARD':
                 continue
-            print_str += f'\n{keys} : {getattr(self.state, keys)}'
+            print_str += (
+                f'\n{keys} : {getattr(self.state, keys)}'
+            )
         return print_str
 
     def get_list_action(self) -> List[Action]:
