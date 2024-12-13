@@ -5,6 +5,7 @@ from typing import List, Optional, Dict
 
 from server.py.dog import Card, Marble, PlayerState, Action, GameState, GamePhase, Dog
 
+
 class TestKaegisDogParts:
 
     def test_setup_players(self) -> None:
@@ -31,11 +32,13 @@ class TestKaegisDogParts:
                 assert marble.pos == kennel_pos, f"Player {player.name} has a marble not in its kennel position"
 
             # Check if all marbles are safe
-            assert all(marble.is_save for marble in player.list_marble), f"All marbles of {player.name} should be marked as safe"
+            assert all(marble.is_save for marble in
+                       player.list_marble), f"All marbles of {player.name} should be marked as safe"
 
             # Check finish positions
             expected_finish_counts = [4, 4, 4, 4]
-            assert len(player.list_finish_pos) == expected_finish_counts[idx], f"Player {player.name} should have 4 finish positions"
+            assert len(player.list_finish_pos) == expected_finish_counts[
+                idx], f"Player {player.name} should have 4 finish positions"
 
         print("Completed Test setup_players")
 
@@ -48,14 +51,14 @@ class TestKaegisDogParts:
         for player in state.list_player:
             assert len(player.list_card) == 6, "Should be 6 Cards for each player in firs Round"
             player.list_card = []
-        
+
         game.state.deal_cards()
         state = game.get_state()
         assert state.cnt_round == 2, "2 Round"
         for player in state.list_player:
             assert len(player.list_card) == 5, "Should be 5 Cards for each player in 2 Round"
             player.list_card = []
-        
+
         game.state.deal_cards()
         state = game.get_state()
         assert state.cnt_round == 3, "3 Round"
@@ -84,17 +87,17 @@ class TestKaegisDogParts:
             assert len(player.list_card) == 6, "Should be 6 Cards for each player in 6 Round"
             player.list_card = []
 
-
         print("Compleeted Test deal_cards")
- 
+
     def test_init_next_turn(self) -> None:
         game = Dog()
 
         # Initial state
         state = game.get_state()
-        state.idx_player_active = 0 
+        state.idx_player_active = 0
         assert state.idx_player_active == 0, "Initial active player should be player 0"
-        assert all(len(player.list_card) == 6 for player in state.list_player), "All players should have 6 cards at the start"
+        assert all(
+            len(player.list_card) == 6 for player in state.list_player), "All players should have 6 cards at the start"
 
         # Simulate a turn where player 0 has no cards
         state.list_player[0].list_card = []
@@ -112,11 +115,12 @@ class TestKaegisDogParts:
         # Simulate all players running out of cards
         for player in state.list_player:
             player.list_card = []
-        
+
         game.state.init_next_turn()
         state = game.get_state()
         assert state.idx_player_active == 0, "Active player should loop back to player 0 after dealing cards"
-        assert all(len(player.list_card) > 0 for player in state.list_player), "New cards should be dealt to all players"
+        assert all(
+            len(player.list_card) > 0 for player in state.list_player), "New cards should be dealt to all players"
 
         print("Completed Test init_next_turn")
 
@@ -197,7 +201,6 @@ class TestKaegisDogParts:
 #             game.marble_switch_jake(player_idx=0, opponent_idx=1, player_marble_pos=1, opponent_marble_pos=10)
 
 
-
 # def test_apply_action_valid_move(setup_game):
 #     game = setup_game
 
@@ -276,7 +279,91 @@ class TestKaegisDogParts:
 #         game.apply_action(action)
 
 
+class TestGameState:
+# Test can_leave_kennel
+    def test_can_leave_kennel_no_card(self):
+        # Testfall: Keine Karte aktiv
+        game_state = GameState(card_active=None)  # card_active = None
+        assert game_state.can_leave_kennel() is False  # Erwartung: False
 
+    def test_can_leave_kennel_valid_card(self):
+        # Testfall: Gültige Karte
+        game_state = GameState(card_active=Card(suit="hearts", rank="A"))  # Karte mit Rang "A"
+        assert game_state.can_leave_kennel() is True  # Erwartung: True
+
+        game_state.card_active = Card(suit="clubs", rank="K")  # Karte mit Rang "K"
+        assert game_state.can_leave_kennel() is True  # Erwartung: True
+
+        game_state.card_active = Card(suit="diamonds", rank="JKR")  # Karte mit Rang "JKR"
+        assert game_state.can_leave_kennel() is True  # Erwartung: True
+
+    def test_can_leave_kennel_invalid_card(self):
+        # Testfall: Ungültige Karte
+        game_state = GameState(card_active=Card(suit="spades", rank="7"))  # Karte mit Rang "7"
+        assert game_state.can_leave_kennel() is False  # Erwartung: False
+
+        game_state.card_active = Card(suit="hearts", rank="Q")  # Karte mit Rang "Q"
+        assert game_state.can_leave_kennel() is False  # Erwartung: False
+
+    def get_list_action_no_start_cards(setup_game):
+        game = setup_game
+        game.state.list_player[0].list_card = [Card(suit='♠', rank='2'), Card(suit='♠', rank='3')]
+        actions = game.get_list_action()
+        assert actions == []
+
+# Test check_final_position
+    def test_check_final_pos_valid_pos_to(self):
+        # Arrange
+        game_state = GameState()
+        card = Card(suit="hearts", rank="10")  # Erstelle ein Card-Objekt
+        action = Action(pos_to=68, pos_from=58, card=card)  # Erstelle ein Action-Objekt
+        marble = Marble(pos=58, is_save=False, start_pos=0)  # Erforderliche Felder übergeben
+
+        # Act
+        game_state.check_final_pos(pos_to=action.pos_to, pos_from=action.pos_from, action=action, marble=marble)
+
+        # Assert
+        assert marble.is_save is True  # Marble sollte safe sein
+
+    def test_check_final_pos_valid_pos_from(self):
+        # Arrange
+        game_state = GameState()
+        card = Card(suit="hearts", rank="10")
+        action = Action(pos_to=74, pos_from=64, card=card)  # pos_from in last_positions
+        marble = Marble(pos=64, is_save=False, start_pos=0)
+
+        # Act
+        game_state.check_final_pos(pos_to=action.pos_to, pos_from=action.pos_from, action=action, marble=marble)
+
+        # Assert
+        assert marble.is_save is True  # Marble sollte safe sein
+
+    def test_check_final_pos_invalid_positions(self):
+        # Arrange
+        game_state = GameState()
+        card = Card(suit="hearts", rank="10")
+        action = Action(pos_to=50, pos_from=40, card=card)  # Beide Positionen sind ungültig
+        marble = Marble(pos=40, is_save=False, start_pos=0)
+
+        # Act
+        game_state.check_final_pos(pos_to=action.pos_to, pos_from=action.pos_from, action=action, marble=marble)
+
+        # Assert
+        assert marble.is_save is False  # Marble sollte nicht safe sein
+
+
+    def test_check_final_pos_both_valid(self):
+        # Arrange
+        game_state = GameState()
+        card = Card(suit="hearts", rank="10")
+        action = Action(pos_to=74, pos_from=64, card=card)  # Beide Positionen sind gültig
+        marble = Marble(pos=64, is_save=False, start_pos=0)
+
+        # Act
+        game_state.check_final_pos(pos_to=action.pos_to, pos_from=action.pos_from, action=action, marble=marble)
+
+        # Assert
+        assert marble.is_save is True  # Marble sollte safe sein
 
 
 
