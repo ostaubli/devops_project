@@ -270,6 +270,7 @@ class TestKaegisDogParts:
 
 
 class TestGameState:
+# Test can_leave_kennel
     def test_can_leave_kennel_no_card(self):
         # Testfall: Keine Karte aktiv
         game_state = GameState(card_active=None)  # card_active = None
@@ -299,6 +300,60 @@ class TestGameState:
         game.state.list_player[0].list_card = [Card(suit='♠', rank='2'), Card(suit='♠', rank='3')]
         actions = game.get_list_action()
         assert actions == []
+
+# Test check_final_position
+    def test_check_final_pos_valid_pos_to(self):
+        # Arrange
+        game_state = GameState()
+        card = Card(suit="hearts", rank="10")  # Erstelle ein Card-Objekt
+        action = Action(pos_to=68, pos_from=58, card=card)  # Erstelle ein Action-Objekt
+        marble = Marble(pos=58, is_save=False, start_pos=0)  # Erforderliche Felder übergeben
+
+        # Act
+        game_state.check_final_pos(pos_to=action.pos_to, pos_from=action.pos_from, action=action, marble=marble)
+
+        # Assert
+        assert marble.is_save is True  # Marble sollte safe sein
+
+    def test_check_final_pos_valid_pos_from(self):
+        # Arrange
+        game_state = GameState()
+        card = Card(suit="hearts", rank="10")
+        action = Action(pos_to=74, pos_from=64, card=card)  # pos_from in last_positions
+        marble = Marble(pos=64, is_save=False, start_pos=0)
+
+        # Act
+        game_state.check_final_pos(pos_to=action.pos_to, pos_from=action.pos_from, action=action, marble=marble)
+
+        # Assert
+        assert marble.is_save is True  # Marble sollte safe sein
+
+    def test_check_final_pos_invalid_positions(self):
+        # Arrange
+        game_state = GameState()
+        card = Card(suit="hearts", rank="10")
+        action = Action(pos_to=50, pos_from=40, card=card)  # Beide Positionen sind ungültig
+        marble = Marble(pos=40, is_save=False, start_pos=0)
+
+        # Act
+        game_state.check_final_pos(pos_to=action.pos_to, pos_from=action.pos_from, action=action, marble=marble)
+
+        # Assert
+        assert marble.is_save is False  # Marble sollte nicht safe sein
+
+
+    def test_check_final_pos_both_valid(self):
+        # Arrange
+        game_state = GameState()
+        card = Card(suit="hearts", rank="10")
+        action = Action(pos_to=74, pos_from=64, card=card)  # Beide Positionen sind gültig
+        marble = Marble(pos=64, is_save=False, start_pos=0)
+
+        # Act
+        game_state.check_final_pos(pos_to=action.pos_to, pos_from=action.pos_from, action=action, marble=marble)
+
+        # Assert
+        assert marble.is_save is True  # Marble sollte safe sein
 
 
 
