@@ -23,7 +23,7 @@ jobs:
         uses: google-github-actions/auth@v2
         with:
           service_account: ${{secrets.SERVICE_ACCOUNT}}
-          project_id: ${{secrets.SERVICE_ID}}
+          project_id: ${{secrets.PROJECT_ID}}
           workload_identity_provider: ${{secrets.WORKLOAD_ID_PROV}}
 
       # Build and Deploy
