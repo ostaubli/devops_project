@@ -337,18 +337,22 @@ class GameState(BaseModel):
         # Get the active player
         active_player = self.list_player[self.idx_player_active]
 
-        # Ensure the card played is in the player's hand
-        if action.card not in active_player.list_card:
-            raise ValueError("The card played is not in the active player's hand.")
+        #FIXME: It is a Game! Dont raise errors ==> Errors will break the Game!
+        #FIXME: Set me in test_dog.py
+        # # Ensure the card played is in the player's hand
+        # if action.card not in active_player.list_card:
+        #     raise ValueError("The card played is not in the active player's hand.")
+        #FIXME: Set me in test_dog.py
+        # # Ensure pos_from and pos_to are defined
+        # if action.pos_from is None or action.pos_to is None:
+        #     raise ValueError("Both pos_from and pos_to must be specified for the action.")
 
-        # Ensure pos_from and pos_to are defined
-        if action.pos_from is None or action.pos_to is None:
-            raise ValueError("Both pos_from and pos_to must be specified for the action.")
+        # Find the marble to move based on pos_from 
+        marble_to_move = next((m for m in active_player.list_marble if m.pos == str(action.pos_from)), None) # FIXME: Is not working for going out
 
-        # Find the marble to move based on pos_from
-        marble_to_move = next((m for m in active_player.list_marble if m.pos == str(action.pos_from)), None)
-        if not marble_to_move:
-            raise ValueError(f"No marble found at the specified pos_from: {action.pos_from}")
+        #FIXME: Set me in test_dog.py
+        # if not marble_to_move:
+        #     raise ValueError(f"No marble found at the specified pos_from: {action.pos_from}")
 
         # Update the marble's position
         marble_to_move.pos = str(action.pos_to)
