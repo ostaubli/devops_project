@@ -337,29 +337,20 @@ class GameState(BaseModel):
         # Get the active player
         active_player = self.list_player[self.idx_player_active]
 
-        # Ensure the card is in the player's hand
-        if action.card not in active_player.list_card:
-            return
-
-        # Ensure pos_from and pos_to are defined
-        if action.pos_from is None or action.pos_to is None:
-            return
-
         # Check if the marble exists at the specified position
-        marble_to_move = next((m for m in active_player.list_marble if m.pos == str(action.pos_from)), None)
-        if not marble_to_move:
-            return
+        marble_to_move = next((m for m in active_player.list_marble if m.pos == action.pos_from), None)
 
         # Update the marble's position
-        marble_to_move.pos = str(action.pos_to)
+        marble_to_move.pos = (action.pos_to)
 
         # Check if the marble's new position is in a final or safe zone
+        # Check if marble can go in finish position and thats a function input marble_to_move and the action(Output of the function is True or False)
         self.check_final_pos(pos_to=action.pos_to, pos_from=action.pos_from, marble=marble_to_move)
 
         # Handle cases where another player's marble occupies the destination
         for player in self.list_player:
             if player != active_player:
-                opponent_marble = next((m for m in player.list_marble if m.pos == str(action.pos_to)), None)
+                opponent_marble = next((m for m in player.list_marble if m.pos == action.pos_to), None)
                 if opponent_marble:
                     self.sending_home(opponent_marble)  # Send the opponent's marble home
         # Discard the played card
