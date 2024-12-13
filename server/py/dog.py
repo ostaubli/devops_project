@@ -75,60 +75,75 @@ class GamePhase(str, Enum):
 
 
 class GameState(BaseModel):
-
-    LIST_SUIT: ClassVar[List[str]] = ['♠', '♥', '♦', '♣']  # 4 suits (colors)
+    LIST_SUIT: ClassVar[List[str]] = ['♠', '♥', '♦', '♣']
     LIST_RANK: ClassVar[List[str]] = [
-        '2', '3', '4', '5', '6', '7', '8', '9', '10',      # 13 ranks + Joker
+        '2', '3', '4', '5', '6', '7', '8', '9', '10',
         'J', 'Q', 'K', 'A', 'JKR'
     ]
     LIST_CARD: ClassVar[List[Card]] = [
-        # 2: Move 2 spots forward
-        Card(suit='♠', rank='2'), Card(suit='♥', rank='2'), Card(suit='♦', rank='2'), Card(suit='♣', rank='2'),
-        # 3: Move 3 spots forward
-        Card(suit='♠', rank='3'), Card(suit='♥', rank='3'), Card(suit='♦', rank='3'), Card(suit='♣', rank='3'),
-        # 4: Move 4 spots forward or back
-        Card(suit='♠', rank='4'), Card(suit='♥', rank='4'), Card(suit='♦', rank='4'), Card(suit='♣', rank='4'),
-        # 5: Move 5 spots forward
-        Card(suit='♠', rank='5'), Card(suit='♥', rank='5'), Card(suit='♦', rank='5'), Card(suit='♣', rank='5'),
-        # 6: Move 6 spots forward
-        Card(suit='♠', rank='6'), Card(suit='♥', rank='6'), Card(suit='♦', rank='6'), Card(suit='♣', rank='6'),
-        # 7: Move 7 single steps forward
-        Card(suit='♠', rank='7'), Card(suit='♥', rank='7'), Card(suit='♦', rank='7'), Card(suit='♣', rank='7'),
-        # 8: Move 8 spots forward
-        Card(suit='♠', rank='8'), Card(suit='♥', rank='8'), Card(suit='♦', rank='8'), Card(suit='♣', rank='8'),
-        # 9: Move 9 spots forward
-        Card(suit='♠', rank='9'), Card(suit='♥', rank='9'), Card(suit='♦', rank='9'), Card(suit='♣', rank='9'),
-        # 10: Move 10 spots forward
-        Card(suit='♠', rank='10'), Card(suit='♥', rank='10'), Card(suit='♦', rank='10'), Card(suit='♣', rank='10'),
-        # Jake: A marble must be exchanged
-        Card(suit='♠', rank='J'), Card(suit='♥', rank='J'), Card(suit='♦', rank='J'), Card(suit='♣', rank='J'),
-        # Queen: Move 12 spots forward
-        Card(suit='♠', rank='Q'), Card(suit='♥', rank='Q'), Card(suit='♦', rank='Q'), Card(suit='♣', rank='Q'),
-        # King: Start or move 13 spots forward
-        Card(suit='♠', rank='K'), Card(suit='♥', rank='K'), Card(suit='♦', rank='K'), Card(suit='♣', rank='K'),
-        # Ass: Start or move 1 or 11 spots forward
-        Card(suit='♠', rank='A'), Card(suit='♥', rank='A'), Card(suit='♦', rank='A'), Card(suit='♣', rank='A'),
-        # Joker: Use as any other card you want
-        Card(suit='', rank='JKR'), Card(suit='', rank='JKR'), Card(suit='', rank='JKR')
-    ] * 2
+        Card(suit=s, rank=r)
+        for s in ['♠','♥','♦','♣'] for r in ['2','3','4','5','6','7','8','9','10','J','Q','K','A']
+    ] + [Card(suit='', rank='JKR'), Card(suit='', rank='JKR'), Card(suit='', rank='JKR')]
 
-    cnt_player: int = 4                # number of players (must be 4)
-    phase: GamePhase                   # current phase of the game
-    cnt_round: int                     # current round
-    bool_card_exchanged: bool          # true if cards was exchanged in round
-    idx_player_started: int            # index of player that started the round
-    idx_player_active: int             # index of active player in round
-    list_player: List[PlayerState]     # list of players
-    list_card_draw: List[Card]         # list of cards to draw
-    list_card_discard: List[Card]      # list of cards discarded
-    card_active: Optional[Card]        # active card (for 7 and JKR with sequence of actions)
+    LIST_CARD = LIST_CARD * 2
+    cnt_player: int
+    phase: GamePhase
+    cnt_round: int
+    bool_card_exchanged: bool
+    idx_player_started: int
+    idx_player_active: int
+    list_player: List[PlayerState]
+    list_card_draw: List[Card]
+    list_card_discard: List[Card]
+    card_active: Optional[Card]
+
+
+class RandomPlayer(Player):
+    def select_action(self, state: GameState, actions: List[Action]) -> Optional[Action]:
+        if actions:
+            return random.choice(actions)
+        return None
+
+    def do_nothing(self) -> None:
+        pass
 
 
 class Dog(Game):
 
+    PLAYER_BOARD_SEGMENTS = {
+        0: {'start': 0, 'queue_start': 64, 'final_start': 68},
+        1: {'start': 16, 'queue_start': 72, 'final_start': 76},
+        2: {'start': 32, 'queue_start': 80, 'final_start': 84},
+        3: {'start': 48, 'queue_start': 88, 'final_start': 92}
+    }
+
+    MAIN_PATH_LENGTH = 64
+    CARD_MOVEMENTS = {
+        '2': 2,
+        '3': 3,
+        '4': -4,
+        '5': 5,
+        '6': 6,
+        '8': 8,
+        '9': 9,
+        '10': 10,
+        'Q': 12,
+        'K': 13,
+        'J': None
+    }
+
+    ACE_OPTIONS = [1, 11]
+    JOKER_OPTIONS = list(range(1, 14))
+    SEVEN_OPTIONS = list(range(1, 8))
+
     def __init__(self, cnt_players: int = 4) -> None:
-        """ Game initialization (set_state call not necessary, we expect 4 players) """
-        self.state = None
+        self.state: GameState
+        self.temp_seven_moves: Optional[List[int]] = None
+        self.temp_seven_card: Optional[Card] = None
+        self.temp_joker_card: Optional[Card] = None
+        self.temp_seven_state: Optional[GameState] = None
+        self.turns_in_current_round: int = 0
+        self.exchange_buffer: List[Optional[Card]] = [None] * cnt_players
         self._initialize_game(cnt_players)
 
     def _initialize_game(self, cnt_players: int) -> None:
