@@ -5,6 +5,7 @@ import copy
 from pydantic import BaseModel
 from server.py.game import Game, Player
 
+
 class Card(BaseModel):
     suit: str
     rank: str
