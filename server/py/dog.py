@@ -655,16 +655,14 @@ class Dog(Game):
 
             self.state.bool_card_exchanged = True
 
-        # Move the played card to the discard pile
-        if action.card and action.card in self.state.list_player[active_player_index].list_card:
+        # move played card from hand to discard pile
+        if action.card in self.state.list_player[active_player_index].list_card:
             self.state.list_player[active_player_index].list_card.remove(action.card)
             self.state.list_card_discard.append(action.card)
 
         # Check if all players have finished their hands (end of round)
         if all(len(player.list_card) == 0 for player in self.state.list_player):
             self.start_new_round()
-
-
 
     def get_player_view(self, idx_player: int) -> GameState:
         """ Get the masked state for the active player (e.g. the opponent's cards are face down)"""
