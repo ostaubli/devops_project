@@ -146,6 +146,122 @@ class Dog(Game):
         self.exchange_buffer: List[Optional[Card]] = [None] * cnt_players
         self._initialize_game(cnt_players)
 
+    def _initialize_game(self, cnt_players: int) -> None:
+        state = GameState(
+            cnt_player=cnt_players,
+            phase=GamePhase.SETUP,
+            cnt_round=1,
+            bool_card_exchanged=False,
+            idx_player_started=0,
+            idx_player_active=0,
+            list_player=[],
+            list_card_draw=[],
+            list_card_discard=[],
+            card_active=None
+        )
+        state.list_card_draw = GameState.LIST_CARD.copy()
+        random.shuffle(state.list_card_draw)
+        for idx in range(state.cnt_player):
+            list_card = [state.list_card_draw.pop() for _ in range(6)]
+            queue_start = self.PLAYER_BOARD_SEGMENTS[idx]['queue_start']
+            list_marble = [Marble(pos=queue_start+i, is_save=False) for i in range(4)]
+            player_state = PlayerState(name=f"Player {idx+1}", list_card=list_card, list_marble=list_marble)
+            state.list_player.append(player_state)
+        state.idx_player_started = random.randint(0, state.cnt_player - 1)
+        state.idx_player_active = state.idx_player_started
+        state.phase = GamePhase.RUNNING
+        state.bool_card_exchanged = False
+        self.state = state
+        self.temp_seven_moves = None
+        self.temp_seven_card = None
+        self.temp_joker_card = None
+        self.temp_seven_state = None
+
+    def reset(self) -> None:
+        assert self.state is not None
+        self._initialize_game(self.state.cnt_player)
+
+    def set_state(self, state: GameState) -> None:
+        self.state = state
+
+    def get_state(self) -> GameState:
+        return self.state
+
+    def print_state(self) -> None:
+        pass
+
+    def setup_next_round(self) -> None:
+        assert self.state is not None
+        cards_in_round = [6, 5, 4, 3, 2]
+        if not self.state.list_card_draw and self.state.list_card_discard:
+            self.state.list_card_draw = self.state.list_card_discard.copy()
+            self.state.list_card_discard.clear()
+            random.shuffle(self.state.list_card_draw)
+
+        current_cards_count = cards_in_round[(self.state.cnt_round - 1) % len(cards_in_round)]
+        for player in self.state.list_player:
+            while len(player.list_card) < current_cards_count and self.state.list_card_draw:
+                player.list_card.append(self.state.list_card_draw.pop())
+
+    def next_turn(self) -> None:
+        assert self.state is not None
+        self.state.idx_player_active = (self.state.idx_player_active + 1) % self.state.cnt_player
+        self.turns_in_current_round += 1
+        if self.turns_in_current_round == self.state.cnt_player:
+            self.turns_in_current_round = 0
+            self.state.cnt_round += 1
+            self.setup_next_round()
+            self.state.idx_player_started = (self.state.idx_player_started + 1) % self.state.cnt_player
+
+    def _player_finished(self, idx: int) -> bool:
+        assert self.state is not None
+        final_start = self.PLAYER_BOARD_SEGMENTS[idx]['final_start']
+        return all(m.pos >= final_start and m.pos < final_start+4 for m in self.state.list_player[idx].list_marble)
+
+    def _controlled_player_indices(self) -> List[int]:
+        assert self.state is not None
+        my_idx = self.state.idx_player_active
+        if self._player_finished(my_idx):
+            return [my_idx, (my_idx+2)%self.state.cnt_player]
+        return [my_idx]
+
+    def _get_player_marbles(self) -> List[Marble]:
+        assert self.state is not None
+        indices = self._controlled_player_indices()
+        marbles: List[Marble] = []
+        for i in indices:
+            marbles.extend(self.state.list_player[i].list_marble)
+        return marbles
+
+    def _get_start_actions(self, card: Card) -> List[Action]:
+        assert self.state is not None
+        actions: List[Action] = []
+        startable_ranks = ['A', 'K', 'JKR']
+        if card.rank in startable_ranks:
+            player_idx = self.state.idx_player_active
+            start_pos = self.PLAYER_BOARD_SEGMENTS[player_idx]['start']
+            queue_start = self.PLAYER_BOARD_SEGMENTS[player_idx]['queue_start']
+            blocked: Optional[bool] = None
+            for p_i, p in enumerate(self.state.list_player):
+                for m in p.list_marble:
+                    if m.pos == start_pos and m.is_save:
+                        blocked = p_i == player_idx
+                        break
+                if blocked is not None:
+                    break
+            if blocked is None:
+                blocked = False
+            if not blocked:
+                player = self.state.list_player[player_idx]
+                kennel_marbles = [m for m in player.list_marble if queue_start <= m.pos <= queue_start + 3]
+                kennel_marbles.sort(key=lambda x: x.pos)
+                if kennel_marbles:
+                    front_marble = kennel_marbles[0]
+                    if self.is_valid_move(front_marble.pos, start_pos):
+                        actions.append(Action(card=Card(suit=card.suit, rank=card.rank),
+                                              pos_from=front_marble.pos, pos_to=start_pos))
+        return actions
+
     def _reset_card_active(self) -> None:
         self.state.card_active = None
         self.temp_seven_moves = None
@@ -180,79 +296,83 @@ class Dog(Game):
             fm.pos = tm.pos
             tm.pos = pos_tmp
 
-    def _initialize_game(self, cnt_players: int) -> None:
-        """Initialize the game to its starting state"""
-        if cnt_players not in [4]:
-            raise ValueError("The game must be played with 4 players.")
+    def _get_standard_actions(self, card: Card, move_distance: Union[int, List[int]]) -> List[Action]:
+        assert self.state is not None
+        actions: List[Action] = []
+        controlled_indices = self._controlled_player_indices()
+        marbles: List[Marble] = []
+        for i in controlled_indices:
+            marbles.extend(self.state.list_player[i].list_marble)
+        def try_move(marble: Marble, dist: int) -> None:
+            if marble.pos >= self.MAIN_PATH_LENGTH and card.rank not in ['A','K','JKR']:
+                return
+            pos_to = self._calc_pos_to(marble.pos, dist, self.state.idx_player_active, card.rank)
+            if pos_to is not None and self.is_valid_move(marble.pos, pos_to):
+                actions.append(Action(card=Card(suit=card.suit, rank=card.rank), pos_from=marble.pos, pos_to=pos_to))
+        if isinstance(move_distance, list):
+            for distance in move_distance:
+                for mb in marbles:
+                    try_move(mb, distance)
+        else:
+            for mb in marbles:
+                try_move(mb, move_distance)
+        return actions
 
-        self.state = GameState(
-            cnt_player=cnt_players,
-            phase=GamePhase.SETUP,
-            cnt_round=1,
-            bool_card_exchanged=False,
-            idx_player_started=0,
-            idx_player_active=0,
-            list_player=[],
-            list_card_draw=[],
-            list_card_discard=[],
-            card_active=None
-        )
-
-        # Initialize card deck (two packs of Bridge-cards)
-        self.state.list_card_draw = GameState.LIST_CARD.copy()   # Two packs of cards
-        random.shuffle(self.state.list_card_draw)  # Shuffle the deck
-
-        # Set up players
-        for idx in range(self.state.cnt_player):
-            list_card = [self.state.list_card_draw.pop() for _ in range(6)]  # Draw 6 cards for each player
-            list_marble = [Marble(pos=0, is_save=False) for _ in range(4)]  # All marbles start in kennel
-            player_state = PlayerState(name=f"Player {idx + 1}", list_card=list_card, list_marble=list_marble)
-            self.state.list_player.append(player_state)
-
-        # Randomly select the player who starts
-        self.state.idx_player_started = random.randint(0, self.state.cnt_player - 1)
-        self.state.idx_player_active = self.state.idx_player_started
-
-        # Update the game phase after setup
-        self.state.phase = GamePhase.RUNNING
-        self.state.bool_card_exchanged = False  # Reset card exchange flag at the beginning
-
-    def reset(self) -> None:
-        """Setzt das Spiel in den Ausgangszustand zurück"""
-        self._initialize_game(self.state.cnt_player)
-
-    def set_state(self, state: GameState) -> None:
-        """ Set the game to a given state """
-        self.state = state
-
-    def get_state(self) -> GameState:
-        """ Get the complete, unmasked game state """
-        return self.state
-
-    def print_state(self) -> None:
-        """ Print the current game state """
-        return None
-
-    def setup_next_round(self) -> None:
-        """ Setup the next round with decreasing number of cards """
-        cards_in_round = [6, 5, 4, 3, 2]  # Anzahl der Karten für jede Runde (beginnend mit Runde 1)
-        current_cards_count = cards_in_round[(self.state.cnt_round - 1) % len(cards_in_round)]
-        # Deal cards to each player
-        for player in self.state.list_player:
-            player.list_card = [self.state.list_card_draw.pop() for _ in range(current_cards_count) if
-                                self.state.list_card_draw]
-
-    def next_turn(self) -> None:
-        """ Advance the turn to the next player """
-        self.state.idx_player_active = (self.state.idx_player_active + 1) % self.state.cnt_player
-        # If all players have played, increase the round count
-        if self.state.idx_player_active == self.state.idx_player_started:
-            self.state.cnt_round += 1
-            self.setup_next_round()  # Setup the next round with updated card counts
+    def _get_actions_for_card(self, c: Card) -> List[Action]:
+        possible_actions: List[Action] = []
+        start_actions = self._get_start_actions(Card(suit=c.suit, rank=c.rank))
+        if c.rank == 'J':
+            possible_actions.extend(self._get_jack_actions(Card(suit=c.suit, rank=c.rank)))
+            possible_actions.extend(start_actions)
+        elif c.rank == '7':
+            possible_actions.extend(start_actions)
+            possible_actions.extend(
+                self._get_standard_actions(Card(suit=c.suit, rank=c.rank), self.SEVEN_OPTIONS))
+        elif c.rank == 'JKR':
+            possible_actions.extend(self._get_actions_for_joker(c, start_actions))
+        else:
+            move_distance = self.get_move_distance(c)
+            if move_distance is not None and c.rank not in ['J', '7', 'JKR']:
+                possible_actions.extend(start_actions)
+                possible_actions.extend(self._get_standard_actions(Card(suit=c.suit, rank=c.rank), move_distance))
+        return possible_actions
 
     def get_list_action(self) -> List[Action]:
-        """ Get a list of possible actions for the active player """
-        return []
+        assert self.state is not None
+        if self.state.cnt_round == 0 and self.state.card_active is None and not self.state.bool_card_exchanged:
+            return self._unique_sorted_actions(
+                [Action(card=Card(suit=c.suit, rank=c.rank), pos_from=None, pos_to=None)
+                 for c in self.state.list_player[self.state.idx_player_active].list_card]
+            )
+        if self.state.card_active and self.state.card_active.rank == '7':
+            return self._get_actions_for_seven_card()
+        card_list = (self.state.list_player[self.state.idx_player_active].list_card
+                     if self.state.card_active is None
+                     else [self.state.card_active])
+        possible_actions: List[Action] = []
+        for c in card_list:
+            if self.state.card_active is None:
+                possible_actions.extend(self._get_actions_for_card(c))
+            else:
+                if self.state.card_active.rank == '7':
+                    continue
+                move_distance = self.get_move_distance(self.state.card_active)
+                if move_distance is not None and self.state.card_active is not None:
+                    possible_actions.extend(self._get_standard_actions(self.state.card_active, move_distance))
+        return self._unique_sorted_actions(possible_actions)
+
+    def _unique_sorted_actions(self, actions: List[Action]) -> List[Action]:
+        unique_actions: List[Action] = []
+        for a in actions:
+            if a not in unique_actions:
+                unique_actions.append(a)
+        unique_actions = sorted(unique_actions, key=lambda x: (
+            str(x.card),
+            x.pos_from if x.pos_from is not None else -999,
+            x.pos_to if x.pos_to is not None else -999,
+            str(x.card_swap) if x.card_swap else ''
+        ))
+        return unique_actions
 
     def apply_action(self, action: Action) -> None:  # pylint: disable=redefined-outer-name
         """ Apply the given action to the game """
@@ -270,6 +390,15 @@ class Dog(Game):
         self.state.list_card_discard.append(action.card)
         # Advance to the next player
         self.next_turn()
+
+    def check_game_status(self) -> None:
+        assert self.state is not None
+        for player in self.state.list_player:
+            player_idx = self.state.list_player.index(player)
+            final_start = self.PLAYER_BOARD_SEGMENTS[player_idx]['final_start']
+            if all(marble.pos >= final_start and marble.pos < final_start+4 for marble in player.list_marble):
+                self.state.phase = GamePhase.FINISHED
+                break
 
     def get_player_view(self, idx_player: int) -> GameState:
         """ Get the masked state for the active player (e.g. the oppontent's cards are face down)"""
