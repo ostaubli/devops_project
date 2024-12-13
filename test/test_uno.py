@@ -1,9 +1,12 @@
 import pytest
 import sys
+import random
 
 sys.path += '../'
 
 from server.py.uno import Uno, Card, Action, PlayerState, GameState, GamePhase
+from server.py.game import Game, Player
+from server.py.uno import RandomPlayer
 
 LIST_COLOR = ['red', 'blue', 'yellow', 'green']
 
@@ -56,7 +59,7 @@ def test_initialize_game_state():
     game.set_state(state)
     assert game.state.cnt_player == 3
     assert len(game.state.list_player) == 3
-    assert len(game.state.list_card_draw) == 86 
+    assert len(game.state.list_card_draw) == 86
     assert game.state.phase == GamePhase.RUNNING
     assert game.state.idx_player_active is not None
 
@@ -397,9 +400,9 @@ def test_get_player_view():
     game.set_state(state)
     view_for_p1 = game.get_player_view(0)
     assert len(view_for_p1.list_player[0].list_card) == 2
-    assert all(c.color is None and c.number is None and c.symbol is None 
+    assert all(c.color is None and c.number is None and c.symbol is None
                for c in view_for_p1.list_player[1].list_card)
-    assert all(c.color is None and c.number is None and c.symbol is None 
+    assert all(c.color is None and c.number is None and c.symbol is None
                for c in view_for_p1.list_player[2].list_card)
 
 def test_has_other_playable_card_no_play():
@@ -463,7 +466,7 @@ def test_advance_turn_with_single_player():
         phase=GamePhase.RUNNING
     )
     game.set_state(state)
-    game._advance_turn() 
+    game._advance_turn()
     assert game.state.idx_player_active == 0
 
 def test_wilddraw4_with_other_playable_cards():
@@ -489,6 +492,7 @@ def test_wilddraw4_with_other_playable_cards():
     red5_actions = [a for a in actions if a.card and a.card.number == 5]
     wd4_actions = [a for a in actions if a.card and a.card.symbol == "wilddraw4"]
     assert len(red5_actions) >= 1
+    # wilddraw4 might still appear in list, but player must have other playable cards.
 
 def test_cumulative_draw_scenario():
     """Test a cumulative draw scenario where cnt_to_draw > 2."""
@@ -514,13 +518,9 @@ def test_cumulative_draw_scenario():
 
 def test_list_action_card_matching_1() -> None:
     """Test 003: Test player card matching with discard pile card - simple cards [3 points]"""
-    # self.game_server.game = Uno()
-
     for c, color in enumerate(LIST_COLOR):
 
         for number in range(10):
-
-            # self.game_server.reset()
             game_server = Uno()
 
             idx_player_active = 0
@@ -592,6 +592,15 @@ def test_list_action_card_matching_1() -> None:
             hint += '  - Found:\n'
             hint += f'{get_list_action_as_str(list_action_found)}'
             assert sorted(list_action_found) == sorted(list_action_expected), hint
+
+def test_initialize_game_no_players():
+    """Test initializing the game with zero players."""
+    game = Uno()
+    state = GameState(cnt_player=0)
+    game.set_state(state)
+    # Expect no setup and no error
+    assert game.state.phase == GamePhase.SETUP
+    assert len(game.state.list_player) == 0
 
 
 
