@@ -165,6 +165,18 @@ class TestKaegisDogParts:
         # Reset for next round
         assert all(card is None for card in state.list_swap_card), "Card swap list should be reset after the exchange"
 
+    def test_discard_invalid_cards(self)->None:
+        # Initial game setup
+        game = Dog()
+        state = game.get_state()
+        state.idx_player_active = 0
+        state.list_card_discard = []
+        to_del_cards = state.list_player[state.idx_player_active].list_card
+        state.discard_invalid_cards()
+        assert not state.list_player[state.idx_player_active].list_card, "The players Handcard should be empty"
+        assert all(card in state.list_card_discard for card in to_del_cards), "all the players Handcards should be in the list_card_discard deck"
+    
+
 
 
 if __name__ == '__main__':
@@ -319,12 +331,12 @@ if __name__ == '__main__':
 
 class TestGameState:
 # Test can_leave_kennel
-    def test_can_leave_kennel_no_card(self):
+    def test_can_leave_kennel_no_card(self) -> None:
         # Testfall: Keine Karte aktiv
         game_state = GameState(card_active=None)  # card_active = None
         assert game_state.can_leave_kennel() is False  # Erwartung: False
 
-    def test_can_leave_kennel_valid_card(self):
+    def test_can_leave_kennel_valid_card(self) -> None:
         # Testfall: Gültige Karte
         game_state = GameState(card_active=Card(suit="hearts", rank="A"))  # Karte mit Rang "A"
         assert game_state.can_leave_kennel() is True  # Erwartung: True
@@ -335,7 +347,7 @@ class TestGameState:
         game_state.card_active = Card(suit="diamonds", rank="JKR")  # Karte mit Rang "JKR"
         assert game_state.can_leave_kennel() is True  # Erwartung: True
 
-    def test_can_leave_kennel_invalid_card(self):
+    def test_can_leave_kennel_invalid_card(self) -> None:
         # Testfall: Ungültige Karte
         game_state = GameState(card_active=Card(suit="spades", rank="7"))  # Karte mit Rang "7"
         assert game_state.can_leave_kennel() is False  # Erwartung: False
@@ -343,14 +355,14 @@ class TestGameState:
         game_state.card_active = Card(suit="hearts", rank="Q")  # Karte mit Rang "Q"
         assert game_state.can_leave_kennel() is False  # Erwartung: False
 
-    def get_list_action_no_start_cards(setup_game):
+    def get_list_action_no_start_cards(setup_game) -> None:
         game = setup_game
         game.state.list_player[0].list_card = [Card(suit='♠', rank='2'), Card(suit='♠', rank='3')]
         actions = game.get_list_action()
         assert actions == []
 
 # Test check_final_position
-    def test_check_final_pos_valid_pos_to(self):
+    def test_check_final_pos_valid_pos_to(self) -> None:
         # Arrange
         game_state = GameState()
         card = Card(suit="hearts", rank="10")  # Erstelle ein Card-Objekt
@@ -363,7 +375,7 @@ class TestGameState:
         # Assert
         assert marble.is_save is True  # Marble sollte safe sein
 
-    def test_check_final_pos_valid_pos_from(self):
+    def test_check_final_pos_valid_pos_from(self) -> None:
         # Arrange
         game_state = GameState()
         card = Card(suit="hearts", rank="10")
@@ -376,7 +388,7 @@ class TestGameState:
         # Assert
         assert marble.is_save is True  # Marble sollte safe sein
 
-    def test_check_final_pos_invalid_positions(self):
+    def test_check_final_pos_invalid_positions(self) -> None:
         # Arrange
         game_state = GameState()
         card = Card(suit="hearts", rank="10")
@@ -390,7 +402,7 @@ class TestGameState:
         assert marble.is_save is False  # Marble sollte nicht safe sein
 
 
-    def test_check_final_pos_both_valid(self):
+    def test_check_final_pos_both_valid(self) -> None:
         # Arrange
         game_state = GameState()
         card = Card(suit="hearts", rank="10")
@@ -404,7 +416,7 @@ class TestGameState:
         assert marble.is_save is True  # Marble sollte safe sein
 
 
-def test_sending_home():
+def test_sending_home() -> None:
     # Arrange
     game_state = GameState()
 
