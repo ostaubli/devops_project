@@ -1,12 +1,15 @@
 import pytest
 import random
-import os
-import sys
+
+if __name__ == '__main__':
+    import os
+    import sys
+    sys.path.append(os.getcwd())
 
 from pydantic import BaseModel
 from typing import List, Optional, Dict
 
-sys.path.append(os.getcwd())
+
 
 from server.py.dog import Card, Marble, PlayerState, Action, GameState, GamePhase, Dog
 from server.py.game import Player
