@@ -190,7 +190,7 @@ class GameState(BaseModel):
                 return None
         return marble.pos
 
-    def get_list_possible_action(self) -> List[Action]:  #Nicolas
+    def get_list_possible_action(self) -> List[Action]:  # Nicolas
         list_steps_split_7 = [
             [1, 1, 1, 1, 1, 1, 1],
             [2, 1, 1, 1, 1, 1],
@@ -397,6 +397,7 @@ class GameState(BaseModel):
         if action.pos_from in last_positions:
             marble.is_save = True
 
+
     def exchange_cards(self) -> None:
         player_blue = self.list_player[0]
         player_red = self.list_player[2]
@@ -584,7 +585,27 @@ class Dog(Game):
 
     def get_list_action(self) -> List[Action]:
         """ Get a list of possible actions for the active player """
-        return self.state.get_list_possible_action()
+        actions = []
+        # Get cards of active player
+        active_player = self.state.list_player[self.state.idx_player_active]
+        cards = active_player.list_card
+
+        # Define start cards that allow moving out of kennel
+        start_cards = ['A', 'K', 'JKR']
+
+        # Check if any card allows moving out of kennel
+        for card in cards:
+            if card.rank in start_cards:
+                # Check if marbe in the kennel (pos=64)
+                for marble in active_player.list_marble:
+                    if marble.pos == 64:
+                        actions.append(Action(
+                            card=card,
+                            pos_from=64,
+                            pos_to=0,
+                            card_swap=None
+                        ))
+        return actions
 
     def apply_action(self, action: Action) -> None:
         """

@@ -1,3 +1,6 @@
+import pytest
+
+from pydantic import BaseModel
 from typing import List, Optional, Dict
 
 from server.py.dog import Card, Marble, PlayerState, Action, GameState, GamePhase, Dog
@@ -291,8 +294,11 @@ class TestGameState:
         game_state.card_active = Card(suit="hearts", rank="Q")  # Karte mit Rang "Q"
         assert game_state.can_leave_kennel() is False  # Erwartung: False
 
-
-
+    def get_list_action_no_start_cards(setup_game):
+        game = setup_game
+        game.state.list_player[0].list_card = [Card(suit='♠', rank='2'), Card(suit='♠', rank='3')]
+        actions = game.get_list_action()
+        assert actions == []
 
 
 
