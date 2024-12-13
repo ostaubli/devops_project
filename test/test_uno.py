@@ -466,6 +466,30 @@ def test_advance_turn_with_single_player():
     game._advance_turn() 
     assert game.state.idx_player_active == 0
 
+def test_wilddraw4_with_other_playable_cards():
+    """Test scenario where wilddraw4 is not allowed if other playable cards exist."""
+    game = Uno()
+    state = GameState(
+        cnt_player=2,
+        list_player=[
+            PlayerState(name="P1", list_card=[
+                Card(color="red", number=5),
+                Card(color="any", symbol="wilddraw4")
+            ]),
+            PlayerState(name="P2", list_card=[Card(color="blue", number=2)])
+        ],
+        list_card_draw=[],
+        list_card_discard=[Card(color="red", number=3)],
+        idx_player_active=0,
+        phase=GamePhase.RUNNING,
+        color="red"
+    )
+    game.set_state(state)
+    actions = game.get_list_action()
+    red5_actions = [a for a in actions if a.card and a.card.number == 5]
+    wd4_actions = [a for a in actions if a.card and a.card.symbol == "wilddraw4"]
+    assert len(red5_actions) >= 1
+
 def test_list_action_card_matching_1() -> None:
     """Test 003: Test player card matching with discard pile card - simple cards [3 points]"""
     # self.game_server.game = Uno()
