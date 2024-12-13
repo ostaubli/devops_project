@@ -363,6 +363,24 @@ def test_get_list_action_no_playable_cards_has_drawn():
     assert actions[0].draw == 1
     assert actions[0].card is None
 
+def test_advance_turn_skip_three_players():
+    """Test advancing turn with skip=True in a 3-player game."""
+    game = Uno()
+    state = GameState(
+        cnt_player=3,
+        list_player=[
+            PlayerState(name="P1", list_card=[]),
+            PlayerState(name="P2", list_card=[]),
+            PlayerState(name="P3", list_card=[])
+        ],
+        idx_player_active=0,
+        phase=GamePhase.RUNNING,
+        direction=1
+    )
+    game.set_state(state)
+    game._advance_turn(skip=True)
+    assert game.state.idx_player_active == 2
+
 def test_list_action_card_matching_1() -> None:
     """Test 003: Test player card matching with discard pile card - simple cards [3 points]"""
     # self.game_server.game = Uno()
