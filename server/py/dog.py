@@ -1,95 +1,184 @@
-from server.py.game import Game, Player
-from typing import List, Optional, ClassVar
-from pydantic import BaseModel
+from typing import List, Optional, ClassVar, Union, Tuple # pylint: disable=unused-import
 from enum import Enum
 import random
+import copy # pylint: disable=unused-import
+from pydantic import BaseModel
+from server.py.game import Game, Player
 
 
 class Card(BaseModel):
-    suit: str  # card suit (color)
-    rank: str  # card rank
+    suit: str
+    rank: str
+
+    def __eq__(self, other: object) -> bool:
+        if not isinstance(other, Card):
+            return False
+        return (self.suit, self.rank) == (other.suit, other.rank)
+
+    def __str__(self) -> str:
+        return f"Card(suit='{self.suit}', rank='{self.rank}')"
+
+    def __repr__(self) -> str:
+        return f"Card(suit='{self.suit}', rank='{self.rank}')"
+
+    def __lt__(self, other: object) -> bool:
+        if not isinstance(other, Card):
+            return NotImplemented
+        suit_order = ['♠', '♥', '♦', '♣', '']
+        rank_order = ['2','3','4','5','6','7','8','9','10','J','Q','K','A','JKR']
+        return ((suit_order.index(self.suit), rank_order.index(self.rank)) <
+                (suit_order.index(other.suit), rank_order.index(other.rank)))
 
 
 class Marble(BaseModel):
-    pos: Optional[int] = None       # position on board (0 to 95)
-    is_save: bool  # true if marble was moved out of kennel and was not yet moved
+    pos: int
+    is_save: bool
 
 
 class PlayerState(BaseModel):
-    name: str                  # name of player
-    list_card: List[Card]      # list of cards
-    list_marble: List[Marble]  # list of marbles
+    name: str
+    list_card: List[Card]
+    list_marble: List[Marble]
 
 
 class Action(BaseModel):
-    card: Card                 # card to play
-    pos_from: Optional[int]    # position to move the marble from
-    pos_to: Optional[int]      # position to move the marble to
-    card_swap: Optional[Card]  # optional card to swap ()
+    card: Optional[Card] = None
+    pos_from: Optional[int] = None
+    pos_to: Optional[int] = None
+    card_swap: Optional[Card] = None
+
+    def __eq__(self, other: object) -> bool:
+        if not isinstance(other, Action):
+            return False
+        other_action: Action = other
+        return (
+            self.card == other_action.card and
+            self.pos_from == other_action.pos_from and
+            self.pos_to == other_action.pos_to and
+            self.card_swap == other_action.card_swap
+        )
+
+    def __str__(self) -> str:
+        card_str = str(self.card) if self.card else "None"
+        swap_str = str(self.card_swap) if self.card_swap else "None"
+        return f"card={card_str} pos_from={self.pos_from} pos_to={self.pos_to} card_swap={swap_str}"
+
+    def __repr__(self) -> str:
+        return (f"Action(card={repr(self.card)}, pos_from={self.pos_from}, "
+                f"pos_to={self.pos_to}, card_swap={repr(self.card_swap)})")
 
 
 class GamePhase(str, Enum):
-    SETUP = 'setup'            # before the game has started
-    RUNNING = 'running'        # while the game is running
-    FINISHED = 'finished'      # when the game is finished
+    SETUP = 'setup'
+    RUNNING = 'running'
+    FINISHED = 'finished'
 
 
 class GameState(BaseModel):
-
-    LIST_SUIT: ClassVar[List[str]] = ['♠', '♥', '♦', '♣']  # 4 suits (colors)
+    LIST_SUIT: ClassVar[List[str]] = ['♠', '♥', '♦', '♣']
     LIST_RANK: ClassVar[List[str]] = [
-        '2', '3', '4', '5', '6', '7', '8', '9', '10',      # 13 ranks + Joker
+        '2', '3', '4', '5', '6', '7', '8', '9', '10',
         'J', 'Q', 'K', 'A', 'JKR'
     ]
     LIST_CARD: ClassVar[List[Card]] = [
-        # 2: Move 2 spots forward
-        Card(suit='♠', rank='2'), Card(suit='♥', rank='2'), Card(suit='♦', rank='2'), Card(suit='♣', rank='2'),
-        # 3: Move 3 spots forward
-        Card(suit='♠', rank='3'), Card(suit='♥', rank='3'), Card(suit='♦', rank='3'), Card(suit='♣', rank='3'),
-        # 4: Move 4 spots forward or back
-        Card(suit='♠', rank='4'), Card(suit='♥', rank='4'), Card(suit='♦', rank='4'), Card(suit='♣', rank='4'),
-        # 5: Move 5 spots forward
-        Card(suit='♠', rank='5'), Card(suit='♥', rank='5'), Card(suit='♦', rank='5'), Card(suit='♣', rank='5'),
-        # 6: Move 6 spots forward
-        Card(suit='♠', rank='6'), Card(suit='♥', rank='6'), Card(suit='♦', rank='6'), Card(suit='♣', rank='6'),
-        # 7: Move 7 single steps forward
-        Card(suit='♠', rank='7'), Card(suit='♥', rank='7'), Card(suit='♦', rank='7'), Card(suit='♣', rank='7'),
-        # 8: Move 8 spots forward
-        Card(suit='♠', rank='8'), Card(suit='♥', rank='8'), Card(suit='♦', rank='8'), Card(suit='♣', rank='8'),
-        # 9: Move 9 spots forward
-        Card(suit='♠', rank='9'), Card(suit='♥', rank='9'), Card(suit='♦', rank='9'), Card(suit='♣', rank='9'),
-        # 10: Move 10 spots forward
-        Card(suit='♠', rank='10'), Card(suit='♥', rank='10'), Card(suit='♦', rank='10'), Card(suit='♣', rank='10'),
-        # Jake: A marble must be exchanged
-        Card(suit='♠', rank='J'), Card(suit='♥', rank='J'), Card(suit='♦', rank='J'), Card(suit='♣', rank='J'),
-        # Queen: Move 12 spots forward
-        Card(suit='♠', rank='Q'), Card(suit='♥', rank='Q'), Card(suit='♦', rank='Q'), Card(suit='♣', rank='Q'),
-        # King: Start or move 13 spots forward
-        Card(suit='♠', rank='K'), Card(suit='♥', rank='K'), Card(suit='♦', rank='K'), Card(suit='♣', rank='K'),
-        # Ass: Start or move 1 or 11 spots forward
-        Card(suit='♠', rank='A'), Card(suit='♥', rank='A'), Card(suit='♦', rank='A'), Card(suit='♣', rank='A'),
-        # Joker: Use as any other card you want
-        Card(suit='', rank='JKR'), Card(suit='', rank='JKR'), Card(suit='', rank='JKR')
-    ] * 2
+        Card(suit=s, rank=r)
+        for s in ['♠','♥','♦','♣'] for r in ['2','3','4','5','6','7','8','9','10','J','Q','K','A']
+    ] + [Card(suit='', rank='JKR'), Card(suit='', rank='JKR'), Card(suit='', rank='JKR')]
 
-    cnt_player: int = 4                # number of players (must be 4)
-    phase: GamePhase                   # current phase of the game
-    cnt_round: int                     # current round
-    bool_card_exchanged: bool          # true if cards was exchanged in round
-    idx_player_started: int            # index of player that started the round
-    idx_player_active: int             # index of active player in round
-    list_player: List[PlayerState]     # list of players
-    list_card_draw: List[Card]         # list of cards to draw
-    list_card_discard: List[Card]      # list of cards discarded
-    card_active: Optional[Card]        # active card (for 7 and JKR with sequence of actions)
+    LIST_CARD = LIST_CARD * 2
+    cnt_player: int
+    phase: GamePhase
+    cnt_round: int
+    bool_card_exchanged: bool
+    idx_player_started: int
+    idx_player_active: int
+    list_player: List[PlayerState]
+    list_card_draw: List[Card]
+    list_card_discard: List[Card]
+    card_active: Optional[Card]
+
+
+class RandomPlayer(Player):
+    def select_action(self, state: GameState, actions: List[Action]) -> Optional[Action]:
+        if actions:
+            return random.choice(actions)
+        return None
+
+    def do_nothing(self) -> None:
+        pass
 
 
 class Dog(Game):
 
+    PLAYER_BOARD_SEGMENTS = {
+        0: {'start': 0, 'queue_start': 64, 'final_start': 68},
+        1: {'start': 16, 'queue_start': 72, 'final_start': 76},
+        2: {'start': 32, 'queue_start': 80, 'final_start': 84},
+        3: {'start': 48, 'queue_start': 88, 'final_start': 92}
+    }
+
+    MAIN_PATH_LENGTH = 64
+    CARD_MOVEMENTS = {
+        '2': 2,
+        '3': 3,
+        '4': -4,
+        '5': 5,
+        '6': 6,
+        '8': 8,
+        '9': 9,
+        '10': 10,
+        'Q': 12,
+        'K': 13,
+        'J': None
+    }
+
+    ACE_OPTIONS = [1, 11]
+    JOKER_OPTIONS = list(range(1, 14))
+    SEVEN_OPTIONS = list(range(1, 8))
+
     def __init__(self, cnt_players: int = 4) -> None:
-        """ Game initialization (set_state call not necessary, we expect 4 players) """
-        self.state = None
+        self.state: GameState
+        self.temp_seven_moves: Optional[List[int]] = None
+        self.temp_seven_card: Optional[Card] = None
+        self.temp_joker_card: Optional[Card] = None
+        self.temp_seven_state: Optional[GameState] = None
+        self.turns_in_current_round: int = 0
+        self.exchange_buffer: List[Optional[Card]] = [None] * cnt_players
         self._initialize_game(cnt_players)
+
+    def _reset_card_active(self) -> None:
+        self.state.card_active = None
+        self.temp_seven_moves = None
+        self.temp_seven_card = None
+        self.temp_joker_card = None
+        self.temp_seven_state = None
+
+    def _find_player_card(self, player: PlayerState, card: Optional[Card]) -> Optional[Card]:
+        if card is None:
+            return None
+        for c in player.list_card:
+            if c.suit == card.suit and c.rank == card.rank:
+                return c
+        return None
+
+    def _find_marble_by_pos(self, pos: int) -> Tuple[Optional[Marble], Optional[int]]:
+        assert self.state is not None
+        for p_idx, p in enumerate(self.state.list_player):
+            for m in p.list_marble:
+                if m.pos == pos:
+                    return m, p_idx
+        return None, None
+
+    def _handle_jack_action(self, action: Action) -> None:  # pylint: disable=redefined-outer-name
+        assert self.state is not None
+        pos_from = action.pos_from if action.pos_from is not None else -1
+        pos_to = action.pos_to if action.pos_to is not None else -1
+        fm, _fp = self._find_marble_by_pos(pos_from)
+        tm, _tp = self._find_marble_by_pos(pos_to)
+        if fm and tm:
+            pos_tmp = fm.pos
+            fm.pos = tm.pos
+            tm.pos = pos_tmp
 
     def _initialize_game(self, cnt_players: int) -> None:
         """Initialize the game to its starting state"""
@@ -116,7 +205,7 @@ class Dog(Game):
         # Set up players
         for idx in range(self.state.cnt_player):
             list_card = [self.state.list_card_draw.pop() for _ in range(6)]  # Draw 6 cards for each player
-            list_marble = [Marble(pos=None, is_save=False) for _ in range(4)]  # All marbles start in kennel
+            list_marble = [Marble(pos=0, is_save=False) for _ in range(4)]  # All marbles start in kennel
             player_state = PlayerState(name=f"Player {idx + 1}", list_card=list_card, list_marble=list_marble)
             self.state.list_player.append(player_state)
 
@@ -142,7 +231,7 @@ class Dog(Game):
 
     def print_state(self) -> None:
         """ Print the current game state """
-        pass
+        return None
 
     def setup_next_round(self) -> None:
         """ Setup the next round with decreasing number of cards """
@@ -152,7 +241,6 @@ class Dog(Game):
         for player in self.state.list_player:
             player.list_card = [self.state.list_card_draw.pop() for _ in range(current_cards_count) if
                                 self.state.list_card_draw]
-        # TODO:: Test re-shuffle if stock out of cards (list_card_draw)
 
     def next_turn(self) -> None:
         """ Advance the turn to the next player """
@@ -160,31 +248,32 @@ class Dog(Game):
         # If all players have played, increase the round count
         if self.state.idx_player_active == self.state.idx_player_started:
             self.state.cnt_round += 1
-            # self.exchange_cards() # TODO:: Exchange cards between players
             self.setup_next_round()  # Setup the next round with updated card counts
-
 
     def get_list_action(self) -> List[Action]:
         """ Get a list of possible actions for the active player """
-        pass
+        return []
 
-    def apply_action(self, action: Action) -> None:
+    def apply_action(self, action: Action) -> None:  # pylint: disable=redefined-outer-name
         """ Apply the given action to the game """
         if action is None:
             # print("No valid action provided. Skipping turn.")
             self.next_turn()
             return
+
+        if action.card is None:
+            raise ValueError("Invalid action: No card provided.")
+
         player = self.state.list_player[self.state.idx_player_active]
         # Remove the card from the player's hand
         player.list_card.remove(action.card)
         self.state.list_card_discard.append(action.card)
-        # TODO:: Move the marble if applicable
         # Advance to the next player
         self.next_turn()
 
     def get_player_view(self, idx_player: int) -> GameState:
         """ Get the masked state for the active player (e.g. the oppontent's cards are face down)"""
-        pass
+        return self.state
 
     def swap_cards(self, player1_idx: int, player2_idx: int, card1: Card, card2: Card) -> None:
         # Hole die Spielerobjekte
@@ -207,14 +296,6 @@ class Dog(Game):
         player2.list_card.remove(card2)
         player1.list_card.append(card2)
 
-class RandomPlayer(Player):
-
-    def select_action(self, state: GameState, actions: List[Action]) -> Optional[Action]:
-        """ Given masked game state and possible actions, select the next action """
-        if len(actions) > 0:
-            return random.choice(actions)
-        return None
-
 
 if __name__ == '__main__':
 
@@ -235,10 +316,10 @@ if __name__ == '__main__':
     print("\nStarting turns simulation:")
     for turn in range(6):
         # Example of getting available actions (currently, not implemented)
-        actions = game.get_list_action()
-        if actions:
+        ACTIONS = game.get_list_action()
+        if ACTIONS:
             # Apply a random action (using RandomPlayer logic as an example)
-            action = random.choice(actions)
+            action = random.choice(ACTIONS)
             game.apply_action(action)
         else:
             # If no valid actions, skip the turn
