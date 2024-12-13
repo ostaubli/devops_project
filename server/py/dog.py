@@ -415,60 +415,71 @@ class Dog(Game):
         if not self.state:
             raise ValueError("Game state is not set.")
 
-        active_player = self.state.list_player[self.state.idx_player_active]
         player_idx = self.state.idx_player_active
+        kennels = self.KENNEL_POSITIONS
 
         # Filter out marbles in the kennel
         marbles_outside_kennel = [
-            m for m in active_marbles if m.pos not in self.KENNEL_POSITIONS[player_idx]
+            marble for marble in active_marbles if marble.pos not in kennels[player_idx]
         ]
 
         if not marbles_outside_kennel:
             return []  # No valid moves if all marbles are in the kennel
 
-        def dfs(remaining: int, current_split: List[int], results: List[List[int]]) -> None:
-            """Recursive helper to generate all possible splits."""
+        def dfs(remaining: int, moves: List[int], marble_indices: List[int], results: List[List[tuple[int, int]]]) -> None:
+            """Recursive helper to generate splits."""
             if remaining == 0:
-                results.append(current_split.copy())
+                # Ensure the split uses exactly 7 points and all moves are valid
+                if sum(moves) == 7:
+                    valid_split = True
+                    for i, steps in enumerate(moves):
+                        if steps > 0:  # Only check marbles that moved
+                            marble = marbles_outside_kennel[marble_indices[i]]
+                            pos_to = self._calculate_new_position(marble, steps, player_idx)
+                            if pos_to is None:
+                                valid_split = False  # Invalidate the split if any move is invalid
+                                break
+                    if valid_split:
+                        results.append([(marble_indices[i], moves[i]) for i in range(len(moves)) if moves[i] > 0])
                 return
-            if not marbles_outside_kennel:
-                return
-            for i in range(len(marbles_outside_kennel)):
-                if current_split[i] < 7:
-                    current_split[i] += 1
-                    dfs(remaining - 1, current_split, results)
-                    current_split[i] -= 1
 
-        # Initialize current_split with zeros for each marble
-        current_split = [0] * len(marbles_outside_kennel)
-        results = []
-        dfs(7, current_split, results)
+            for i in range(len(moves)):
+                # Add 1 step to the current marble's move
+                moves[i] += 1
+                pos_to = self._calculate_new_position(marbles_outside_kennel[marble_indices[i]], moves[i], player_idx)
 
-        # Remove splits where any marble is not moved at all
-        valid_results = []
-        for split in results:
-            if any(step > 0 for step in split):
-                valid_results.append(split)
+                if pos_to is not None:
+                    dfs(remaining - 1, moves, marble_indices, results)
+
+                # Backtrack (remove the step)
+                moves[i] -= 1
+
+        # Generate all valid splits
+        marble_indices = list(range(len(marbles_outside_kennel)))
+        results: List[List[tuple[int, int]]] = []  # Store splits as (marble index, steps)
+        dfs(7, [0] * len(marbles_outside_kennel), marble_indices, results)
 
         # Convert valid splits into grouped actions
         grouped_actions_list = []
-        for split in valid_results:
+        for split in results:
             split_actions = []
-            for idx, steps in enumerate(split):
-                if steps > 0:
-                    marble = marbles_outside_kennel[idx]
-                    pos_to = self._calculate_new_position(marble, steps, player_idx)
-                    if pos_to is not None:
-                        split_actions.append(Action(
-                            card=card,
-                            pos_from=marble.pos,
-                            pos_to=pos_to,
-                            card_swap=None
-                        ))
-            # Ensure the split actions sum to 7 steps
-            total_steps = sum(abs(action.pos_to - action.pos_from) for action in split_actions)
-            if total_steps == 7:
-                grouped_actions_list.append(split_actions)
+            for marble_idx, steps in split:
+                marble = marbles_outside_kennel[marble_idx]
+                pos_to = self._calculate_new_position(marble, steps, player_idx)
+                if pos_to is not None:
+
+                    new_action = Action(
+                        card=card,
+                        pos_from=marble.pos,
+                        pos_to=pos_to,
+                        card_swap=None
+                    )
+                    # Append only if the action is unique
+                    if new_action not in split_actions:
+                        split_actions.append(new_action)
+        
+            grouped_actions_list.append(split_actions)
+            # print(grouped_actions_list)
 
         return grouped_actions_list
 
@@ -1268,8 +1279,9 @@ class Dog(Game):
         excluded_positions = set(self.START_POSITIONS.values())
         excluded_positions.update(self.SAFE_SPACES[self.state.idx_player_active])
 
+        # Filter overtaken positions and exclude `pos_to`
         overtaken_positions = [
-            pos for pos in overtaken_positions if pos not in excluded_positions
+            pos for pos in overtaken_positions if pos not in excluded_positions and pos != pos_to
         ]
 
         # Iterate through all players to identify overtaken marbles
@@ -1480,6 +1492,7 @@ class RandomPlayer(Player):
         print(f"{self.__class__.__name__} finished the game with result: {result}")
 
 
+
 if __name__ == '__main__':
 
     game = Dog()
@@ -1542,6 +1555,3 @@ if __name__ == '__main__':
             if game.state.cnt_round > 15:  # Example limit
                 print(f"Ending game for testing after {game.state.cnt_round} rounds.")
                 break
-
-
-    
