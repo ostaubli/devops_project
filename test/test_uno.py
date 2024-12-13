@@ -402,6 +402,22 @@ def test_get_player_view():
     assert all(c.color is None and c.number is None and c.symbol is None 
                for c in view_for_p1.list_player[2].list_card)
 
+def test_has_other_playable_card_no_play():
+    """Test _has_other_playable_card with no playable cards."""
+    game = Uno()
+    state = GameState(
+        cnt_player=1,
+        list_player=[PlayerState(name="P1", list_card=[Card(color="green", number=7)])],
+        list_card_discard=[Card(color="red", number=5)],
+        phase=GamePhase.RUNNING,
+        color="red"
+    )
+    game.set_state(state)
+    hand = game.state.list_player[0].list_card
+    top_discard = game.state.list_card_discard[-1]
+    exclude_card = hand[0]
+    assert game._has_other_playable_card(hand, exclude_card, top_discard) is False
+
 def test_list_action_card_matching_1() -> None:
     """Test 003: Test player card matching with discard pile card - simple cards [3 points]"""
     # self.game_server.game = Uno()
