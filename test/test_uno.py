@@ -317,6 +317,36 @@ def test_game_end_condition():
     # Check if the game is finished
     assert game.state.phase == GamePhase.FINISHED, "Game should finish when a player runs out of cards."
 
+def test_missed_uno_penalty():
+    """Test that a player who fails to call UNO when going down to one card receives a 4-card penalty."""
+    game = Uno()
+    state = GameState(
+        cnt_player=2,
+        list_player=[
+            PlayerState(name="Player 1", list_card=[Card(color="red", number=5), Card(color="blue", number=2)]),
+            PlayerState(name="Player 2", list_card=[Card(color="yellow", number=4)])
+        ],
+        # Provide at least 4 cards in the draw pile for the penalty
+        list_card_draw=[Card(color="green", number=i) for i in range(1, 5)],
+        list_card_discard=[Card(color="red", number=3)],
+        idx_player_active=0,
+        phase=GamePhase.RUNNING,
+        color="red"
+    )
+    game.set_state(state)
+
+    # Player 1 plays red 5 without calling UNO (action.uno=False)
+    action = Action(card=Card(color="red", number=5), uno=False)
+    game.apply_action(action)
+
+    # After playing red 5, Player 1 now has exactly 1 card but didn't call UNO
+    # They should receive a 4-card penalty.
+    assert len(game.state.list_player[0].list_card) == 5, "Player 1 should have been given 4 penalty cards (1+4=5)."
+    # Check that the top card on the discard is the one played
+    assert game.state.list_card_discard[-1].number == 5, "The played card should be on top of the discard pile."
+    # Check that the turn has advanced to Player 2 as normal
+    assert game.state.idx_player_active == 1, "Turn should advance to Player 2 after Player 1's action."
+
 def test_list_action_card_matching_1() -> None:
     """Test 003: Test player card matching with discard pile card - simple cards [3 points]"""
     # self.game_server.game = Uno()
