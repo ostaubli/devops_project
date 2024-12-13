@@ -561,14 +561,15 @@ class Dog(Game):
         """Apply the given action to the game."""
         active_player_index = self.state.idx_player_active
 
-        # Handle the case where action is None (start a new round)
+        # Handle the case where action is None (start a new round). No player can do anything anymore.
         if action is None:
             if all(len(player.list_card) == 0 for player in self.state.list_player):
                 self.start_new_round()
             return
 
+        # Handle card exchange at the beginning of the game
         if (action.pos_from is None and action.pos_to is None and
-            self.state.cnt_round == 0 and not self.state.bool_card_exchanged):
+                self.state.cnt_round == 0 and not self.state.bool_card_exchanged):
             # Find the player who currently owns the card
             card_owner_idx = None
             for p_idx, player_state in enumerate(self.state.list_player):
@@ -595,98 +596,53 @@ class Dog(Game):
 
             return
 
+        # Handle special actions (e.g., swaps or specific card ranks)
         if action.card.rank == 'J':
-            # This is a swap action
-            # Find the two marbles to be swapped
+            # Swap two marbles
             marble_from = None
-            marble_from_player_idx = None
-            marble_from_marble_idx = None
-
             marble_to = None
-            marble_to_player_idx = None
-            marble_to_marble_idx = None
 
             for p_idx, player in enumerate(self.state.list_player):
                 for m_idx, m in enumerate(player.list_marble):
                     if m.pos == action.pos_from:
                         marble_from = m
-                        marble_from_player_idx = p_idx
-                        marble_from_marble_idx = m_idx
                     if m.pos == action.pos_to:
                         marble_to = m
-                        marble_to_player_idx = p_idx
-                        marble_to_marble_idx = m_idx
 
-            if marble_from_player_idx is not None and marble_from_marble_idx is not None and \
-            marble_to_player_idx is not None and marble_to_marble_idx is not None:
-                marble_from = (
-                    self.state.list_player[marble_from_player_idx]
-                    .list_marble[marble_from_marble_idx]
-                )
-                marble_to = (
-                    self.state.list_player[marble_to_player_idx]
-                    .list_marble[marble_to_marble_idx]
-                )
-
-                temp_pos = marble_from.pos
-                marble_from.pos = marble_to.pos
-                marble_to.pos = temp_pos
+            if marble_from and marble_to:
+                marble_from.pos, marble_to.pos = marble_to.pos, marble_from.pos
             else:
-                raise ValueError("Invalid player or marble indices: indices cannot be None")
+                raise ValueError("Invalid marble positions for swapping.")
 
-            # Move played card from hand to discard pile
+            # Move played card to discard pile
             if action.card in self.state.list_player[active_player_index].list_card:
                 self.state.list_player[active_player_index].list_card.remove(action.card)
                 self.state.list_card_discard.append(action.card)
 
             return
 
-        # Check input of pos_from and pos_to
-        if (action.pos_from is not None and action.pos_from != -1 and
-                action.pos_to is not None and action.pos_to != -1):
-            # Move a marble
-            normal_cards = ['A', '2', '3', '4', '5', '6', '8', '9', '10', 'Q', 'K']
-            is_normal_card = action.card.rank in normal_cards
-
-            for idx_marble, marble in enumerate(self.state.list_player[
-                active_player_index].list_marble):
+        # Normal card play
+        if action.pos_from is not None and action.pos_to is not None:
+            # Handle marble movement
+            for idx_marble, marble in enumerate(self.state.list_player[active_player_index].list_marble):
                 if marble.pos == action.pos_from:
-                    # First, if it's a normal card, check if pos_to is occupied
-                    if is_normal_card:
-                        occupant_player_idx = None
-                        occupant_marble_idx = None
-                        for p_idx, player in enumerate(self.state.list_player):
-                            for m_idx, m in enumerate(player.list_marble):
-                                if m.pos == action.pos_to:
-                                    occupant_player_idx = p_idx
-                                    occupant_marble_idx = m_idx
-                                    break
-                            if occupant_player_idx is not None:
-                                break
+                    # Check if destination is occupied
+                    for p_idx, player in enumerate(self.state.list_player):
+                        for m_idx, m in enumerate(player.list_marble):
+                            if m.pos == action.pos_to:
+                                # Send occupant marble home
+                                m.pos = self.KENNEL_POSITIONS[p_idx][0]
+                                m.is_save = False
 
-                        # If occupied, send occupant marble home
-                        if occupant_player_idx is not None and occupant_marble_idx is not None:
-                            target_kennel = self.KENNEL_POSITIONS[
-                                occupant_player_idx][0]
-                            self.state.list_player[
-                                occupant_player_idx].list_marble[
-                                    occupant_marble_idx].pos = target_kennel
-                            self.state.list_player[
-                                occupant_player_idx].list_marble[
-                                    occupant_marble_idx].is_save = False
+                    # Move the marble
+                    marble.pos = action.pos_to
 
-                    # Now move the active player's marble
-                    self.state.list_player[
-                        active_player_index].list_marble[idx_marble].pos = action.pos_to
-
-                    # Check if the marble is moved out of the kennel
+                    # Check if the marble is leaving the kennel
                     if action.pos_from in self.KENNEL_POSITIONS[active_player_index]:
-                        self.state.list_player[
-                            active_player_index].list_marble[idx_marble].is_save = True
-
+                        marble.is_save = True
 
         # Handle card swapping
-        elif action.card_swap is not None:
+        if action.card_swap is not None:
             target_player_idx = (active_player_index + 2) % 4
 
             # Active player gives their card and the target player receives it
@@ -699,14 +655,6 @@ class Dog(Game):
 
             self.state.bool_card_exchanged = True
 
-        # Normal card logic
-        if action.card.rank != '7':
-            self.state.card_active = None
-            self.state.steps_remaining_for_7 = 0
-
-        # Update active player
-        # self.state.idx_player_active = (self.state.idx_player_active + 1) % self.state.cnt_player
-
         # move played card from hand to discard pile
         if action.card in self.state.list_player[active_player_index].list_card:
             self.state.list_player[active_player_index].list_card.remove(action.card)
@@ -715,8 +663,6 @@ class Dog(Game):
         # Check if all players have finished their hands (end of round)
         if all(len(player.list_card) == 0 for player in self.state.list_player):
             self.start_new_round()
-
-
 
     def get_player_view(self, idx_player: int) -> GameState:
         """ Get the masked state for the active player (e.g. the opponent's cards are face down)"""
