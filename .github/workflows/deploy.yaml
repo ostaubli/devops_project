@@ -22,9 +22,9 @@ jobs:
       - name: Authenticate Google Cloud
         uses: google-github-actions/auth@v2
         with:
-          service_account: "401752948836-compute@developer.gserviceaccount.com"
-          project_id: "devops-team-5-946390"
-          workload_identity_provider: "projects/401752948836/locations/global/workloadIdentityPools/github/providers/my-repo"
+          service_account: ${{secrets.SERVICE_ACCOUNT}}
+          project_id: ${{secrets.SERVICE_ID}}
+          workload_identity_provider: ${{secrets.WORKLOAD_ID_PROV}}
 
       # Build and Deploy
       - name: Build and Deploy
