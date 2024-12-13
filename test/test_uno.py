@@ -453,6 +453,19 @@ def test_apply_action_non_running_phase():
     game.apply_action(action)
     assert game.get_state().model_dump() == original_state
 
+def test_advance_turn_with_single_player():
+    """Test _advance_turn in a single-player game does not change the active player."""
+    game = Uno()
+    state = GameState(
+        cnt_player=1,
+        list_player=[PlayerState(name="Solo", list_card=[Card(color="red", number=1)])],
+        idx_player_active=0,
+        phase=GamePhase.RUNNING
+    )
+    game.set_state(state)
+    game._advance_turn() 
+    assert game.state.idx_player_active == 0
+
 def test_list_action_card_matching_1() -> None:
     """Test 003: Test player card matching with discard pile card - simple cards [3 points]"""
     # self.game_server.game = Uno()
