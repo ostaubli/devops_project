@@ -6,10 +6,9 @@ This module contains the core game logic and data structures for the Dog card ga
 # runcmd: cd ../.. & venv\Scripts\python server/py/dog_template.py
 import random
 from enum import Enum
-from typing import List, Optional, ClassVar
+from typing import List, Optional, ClassVar, Dict, Any, Set
 from pydantic import BaseModel
 from server.py.game import Game, Player
-
 
 
 class Card(BaseModel):
@@ -107,6 +106,7 @@ class Dog(Game):
 
     # Constants
     BOARD_SIZE = 96
+    MAIN_TRACK = 64
     STARTING_CARDS = {'A', 'K', 'JKR'}
     MOVEMENT_CARDS = {'2', '3', '4', '5', '6', '8', '9', '10', 'Q', 'K', 'A', 'JKR'}
     SAFE_SPACES = {
@@ -184,7 +184,7 @@ class Dog(Game):
                         list_card_draw=deck,
                         list_card_discard=[],
                         card_active=None,
-                        board_positions=[None] * 96  # Initialize board positions
+                        board_positions=[None] * self.BOARD_SIZE  # Initialize board positions
                     )
 
         # Deal initial cards (6 cards in first round)
@@ -273,49 +273,52 @@ class Dog(Game):
         if self.state is None:
             raise ValueError("Game state is not set.")
 
+        start_positions: Dict[int, int] = self.START_POSITIONS
+        safe_spaces: Dict[int, List[int]] = self.SAFE_SPACES
+        kennel_positions: Dict[int, List[int]] = self.KENNEL_POSITIONS
+
+        # Create a list of all marbles for checking occupancy
+        all_marbles: List[Dict[str, Any]] = self._get_all_marbles()
+
         # Define helper functions
         def is_blocked_start_position(pos: int) -> bool:
             # A start position is blocked if there's a marble with is_save=True on it
             return any(m["position"] == pos and m["is_save"] for m in all_marbles)
 
-        start_positions = self.START_POSITIONS
-        safe_spaces = self.SAFE_SPACES
-        kennel_positions = self.KENNEL_POSITIONS
-
         # Current position of the marble
         current_pos = marble.pos
-
-        # Create a list of all marbles for checking occupancy
-        all_marbles = self._get_all_marbles()
 
         # Rule 1: Marble in the kennel cannot move
         if current_pos in kennel_positions[player_idx]:
             return None
 
         # calculate new tentantive position
-        tentative_pos = (current_pos + move_value) % 64
+        main_track = self.MAIN_TRACK
+        tentative_pos = (current_pos + move_value) % main_track
+
+        # Collect all marble positions for quick lookup
+        positions_occupied: Set[int] = {m["position"] for m in all_marbles}
 
         #create a list of all passing fields
         if current_pos <= tentative_pos:
             positions_to_check = list(range(current_pos + 1, tentative_pos + 1))
         else:
-            positions_to_check = list(range(current_pos + 1, 64)) + list(range(0, tentative_pos + 1))
+            positions_to_check = list(range(current_pos + 1, main_track)) + list(range(0, tentative_pos + 1))
 
         # Rule 2: check if starting position is inbetween
+        start_positions_values = set(start_positions.values())
         for pos in positions_to_check:
-            if pos in list(start_positions.values()):
+            if pos in start_positions_values:
                 # We have encountered a start position, check if blocked
                 if is_blocked_start_position(pos):
                     # If the position is blocked and this is not our final destination, we're trying to jump over it
-                    if pos != tentative_pos:
-                        return None
                     # If we end exactly on a blocked start position, also invalid
                     return None
 
         #Rule 3: move within save space
-        if current_pos in safe_spaces[player_idx]:
+        player_safe_spaces = safe_spaces[player_idx]
+        if current_pos in player_safe_spaces:
             # Find the current index of the marble in the safe_spaces list
-            player_safe_spaces = safe_spaces[player_idx]
             current_index = player_safe_spaces.index(current_pos)
             target_index = current_index + move_value
 
@@ -323,13 +326,12 @@ class Dog(Game):
             if target_index < 0 or target_index >= len(player_safe_spaces):
                 # Overshoot beyond safe space boundaries
                 return None
-            # Extract positions we must pass through (including the final one)
-            path_positions = (player_safe_spaces[current_index+1:target_index+1]
-                            if target_index > current_index
-                            else player_safe_spaces[target_index:current_index])
 
-            # Gather all marble positions for quick lookup
-            positions_occupied = {m["position"] for m in all_marbles}
+            # Extract positions we must pass through (including the final one)
+            if target_index > current_index:
+                path_positions = player_safe_spaces[current_index + 1:target_index + 1]
+            else:
+                path_positions = player_safe_spaces[target_index:current_index]
 
             # Check each position in the path for blocking marbles
             for pos in path_positions:
@@ -341,26 +343,23 @@ class Dog(Game):
             return player_safe_spaces[target_index]
 
         # Rule 4: move to the save spaces
-        if start_positions[player_idx] == 0:
-            if current_pos != 0:
-                current_pos = current_pos - 64
-        if current_pos <= start_positions[player_idx] <= tentative_pos and not marble.is_save:
-            steps_into_safe_space = tentative_pos - start_positions[player_idx]
+        player_start_pos = start_positions[player_idx]
+        if not marble.is_save and (player_start_pos + 1) in positions_to_check:
+            if player_start_pos >= current_pos:
+                steps_to_start = player_start_pos - current_pos
+            else:
+                steps_to_start = (main_track - current_pos) + player_start_pos
 
-            player_safe_spaces = safe_spaces[player_idx]
+            steps_into_safe_space = move_value - steps_to_start
             if steps_into_safe_space < 0 or steps_into_safe_space > len(player_safe_spaces):
                 # Either we don't actually step into safe spaces or we overshoot them
                 return None
 
-            # Determine the final safe space position
-            final_safe_pos = player_safe_spaces[steps_into_safe_space - 1]
-
-            # Collect all marble positions for quick lookup
-            positions_occupied = {m["position"] for m in all_marbles}
-
-            # The path in safe spaces is from player_safe_spaces[0] up to final_safe_pos if steps_into_safe_space > 0
-            # For example, if steps_into_safe_space == 2, we are moving into player_safe_spaces[1]
-            path_positions = player_safe_spaces[:steps_into_safe_space]
+            # The path in safe spaces is from player_safe_spaces[0] up to final_safe_pos
+            if steps_into_safe_space > 0:
+                path_positions = player_safe_spaces[:steps_into_safe_space]
+            else:
+                path_positions = []
 
             # Check each position in the safe space path for blocking marbles
             for pos in path_positions:
@@ -368,7 +367,7 @@ class Dog(Game):
                     # If a marble is found on the path (including final position), we cannot jump over or land on it
                     return None
 
-            # If no block found, we can safely move the marble to the final safe space position
+            final_safe_pos = player_safe_spaces[steps_into_safe_space - 1] if steps_into_safe_space > 0 else None
             return final_safe_pos
 
 
@@ -492,19 +491,26 @@ class Dog(Game):
     def _exchange_jkr(self) -> List[Action]:
 
         #all possible jkr exchanges
-        actions_list_jkr = []
+        actions_list_jkr: List['Action'] = []
 
-        #all ranks we can exchange for the jkr
-        ranks = ['2', '3', '4', '5', '6', '7', '8', '9', '10', 'J', 'Q', 'K', 'A']
-        suits = ['♠', '♥', '♦', '♣']
+        #all ranks and sueit we can exchange for the jkr
+        suits = GameState.LIST_SUIT
+        ranks = GameState.LIST_RANK
+        if 'JKR' in ranks:
+            ranks.remove('JKR')
+
         #joker card
-        jkr = Card(suit='', rank='JKR')
+        jkr_card = Card(suit='', rank='JKR')
 
         #initalize player information to check moves (or which cards we can exchange to)
         assert self.state
-        active_player = self.state.list_player[self.state.idx_player_active]
+        active_player_idx = self.state.idx_player_active
+        active_player = self.state.list_player[active_player_idx]
+
         active_marbles:list[Marble] = active_player.list_marble  # marbels of current player
         all_marbles = self._get_all_marbles() #marbel information of all players
+        active_marbles_positions = {m.pos for m in active_marbles} # Helper sets for quick lookups
+
         kennels = self.KENNEL_POSITIONS
         start_positions = self.START_POSITIONS
         player_idx = self.state.idx_player_active
@@ -513,79 +519,91 @@ class Dog(Game):
         marbles_in_kennel = [marble for marble in active_marbles if marble.pos in player_kennel]
         num_in_kennel = len(marbles_in_kennel)
 
+        def can_do_starting_move(card_rank: str) -> bool:
+            """
+            Check if a starting move is possible with the given card rank.
+            Conditions:
+            - There is at least one marble in the kennel.
+            - The start position is not occupied by the active player's own marble.
+            - The card rank is one of the starting cards.
+            """
+            if num_in_kennel == 0:
+                return False
+            if player_start_position in active_marbles_positions:
+                return False
+            return card_rank in self.STARTING_CARDS
+
         for rank in ranks:
             for suit in suits:
                 card = Card(suit=suit, rank=rank)
                 card_values = self._get_card_value(card)  # Get the list of possible values for the card
 
-                # Check for starting moves & Ensure the starting position is free of the active player's own marbles
-                if num_in_kennel > 0 and not any(marble.pos == player_start_position for marble in active_marbles):
-                    # Only `A`, `K`, `JKR` can perform starting moves
-                    if card.rank in self.STARTING_CARDS:
-                        actions_list_jkr.append(Action(
-                            card=jkr,
-                            pos_from=None,
-                            pos_to=None,
-                            card_swap=card
-                        ))
+                # Check starting moves
+                if can_do_starting_move(card.rank):
+                    actions_list_jkr.append(
+                        Action(card=jkr_card,
+                               pos_from=None,
+                               pos_to=None,
+                               card_swap=card)
+                    )
 
                 # Handle `7` or 'JKR' as 7: split moves
                 if card.rank == '7':
-                    if len(self._handle_seven_card(card, active_marbles)) > 0:
+                    seven_actions = self._handle_seven_card(card, active_marbles)
+                    if len(seven_actions) > 0:
+                        actions_list_jkr.append(
+                            Action(card=jkr_card,
+                                   pos_from=None,
+                                   pos_to=None,
+                                   card_swap=card)
+                        )
+                    else:
+                        # If no actions are possible with '7', skip processing moves for this card.
+                        continue
+
+                # Handle MARBLE SWAPPING with `J`: exchange with opponent's marble
+                for marble_a in all_marbles:
+                    if marble_a["position"] > 63:
+                        continue
+                    if (marble_a["player_idx"] != active_player_idx
+                            and marble_a["is_save"]):
+                        continue
+
+                    for marble_b in all_marbles:
+                        if marble_b is marble_a:
+                            continue
+                        if marble_b["position"] > 63:
+                            continue
+                        if (marble_b["player_idx"] != active_player_idx
+                                and marble_b["is_save"]):
+                            continue
+
+                        # Check that one of these marbles belongs to the active player and the other doesn't
+                        belongs_to_active_a = marble_a["player_idx"] == active_player_idx
+                        belongs_to_active_b = marble_b["player_idx"] == active_player_idx
+                        if belongs_to_active_a == belongs_to_active_b:
+                            # Either both belong to the active player or both don't,
+                            # in either case, no valid swap.
+                            continue
+
+                        # Add swap action
                         actions_list_jkr.append(Action(
-                            card=jkr,
+                            card=jkr_card,
                             pos_from=None,
                             pos_to=None,
                             card_swap=card
                         ))
-                    else:
-                        continue
 
-                # Handle MARBLE SWAPPING with `J`: exchange with opponent's marble
-                if card.rank == 'J':
-                    for marble in all_marbles:
-                        if marble["position"] > 63:
-                            continue  # Skip this marble
-
-                        if marble["player_idx"] != self.state.idx_player_active and marble["is_save"] is True:
-                            continue
-
-                        for target in all_marbles:
-                            # Skip if the same marble is being compared
-                            if marble is target:
-                                continue
-
-                            if target["position"] > 63:
-                                continue  # Skip this marble
-
-                            if target["player_idx"] != self.state.idx_player_active and target["is_save"] is True:
-                                continue
-
-                            if self.state.idx_player_active not in (marble['player_idx'], target['player_idx']):
-                                continue
-
-                            # prevent swapping on the same player
-                            if (marble["player_idx"] is self.state.idx_player_active and
-                                target["player_idx"] is self.state.idx_player_active):
-                                continue
-
-                            # Add swap action
-                            actions_list_jkr.append(Action(
-                                card=jkr,
-                                pos_from=None,
-                                pos_to=None,
-                                card_swap=card
-                            ))
-
-                    # all cases with cards
-                    # Iterate over all possible values of the card, #check if we can move this far!!
+                # all cases with normal cards
+                # Iterate over all possible values of the card and check if we can move this far!!
                 for marble in active_marbles:
                     if marble.pos not in player_kennel:
                         for card_value in card_values:
-                            pos_to = self._calculate_new_position(marble, card_value, self.state.idx_player_active)
-                            if pos_to is not None:
+                            new_pos: Optional[int] = self._calculate_new_position(marble,
+                                                                  card_value, self.state.idx_player_active)
+                            if new_pos is not None:
                                 actions_list_jkr.append(Action(
-                                card=jkr,
+                                card=jkr_card,
                                 pos_from=None,
                                 pos_to=None,
                                 card_swap=card
@@ -789,7 +807,7 @@ class Dog(Game):
         return actions
 
     def apply_action(self, action: Optional[Action]) -> None:
-        # pylint: disable=redefined-outer-name
+        """Moving marbles based on the chosen action from get_list_action function."""
         if not self.state:
             raise ValueError("Game state is not set.")
 
@@ -988,8 +1006,9 @@ class Dog(Game):
                     print(f"Marble moved from kennel to start position: {marble.pos}.")
 
                     # Log the kennel_action
-                    print(f"Player {active_player.name} plays {kennel_action.card.rank} of {kennel_action.card.suit} "
-                        f"moving marble from {kennel_action.pos_from} to {kennel_action.pos_to}.")
+                    print(f"Player {active_player.name} plays {kennel_action.card.rank} "+
+                          f"of {kennel_action.card.suit} moving marble from {kennel_action.pos_from} "+ 
+                          f"to {kennel_action.pos_to}.")
 
                     return True  # Action handled successfully
         return False  # Action does not involve moving from kennel to start
@@ -1005,7 +1024,8 @@ class Dog(Game):
 
         for marble in active_player.list_marble:
             if marble.pos == mm_action.pos_from:
-                print(f"Moving active player's marble from {mm_action.pos_from} to {mm_action.pos_to}.")
+                print(f"Moving active player's marble from {mm_action.pos_from}" +
+                      f" to {mm_action.pos_to}.")
                 marble.pos = mm_action.pos_to
                 marble.is_save = marble.pos in self.SAFE_SPACES[self.state.idx_player_active]
                 if marble.is_save:
@@ -1069,7 +1089,8 @@ class Dog(Game):
         # Swap their positions
         if marble_from and marble_to:
             marble_from.pos, marble_to.pos = marble_to.pos, marble_from.pos
-            print(f"Swapped marbles: Marble at {move_action.pos_from} with marble at {move_action.pos_to}.")
+            print(f"Swapped marbles: Marble at {move_action.pos_from} with "+
+                  f"marble at {move_action.pos_to}.")
         else:
             raise ValueError("Could not find one or both marbles to swap for the Jack action.")
 
@@ -1128,8 +1149,9 @@ class Dog(Game):
         pos_to = move_action.pos_to if move_action.pos_to is not None else -1
 
         idx_active: int = self.state.idx_player_active
+        kennel_idx_active: list = self.KENNEL_POSITIONS[idx_active]
 
-        if move_action.pos_from in self.KENNEL_POSITIONS[idx_active] and pos_to in self.START_POSITIONS:
+        if move_action.pos_from in kennel_idx_active and pos_to in self.START_POSITIONS:
             for marble in active_player.list_marble:
                 if marble.pos == move_action.pos_from:
                     marble.pos = pos_to  # Assign the (default or valid) pos_to
@@ -1417,7 +1439,7 @@ class Dog(Game):
 class RandomPlayer(Player):
     """A player that selects actions randomly."""
 
-    def select_action(self, state: GameState, actions: List[Action]) -> Optional[Action]:
+    def select_action(self, actions: List[Action]) -> Optional[Action]:
         """
         Given masked game state and possible actions, select the next action randomly.
         """
@@ -1465,7 +1487,7 @@ if __name__ == '__main__':
                 print(f"{idx}: Play {action.card.rank} of {action.card.suit} from {action.pos_from} to {action.pos_to}")
 
             # Select an action (random in this example)
-            selected_action = random_player.select_action(game.get_state(), game_actions)
+            selected_action = random_player.select_action(game_actions)
 
 
             # Apply the selected action
