@@ -205,7 +205,7 @@ class Dog(Game):
         # Set up players
         for idx in range(self.state.cnt_player):
             list_card = [self.state.list_card_draw.pop() for _ in range(6)]  # Draw 6 cards for each player
-            list_marble = [Marble(pos=None, is_save=False) for _ in range(4)]  # All marbles start in kennel
+            list_marble = [Marble(pos=0, is_save=False) for _ in range(4)]  # All marbles start in kennel
             player_state = PlayerState(name=f"Player {idx + 1}", list_card=list_card, list_marble=list_marble)
             self.state.list_player.append(player_state)
 
@@ -260,6 +260,10 @@ class Dog(Game):
             # print("No valid action provided. Skipping turn.")
             self.next_turn()
             return
+
+        if action.card is None:
+            raise ValueError("Invalid action: No card provided.")
+
         player = self.state.list_player[self.state.idx_player_active]
         # Remove the card from the player's hand
         player.list_card.remove(action.card)
