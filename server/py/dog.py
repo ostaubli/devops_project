@@ -323,6 +323,15 @@ class Dog(Game):
 
             # --- Joker ---
             if card.rank == 'JKR':
+                # Option 1: Joker als Ass verwenden, um eine Murmel aus dem Kennel zu holen
+                marbles_in_kennel = [
+                    m for m in active_player.list_marble
+                    if m.pos in self.KENNEL_POSITIONS[active_player_idx]
+                ]
+                start_pos = self.START_POSITION[active_player_idx]
+                
+                # Option 2: Joker für 1 bis 13 Felder verwenden
+                seen_actions = set()  # Set, um doppelte Aktionen zu vermeiden
                 for possible_card in range(1, 14):
                     for marble in active_player.list_marble:
                         if marble.pos not in self.KENNEL_POSITIONS[active_player_idx]:
@@ -330,26 +339,49 @@ class Dog(Game):
                             move_allowed = True
                             test_state = self.state.model_copy(deep=True)
                             for _ in range(num_moves):
-                                new_pos = test_state.list_player[
-                                    active_player_idx].list_marble[marble_idx].pos
-                                validity = self.check_move_validity(active_player_idx,
-                                                                    marble_idx, new_pos)
+                                # Berechne die neue Position
+                                new_pos = test_state.list_player[active_player_idx].list_marble[marble_idx].pos
+                                validity = self.check_move_validity(
+                                    active_player_idx, marble_idx, new_pos
+                                )
                                 if not validity:
                                     move_allowed = False
                                     break
 
                             if move_allowed:
                                 action = Action(
-                                        card=Card(suit='', rank=str(possible_card)),
-                                        pos_from=marble.pos,
-                                        pos_to=test_state.list_player[
-                                            active_player_idx].list_marble[marble.pos].pos,
-                                        card_swap=None
-                                    )
+                                    card=Card(suit='', rank=str(possible_card)),
+                                    pos_from=marble.pos,
+                                    pos_to=test_state.list_player[active_player_idx].list_marble[marble.pos].pos,
+                                    card_swap=None
+                                )
                                 action_key = (card.suit, card.rank, marble.pos, new_pos)
                                 if action_key not in seen_actions:
                                     seen_actions.add(action_key)
                                     actions.append(action)
+
+                # Option 3: Tauschaktionen mit Ass und König für jede Farbe
+                LIST_SUIT = ['♠', '♥', '♦', '♣']
+                for suit in LIST_SUIT:
+                    # Tauschen mit einer Ass-Karte (A) - einmal pro Farbe
+                    actions.append(
+                        Action(
+                            card=card,
+                            pos_from=None,
+                            pos_to=None,
+                            card_swap=Card(suit=suit, rank='A')
+                        )
+                    )
+                    # Tauschen mit einer König-Karte (K) - einmal pro Farbe
+                    actions.append(
+                        Action(
+                            card=card,
+                            pos_from=None,
+                            pos_to=None,
+                            card_swap=Card(suit=suit, rank='K')
+                        )
+                    )
+
             # --- Ass ---
             if card.rank == 'A':
                 for marble_idx, marble in enumerate(active_player.list_marble):
@@ -477,10 +509,6 @@ class Dog(Game):
     def deal_cards(self, num_cards_per_player: int) -> None:
         """Deal a specified number of cards to each player."""
         total_cards_to_deal = num_cards_per_player * self.state.cnt_player
-        assert len(self.state.list_card_draw) >= total_cards_to_deal, (
-            f"Not enough cards to deal: required {total_cards_to_deal}, "
-            f"but only {len(self.state.list_card_draw)} available."
-        )
 
         # Clear players' hands before dealing new cards
         for player_state in self.state.list_player:
@@ -489,12 +517,17 @@ class Dog(Game):
         # Deal the cards to each player
         for _ in range(num_cards_per_player):
             for player_state in self.state.list_player:
+                if not self.state.list_card_draw:
+                    # Reshuffle the discard pile into the draw pile
+                    self.state.list_card_draw.extend(self.state.list_card_discard)
+                    self.state.list_card_discard.clear()
+                    random.shuffle(self.state.list_card_draw)
+
                 card = self.state.list_card_draw.pop()  # Pop a card from the deck
                 player_state.list_card.append(card)
 
-        # If there aren't enough cards left to deal, reshuffle the discard pile into the draw pile
-        if len(self.state.list_card_draw) < total_cards_to_deal:
-            print("Not enough cards in draw pile. Reshuffling discard pile into draw pile.")
+        # After dealing, check if the draw pile is empty and reshuffle if necessary
+        if not self.state.list_card_draw:
             self.state.list_card_draw.extend(self.state.list_card_discard)
             self.state.list_card_discard.clear()
             random.shuffle(self.state.list_card_draw)
