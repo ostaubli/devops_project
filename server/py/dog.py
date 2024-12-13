@@ -343,8 +343,7 @@ class GameState(BaseModel):
         # Update the marble's position
         marble_to_move.pos = (action.pos_to)
 
-        # Check if the marble's new position is in a final or safe zone
-        # Check if marble can go in finish position and thats a function input marble_to_move and the action(Output of the function is True or False)
+        # Check if the marble's new position is in a final or safe zone Check if marble can go in finish position and# thats a function input marble_to_move and the action(Output of the function is True or False)
         self.check_final_pos(pos_to=action.pos_to, pos_from=action.pos_from, marble=marble_to_move)
 
         # Handle cases where another player's marble occupies the destination
