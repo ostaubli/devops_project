@@ -593,6 +593,9 @@ def test_list_action_card_matching_1() -> None:
             hint += f'{get_list_action_as_str(list_action_found)}'
             assert sorted(list_action_found) == sorted(list_action_expected), hint
 
+
+# Additional tests for coverage
+
 def test_initialize_game_no_players():
     """Test initializing the game with zero players."""
     game = Uno()
@@ -601,6 +604,23 @@ def test_initialize_game_no_players():
     # Expect no setup and no error
     assert game.state.phase == GamePhase.SETUP
     assert len(game.state.list_player) == 0
+
+def test_initialize_game_wilddraw4_on_start():
+    """Test scenario where initial discard tries wilddraw4 multiple times until a valid card is found."""
+    game = Uno()
+    # Create a deck where the first few cards are wilddraw4
+    # Then a normal card
+    deck = [Card(color='any', symbol='wilddraw4') for _ in range(3)]
+    deck.append(Card(color='red', number=5))  # valid start
+    deck.extend(game._initialize_deck())
+    random.shuffle(deck)
+    game.state.cnt_player = 2
+    game.state.list_card_draw = deck
+    game.set_state(game.state)
+    # After initialization, phase should be RUNNING and top discard should not be wilddraw4
+    assert game.state.phase == GamePhase.RUNNING
+    assert game.state.list_card_discard
+    assert game.state.list_card_discard[-1].symbol != 'wilddraw4'
 
 
 
