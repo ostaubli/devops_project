@@ -46,7 +46,7 @@ python server/py/dog.py
 ### Run the Benchmark
 ````
 "../.venv\Scripts\activate"
-"../.venv\Scripts\activate"              # in Command Prompt
+set PYTHONPATH=%cd%                    # in Command Prompt
 $env:PYTHONPATH = (Get-Location).Path  # in PowerShell
 python benchmark/benchmark_hangman.py python hangman.Hangman
 python benchmark/benchmark_battleship.py python battleship.Battleship
@@ -59,7 +59,8 @@ python benchmark/benchmark_dog.py python dog.Dog > benchmark.log 2>&1
 python benchmark/benchmark_dog.py python dog.Dog > "benchmark_$(date +%Y%m%d_%H%M%S).log" 2>&1
 python benchmark/benchmark_dog.py python dog.Dog > logs\benchmark_%DATE:~10,4%%DATE:~7,2%%DATE:~4,2%_%TIME:~0,2%%TIME:~3,2%%TIME:~6,2%.log 2>&1
 
-### Group Test => test_dog.py 
+### Group Test => test_dog.py
+.\.venv\Scripts\activate
 set PYTHONPATH=%cd%                    # in Command Prompt
 $env:PYTHONPATH = (Get-Location).Path  # in PowerShell
 pytest test/test_dog.py

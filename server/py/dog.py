@@ -1,6 +1,7 @@
 # runcmd: cd ../.. & venv\Scripts\python server/py/dog_template.py
 
 import random
+import copy
 from typing import List, Optional, ClassVar
 from enum import Enum
 from pydantic import BaseModel
@@ -98,7 +99,7 @@ class GameState(BaseModel):
     phase: GamePhase = GamePhase.SETUP  # current phase of the game
     cnt_round: int = 0  # current round
     bool_card_exchanged: bool = False  # true if cards was exchanged in round
-    list_swap_card: Optional[Card] = [None] * 4 # empty Carddeck for cards to be swapt
+    list_swap_card: List[Optional[Card]] = [None]*4 # empty Carddeck for cards to be swapt
     idx_player_started: int = random.randint(0, 3)  # index of player that started the round
     idx_player_active: int = idx_player_started  # index of active player in round
     list_player: List[PlayerState] = []  # list of players
@@ -180,25 +181,9 @@ class GameState(BaseModel):
             player.list_card = random.sample(self.list_card_draw, num_cards)
             for card in player.list_card:
                 self.list_card_draw.remove(card)
-        
+
         # Set Cardexchange
         self.bool_card_exchanged = False
-
-
-    def swap_cards(self, action_cardswap: Action):
-        self.list_swap_card[self.idx_player_active] = action_cardswap.card
-        self.list_player[self.idx_player_active].list_card.remove(action_cardswap.card)
-
-        if None in self.list_swap_card:
-            return
-        
-        for i in range(len(self.list_player)):
-            opposite_player_index = (i + 2) % 4  # Index des Teammitglieds
-            self.list_player[i].list_card.append(self.list_swap_card[opposite_player_index])
-        
-        self.bool_card_exchanged = True
-        self.list_swap_card = [None]*4
-
 
     def can_marble_leave_kennel(self, player: PlayerState) -> int:
         for marble in player.list_marble:
@@ -418,56 +403,78 @@ class GameState(BaseModel):
             marble.is_save = True
 
 
-    def exchange_cards(self) -> None:
-        player_blue = self.list_player[0]
-        player_red = self.list_player[2]
+    def exchange_cards(self, action_cardswap: Action) -> None:
+        # Part Kägi
 
-        print(f"\n{player_blue.name}, bitte wähle eine Karte zum Tauschen aus:")
-        for idx, card in enumerate(player_blue.list_card):
-            print(f"{idx + 1}: {card}")
+        # Save selected Card
+        self.list_swap_card[self.idx_player_active] = action_cardswap.card
+        self.list_player[self.idx_player_active].list_card.remove(action_cardswap.card)
 
-        blue_choice = int(input("Gib die Nummer der Karte ein, die du tauschen möchtest: ")) - 1
-        card_blue = player_blue.list_card[blue_choice]
+        # Check iff all Player selected a Card, Return if not
+        if None in self.list_swap_card:
+            return
+        
+        # Swap Cards with teammember
+        for i, player in enumerate(self.list_player):
+            opposite_player_index = (i + 2) % 4  # Index des Teammitglieds
+            player.list_card.append(self.list_swap_card[opposite_player_index])
+        
+        # Set global Variables
+        self.bool_card_exchanged = True
+        self.list_swap_card = [None]*4
 
-        print(f"\n{player_red.name}, bitte wähle eine Karte zum Tauschen aus:")
-        for idx, card in enumerate(player_red.list_card):
-            print(f"{idx + 1}: {card}")
+        return
 
-        red_choice = int(input("Gib die Nummer der Karte ein, die du tauschen möchtest: ")) - 1
-        card_red = player_red.list_card[red_choice]
+        ## ----------- Part Renato -----------
+        # player_blue = self.list_player[0]
+        # player_red = self.list_player[2]
 
-        player_blue.list_card.remove(card_blue)
-        player_red.list_card.remove(card_red)
+        # print(f"\n{player_blue.name}, bitte wähle eine Karte zum Tauschen aus:")
+        # for idx, card in enumerate(player_blue.list_card):
+        #     print(f"{idx + 1}: {card}")
 
-        player_blue.list_card.append(card_red)
-        player_red.list_card.append(card_blue)
+        # blue_choice = int(input("Gib die Nummer der Karte ein, die du tauschen möchtest: ")) - 1
+        # card_blue = player_blue.list_card[blue_choice]
 
-        print(f"{player_blue.name} tauscht {card_blue} mit {player_red.name} für {card_red}")
+        # print(f"\n{player_red.name}, bitte wähle eine Karte zum Tauschen aus:")
+        # for idx, card in enumerate(player_red.list_card):
+        #     print(f"{idx + 1}: {card}")
 
-        player_yellow = self.list_player[3]
-        player_green = self.list_player[1]
+        # red_choice = int(input("Gib die Nummer der Karte ein, die du tauschen möchtest: ")) - 1
+        # card_red = player_red.list_card[red_choice]
 
-        print(f"\n{player_yellow.name}, bitte wähle eine Karte zum Tauschen aus:")
-        for idx, card in enumerate(player_yellow.list_card):
-            print(f"{idx + 1}: {card}")
+        # player_blue.list_card.remove(card_blue)
+        # player_red.list_card.remove(card_red)
 
-        yellow_choice = int(input("Gib die Nummer der Karte ein, die du tauschen möchtest: ")) - 1
-        card_yellow = player_yellow.list_card[yellow_choice]
+        # player_blue.list_card.append(card_red)
+        # player_red.list_card.append(card_blue)
 
-        print(f"\n{player_green.name}, bitte wähle eine Karte zum Tauschen aus:")
-        for idx, card in enumerate(player_green.list_card):
-            print(f"{idx + 1}: {card}")
+        # print(f"{player_blue.name} tauscht {card_blue} mit {player_red.name} für {card_red}")
 
-        green_choice = int(input("Gib die Nummer der Karte ein, die du tauschen möchtest: ")) - 1
-        card_green = player_green.list_card[green_choice]
+        # player_yellow = self.list_player[3]
+        # player_green = self.list_player[1]
 
-        player_yellow.list_card.remove(card_yellow)
-        player_green.list_card.remove(card_green)
+        # print(f"\n{player_yellow.name}, bitte wähle eine Karte zum Tauschen aus:")
+        # for idx, card in enumerate(player_yellow.list_card):
+        #     print(f"{idx + 1}: {card}")
 
-        player_yellow.list_card.append(card_green)
-        player_green.list_card.append(card_yellow)
+        # yellow_choice = int(input("Gib die Nummer der Karte ein, die du tauschen möchtest: ")) - 1
+        # card_yellow = player_yellow.list_card[yellow_choice]
 
-        print(f"{player_yellow.name} tauscht {card_yellow} mit {player_green.name} für {card_green}")
+        # print(f"\n{player_green.name}, bitte wähle eine Karte zum Tauschen aus:")
+        # for idx, card in enumerate(player_green.list_card):
+        #     print(f"{idx + 1}: {card}")
+
+        # green_choice = int(input("Gib die Nummer der Karte ein, die du tauschen möchtest: ")) - 1
+        # card_green = player_green.list_card[green_choice]
+
+        # player_yellow.list_card.remove(card_yellow)
+        # player_green.list_card.remove(card_green)
+
+        # player_yellow.list_card.append(card_green)
+        # player_green.list_card.append(card_yellow)
+
+        # print(f"{player_yellow.name} tauscht {card_yellow} mit {player_green.name} für {card_green}")
 
     def sending_home(self, murmel: Marble) -> None:  # Set player X Marvel home
         """
@@ -563,21 +570,21 @@ class GameState(BaseModel):
 
     def init_next_turn(self) -> None: # Kägi
         # Start with the next player
-        idx_next_player = self.idx_player_active + 1 if self.idx_player_active + 1 < 4 else 0
+        idx_next_player = (self.idx_player_active +1) %4
 
         # Loop through players until a player with cards is found or the cycle returns to the active player
         while not self.list_player[idx_next_player].list_card and idx_next_player != self.idx_player_active:
-            idx_next_player = idx_next_player + 1 if idx_next_player + 1 < 4 else 0
-
+            idx_next_player = (idx_next_player + 1)%4
+            
         # Check if a player with cards was found
-        if self.list_player[idx_next_player].list_card:  # Logic 1 and 2
-            # Set the next player with cards as the active player
+        if self.list_player[idx_next_player].list_card:
             self.idx_player_active = idx_next_player
-        else:  # Logic 3: All players are out of cards
-            # Move to the next player in normal order
-            self.idx_player_active = self.idx_player_active + 1 if self.idx_player_active + 1 < 4 else 0
-            # Deal new cards to all players
+
+        else: #All players are out of cards
+            # Move to the next start player
             self.deal_cards()
+            self.idx_player_started = (self.idx_player_active +1) %4
+            self.idx_player_active = self.idx_player_started
 
 
 class Dog(Game):
@@ -609,8 +616,9 @@ class Dog(Game):
         if self.state.bool_card_exchanged is False:
             action_list = [Action(card=hand_card,pos_from=None, pos_to=None) for hand_card in self.state.list_player[self.state.idx_player_active].list_card]
             return action_list
-        else:
-            actions = []
+        
+        #
+        actions = []
         # Get cards of active player
         active_player = self.state.list_player[self.state.idx_player_active]
         cards = active_player.list_card
@@ -647,20 +655,22 @@ class Dog(Game):
 
         2. Wenn Zug abgeschlossen Aktiver spieler weitergeben
         """
-        
+        # Check if exchange cards is needed
         if self.state.bool_card_exchanged is False:
+            self.state.exchange_cards(action)
 
+        else:
 
-        if action == None:  #F or benchmarking
-            return
-        # 1 Apply action
-        self.state.set_action_to_game(action)
-        # 2 check if game is finished
-        pass
+            #FIXME: set the Action to Game. If needed seperate sepcial actions and normal movement
+            if action == None:  #F or benchmarking
+                return
+            # 1 Apply action
+            self.state.set_action_to_game(action)
+            # 2 check if game is finished
 
     def get_player_view(self, idx_player: int) -> GameState:
         """Returns the masked game state for the other players."""
-        masked_state = self.state  # Start with the full state
+        masked_state = copy.deepcopy(self.state) # Start with the full state
 
         # Mask the cards of the other players.
         for i in range(4):
@@ -682,6 +692,7 @@ if __name__ == '__main__':
     idx_player_you = 0
     game = Dog()
     player = RandomPlayer()
+    debug_counter = 0
 
     while True:
 
@@ -693,21 +704,22 @@ if __name__ == '__main__':
 
         if state.idx_player_active == idx_player_you:
 
-            state = game.get_player_view(idx_player_you)
+            player_state = game.get_player_view(idx_player_you)
             list_action = game.get_list_action()
-            dict_state = state.model_dump()  # <=== Method of BaseModel !!
+            dict_state = player_state.model_dump()  # <=== Method of BaseModel !!
             dict_state['idx_player_you'] = idx_player_you
             dict_state['list_action'] = [action.model_dump() for action in list_action]
             data = {'type': 'update', 'state': dict_state}
             # await websocket.send_json(data)
-            print(data)
+            #print(data)
 
             if len(list_action) == 0:
                 continue
+                
             else:
                 action = random.choice(list_action)  # data =
                 # data = await websocket.receive_json()
-                if isinstance(action, 'action'):
+                if isinstance(action, Action):
                     # action = Dog.model_validate(data['action']) # Checks if Action is Valid (only Valid aktion for
                     # our game?
                     game.apply_action(action)
@@ -719,22 +731,34 @@ if __name__ == '__main__':
             dict_state['list_action'] = []
 
             data = {'type': 'update', 'state': dict_state}
-            print(data)
+            # print(data)
             # await websocket.send_json(data)
 
         else:
 
-            state = game.get_player_view(state.idx_player_active)
             list_action = game.get_list_action()
-            action = player.select_action(state, list_action)
+            action = player.select_action(game.state, list_action)
             if action is not None:
-                print(f"Player {state.idx_player_active} is playing")
+                print(f"Player {game.state.idx_player_active} is playing")
                 # await asyncio.sleep(1)
+                print(action)
             game.apply_action(action)
-            state = game.get_player_view(idx_player_you)  # Abbildung für Person zeigen
-            dict_state = state.model_dump()
+            player_state = game.get_player_view(idx_player_you)  # Abbildung für Person zeigen
+            dict_state = player_state.model_dump()
             dict_state['idx_player_you'] = idx_player_you
             dict_state['list_action'] = []
             data = {'type': 'update', 'state': dict_state}
-            print(data)
+            # print(data)
             # await websocket.send_json(data)
+        
+        print("old Player Active: ", game.state.idx_player_active)
+        game.state.init_next_turn()
+        print("New Player Active: ", game.state.idx_player_active)
+        print("Exchanged? ",game.state.bool_card_exchanged)
+        print("*"*50)
+
+
+        if debug_counter >4:
+            print("-"*50,"> break becaus of counter")
+            break
+        debug_counter+=1

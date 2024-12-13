@@ -1,7 +1,12 @@
 import pytest
+import random
+import os
+import sys
 
 from pydantic import BaseModel
 from typing import List, Optional, Dict
+
+sys.path.append(os.getcwd())
 
 from server.py.dog import Card, Marble, PlayerState, Action, GameState, GamePhase, Dog
 
@@ -124,15 +129,47 @@ class TestKaegisDogParts:
 
         print("Completed Test init_next_turn")
 
+    def test_exchange_cards(self) -> None:
 
-    def test_get_list_action(self) -> None:
-        # Initial game
+        # Initial game setup
         game = Dog()
         state = game.get_state()
-        state.idx_player_active = 0
         state.bool_card_exchanged = False
-        action_list = game.get_list_action()
-        assert [action.card in state.list_player[state.idx_player_active].list_card for action in action_list], "During the exchange, only cards in the player's hand should be returned as actions"
+        state.list_swap_card = [None]*4
+        check_swaped_cards = []
+
+        # Simulate card exchange for all players
+        for player_idx in range(4):
+            state.idx_player_active = player_idx
+            action_list = game.get_list_action()
+            assert all(action.card in state.list_player[state.idx_player_active].list_card for action in action_list), f"During the exchange, only cards in Player {player_idx + 1}'s hand should be returned as actions"
+            
+            select_action = random.choice(action_list)
+            game.apply_action(select_action)
+            check_swaped_cards.append(select_action.card)
+
+            assert select_action.card not in state.list_player[state.idx_player_active].list_card, f"The selected card should not be in Player {player_idx + 1}'s hand after exchange"
+            if not state.bool_card_exchanged:
+                assert state.list_swap_card.count(None) == (3-player_idx), "The exchangecard is not stored"
+
+        # Check if cards are correctly swapped
+        state = game.get_state()
+        assert state.bool_card_exchanged is True, "Cards should have been exchanged after all selections"
+
+        # Verify the correct exchange of cards between team members
+        for i in range(4):
+            opposite_player_index = (i + 2) % 4
+            assert check_swaped_cards[i] in state.list_player[opposite_player_index].list_card, f"Player {i} should have the card from their team member Player {opposite_player_index}"
+
+        # Reset for next round
+        assert all(card is None for card in state.list_swap_card), "Card swap list should be reset after the exchange"
+
+
+
+if __name__ == '__main__':
+    test = TestKaegisDogParts()
+    test.test_exchange_cards()
+    
 
 # class TestGameActions:
 #     @pytest.fixture
