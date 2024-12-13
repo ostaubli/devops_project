@@ -1,7 +1,7 @@
-from typing import List, Optional, ClassVar, Union, Tuple
+from typing import List, Optional, ClassVar, Union, Tuple # pylint: disable=unused-import
 from enum import Enum
 import random
-import copy
+import copy # pylint: disable=unused-import
 from pydantic import BaseModel
 from server.py.game import Game, Player
 
@@ -169,7 +169,7 @@ class Dog(Game):
                     return m, p_idx
         return None, None
 
-    def _handle_jack_action(self, action: Action) -> None:
+    def _handle_jack_action(self, action: Action) -> None:  # pylint: disable=redefined-outer-name
         assert self.state is not None
         pos_from = action.pos_from if action.pos_from is not None else -1
         pos_to = action.pos_to if action.pos_to is not None else -1
@@ -231,7 +231,7 @@ class Dog(Game):
 
     def print_state(self) -> None:
         """ Print the current game state """
-        pass
+        return None
 
     def setup_next_round(self) -> None:
         """ Setup the next round with decreasing number of cards """
@@ -241,7 +241,6 @@ class Dog(Game):
         for player in self.state.list_player:
             player.list_card = [self.state.list_card_draw.pop() for _ in range(current_cards_count) if
                                 self.state.list_card_draw]
-        # TODO:: Test re-shuffle if stock out of cards (list_card_draw)
 
     def next_turn(self) -> None:
         """ Advance the turn to the next player """
@@ -249,15 +248,13 @@ class Dog(Game):
         # If all players have played, increase the round count
         if self.state.idx_player_active == self.state.idx_player_started:
             self.state.cnt_round += 1
-            # self.exchange_cards() # TODO:: Exchange cards between players
             self.setup_next_round()  # Setup the next round with updated card counts
-
 
     def get_list_action(self) -> List[Action]:
         """ Get a list of possible actions for the active player """
-        pass
+        return []
 
-    def apply_action(self, action: Action) -> None:
+    def apply_action(self, action: Action) -> None:  # pylint: disable=redefined-outer-name
         """ Apply the given action to the game """
         if action is None:
             # print("No valid action provided. Skipping turn.")
@@ -267,13 +264,12 @@ class Dog(Game):
         # Remove the card from the player's hand
         player.list_card.remove(action.card)
         self.state.list_card_discard.append(action.card)
-        # TODO:: Move the marble if applicable
         # Advance to the next player
         self.next_turn()
 
     def get_player_view(self, idx_player: int) -> GameState:
         """ Get the masked state for the active player (e.g. the oppontent's cards are face down)"""
-        pass
+        return self.state
 
     def swap_cards(self, player1_idx: int, player2_idx: int, card1: Card, card2: Card) -> None:
         # Hole die Spielerobjekte
@@ -296,14 +292,6 @@ class Dog(Game):
         player2.list_card.remove(card2)
         player1.list_card.append(card2)
 
-class RandomPlayer(Player):
-
-    def select_action(self, state: GameState, actions: List[Action]) -> Optional[Action]:
-        """ Given masked game state and possible actions, select the next action """
-        if len(actions) > 0:
-            return random.choice(actions)
-        return None
-
 
 if __name__ == '__main__':
 
@@ -324,10 +312,10 @@ if __name__ == '__main__':
     print("\nStarting turns simulation:")
     for turn in range(6):
         # Example of getting available actions (currently, not implemented)
-        actions = game.get_list_action()
-        if actions:
+        ACTIONS = game.get_list_action()
+        if ACTIONS:
             # Apply a random action (using RandomPlayer logic as an example)
-            action = random.choice(actions)
+            action = random.choice(ACTIONS)
             game.apply_action(action)
         else:
             # If no valid actions, skip the turn
