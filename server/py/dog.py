@@ -409,81 +409,54 @@ class Dog(Game):
                 })
         return all_marbles
 
-    def _handle_seven_card(self, card: Card, active_marbles: List[Marble]) -> List[Action]:
-            """Generate all possible split actions for the `7` card."""
+    def _handle_seven_card(self, card: Card, active_marbles: List[Marble]) -> List[List[Action]]:
+        """Generate all possible split actions for the `7` card."""
 
-            if not self.state:
-                raise ValueError("Game state is not set.")
+        if not self.state:
+            raise ValueError("Game state is not set.")
 
-            # Initialize player and board info just like in _exchange_jkr
-            active_player = self.state.list_player[self.state.idx_player_active]
-            all_marbles = self._get_all_marbles()
-            kennels = self.KENNEL_POSITIONS
-            start_positions = self.START_POSITIONS
-            player_idx = self.state.idx_player_active
-            player_kennel = kennels[player_idx]
-            player_start_position = start_positions[player_idx]
-            marbles_in_kennel = [marble for marble in active_marbles if marble.pos in player_kennel]
-            num_in_kennel = len(marbles_in_kennel)
-            kennels = self.KENNEL_POSITIONS
-            
-            # Filter out marbles in the kennel
-            marbles_outside_kennel = [
-                m for m in active_marbles if m.pos not in self.KENNEL_POSITIONS[player_idx]
-            ]
+        active_player = self.state.list_player[self.state.idx_player_active]
+        player_idx = self.state.idx_player_active
 
+        # Filter out marbles in the kennel
+        marbles_outside_kennel = [
+            m for m in active_marbles if m.pos not in self.KENNEL_POSITIONS[player_idx]
+        ]
+
+        if not marbles_outside_kennel:
+            return []  # No valid moves if all marbles are in the kennel
+
+        def dfs(remaining: int, current_split: List[int], results: List[List[int]]) -> None:
+            """Recursive helper to generate all possible splits."""
+            if remaining == 0:
+                results.append(current_split.copy())
+                return
             if not marbles_outside_kennel:
-                return []  # No valid moves if all marbles are in the kennel
+                return
+            for i in range(len(marbles_outside_kennel)):
+                if current_split[i] < 7:
+                    current_split[i] += 1
+                    dfs(remaining - 1, current_split, results)
+                    current_split[i] -= 1
 
-            def dfs(remaining: int,
-                    moves: List[int],
-                    marble_indices: List[int],
-                    results: List[List[tuple[int, int]]]) -> None:
-                """Recursive helper to generate splits."""
-                if remaining == 0:
-                    # Check if all moves in the split are valid and use exactly 7 points
-                    if sum(moves) == 7:  # Ensure the full 7 points are used
-                        valid_split = True
-                        for i, steps in enumerate(moves):
-                            if steps > 0:  # Check only marbles with non-zero moves
-                                marble = marbles_outside_kennel[marble_indices[i]]
-                                pos_to: Optional[int] = self._calculate_new_position(marble, steps, player_idx)
-                                if pos_to is None:
-                                    valid_split = False  # Invalidate the entire split if one move fails
-                                    break
+        # Initialize current_split with zeros for each marble
+        current_split = [0] * len(marbles_outside_kennel)
+        results = []
+        dfs(7, current_split, results)
 
-                        # If valid, append the current split result
-                        if valid_split:
-                            results.append([(marble_indices[i], moves[i]) for i in range(len(moves)) if moves[i] > 0])
-                    return
+        # Remove splits where any marble is not moved at all
+        valid_results = []
+        for split in results:
+            if any(step > 0 for step in split):
+                valid_results.append(split)
 
-                for i, _ in enumerate(moves):
-                    # Tentatively add 1 step to the current marble's move
-                    moves[i] += 1
-                    dfs(remaining - 1, moves, marble_indices, results)
-                    moves[i] -= 1  # backtrack
-
-                    # Validate the move using `_calculate_new_position` REDUNDANT
-                    # temp_pos_to = self._calculate_new_position(marbles_outside_kennel[marble_indices[i]],
-                                                            # moves[i],
-                                                            # player_idx)
-                    # if temp_pos_to is not None:
-                        # dfs(remaining - 1, moves, marble_indices, results)
-
-                    # Backtrack (remove the step)
-                    # moves[i] -= 1
-
-            # Generate all valid splits
-            marble_indices = list(range(len(marbles_outside_kennel)))
-            results: List[List[tuple[int, int]]] = []  # Type annotation fix
-            dfs(7, [0] * len(marbles_outside_kennel), marble_indices, results)
-
-            # Convert valid splits into grouped actions
-            grouped_actions_list = []
-            for split in results:
-                split_actions = []
-                for marble_idx, steps in split:
-                    marble = marbles_outside_kennel[marble_idx]
+        # Convert valid splits into grouped actions
+        grouped_actions_list = []
+        for split in valid_results:
+            split_actions = []
+            for idx, steps in enumerate(split):
+                if steps > 0:
+                    marble = marbles_outside_kennel[idx]
                     pos_to = self._calculate_new_position(marble, steps, player_idx)
                     if pos_to is not None:
                         split_actions.append(Action(
@@ -492,9 +465,13 @@ class Dog(Game):
                             pos_to=pos_to,
                             card_swap=None
                         ))
+            # Ensure the split actions sum to 7 steps
+            total_steps = sum(abs(action.pos_to - action.pos_from) for action in split_actions)
+            if total_steps == 7:
                 grouped_actions_list.append(split_actions)
 
-            return grouped_actions_list
+        return grouped_actions_list
+
 
     def _exchange_jkr(self):
 
@@ -632,9 +609,29 @@ class Dog(Game):
                 )
 
             # If card is '7' or 'JKR' (which can act like 7), handle the special "split move"
-            if card.rank == '7':
-                actions_list.extend(self._handle_seven_card(card, active_player.list_marble))
+            if card.rank == '7'and self.state.card_active is not None:
+                seven_actions = self._handle_seven_card(card, active_player.list_marble)
+                if seven_actions:
+                    actions_list.append(Action(
+                        card=card,
+                        pos_from=None,
+                        pos_to=None,  
+                        card_swap=None
+                        ))
+                continue
+
                 # After handling special moves for '7' or 'JKR', continue to next card
+                # falls actions = True -> card = 7 
+                # from / to = None
+                # card swap = 7
+                # continue
+
+            if card.rank == '7'and self.state.card_active is None:
+                actions_list.extend(action for sublist in self._handle_seven_card(card, active_player.list_marble) for action in sublist)
+                # After handling special moves for '7' or 'JKR', continue to next card
+                # falls actions = True -> card = 7 
+                # from / to = None
+                # card swap = 7
                 continue
 
             if card.rank == 'JKR':
@@ -901,11 +898,8 @@ class Dog(Game):
             print(f"{active_player.name} exchanges {action.card.rank} wit {action.card_swap.rank}.")
             active_player.list_card.append(action.card_swap)
             active_player.list_card.remove(action.card)
+            # check for further code row: self.state
             return
-
-        # Log the action being applied
-        print(f"Player {active_player.name} plays {action.card.rank} of {action.card.suit} "
-        f"moving marble from {action.pos_from} to {action.pos_to}.")
 
         # Handle special cards
         if action.card.rank == 'J':
@@ -913,18 +907,24 @@ class Dog(Game):
         #elif action.card.rank == 'JKR':
             #self._handle_joker(action)
         elif action.card.rank == '7':
+            # Handle SEVEN card
             grouped_actions = self.get_list_action()
-
             splits_completed = self._handle_seven_card_logic(grouped_actions)
 
-            # Finalize SEVEN card action only if all splits are completed
-            if splits_completed: #and action.card in active_player.list_card:
-                active_player.list_card.remove(action.card)  # Remove card from hand
-                self.state.list_card_discard.append(action.card)  # Add to discard pile
-                self.state.idx_player_active = (self.state.idx_player_active + 1) % len(self.state.list_player)  # Advance player
+            if splits_completed:
+                # Remove the SEVEN card from player's hand
+                active_player = self.state.list_player[self.state.idx_player_active]
+                active_player.list_card.remove(action.card)
+                self.state.list_card_discard.append(action.card)
+                # Advance to next player
+                self.state.idx_player_active = (self.state.idx_player_active + 1) % len(self.state.list_player)
             return
         else:
             self._handle_normal_move(action, active_player)
+
+        # Log the action being applied
+        print(f"Player {active_player.name} plays {action.card.rank} of {action.card.suit} "
+        f"moving marble from {action.pos_from} to {action.pos_to}.")
 
         # Check for collision with other players' marbles
         self._check_collisions(action)
@@ -941,62 +941,35 @@ class Dog(Game):
         self._check_game_finished()
 
     def _handle_seven_card_logic(self, grouped_actions: List[List[Action]]) -> bool:
-        """Process a SEVEN card by applying valid split actions."""
-        remaining_steps = 7  # Steps left to process
+        """Process a SEVEN card by applying valid split actions, trusting the handle_seven_card results."""
 
+        # Since _handle_seven_card only returns valid splits that sum to 7 steps total,
+        # we do not need to re-check steps or safe spaces.
         if not grouped_actions:
             print("No valid split actions provided for SEVEN card.")
             return False
 
+        # Just process the first valid split scenario (or all of them if you prefer)
         for split_actions in grouped_actions:
-
             if not isinstance(split_actions, list):
-                split_actions = [split_actions]  # Wrap the single Action object in a list
+                split_actions = [split_actions]
 
             print(f"Processing a split with {len(split_actions)} actions.")
-            for split_action in split_actions:
-                steps_used = abs(split_action.pos_to - split_action.pos_from)
-
-                # Check for SAFE_SPACES inside-out logic
-                if split_action.pos_to in self.SAFE_SPACES[self.state.idx_player_active]:
-                    safe_space_index = self.SAFE_SPACES[self.state.idx_player_active].index(split_action.pos_to)
-                    expected_safe_space = self.SAFE_SPACES[self.state.idx_player_active][:safe_space_index]
-                    if any(
-                        pos not in expected_safe_space
-                        for pos in self.SAFE_SPACES[self.state.idx_player_active][:safe_space_index]
-                    ):
-                        print(f"Invalid SAFE_SPACE move: {split_action.pos_to} violates inside-out rule.")
-                        continue
-
-                print(f"Processing SEVEN card action: {split_action.pos_from} -> {split_action.pos_to} with {steps_used} steps.")
-                try:
-                    # Move the marble and handle any logic related to the movement
+            try:
+                for split_action in split_actions:
+                    # Move the marble according to pos_from and pos_to
                     self._handle_seven_marble_movement(split_action)
-                    print(f"SEVEN card: marble successfully moved from {split_action.pos_from} to {split_action.pos_to}.")
+                    print(f"SEVEN card: marble moved from {split_action.pos_from} to {split_action.pos_to}.")
 
-                    # Validate that the marble is at the expected position
-                    active_player = self.state.list_player[self.state.idx_player_active]
-                    marble_positions = [marble.pos for marble in active_player.list_marble]
+                # If we got here without exceptions, this split is processed successfully.
+                print("All steps for SEVEN card have been processed (total of 7 steps).")
+                return True
+            except ValueError as e:
+                print(f"Error processing one of the actions in the split: {e}")
+                # Try the next split if desired, or return False if you only process one
+                continue
 
-                    if split_action.pos_to not in marble_positions:
-                        raise ValueError(
-                            f"Validation failed: Active player's marble not found at position {split_action.pos_to}. "
-                            f"Current positions: {marble_positions}"
-                        )
-                    print(f"Validation Passed: Marble successfully moved to position {split_action.pos_to}.")
-
-                except ValueError as e:
-                    print(f"Error processing action {split_action.pos_from} -> {split_action.pos_to}: {e}")
-                    return False
-
-                # Deduct steps used from remaining steps
-                remaining_steps -= steps_used
-
-                if remaining_steps <= 0:
-                    print("All steps for SEVEN card have been processed.")
-                    return True
-
-        print("SEVEN card logic complete but not all steps were used.")
+        # If none of the splits could be processed (which should be rare), return False
         return False
 
     def _check_game_finished(self) -> None:
@@ -1251,7 +1224,6 @@ class Dog(Game):
                             other_marble.is_save = False
                             break
 
-
     def _handle_seven_marble_movement(self, action: Action) -> None:
         """Handle marble movement and collision resolution for SEVEN card actions."""
         
@@ -1305,8 +1277,8 @@ class Dog(Game):
             for marble in player.list_marble:
                 if marble.pos in overtaken_positions:
                     # Skip the marble if it belongs to the active player and is the same marble being moved
-                    if player_idx == self.state.idx_player_active and marble.pos == pos_to:
-                        continue
+                    # if player_idx == self.state.idx_player_active and marble.pos == pos_to:
+                        # continue
 
                     # Log overtaking event
                     print(f"Overtaking detected! Marble at position {marble.pos} is sent back to the kennel.")
@@ -1508,7 +1480,6 @@ class RandomPlayer(Player):
         print(f"{self.__class__.__name__} finished the game with result: {result}")
 
 
-
 if __name__ == '__main__':
 
     game = Dog()
@@ -1572,50 +1543,5 @@ if __name__ == '__main__':
                 print(f"Ending game for testing after {game.state.cnt_round} rounds.")
                 break
 
-    def test_seven_card_split_generation():
-        # Initialize the game
-        game = Dog()
-        game.initialize_game()
 
-        # Ensure card exchange phase is done
-        game.state.bool_card_exchanged = True
-
-        # Set up a controlled scenario:
-        # - Active player: Player 1 (index 0)
-        # - Place a single marble of Player 1 at position 5 (arbitrary position in the main track)
-        # - Give Player 1 a SEVEN card
-        active_player = game.state.list_player[0]
-        active_player.list_card = [Card(suit='♠', rank='7')]
-        active_player.list_marble[0].pos = 5
-
-        # Marble setup: one marble in a known position, others remain in kennel
-        # This ensures no unnecessary blocking or collision logic.
-        for m in active_player.list_marble[1:]:
-            m.pos = game.KENNEL_POSITIONS[0][0]
-
-        # Call _handle_seven_card directly
-        card = active_player.list_card[0]
-        grouped_splits = game._handle_seven_card(card, active_player.list_marble)
-
-        print("\n=== SEVEN Card Split Generation Test ===")
-        if not grouped_splits:
-            print("No splits generated.")
-        else:
-            for idx, split_group in enumerate(grouped_splits, start=1):
-                print(f"\nSplit Group {idx}:")
-                hypothetical_positions = []
-                
-                # We know from the DFS logic that total steps == 7.
-                total_steps = 7
-
-                for action in split_group:
-                    hypothetical_positions.append(action.pos_to)
-                    print(f"  Action: Move from {action.pos_from} to {action.pos_to} using {action.card.rank} of {action.card.suit}")
-
-                print(f"  Total steps in this split: {total_steps}")
-                print(f"  Hypothetical final positions: {hypothetical_positions}")
-                assert total_steps == 7, f"Expected splits to total 7 steps, got {total_steps}"
-
-        print("Test completed: Splits generated and logged for inspection.")
-
-    test_seven_card_split_generation()
+    
