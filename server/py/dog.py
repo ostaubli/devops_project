@@ -285,6 +285,41 @@ class Dog(Game):
                     return m, p_idx
         return None, None
 
+    def _calc_steps(self, pos_from: int, pos_to: int, player_idx: int) -> Optional[int]:
+        assert self.state is not None
+        final_start = self.PLAYER_BOARD_SEGMENTS[player_idx]['final_start']
+        start = self.PLAYER_BOARD_SEGMENTS[player_idx]['start']
+        queue_start = self.PLAYER_BOARD_SEGMENTS[player_idx]['queue_start']
+        result: Optional[int] = None
+        if queue_start <= pos_from <= queue_start + 3 and pos_to == start:
+            result = 1
+        elif pos_from >= final_start:
+            if pos_to < final_start or pos_to < pos_from:
+                result = None
+            else:
+                result = pos_to - pos_from
+        elif pos_to >= final_start:
+            steps_finish = self._count_steps_to_finish(pos_from, start, final_start)
+            diff = pos_to - final_start
+            if diff < 0 or diff > 3:
+                result = None
+            else:
+                result = steps_finish + diff
+        else:
+            if self.state.card_active and self.state.card_active.rank == '4':
+                d = (pos_to - pos_from) % self.MAIN_PATH_LENGTH
+                d2 = (pos_from - pos_to) % self.MAIN_PATH_LENGTH
+                if d2 == 4:
+                    result = -4
+                elif d == 4:
+                    result = 4
+                else:
+                    result = None
+            else:
+                dist = (pos_to - pos_from) % self.MAIN_PATH_LENGTH
+                result = dist if dist != 0 else None
+        return result
+
     def _handle_jack_action(self, action: Action) -> None:  # pylint: disable=redefined-outer-name
         assert self.state is not None
         pos_from = action.pos_from if action.pos_from is not None else -1
@@ -295,6 +330,60 @@ class Dog(Game):
             pos_tmp = fm.pos
             fm.pos = tm.pos
             tm.pos = pos_tmp
+
+    def _get_safe_marble_actions_for_jack(self, safe_marbles: List[Marble], card: Card) -> List[Action]:
+        actions: List[Action] = []
+        done_pairs = set()
+        for i, marble_i in enumerate(safe_marbles):
+            for marble_j in safe_marbles[i + 1:]:
+                if ((marble_i.pos, marble_j.pos) not in done_pairs and
+                        (marble_j.pos, marble_i.pos) not in done_pairs):
+                    actions.append(Action(card=Card(suit=card.suit, rank=card.rank),
+                                          pos_from=marble_i.pos, pos_to=marble_j.pos))
+                    actions.append(Action(card=Card(suit=card.suit, rank=card.rank),
+                                          pos_from=marble_j.pos, pos_to=marble_i.pos))
+                    done_pairs.add((marble_i.pos, marble_j.pos))
+                    done_pairs.add((marble_j.pos, marble_i.pos))
+        return actions
+
+    def _get_jack_actions(self, card: Card) -> List[Action]:
+        assert self.state is not None
+        controlled = self._controlled_player_indices()
+        my_marbles = [
+            m
+            for i in controlled
+            for m in self.state.list_player[i].list_marble
+            if m.pos < self.MAIN_PATH_LENGTH
+        ]
+        opponent_marbles: List[int] = []
+        for p_idx, p in enumerate(self.state.list_player):
+            if p_idx not in controlled:
+                opponent_marbles.extend(
+                    mm.pos
+                    for mm in p.list_marble
+                    if mm.pos < self.MAIN_PATH_LENGTH and not (
+                            mm.pos == self.PLAYER_BOARD_SEGMENTS[p_idx]['start'] and mm.is_save
+                    )
+                )
+        actions: List[Action] = [
+            Action(card=Card(suit=card.suit, rank=card.rank), pos_from=mm.pos, pos_to=o_pos)
+            for mm in my_marbles
+            for o_pos in opponent_marbles
+        ]
+        actions += [
+            Action(card=Card(suit=card.suit, rank=card.rank), pos_from=o_pos, pos_to=mm.pos)
+            for mm in my_marbles
+            for o_pos in opponent_marbles
+        ]
+        safe_marbles = [
+            m
+            for i in controlled
+            for m in self.state.list_player[i].list_marble
+            if m.pos < self.MAIN_PATH_LENGTH and m.is_save
+        ]
+        if not actions and len(safe_marbles) >= 2:
+            actions.extend(self._get_safe_marble_actions_for_jack(safe_marbles, card))
+        return actions
 
     def _get_standard_actions(self, card: Card, move_distance: Union[int, List[int]]) -> List[Action]:
         assert self.state is not None
@@ -317,6 +406,104 @@ class Dog(Game):
             for mb in marbles:
                 try_move(mb, move_distance)
         return actions
+
+    def _calc_pos_to(self, pos_from: int, dist: int, player_idx: int, rank: str) -> Optional[int]:
+        assert self.state is not None
+        start = self.PLAYER_BOARD_SEGMENTS[player_idx]['start']
+        final_start = self.PLAYER_BOARD_SEGMENTS[player_idx]['final_start']
+        if pos_from >= self.MAIN_PATH_LENGTH and rank not in ['A', 'K', 'JKR']:
+            return None
+        pos_new: Optional[int] = None
+        if rank == '4' and dist < 0:
+            pos_test = (pos_from + dist) % self.MAIN_PATH_LENGTH
+            pos_new = None if pos_test >= self.MAIN_PATH_LENGTH else pos_test
+        elif pos_from < self.MAIN_PATH_LENGTH:
+            steps_to_finish = self._count_steps_to_finish(pos_from, start, final_start)
+            if 0 < dist <= steps_to_finish:
+                diff = dist - steps_to_finish
+                pos_test = final_start + diff
+                pos_new = None if pos_test >= final_start + 4 else pos_test
+            else:
+                pos_new = (pos_from + dist) % self.MAIN_PATH_LENGTH
+        else:
+            pos_test = pos_from + dist
+            pos_new = None if (pos_test < final_start or pos_test >= final_start + 4) else pos_test
+        return pos_new
+
+    def _count_steps_to_finish(self, pos_from: int, start: int, final_start: int) -> int:
+        if final_start < self.MAIN_PATH_LENGTH:
+            pf = pos_from
+            if pf < start:
+                pf += self.MAIN_PATH_LENGTH
+            return (final_start - pf) % self.MAIN_PATH_LENGTH
+        pf = pos_from
+        if pf < start:
+            dist_to_loop_end = self.MAIN_PATH_LENGTH - pf
+            dist_finish = final_start - self.MAIN_PATH_LENGTH
+            return dist_to_loop_end + dist_finish
+        dist_main = self.MAIN_PATH_LENGTH - pf
+        dist_finish = final_start - self.MAIN_PATH_LENGTH
+        return dist_main + dist_finish
+
+    def _get_actions_for_seven_card(self) -> List[Action]:
+        assert self.state is not None
+        if self.temp_seven_moves is None:
+            return []
+        used_steps = sum(self.temp_seven_moves) if self.temp_seven_moves else 0
+        if used_steps == 7:
+            return []
+        left = 7 - used_steps
+        controlled_indices = self._controlled_player_indices()
+        marbles = [m for i in controlled_indices for m in self.state.list_player[i].list_marble]
+        final_start = self.PLAYER_BOARD_SEGMENTS[self.state.idx_player_active]['final_start']
+        in_finish = any(mb.pos is not None and mb.pos >= final_start for mb in marbles)
+        move_distance = [left] if in_finish else [x for x in self.SEVEN_OPTIONS if x <= left]
+        assert self.state.card_active is not None
+        all_actions = self._get_standard_actions(self.state.card_active, move_distance)
+        if in_finish:
+            assert self.temp_seven_state is not None
+            originally = {(p_i, idx): m.pos for p_i, p in enumerate(self.temp_seven_state.list_player)
+                          for idx, m in enumerate(p.list_marble)}
+            now = {(p_i, idx): m.pos for p_i, p in enumerate(self.state.list_player)
+                   for idx, m in enumerate(p.list_marble)}
+            moved_marbles = [key for key in now if now[key] != originally[key]]
+            filtered_actions = [
+                act for act in all_actions if any(
+                    mm.pos == act.pos_from and (pp_i, idx) in moved_marbles
+                    for pp_i, pl in enumerate(self.state.list_player)
+                    for idx, mm in enumerate(pl.list_marble)
+                )
+            ]
+            return self._unique_sorted_actions(filtered_actions)
+        return self._unique_sorted_actions(all_actions)
+
+    def _get_actions_for_joker(self, c: Card, start_actions: List[Action]) -> List[Action]:
+        assert self.state is not None
+        possible_actions: List[Action] = []
+        all_ranks = ['2', '3', '4', '5', '6', '7', '8', '9', '10', 'A', 'J', 'K', 'Q']
+        list_suit = ['♠', '♥', '♦', '♣']
+        if self.state.cnt_round == 0 and self.state.bool_card_exchanged:
+            if start_actions:
+                possible_actions.extend(start_actions)
+                for suitx in list_suit:
+                    possible_actions.append(Action(card=Card(suit='', rank='JKR'), pos_from=None, pos_to=None,
+                                                   card_swap=Card(suit=suitx, rank='A')))
+                    possible_actions.append(Action(card=Card(suit='', rank='JKR'), pos_from=None, pos_to=None,
+                                                   card_swap=Card(suit=suitx, rank='K')))
+            else:
+                for suitx in list_suit:
+                    for r in all_ranks:
+                        possible_actions.append(Action(card=Card(suit='', rank='JKR'),
+                                                       pos_from=None, pos_to=None,
+                                                       card_swap=Card(suit=suitx, rank=r)))
+        else:
+            possible_actions.extend(start_actions)
+            for r in all_ranks:
+                possible_actions.append(Action(card=Card(suit=c.suit, rank=c.rank),
+                                               pos_from=None, pos_to=None,
+                                               card_swap=Card(suit='♥', rank=r)))
+            possible_actions.extend(self._get_standard_actions(Card(suit=c.suit, rank=c.rank), self.JOKER_OPTIONS))
+        return possible_actions
 
     def _get_actions_for_card(self, c: Card) -> List[Action]:
         possible_actions: List[Action] = []
@@ -374,6 +561,93 @@ class Dog(Game):
         ))
         return unique_actions
 
+    def is_valid_move(self, pos_from: int, pos_to: int) -> bool:
+        assert self.state is not None
+        player_idx = self.state.idx_player_active
+        final_start = self.PLAYER_BOARD_SEGMENTS[player_idx]['final_start']
+        start_pos = self.PLAYER_BOARD_SEGMENTS[player_idx]['start']
+        result = True
+        if pos_from >= self.MAIN_PATH_LENGTH:
+            if pos_to != start_pos or not self._can_start(start_pos):
+                result = False
+        elif pos_to >= final_start + 4:
+            result = False
+        elif not self._path_clear(pos_from, pos_to, player_idx):
+            result = False
+        else:
+            for p_i, p in enumerate(self.state.list_player):
+                player_final_start = self.PLAYER_BOARD_SEGMENTS[p_i]['final_start']
+                if pos_to >= player_final_start and any(m.pos == pos_to for m in p.list_marble):
+                    result = False
+                    break
+        return result
+
+    def _can_start(self, start_pos: int) -> bool:
+        assert self.state is not None
+        player_idx = self.state.idx_player_active
+        for p_i, p in enumerate(self.state.list_player):
+            for m in p.list_marble:
+                if m.pos == start_pos and m.is_save:
+                    if p_i == player_idx:
+                        return False
+        return True
+
+    def _blocked_on_main_path(self, p: int) -> bool:
+        assert self.state is not None
+        starts = {0, 16, 32, 48}
+        for pl_st in self.state.list_player:
+            for mm in pl_st.list_marble:
+                if mm.pos == p and mm.is_save and (p in starts or p < self.MAIN_PATH_LENGTH):
+                    return True
+        return False
+
+    def _move_through_main_path(self, start_pos: int, steps: int, direction: int = 1) -> bool:
+        assert self.state is not None
+        cur = start_pos
+        for _ in range(steps):
+            cur = (cur + direction) % self.MAIN_PATH_LENGTH
+            if self._blocked_on_main_path(cur):
+                return False
+        return True
+
+    def _move_through_final_area(self, fs: int, steps: int) -> bool:
+        assert self.state is not None
+        for step in range(steps):
+            np = fs + step
+            for pl_st in self.state.list_player:
+                for mm in pl_st.list_marble:
+                    if mm.pos == np:
+                        return False
+        return True
+
+    def _path_clear(self, pos_from: int, pos_to: int, player_idx: int) -> bool:
+        assert self.state is not None
+        if pos_from >= self.MAIN_PATH_LENGTH and pos_to < self.MAIN_PATH_LENGTH:
+            return False
+        fs = self.PLAYER_BOARD_SEGMENTS[player_idx]['final_start']
+        st = self.PLAYER_BOARD_SEGMENTS[player_idx]['start']
+        plen = self.MAIN_PATH_LENGTH if pos_from < fs else 64
+        dist = (pos_to - pos_from) % plen
+        direction = 1
+        c = self.state.card_active
+        if c and c.rank == '4':
+            bd = (pos_from - pos_to) % self.MAIN_PATH_LENGTH
+            fd = (pos_to - pos_from) % self.MAIN_PATH_LENGTH
+            if bd == 4:
+                direction = -1
+                dist = 4
+            elif fd == 4:
+                dist = 4
+        if pos_to < fs:
+            return self._move_through_main_path(pos_from, dist, direction)
+        stf = self._count_steps_to_finish(pos_from, st, fs)
+        if dist <= stf:
+            return self._move_through_main_path(pos_from, dist, 1)
+        if not self._move_through_main_path(pos_from, stf, 1):
+            return False
+        diff = dist - stf
+        return self._move_through_final_area(fs, diff)
+
     def apply_action(self, action: Action) -> None:  # pylint: disable=redefined-outer-name
         """ Apply the given action to the game """
         if action is None:
@@ -400,8 +674,18 @@ class Dog(Game):
                 self.state.phase = GamePhase.FINISHED
                 break
 
+    def get_move_distance(self, card: Card) -> Optional[Union[int, List[int]]]:
+        if card.rank in self.CARD_MOVEMENTS:
+            return self.CARD_MOVEMENTS[card.rank]
+        if card.rank == 'A':
+            return self.ACE_OPTIONS
+        if card.rank == '7':
+            return self.SEVEN_OPTIONS
+        if card.rank == 'JKR':
+            return self.JOKER_OPTIONS
+        return None
+
     def get_player_view(self, idx_player: int) -> GameState:
-        """ Get the masked state for the active player (e.g. the oppontent's cards are face down)"""
         return self.state
 
     def swap_cards(self, player1_idx: int, player2_idx: int, card1: Card, card2: Card) -> None:
