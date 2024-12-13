@@ -418,6 +418,31 @@ def test_has_other_playable_card_no_play():
     exclude_card = hand[0]
     assert game._has_other_playable_card(hand, exclude_card, top_discard) is False
 
+def test_get_list_action_first_turn_with_wild():
+    """Test get_list_action on the first turn when the discard top is a wild card."""
+    game = Uno()
+    state = GameState(
+        cnt_player=2,
+        list_player=[
+            PlayerState(name="P1", list_card=[
+                Card(color="red", number=3),
+                Card(color="blue", number=6)
+            ]),
+            PlayerState(name="P2", list_card=[Card(color="yellow", number=9)])
+        ],
+        list_card_draw=[],
+        list_card_discard=[Card(color="any", symbol="wild")],
+        idx_player_active=0,
+        phase=GamePhase.RUNNING,
+        color="any"
+    )
+    game.set_state(state)
+
+    actions = game.get_list_action()
+    # Player 1 should be able to play red3 or blue6 since it's the first turn wild scenario
+    playable = [a for a in actions if a.card and a.card.number in [3,6]]
+    assert len(playable) > 0
+
 def test_list_action_card_matching_1() -> None:
     """Test 003: Test player card matching with discard pile card - simple cards [3 points]"""
     # self.game_server.game = Uno()
