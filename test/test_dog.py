@@ -120,6 +120,16 @@ class TestKaegisDogParts:
 
         print("Completed Test init_next_turn")
 
+
+    def test_get_list_action(self) -> None:
+        # Initial game
+        game = Dog()
+        state = game.get_state()
+        state.idx_player_active = 0
+        state.bool_card_exchanged = False
+        action_list = game.get_list_action()
+        assert [action.card in state.list_player[state.idx_player_active].list_card for action in action_list], "During the exchange, only cards in the player's hand should be returned as actions"
+
 # class TestGameActions:
 #     @pytest.fixture
 #     def setup_game(self):

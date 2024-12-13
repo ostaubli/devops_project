@@ -98,6 +98,7 @@ class GameState(BaseModel):
     phase: GamePhase = GamePhase.SETUP  # current phase of the game
     cnt_round: int = 0  # current round
     bool_card_exchanged: bool = False  # true if cards was exchanged in round
+    list_swap_card: Optional[Card] = [None] * 4 # empty Carddeck for cards to be swapt
     idx_player_started: int = random.randint(0, 3)  # index of player that started the round
     idx_player_active: int = idx_player_started  # index of active player in round
     list_player: List[PlayerState] = []  # list of players
@@ -159,7 +160,7 @@ class GameState(BaseModel):
                 continue
             else:
                 print(f"{player.name} has still {len(player.list_card)} card's")
-                return None
+                return
 
         # Go to next Gameround
         self.cnt_round += 1
@@ -179,8 +180,25 @@ class GameState(BaseModel):
             player.list_card = random.sample(self.list_card_draw, num_cards)
             for card in player.list_card:
                 self.list_card_draw.remove(card)
+        
+        # Set Cardexchange
+        self.bool_card_exchanged = False
 
-        return
+
+    def swap_cards(self, action_cardswap: Action):
+        self.list_swap_card[self.idx_player_active] = action_cardswap.card
+        self.list_player[self.idx_player_active].list_card.remove(action_cardswap.card)
+
+        if None in self.list_swap_card:
+            return
+        
+        for i in range(len(self.list_player)):
+            opposite_player_index = (i + 2) % 4  # Index des Teammitglieds
+            self.list_player[i].list_card.append(self.list_swap_card[opposite_player_index])
+        
+        self.bool_card_exchanged = True
+        self.list_swap_card = [None]*4
+
 
     def can_marble_leave_kennel(self, player: PlayerState) -> int:
         for marble in player.list_marble:
@@ -271,8 +289,9 @@ class GameState(BaseModel):
                         case 'J':
                             for oponent_player in oponent_players:
                                 for oponent_marble in oponent_player.list_marble:
-                                    if not oponent_marble.is_save: action_list.append(Action(card = card,pos_from = marble.pos,
-                                                                                            pos_to = oponent_marble.pos, card_swap = None))
+                                    if not oponent_marble.is_save: 
+                                        action_list.append(Action(card = card,pos_from = marble.pos,
+                                                                  pos_to = oponent_marble.pos, card_swap = None))
                         case 'Q':
                             action_list.append(
                                 Action(card=card, pos_from=marble.pos, pos_to=(marble.pos + 12) % 64, card_swap=None))
@@ -317,8 +336,9 @@ class GameState(BaseModel):
                                 Action(card=card, pos_from=marble.pos, pos_to=(marble.pos + 1) % 64, card_swap=None))
                             for oponent_player in oponent_players:
                                 for oponent_marble in oponent_player.list_marble:
-                                    if not oponent_marble.is_save: action_list.append(Action(card = card,pos_from = marble.pos,
-                                                                                            pos_to = oponent_marble.pos, card_swap = None))
+                                    if not oponent_marble.is_save: 
+                                        action_list.append(Action(card = card,pos_from = marble.pos,
+                                                                  pos_to = oponent_marble.pos, card_swap = None))
                         case _:
                             pass
 
@@ -585,7 +605,12 @@ class Dog(Game):
 
     def get_list_action(self) -> List[Action]:
         """ Get a list of possible actions for the active player """
-        return self.state.get_list_possible_action()
+        # Swap Card Actions
+        if self.state.bool_card_exchanged is False:
+            action_list = [Action(card=hand_card,pos_from=None, pos_to=None) for hand_card in self.state.list_player[self.state.idx_player_active].list_card]
+            return action_list
+        else:
+            return self.state.get_list_possible_action()
 
     def apply_action(self, action: Action) -> None:
         """
@@ -602,6 +627,10 @@ class Dog(Game):
 
         2. Wenn Zug abgeschlossen Aktiver spieler weitergeben
         """
+        
+        if self.state.bool_card_exchanged is False:
+
+
         if action == None:  #F or benchmarking
             return
         # 1 Apply action
