@@ -1,0 +1,10 @@
+name: First Workflow  # name of workflow
+on: workflow_dispatch # event that triggers the execution, 'workflow_dispatch' is a manual trigger
+jobs:
+  first-job: # name of job (can be customized)
+    runs-on: ubuntu-latest # runner e.g. execution environment (for example a GitHub-Hosted Runner)
+    steps:
+      - name: Print greeting
+        run: echo "Hello World"
+      - name: Print goodbye
+        run: echo "Done - bye"
