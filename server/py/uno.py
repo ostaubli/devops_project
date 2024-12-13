@@ -308,6 +308,9 @@ class Uno(Game):
             if action.card.symbol not in ["skip", "reverse", "draw2", "wilddraw4"]:
                 self._advance_turn()
 
+            if action.card.symbol in ["draw2", "wilddraw4"] and self.state.cnt_player==2:
+                self._advance_turn()
+
             self.state.has_drawn = False
 
         elif action.draw:
@@ -317,7 +320,7 @@ class Uno(Game):
                     if self.state.list_card_draw:
                         active_player.list_card.append(self.state.list_card_draw.pop())
                 self.state.cnt_to_draw = 0
-                self._advance_turn()
+                self._advance_turn(skip=True)
                 self.state.has_drawn = False
             else:
                 for _ in range(action.draw):
@@ -347,8 +350,6 @@ class Uno(Game):
             deck = self._initialize_deck()
             random.shuffle(deck)
             self.state.list_card_draw = deck
-            if self.state.idx_player_active is None:
-                self.state.idx_player_active = 0
 
         if self.state.idx_player_active is None:
             self.state.idx_player_active = 0
@@ -357,8 +358,8 @@ class Uno(Game):
             while len(player.list_card) < self.state.CNT_HAND_CARDS and self.state.list_card_draw:
                 player.list_card.append(self.state.list_card_draw.pop())
 
+        valid_start_found = False
         if not self.state.list_card_discard:
-            valid_start_found = False
             while self.state.list_card_draw and not valid_start_found:
                 top_card = self.state.list_card_draw.pop()
                 if top_card.symbol == "wilddraw4":
@@ -374,9 +375,12 @@ class Uno(Game):
             elif top_card.symbol == "reverse":
                 self.state.direction = -1
             elif top_card.symbol == "skip":
-                self._advance_turn(skip=False)
+                if valid_start_found:
+                    self._advance_turn(skip=False)
+                else:
+                    self._advance_turn(skip=True)
             elif top_card.symbol == "wild":
-                self.state.color = 'blue'
+                self.state.color = 'any'
 
         self.state.phase = GamePhase.RUNNING
 
@@ -408,7 +412,8 @@ class Uno(Game):
         if not top_discard:
             return True
         return (
-            card.color == self.state.color
+            card.color == self.state.color 
+            or self.state.color == 'any'
             or (card.number is not None and top_discard.number is not None
                 and card.number == top_discard.number)
             or (card.symbol is not None and top_discard.symbol == card.symbol)
