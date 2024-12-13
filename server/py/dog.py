@@ -337,33 +337,20 @@ class GameState(BaseModel):
         # Get the active player
         active_player = self.list_player[self.idx_player_active]
 
-        #FIXME: It is a Game! Dont raise errors ==> Errors will break the Game!
-        #FIXME: Set me in test_dog.py
-        # # Ensure the card played is in the player's hand
-        # if action.card not in active_player.list_card:
-        #     raise ValueError("The card played is not in the active player's hand.")
-        #FIXME: Set me in test_dog.py
-        # # Ensure pos_from and pos_to are defined
-        # if action.pos_from is None or action.pos_to is None:
-        #     raise ValueError("Both pos_from and pos_to must be specified for the action.")
-
-        # Find the marble to move based on pos_from 
-        marble_to_move = next((m for m in active_player.list_marble if m.pos == str(action.pos_from)), None) # FIXME: Is not working for going out
-
-        #FIXME: Set me in test_dog.py
-        # if not marble_to_move:
-        #     raise ValueError(f"No marble found at the specified pos_from: {action.pos_from}")
+        # Check if the marble exists at the specified position
+        marble_to_move = next((m for m in active_player.list_marble if m.pos == action.pos_from), None)
 
         # Update the marble's position
-        marble_to_move.pos = str(action.pos_to)
+        marble_to_move.pos = (action.pos_to)
 
         # Check if the marble's new position is in a final or safe zone
+        # Check if marble can go in finish position and thats a function input marble_to_move and the action(Output of the function is True or False)
         self.check_final_pos(pos_to=action.pos_to, pos_from=action.pos_from, marble=marble_to_move)
 
         # Handle cases where another player's marble occupies the destination
         for player in self.list_player:
             if player != active_player:
-                opponent_marble = next((m for m in player.list_marble if m.pos == str(action.pos_to)), None)
+                opponent_marble = next((m for m in player.list_marble if m.pos == action.pos_to), None)
                 if opponent_marble:
                     self.sending_home(opponent_marble)  # Send the opponent's marble home
         # Discard the played card
@@ -479,15 +466,6 @@ class GameState(BaseModel):
         # player_green.list_card.append(card_yellow)
 
         # print(f"{player_yellow.name} tauscht {card_yellow} mit {player_green.name} für {card_green}")
-
-
-    def discard_invalid_cards(self) -> None:
-        # check if player has cards
-        if not self.list_player[self.idx_player_active].list_card:
-            return
-        # discard the player
-        self.list_card_discard.extend(self.list_player[self.idx_player_active].list_card)
-        self.list_player[self.idx_player_active].list_card = []
 
     def sending_home(self, marble: Marble, card: Card, action: Action) -> bool:
         # First case: A marble of another player lands exactly on the position of my marble
@@ -623,33 +601,28 @@ class Dog(Game):
             action_list = [Action(card=hand_card,pos_from=None, pos_to=None) for hand_card in self.state.list_player[self.state.idx_player_active].list_card]
             return action_list
         
-        # get possible Actions
-        action_list = self.state.get_list_possible_action()
+        #
+        actions = []
+        # Get cards of active player
+        active_player = self.state.list_player[self.state.idx_player_active]
+        cards = active_player.list_card
 
-        if not action_list:
-            actions = []
-            # Get cards of active player
-            active_player = self.state.list_player[self.state.idx_player_active]
-            cards = active_player.list_card
+        # Define start cards that allow moving out of kennel
+        start_cards = ['A', 'K', 'JKR']
 
-            # Define start cards that allow moving out of kennel
-            start_cards = ['A', 'K', 'JKR']
-
-            # Check if any card allows moving out of kennel
-            for card in cards:
-                if card.rank in start_cards:
-                    # Check if marbe in the kennel (pos=64)
-                    for marble in active_player.list_marble:
-                        if marble.pos == 64:
-                            actions.append(Action(
-                                card=card,
-                                pos_from=64,
-                                pos_to=0,
-                                card_swap=None
-                            ))
-            return actions
-        
-        return action_list
+        # Check if any card allows moving out of kennel
+        for card in cards:
+            if card.rank in start_cards:
+                # Check if marbe in the kennel (pos=64)
+                for marble in active_player.list_marble:
+                    if marble.pos == 64:
+                        actions.append(Action(
+                            card=card,
+                            pos_from=64,
+                            pos_to=0,
+                            card_swap=None
+                        ))
+        return actions
 
     def apply_action(self, action: Action) -> None:
         """
@@ -744,7 +717,6 @@ if __name__ == '__main__':
             #print(data)
 
             if len(list_action) == 0:
-                game.state.discard_invalid_cards()
                 continue
                 
             else:
@@ -766,11 +738,8 @@ if __name__ == '__main__':
             # await websocket.send_json(data)
 
         else:
-            list_action = game.get_list_action()
-            if not list_action:
-                game.state.discard_invalid_cards()
-                continue
 
+            list_action = game.get_list_action()
             action = player.select_action(game.state, list_action)
             if action is not None:
                 print(f"Player {game.state.idx_player_active} is playing")
