@@ -490,6 +490,28 @@ def test_wilddraw4_with_other_playable_cards():
     wd4_actions = [a for a in actions if a.card and a.card.symbol == "wilddraw4"]
     assert len(red5_actions) >= 1
 
+def test_cumulative_draw_scenario():
+    """Test a cumulative draw scenario where cnt_to_draw > 2."""
+    game = Uno()
+    state = GameState(
+        cnt_player=2,
+        list_player=[
+            PlayerState(name="P1", list_card=[Card(color="red", symbol="draw2")]),
+            PlayerState(name="P2", list_card=[Card(color="blue", number=5)])
+        ],
+        list_card_draw=[Card(color="green", number=i) for i in range(1,6)],
+        list_card_discard=[Card(color="red", symbol="draw2")],
+        idx_player_active=1,
+        phase=GamePhase.RUNNING,
+        color="red",
+        cnt_to_draw=2
+    )
+    game.set_state(state)
+    game.state.list_player[1].list_card.append(Card(color="red", symbol="draw2"))
+    actions = game.get_list_action()
+    stack_draw2_actions = [a for a in actions if a.card and a.card.symbol == "draw2"]
+    assert len(stack_draw2_actions) > 0
+
 def test_list_action_card_matching_1() -> None:
     """Test 003: Test player card matching with discard pile card - simple cards [3 points]"""
     # self.game_server.game = Uno()
