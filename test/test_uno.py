@@ -862,6 +862,84 @@ def test_get_list_action_finished_phase():
     actions = game.get_list_action()
     assert actions == []
 
+def test_two_cards_uno_option():
+    """Test that when a player has exactly two cards and a playable card, 
+    both normal action and uno action are presented."""
+    game = Uno()
+    # Player has two cards: one playable (red 5) and one non-playable (blue 9)
+    # Top discard is red 3, color=red, so red 5 is playable.
+    state = GameState(
+        cnt_player=2,
+        list_player=[
+            PlayerState(name="P1", list_card=[Card(color="red", number=5), Card(color="blue", number=9)]),
+            PlayerState(name="P2", list_card=[Card(color="yellow", number=2)])
+        ],
+        list_card_draw=[],
+        list_card_discard=[Card(color="red", number=3)],
+        idx_player_active=0,
+        phase=GamePhase.RUNNING,
+        color="red"
+    )
+    game.set_state(state)
+    actions = game.get_list_action()
+    # Look for normal red5 action and red5+uno action
+    normal_red5_actions = [a for a in actions if a.card and a.card.number == 5 and not a.uno]
+    uno_red5_actions = [a for a in actions if a.card and a.card.number == 5 and a.uno]
+    assert len(normal_red5_actions) > 0, "Normal play action for red5 should be present."
+    assert len(uno_red5_actions) > 0, "UNO variant of the action should also be present."
+
+def test_cumulative_draw_no_stackable_but_normal():
+    """Test cumulative scenario (cnt_to_draw > 2) with normal playable card but no stackable cards."""
+    game = Uno()
+    # Scenario:
+    # cnt_to_draw=4 (>2 means cumulative)
+    # Top discard: red draw2, color=red, player has a red 5 (normal playable) but no draw2/wilddraw4 stackable cards.
+    # According to logic, if cumulative_scenario and no stackable cards, player must just draw cnt_to_draw.
+    state = GameState(
+        cnt_player=2,
+        list_player=[
+            PlayerState(name="P1", list_card=[Card(color="red", number=5)]),  # normal playable
+            PlayerState(name="P2", list_card=[Card(color="blue", number=5)])
+        ],
+        list_card_draw=[Card(color="green", number=i) for i in range(1, 6)],
+        list_card_discard=[Card(color="red", symbol="draw2")],
+        idx_player_active=0,
+        phase=GamePhase.RUNNING,
+        color="red",
+        cnt_to_draw=4
+    )
+    game.set_state(state)
+    actions = game.get_list_action()
+    # Expect exactly one action: draw=4 because no stackable cards to continue the chain.
+    assert len(actions) == 1
+    assert actions[0].draw == 4
+    assert actions[0].card is None
+
+
+def test_first_turn_with_wild_no_play():
+    """Test first turn with wild on top but no playable cards due to chosen color mismatch."""
+    game = Uno()
+    # First turn: discard top is wild, chosen color is green.
+    # Player's card: blue9 doesn't match green and isn't wild, so no playable cards.
+    state = GameState(
+        cnt_player=2,
+        list_player=[
+            PlayerState(name="P1", list_card=[Card(color="blue", number=9)]),
+            PlayerState(name="P2", list_card=[Card(color="yellow", number=1)])
+        ],
+        list_card_draw=[Card(color="green", number=2)],
+        list_card_discard=[Card(color="any", symbol="wild")],
+        idx_player_active=0,
+        phase=GamePhase.RUNNING,
+        color="green"  # chosen color doesn't match the player's card
+    )
+    game.set_state(state)
+    actions = game.get_list_action()
+    # No playable cards, should only get a draw action
+    assert len(actions) == 1
+    assert actions[0].draw == 1
+    assert actions[0].card is None
+
 
 if __name__ == "__main__":
 
