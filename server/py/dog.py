@@ -185,6 +185,14 @@ class GameState(BaseModel):
         # Set Cardexchange
         self.bool_card_exchanged = False
 
+    def discard_invalid_cards(self) -> None:
+        # check if player has cards
+        if not self.list_player[self.idx_player_active].list_card:
+            return
+        # discard the player
+        self.list_card_discard.extend(self.list_player[self.idx_player_active].list_card)
+        self.list_player[self.idx_player_active].list_card = []
+
     def can_marble_leave_kennel(self, player: PlayerState) -> int:
         for marble in player.list_marble:
             if int(marble.pos) not in player.list_kennel_pos:
@@ -747,17 +755,14 @@ if __name__ == '__main__':
             # await websocket.send_json(data)
             #print(data)
 
-            if len(list_action) == 0:
-                continue
-                
-            else:
-                action = random.choice(list_action)  # data =
-                # data = await websocket.receive_json()
-                if isinstance(action, Action):
-                    # action = Dog.model_validate(data['action']) # Checks if Action is Valid (only Valid aktion for
-                    # our game?
-                    game.apply_action(action)
-                    print(action)
+            # If there are possible actions, choose one
+            if action is not None: 
+                action = random.choice(list_action)
+                print(action)
+                game.apply_action(action)
+
+            else: # if not: delet all cards for this round
+                game.state.discard_invalid_cards()
 
             state = game.get_player_view(idx_player_you)
             dict_state = state.model_dump()
@@ -772,11 +777,17 @@ if __name__ == '__main__':
 
             list_action = game.get_list_action()
             action = player.select_action(game.state, list_action)
+
+            # If there are possible actions, choose one
             if action is not None:
                 print(f"Player {game.state.idx_player_active} is playing")
                 # await asyncio.sleep(1)
                 print(action)
-            game.apply_action(action)
+                game.apply_action(action)
+            else:# if not: delet all cards for this round
+                game.state.discard_invalid_cards()
+            
+            
             player_state = game.get_player_view(idx_player_you)  # Abbildung für Person zeigen
             dict_state = player_state.model_dump()
             dict_state['idx_player_you'] = idx_player_you
@@ -792,7 +803,7 @@ if __name__ == '__main__':
         print("*"*50)
 
 
-        if debug_counter >3:
+        if debug_counter >5:
             print("-"*50,"> break becaus of counter")
             break
         debug_counter+=1
