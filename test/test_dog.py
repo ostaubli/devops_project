@@ -399,48 +399,6 @@ def test_apply_action_no_state():
     with pytest.raises(ValueError, match="Game state is not set"):
         game.apply_action(None)
 
-# def test_apply_action_jack_no_marbles_to_swap():
-#     """Test the Jack action when no marbles can be swapped."""
-#     game = Dog()
-#     game.initialize_game()
-#     assert game.state is not None
-
-#     # Give the active player a Jack card and place marbles so no swap is possible
-#     idx_active = game.state.idx_player_active
-#     player = game.state.list_player[idx_active]
-#     player.list_card = [Card(suit='♠', rank='J')]
-
-#     # Marble in kennel and no other player marbles in reachable positions
-#     player.list_marble[0].pos = 64  # Kennel of player 1
-#     action = Action(card=Card(suit='♠', rank='J'), pos_from=64, pos_to=10)  # Attempt to swap with pos 10 (empty)
-
-#     with pytest.raises(ValueError, match="Could not find marbles to swap for the Jack action."):
-#         game.apply_action(action)
-
-# def test_apply_action_joker_regular_move():
-#     """Test the Joker card used as a normal move card."""
-#     game = Dog()
-#     game.initialize_game()
-#     assert game.state is not None
-
-#     idx_active = game.state.idx_player_active
-#     player = game.state.list_player[idx_active]
-
-#     # Place a marble on the main track and give Joker card
-#     player.list_marble[0].pos = 5
-#     player.list_marble[0].is_save = False
-#     player.list_card = [Card(suit='', rank='JKR')]
-
-#     # Joker can act like a K (13 forward) for instance
-#     # Check a valid move scenario
-#     pos_from = 5
-#     pos_to = 5 + 13  # hypothetical new position
-#     action = Action(card=Card(suit='', rank='JKR'), pos_from=pos_from, pos_to=pos_to)
-#     game.apply_action(action)
-
-#     # Verify that marble moved and possibly became safe if pos_to is in safe spaces
-#     moved_marble = [m for m in player.list_marble if m.pos == pos_to]
-#     assert len(moved_marble) == 1, "Joker card did not move the marble as expected."
 
 def test_invalid_apply_action_card_not_in_player_hand():
     """Test applying an action with a card that is not in the active player's hand."""
@@ -581,32 +539,6 @@ def test_validate_total_cards_mismatch():
     with pytest.raises(ValueError, match="Total cards mismatch"):
         game.validate_total_cards()
 
-# def test_collision_opponent_marble_sent_back():
-#     """Test collision scenario where an opponent's marble is sent back to the kennel."""
-#     game = Dog()
-#     game.initialize_game()
-#     assert game.state is not None
-
-#     idx_active = game.state.idx_player_active
-#     player = game.state.list_player[idx_active]
-
-#     # Place opponent marble on a position and active player's marble moving onto it
-#     opponent_idx = (idx_active + 1) % 4
-#     opponent_player = game.state.list_player[opponent_idx]
-#     opponent_player.list_marble[0].pos = 10
-
-#     player.list_marble[0].pos = 9
-#     player.list_card = [Card(suit='♠', rank='2')]  # Move 2 steps forward
-
-#     # Apply action moving marble from 9 to 11 (which collides at pos_to=11 if pos_to is 10)
-#     action = Action(card=Card(suit='♠', rank='2'), pos_from=9, pos_to=10)
-#     game.apply_action(action)
-
-#     # Opponent's marble should be sent back to kennel
-#     new_pos = opponent_player.list_marble[0].pos
-#     kennel_positions = game.KENNEL_POSITIONS[opponent_idx]
-#     assert new_pos in kennel_positions, "Opponent's marble was not sent back to kennel on collision."
-
 def test_no_state_for_get_list_action():
     """Test get_list_action returns an empty list when no state is set."""
     game = Dog()
@@ -664,87 +596,6 @@ def test_no_marble_in_kennel_with_start_card():
             "No starting action should be offered if no marbles are in kennel."
         )
 
-# def test_handle_seven_card_no_valid_splits():
-#     """Test that _handle_seven_card returns empty if no valid splits are possible."""
-#     game = Dog()
-#     game.initialize_game()
-#     assert game.state is not None
-
-#     # Give the active player a '7' but place marbles so no move is possible
-#     idx_active = game.state.idx_player_active
-#     player = game.state.list_player[idx_active]
-
-#     player.list_card = [Card(suit='♠', rank='7')]
-#     # Put all marbles in kennel so no move can be made with '7'
-#     for marble in player.list_marble:
-#         marble.pos = game.KENNEL_POSITIONS[idx_active][0]
-
-#     actions = game.get_list_action()
-#     # '7' actions that require splitting should not produce moves if all marbles are stuck
-#     # The starting action might still appear if a marble can come out. Disable that scenario by placing start pos occupied
-#     start_pos = game.START_POSITIONS[idx_active]
-#     player.list_marble[0].pos = start_pos
-
-#     # Regenerate actions now that start pos is blocked too
-#     game.set_state(game.get_state())
-#     actions = game.get_list_action()
-
-#     # If no splits or moves possible, no actions should appear related to seven splitting
-#     for action in actions:
-#         assert action.card.rank != '7' or action.pos_from == start_pos, (
-#             "No valid seven-split actions should appear if no moves are possible."
-#         )
-
-# def test_calculate_new_position_safe_space():
-#     """Test _calculate_new_position entering safe spaces correctly."""
-#     game = Dog()
-#     game.initialize_game()
-#     assert game.state is not None
-
-#     idx_active = game.state.idx_player_active
-#     player_kennel = game.KENNEL_POSITIONS[idx_active]
-#     player = game.state.list_player[idx_active]
-
-#     # Place a marble just before the start position, moving into safe space
-#     start_pos = game.START_POSITIONS[idx_active]
-#     safe_spaces = game.SAFE_SPACES[idx_active]
-
-#     # For example, if start_pos=0 and safe_spaces=[68,69,70,71],
-#     # place marble at start_pos - 1 (if possible)
-#     # If start_pos=0, place somewhere on board track before safe spaces logically.
-#     # We'll pick a position that after a move will fall into safe spaces.
-#     marble = player.list_marble[0]
-#     marble.pos = start_pos - 1 if start_pos > 0 else 63  # just before start in track modulo 64
-#     marble.is_save = False
-#     steps_needed = (start_pos + 2) - marble.pos  # Move into second safe space, for example
-
-#     new_pos = game._calculate_new_position(marble, steps_needed, idx_active)
-#     assert new_pos in safe_spaces, "Marble should land in a safe space after correct move."
-
-# def test_calculate_new_position_blocked_start():
-#     """Test that _calculate_new_position returns None if crossing a blocked start position."""
-#     game = Dog()
-#     game.initialize_game()
-#     assert game.state is not None
-
-#     idx_active = game.state.idx_player_active
-#     player = game.state.list_player[idx_active]
-#     start_pos = game.START_POSITIONS[idx_active]
-
-#     # Place opponent's marble at their start position and mark it safe to block crossing
-#     opponent_idx = (idx_active + 1) % 4
-#     opponent_player = game.state.list_player[opponent_idx]
-#     opponent_player.list_marble[0].pos = game.START_POSITIONS[opponent_idx]
-#     opponent_player.list_marble[0].is_save = True
-
-#     # Active player's marble tries to move past the opponent's start position
-#     marble = player.list_marble[0]
-#     marble.pos = start_pos - 2 if start_pos > 1 else 62
-#     move_value = 5  # Enough steps to cross opponent's start
-
-#     new_pos = game._calculate_new_position(marble, move_value, idx_active)
-#     assert new_pos is None, "Should not be able to cross a blocked start position."
-
 def test_validate_total_cards_no_error():
     """Test validate_total_cards when counts match perfectly."""
     game = Dog()
@@ -791,39 +642,6 @@ def test_apply_action_without_moves_but_round_not_ended():
     # After skipping, if moves were possible, no discard/clear hand occurs, just active player changes
     assert game.state.idx_player_active != idx_active, "Active player should advance after skipping."
     assert game.state.cnt_round == initial_round, "Round should not advance just because player skipped."
-
-# def test_cannot_move_marble_from_non_existent_position():
-#     """Test that a ValueError is raised if trying to move a marble from a position where no marble exists."""
-#     game = Dog()
-#     game.initialize_game()
-#     assert game.state is not None
-
-#     idx_active = game.state.idx_player_active
-#     player = game.state.list_player[idx_active]
-#     player.list_card = [Card(suit='♠', rank='2')]
-
-#     # Try to move from a position where no marble is located
-#     invalid_action = Action(card=Card(suit='♠', rank='2'), pos_from=999, pos_to=10)
-#     with pytest.raises(ValueError, match="No marble found at position 999"):
-#         game.apply_action(invalid_action)
-
-# def test_handle_jack_with_no_valid_swaps():
-#     """Test that Jack action raises error if no valid marbles to swap with found."""
-#     game = Dog()
-#     game.initialize_game()
-#     assert game.state is not None
-
-#     idx_active = game.state.idx_player_active
-#     player = game.state.list_player[idx_active]
-#     player.list_card = [Card(suit='♠', rank='J')]
-
-#     # Place marble outside kennel
-#     player.list_marble[0].pos = 10
-#     # Try to swap with a position that has no marble
-#     action = Action(card=Card(suit='♠', rank='J'), pos_from=10, pos_to=20)
-
-#     with pytest.raises(ValueError, match="Could not find marbles to swap"):
-#         game.apply_action(action)
 
 def test_masked_view_no_marbles():
     """Test get_player_view when opponents have no marbles (edge case)."""
@@ -888,36 +706,6 @@ def test_apply_action_in_finished_phase():
     game.apply_action(None)  # No action provided
     # Just ensure no exceptions are raised
     assert game.state.phase == GamePhase.FINISHED, "Phase should remain finished."
-
-# def test_joker_as_various_cards():
-#     """Test Joker acting like a variety of cards (e.g., as 'A', 'K', '4', '7')."""
-#     game = Dog()
-#     game.initialize_game()
-#     assert game.state is not None
-
-#     idx_active = game.state.idx_player_active
-#     player = game.state.list_player[idx_active]
-#     joker_card = Card(suit='', rank='JKR')
-#     player.list_card = [joker_card]
-
-#     # Move marble into a position where different card values would matter
-#     player.list_marble[0].pos = 10
-#     player.list_marble[0].is_save = False
-
-#     # Test moves for Joker as 'K' (13 steps)
-#     # Adjust pos_to just to simulate a possible scenario:
-#     pos_to = 23  # (10 + 13) mod 64 in normal scenario
-#     action = Action(card=joker_card, pos_from=10, pos_to=pos_to)
-#     game.apply_action(action)
-
-#     # Joker card played, marble moved
-#     # Reset card state
-#     player.list_card = [joker_card]
-#     player.list_marble[0].pos = 10
-#     # Try joker as '4' for backward movement (-4 steps)
-#     pos_to_back = 6  # (10 - 4) => 6
-#     action_back = Action(card=joker_card, pos_from=10, pos_to=pos_to_back)
-#     game.apply_action(action_back)
 
 def test_normal_move_action_blocked():
     """Test that a normal move action returns None if the path is blocked."""
@@ -1589,8 +1377,295 @@ def test_kennel_positions_invariance():
     for k, v in original_kennels.items():
         assert game.KENNEL_POSITIONS[k] == v, "Kennel positions changed unexpectedly."
 
+def test_draw_board_with_no_players():
+    """Test draw_board when there are no players."""
+    game = Dog()
+    game.state = type('State', (object,), {"list_player": []})()
+    game.BOARD_SIZE = 100
+    game.SAFE_SPACES = [[10, 20, 30], [40, 50, 60], [70, 80, 90]]
+    game.KENNEL_POSITIONS = [[1, 2, 3], [4, 5, 6], [7, 8, 9]]
+
+    game.draw_board()
+    assert game.state.list_player == []
 
 
+def test_draw_board_with_one_player():
+    """Test draw_board with a single player and their marbles."""
+    game = Dog()
+    game.state = type('State', (object,), {})()
+    game.BOARD_SIZE = 100
+
+    # Mock player and marbles
+    player1 = type('Player', (object,), {})()
+    player1.list_marble = [
+        type('Marble', (object,), {"pos": 10, "is_save": True}),
+        type('Marble', (object,), {"pos": 20, "is_save": False})
+    ]
+    game.state.list_player = [player1]
+
+    game.draw_board()
+    assert game.state.list_player[0].list_marble[0].pos == 10
+    assert game.state.list_player[0].list_marble[0].is_save is True
+    assert game.state.list_player[0].list_marble[1].pos == 20
+    assert game.state.list_player[0].list_marble[1].is_save is False
+
+
+def test_draw_board_with_multiple_players():
+    """Test draw_board with multiple players and their marbles."""
+    game = Dog()
+    game.state = type('State', (object,), {})()
+    game.BOARD_SIZE = 100
+
+    # Mock players and marbles
+    player1 = type('Player', (object,), {})()
+    player1.list_marble = [
+        type('Marble', (object,), {"pos": 10, "is_save": True}),
+        type('Marble', (object,), {"pos": 20, "is_save": False})
+    ]
+    player2 = type('Player', (object,), {})()
+    player2.list_marble = [
+        type('Marble', (object,), {"pos": 40, "is_save": True}),
+        type('Marble', (object,), {"pos": 50, "is_save": False})
+    ]
+    player3 = type('Player', (object,), {})()
+    player3.list_marble = [
+        type('Marble', (object,), {"pos": 70, "is_save": True}),
+        type('Marble', (object,), {"pos": 80, "is_save": False})
+    ]
+
+    game.state.list_player = [player1, player2, player3]
+
+    game.draw_board()
+
+    # Assertions for player 1
+    assert game.state.list_player[0].list_marble[0].pos == 10
+    assert game.state.list_player[0].list_marble[0].is_save is True
+    assert game.state.list_player[0].list_marble[1].pos == 20
+    assert game.state.list_player[0].list_marble[1].is_save is False
+
+    # Assertions for player 2
+    assert game.state.list_player[1].list_marble[0].pos == 40
+    assert game.state.list_player[1].list_marble[0].is_save is True
+    assert game.state.list_player[1].list_marble[1].pos == 50
+    assert game.state.list_player[1].list_marble[1].is_save is False
+
+    # Assertions for player 3
+    assert game.state.list_player[2].list_marble[0].pos == 70
+    assert game.state.list_player[2].list_marble[0].is_save is True
+    assert game.state.list_player[2].list_marble[1].pos == 80
+    assert game.state.list_player[2].list_marble[1].is_save is False
+
+def test_card_in_card_values():
+    """Test _get_card_value when the card rank exists in CARD_VALUES."""
+    # Initialize the Dog game instance
+    game = Dog()
+
+    # Set up the CARD_VALUES dictionary
+    game.CARD_VALUES = {'A': [1], 'K': [5]}  # Example card values
+
+    # Create a card with rank 'A'
+    card = Card(suit='♠', rank='A')  # Include suit as required by the Card class
+
+    # Call the method to get the card value
+    result = game._get_card_value(card)
+
+    # Assert the result matches the expected value
+    assert result == [1], f"Expected card value [1], but got {result}"
+
+
+def test_numeric_rank():
+    """Test _get_card_value for a numeric card rank."""
+    # Initialize the Dog game instance
+    game = Dog()
+
+    # Set up CARD_VALUES dictionary
+    game.CARD_VALUES = {'A': [1], 'K': [5]}  # Example card values
+
+    # Create a card with rank '3' (numeric rank)
+    card = Card(suit='♠', rank='3')
+
+    # Call the method to get the card value
+    result = game._get_card_value(card)
+
+    # Assert the result matches the expected value
+    assert result == [3], f"Expected card value [3], but got {result}"
+
+
+
+def test_rank_4():
+    """Test _get_card_value for rank '4', treated as a special case."""
+    # Initialize the Dog game instance
+    game = Dog()
+
+    # Set up CARD_VALUES dictionary with example values
+    game.CARD_VALUES = {'A': [1], 'K': [5]}  # Example predefined values
+
+    # Create a card with rank '4' (special case)
+    card = Card(suit='♦', rank='4')
+
+    # Call the method to get the card value
+    result = game._get_card_value(card)
+
+    # Assert the result matches the special case value [0]
+    assert result == [4], f"Expected card value [0] for rank '4', but got {result}"
+
+
+def test_rank_7():
+    """Test _get_card_value for rank '7', which allows split moves."""
+    # Initialize the Dog game instance
+    game = Dog()
+
+    # Define a '7' card
+    card = Card(suit='♦', rank='7')
+
+    # Check that the card value for '7' is correctly returned as [7]
+    result = game._get_card_value(card)
+
+    # Assert the returned value matches the expected movement
+    assert result == [7], f"Expected [7] for rank '7', but got {result}"
+
+
+def test_non_numeric_rank():
+    """Test _get_card_value for a non-numeric rank (e.g., 'J')."""
+    # Initialize the Dog game instance
+    game = Dog()
+
+    # Card values are already predefined in the class
+    # Explicitly ensure 'J' is not defined
+    assert 'J' not in game.CARD_VALUES, "'J' should not be defined in CARD_VALUES."
+
+    # Define a 'J' card
+    card = Card(suit='♠', rank='J')
+
+    # Get the card value
+    result = game._get_card_value(card)
+
+    # Assert it returns [0] for undefined ranks
+    assert result == [0], f"Expected [0] for rank 'J', but got {result}"
+
+
+def test_invalid_rank():
+    """Test _get_card_value for an invalid card rank (e.g., 'invalid')."""
+    # Initialize the Dog game instance
+    game = Dog()
+
+    # Ensure CARD_VALUES does not define the invalid rank
+    assert 'invalid' not in game.CARD_VALUES, "'invalid' should not be defined in CARD_VALUES."
+
+    # Create a card with an invalid rank
+    card = Card(suit='♠', rank='invalid')
+
+    # Get the card value
+    result = game._get_card_value(card)
+
+    # Assert it returns [0] for an invalid rank
+    assert result == [0], f"Expected [0] for rank 'invalid', but got {result}"
+
+
+def test_no_players():
+    game = Dog()
+    game.state = type("State", (), {"list_player": []})()
+    assert game._get_all_marbles() == []
+
+def test_single_player_single_marble():
+    game = Dog()
+    player = type("Player", (), {"name": "Player1", "list_marble": [type("Marble", (), {"pos": 1, "is_save": True})()]})()
+    game.state = type("State", (), {"list_player": [player]})()
+    expected_result = [{"player": "Player1", "player_idx": 0, "position": 1, "is_save": True}]
+    assert game._get_all_marbles() == expected_result
+
+def test_multiple_players_multiple_marbles():
+    game = Dog()
+    player1 = type("Player", (), {"name": "Player1", "list_marble": [type("Marble", (), {"pos": 1, "is_save": True})(), type("Marble", (), {"pos": 2, "is_save": False})()]})()
+    player2 = type("Player", (), {"name": "Player2", "list_marble": [type("Marble", (), {"pos": 3, "is_save": True})()]})()
+    game.state = type("State", (), {"list_player": [player1, player2]})()
+    expected_result = [
+        {"player": "Player1", "player_idx": 0, "position": 1, "is_save": True},
+        {"player": "Player1", "player_idx": 0, "position": 2, "is_save": False},
+        {"player": "Player2", "player_idx": 1, "position": 3, "is_save": True},
+    ]
+    assert game._get_all_marbles() == expected_result
+
+def initialize_game_state():
+    return GameState(
+        cnt_player=4,
+        phase=GamePhase.RUNNING,
+        cnt_round=1,
+        bool_card_exchanged=False,
+        idx_player_started=0,
+        idx_player_active=0,
+        bool_game_finished=False,
+        card_active=None,
+        list_card_draw=[],
+        list_card_discard=[],
+        list_player=[
+            PlayerState(
+                name="Player 1",
+                list_card=[],
+                list_marble=[Marble(pos=0, is_save=False)]
+            )
+        ],
+        board_positions=[None] * Dog.BOARD_SIZE
+    )
+
+def test_marble_in_kennel_cannot_move():
+    """Test that a marble in the kennel cannot move."""
+    dog = Dog()
+    dog.state = initialize_game_state()
+    dog.KENNEL_POSITIONS = {0: [0]}  # Kennel at position 0
+    marble = dog.state.list_player[0].list_marble[0]
+    new_pos = dog._calculate_new_position(marble, 1, 0)
+    assert new_pos is None, "Expected marble in kennel to not move."
+
+
+
+def test_invalid_game_state():
+    """Test invalid game state raises ValueError."""
+    dog = Dog()
+    dog.state = None  # No valid game state
+    marble = Marble(pos=0, is_save=False)
+    with pytest.raises(ValueError):
+        dog._calculate_new_position(marble, 1, 0)
+
+
+def test_handle_seven_card_no_marbles_outside_kennel():
+    """Test SEVEN card with no marbles outside the kennel."""
+    game = Dog()
+    game.initialize_game()
+    card = Card(suit='♠', rank='7')
+    result = game._handle_seven_card(card, [])  # No marbles outside kennel
+    assert result == []
+
+
+def test_handle_seven_card_all_marbles_in_kennel():
+    """Test SEVEN card when all marbles are in the kennel."""
+    game = Dog()
+    game.initialize_game()
+    game.state.idx_player_active = 0
+    game.state.list_player[0].list_marble = [Marble(pos=pos, is_save=False) for pos in game.KENNEL_POSITIONS[0]]
+    card = Card(suit='♠', rank='7')
+    result = game._handle_seven_card(card, game.state.list_player[0].list_marble)
+    assert result == []
+
+def test_exchange_jkr_seven_card():
+    """Test Joker (JKR) acting as SEVEN card."""
+    game = Dog()
+    game.initialize_game()
+    game.state.list_player[0].list_marble = [Marble(pos=0, is_save=False), Marble(pos=64, is_save=False)]
+    actions = game._exchange_jkr()
+    assert len(actions) >= 1
+    assert actions[0].card.rank == 'JKR'
+
+
+def test_exchange_jkr_other_cards():
+    """Test Joker (JKR) for other cards (e.g., A, K)."""
+    game = Dog()
+    game.initialize_game()
+    game.state.list_player[0].list_card = [Card(suit='♠', rank='A')]
+    game.state.list_player[0].list_marble = [Marble(pos=0, is_save=False)]
+    actions = game._exchange_jkr()
+    assert len(actions) >= 1
+    assert actions[0].card.rank == 'JKR'
 
 
 
