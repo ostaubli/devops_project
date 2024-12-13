@@ -9,6 +9,7 @@ from typing import List, Optional, Dict
 sys.path.append(os.getcwd())
 
 from server.py.dog import Card, Marble, PlayerState, Action, GameState, GamePhase, Dog
+from server.py.game import Player
 
 
 class TestKaegisDogParts:
@@ -403,4 +404,72 @@ class TestGameState:
         assert marble.is_save is True  # Marble sollte safe sein
 
 
+def test_sending_home():
+    # Arrange
+    game_state = GameState()
 
+    # Initialisierung der Spieler mit den verlangten Attributen in PlayerState
+    player1 = PlayerState(
+        list_card=[],
+        list_finish_pos=[],
+        list_kennel_pos=[],
+        list_marble=[],
+        name="Player1",
+        start_pos=0,
+    )
+
+    player2 = PlayerState(
+        list_card=[],
+        list_finish_pos=[],
+        list_kennel_pos=[],
+        list_marble=[],
+        name="Player2",
+        start_pos=0,
+    )
+
+    # Initialisiere Murmeln
+    marble1 = Marble(pos=0, start_pos=0, is_save=False)
+    marble2 = Marble(pos=5, start_pos=5, is_save=False)
+
+    # Füge Murmeln den Spielern hinzu
+    player1.list_marble.append(marble1)
+    player2.list_marble.append(marble2)
+
+    # Füge Spieler zum GameState hinzu
+    game_state.list_player.extend([player1, player2])
+
+    # Case 1: Marble2 lands on position of marble1
+    marble2.pos = 0
+    result = game_state.sending_home(marble1, None, None)  # Keine Action benötigt
+    assert result is True
+    assert marble1.pos == marble1.start_pos
+    assert marble1.is_save is True
+
+    # Case 2: Marble2 does not land on position of marble1
+    marble2.pos = 1
+    result = game_state.sending_home(marble1, None, None)  # Keine Action benötigt
+    assert result is False
+    assert marble1.pos == 0
+    assert marble1.is_save is True
+
+    # Case 3: Marble1 gets jumped over by Marble2 with a 7-card
+    card = Card(suit='hearts', rank='7')  # Erstellt eine gültige Karte
+    action = Action(card=card, pos_from=3, pos_to=8)  # Erstellt eine gültige Action mit Karte und Positionen
+    marble1.pos = 5
+
+    result = game_state.sending_home(marble1, card, action)
+    assert result is True
+    assert marble1.pos == marble1.start_pos
+    assert marble1.is_save is True
+
+
+
+
+
+
+# Test test_is_player_finished
+# Test test_check_game_end
+# test_set_state
+# test get_state
+# test print_state
+# test get_player_view

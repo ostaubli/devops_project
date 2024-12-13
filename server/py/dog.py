@@ -476,29 +476,22 @@ class GameState(BaseModel):
 
         # print(f"{player_yellow.name} tauscht {card_yellow} mit {player_green.name} für {card_green}")
 
-    def sending_home(self, murmel: Marble) -> None:  # Set player X Marvel home
-        """
-        Function to send a player home. There are two possibilities:
-        1) a marble of another player lands exactly on the position of my marble
-        2) my marble gets jumped over by a marble with a 7-card.
-        """
-
-        # First case
-        for player in self.list_player:
-            for marble in player.list_marble:
-                if marble.pos == self.pos_to:
-                    marble.pos = 0  # Anpassen. Marble zurück auf Startposition. Wie definieren wir die
-                    # Startposition? Fix zuweisen oder Logik?
+    def sending_home(self, marble: Marble, card: Card, action: Action) -> bool:
+        # First case: A marble of another player lands exactly on the position of my marble
+        for current_player in self.list_player:
+            for opponent_marble in current_player.list_marble:
+                if opponent_marble.pos == marble.pos and opponent_marble != marble:
+                    marble.pos = marble.start_pos
                     marble.is_save = True
+                    return True
 
-        # Second case
-        if Action.card.rank == 7:  # Müssen wir hier noch eine Action mitgeben?
-            for player in self.list_player:
-                for marble in player.list_marble:
-                    if murmel.pos_from < marble.pos < murmel.pos_to and marble.is_save == False:
-                        marble.pos = 0  # Anpassen. Marble zurück auf Startposition. Wie definieren wir die
-                        # Startposition? Fix zuweisen oder Logik?
-                        marble.is_save = True
+        # Second case: My marble gets jumped over by a marble with a 7-card
+        if action and action.pos_from is not None and action.pos_to is not None:
+            if action.pos_from < marble.pos < action.pos_to:
+                marble.pos = marble.start_pos
+                marble.is_save = True
+                return True
+        return False
 
     def marble_switch_jake(self, player_idx: int, opponent_idx: int, player_marble_pos: int,
                            opponent_marble_pos: int):  # Kened
