@@ -766,10 +766,17 @@ class Dog(Game):
         print(f"Player {active_player.name} plays {action.card.rank} of {action.card.suit} "
         f"moving marble from {action.pos_from} to {action.pos_to}.")
 
-        # Handle special cards
+        # Handle Jack card swaps and skip collision checks
         if action.card.rank == 'J':
             self._handle_jack(action)
-        elif action.card.rank == '7':
+            active_player.list_card.remove(action.card)
+            self.state.list_card_discard.append(action.card)
+            self.state.card_active = None
+            self.state.idx_player_active = (self.state.idx_player_active + 1) % len(self.state.list_player)
+            return
+
+        # Handle SEVEN card logic
+        if action.card.rank == '7':
             grouped_actions: List[Action] = self.get_list_action()
             splits_completed: bool = self._handle_seven_card_logic(grouped_actions)
 
