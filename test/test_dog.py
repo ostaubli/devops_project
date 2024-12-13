@@ -480,8 +480,6 @@ def test_sending_home() -> None:
 
 
 
-
-
 # Test test_is_player_finished
 # Test test_check_game_end
 # test_set_state
