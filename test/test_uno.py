@@ -443,6 +443,16 @@ def test_get_list_action_first_turn_with_wild():
     playable = [a for a in actions if a.card and a.card.number in [3,6]]
     assert len(playable) > 0
 
+def test_apply_action_non_running_phase():
+    """Test apply_action does nothing when phase is not RUNNING and an action is given."""
+    game = Uno()
+    state = GameState(cnt_player=0, phase=GamePhase.SETUP)
+    game.set_state(state)
+    original_state = game.get_state().model_dump()
+    action = Action(draw=1)
+    game.apply_action(action)
+    assert game.get_state().model_dump() == original_state
+
 def test_list_action_card_matching_1() -> None:
     """Test 003: Test player card matching with discard pile card - simple cards [3 points]"""
     # self.game_server.game = Uno()
