@@ -1,3 +1,9 @@
+## Deployment Links
+
+- [GitHub Action Deployment](https://game-401752948836.europe-west6.run.app)
+- [CLI Deployment](https://gamecli-401752948836.europe-west6.run.app)
+
+
 # Students Repository for HSLU Module "DevOps"
 
 The following commands are all ment to be executed in the root directory of the project.
