@@ -34,7 +34,7 @@ class Action(BaseModel):
     """Represents the action information"""
     card: Card                 # card to play
     pos_from: Optional[int | None]    # position to move the marble from
-    pos_to: Optional[int | None]      # position to move the marble to
+    pos_to: Optional[int]      # position to move the marble to
     card_swap: Optional[Card] = None  # optional card to swap (default is None)
 
 
@@ -903,7 +903,7 @@ class Dog(Game):
             return False
 
         for split_actions in grouped_actions:
-            print(f"Processing a split with {len(split_actions)} actions.")
+            # print(f"Processing a split with {len(split_actions)} actions.")
             for split_action in split_actions:
                 assert self.state
                 steps_used = abs(split_action.pos_to - split_action.pos_from)
@@ -1007,8 +1007,8 @@ class Dog(Game):
 
                     # Log the kennel_action
                     print(f"Player {active_player.name} plays {kennel_action.card.rank} "+
-                          f"of {kennel_action.card.suit} moving marble from {kennel_action.pos_from} "+ 
-                          f"to {kennel_action.pos_to}.")
+                        f"of {kennel_action.card.suit} moving marble from {kennel_action.pos_from} "+
+                        f"to {kennel_action.pos_to}.")
 
                     return True  # Action handled successfully
         return False  # Action does not involve moving from kennel to start
@@ -1025,7 +1025,7 @@ class Dog(Game):
         for marble in active_player.list_marble:
             if marble.pos == mm_action.pos_from:
                 print(f"Moving active player's marble from {mm_action.pos_from}" +
-                      f" to {mm_action.pos_to}.")
+                    f" to {mm_action.pos_to}.")
                 marble.pos = mm_action.pos_to
                 marble.is_save = marble.pos in self.SAFE_SPACES[self.state.idx_player_active]
                 if marble.is_save:
@@ -1439,9 +1439,9 @@ class Dog(Game):
 class RandomPlayer(Player):
     """A player that selects actions randomly."""
 
-    def select_action(self, actions: List[Action]) -> Optional[Action]:
+    def select_action(self, state: GameState, actions: List[Action]) -> Optional[Action]:
         """
-        Given masked game state and possible actions, select the next action randomly.
+        Given the game state and possible actions, select the next action randomly.
         """
         if actions:
             return random.choice(actions)
@@ -1487,7 +1487,7 @@ if __name__ == '__main__':
                 print(f"{idx}: Play {action.card.rank} of {action.card.suit} from {action.pos_from} to {action.pos_to}")
 
             # Select an action (random in this example)
-            selected_action = random_player.select_action(game_actions)
+            selected_action = random_player.select_action(state=game.state, actions=game_actions)
 
 
             # Apply the selected action
