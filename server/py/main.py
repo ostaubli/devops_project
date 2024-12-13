@@ -261,40 +261,38 @@ async def dog_simulation(request: Request):
 async def dog_simulation_ws(websocket: WebSocket):
     await websocket.accept()
 
+    idx_player_you = 0 
+
     try:
-        game = dog.Dog()
-        random_player = dog.RandomPlayer()
-
-        # Initialize the game state
-        game.initialize_game()
-
+        game = dog.Dog() 
+        player = dog.RandomPlayer() 
+    
         while True:
             state = game.get_state()
             list_action = game.get_list_action()
 
-            if state.phase == dog.GamePhase.FINISHED:
-                # Notify the client that the game is finished
-                data = {'type': 'finished', 'state': state.dict()}
-                await websocket.send_json(data)
-                break
+            action = None
+            if len(list_action) > 0:
+                action = player.select_action(state, list_action)
 
-            # Random player selects an action
-            action = random_player.select_action(state, list_action) if list_action else None
-
-            # State update to the client
-            dict_state = state.dict()
-            dict_state['list_action'] = [action.dict() for action in list_action]
-            dict_state['selected_action'] = action.dict() if action else None
+            dict_state = state.model_dump()
+            dict_state['idx_player_you'] = idx_player_you
+            dict_state['list_action'] = [action.model_dump() for action in list_action]
+            dict_state['selected_action'] = None if action is None else action.model_dump()
             data = {'type': 'update', 'state': dict_state}
             await websocket.send_json(data)
 
-            if action:
+            # Check for Game End
+            if state.phase == dog.GamePhase.FINISHED:
+                break
+
+            data = await websocket.receive_json()
+            if data['type'] == 'action':
+                action = dog.Action.model_validate(data['action'])
                 game.apply_action(action)
 
-            await asyncio.sleep(1)  # Add a delay for simulation
-
     except WebSocketDisconnect:
-        print("Disconnected")
+        print('DISCONNECTED')
 
 
 @app.get("/dog/singleplayer", response_class=HTMLResponse)
@@ -306,35 +304,57 @@ async def dog_singleplayer(request: Request):
 async def dog_singleplayer_ws(websocket: WebSocket):
     await websocket.accept()
 
+    idx_player_you = 0
+
     try:
-        game = dog.Dog()  # Correct instantiation
-        idx_player_you = 0
-        game.initialize_game()
+        game = dog.Dog()
+        player = dog.RandomPlayer()
 
         while True:
-            state = game.get_player_view(idx_player_you)
-            list_action = game.get_list_action()
-
+            state = game.get_state()
             if state.phase == dog.GamePhase.FINISHED:
-                data = {'type': 'finished', 'state': state.dict()}
-                await websocket.send_json(data)
                 break
 
-            dict_state = state.dict()
-            dict_state['list_action'] = [action.dict() for action in list_action]
-            data = {'type': 'update', 'state': dict_state}
-            await websocket.send_json(data)
+            if state.idx_player_active == idx_player_you:
+                state = game.get_player_view(idx_player_you)
+                list_action = game.get_list_action()
+                dict_state = state.model_dump()
+                dict_state['idx_player_you'] = idx_player_you
+                dict_state['list_action'] = [action.model_dump() for action in list_action]
+                data = {'type': 'update', 'state': dict_state}
+                await websocket.send_json(data)
 
-            if list_action:
-                data = await websocket.receive_json()
-                if data['type'] == 'action':
-                    action = dog.Action(**data['action'])
-                    game.apply_action(action)
+                if len(list_action) > 0:
+                    data = await websocket.receive_json()
+                    if data['type'] == 'action':
+                        action = dog.Action.model_validate(data['action'])
+                        game.apply_action(action)
+
+                state = game.get_player_view(idx_player_you)
+                dict_state = state.model_dump()
+                dict_state['idx_player_you'] = idx_player_you
+                dict_state['list_action'] = []
+
+                data = {'type': 'update', 'state': dict_state}
+                await websocket.send_json(data)
+
             else:
-                game.apply_action(None)
+
+                state = game.get_player_view(state.idx_player_active)
+                list_action = game.get_list_action()
+                action = player.select_action(state, list_action)
+                if action is not None:
+                    await asyncio.sleep(1)
+                game.apply_action(action)
+                state = game.get_player_view(idx_player_you)
+                dict_state = state.model_dump()
+                dict_state['idx_player_you'] = idx_player_you
+                dict_state['list_action'] = []
+                data = {'type': 'update', 'state': dict_state}
+                await websocket.send_json(data)
 
     except WebSocketDisconnect:
-        print("Disconnected")
+        print('DISCONNECTED')
 
 
 @app.websocket("/dog/random_player/ws")
@@ -342,31 +362,30 @@ async def dog_random_player_ws(websocket: WebSocket):
     await websocket.accept()
 
     try:
-        game = dog.Dog()  # Correct instantiation
-        random_player = dog.RandomPlayer()
-        game.initialize_game()
+        game = dog.Dog()
+        players = [dog.RandomPlayer() for _ in range(4)] 
 
         while True:
             state = game.get_state()
             list_action = game.get_list_action()
 
-            if state.phase == dog.GamePhase.FINISHED:
-                data = {'type': 'finished', 'state': state.dict()}
-                await websocket.send_json(data)
-                break
+            action = None
+            if len(list_action) > 0:
 
-            action = random_player.select_action(state, list_action) if list_action else None
+                current_player = players[state.idx_player_active]
+                action = current_player.select_action(state, list_action)
 
-            dict_state = state.dict()
-            dict_state['list_action'] = [action.dict() for action in list_action]
-            dict_state['selected_action'] = action.dict() if action else None
-            data = {'type': 'update', 'state': dict_state}
-            await websocket.send_json(data)
-
-            if action:
+            if action is not None:
                 game.apply_action(action)
 
-            await asyncio.sleep(1)
+            dict_state = state.model_dump()
+            dict_state['list_action'] = [action.model_dump() for action in list_action]
+            dict_state['selected_action'] = None if action is None else action.model_dump()
+            await websocket.send_json({'type': 'update', 'state': dict_state})
+
+            if state.phase == dog.GamePhase.FINISHED:
+                await websocket.send_json({'type': 'update', 'state': dict_state})
+                break
 
     except WebSocketDisconnect:
-        print("WebSocket disconnected")
+        print('DISCONNECTED')
