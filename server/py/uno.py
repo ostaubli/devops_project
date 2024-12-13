@@ -1,24 +1,8 @@
+from server.py.game import Game, Player
 from typing import List, Optional
 from enum import Enum
 import random
 from pydantic import BaseModel
-
-
-# --- Minimal stubs for Game and Player classes (originally from server.py.game) ---
-
-class Game:
-    def set_state(self, state):
-        pass
-
-    def get_state(self):
-        pass
-
-class Player:
-    def select_action(self, state, actions):
-        pass
-
-
-# --- UNO code begins here ---
 
 class Card(BaseModel):
     """Represents a UNO card with optional color, number, and/or symbol."""
@@ -119,8 +103,13 @@ class Uno(Game):
         """Return the current game state."""
         return self.state
 
-    def print_state(self, list_color: bool = True, list_symbol: bool = True,
-                    list_card: bool = True) -> str:
+    def print_state(self) -> None:
+        # Just call a helper method that returns the desired string
+        print_str = self._generate_state_str(list_color=True, list_symbol=True, list_card=True)
+        print(print_str)
+
+    def _generate_state_str(self, list_color: bool = True, list_symbol: bool = True,
+                            list_card: bool = True) -> str:
         """
         Return a string representation of the current game state.
         """
