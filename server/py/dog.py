@@ -334,6 +334,11 @@ class GameState(BaseModel):
         return action_list
 
     def set_action_to_game(self, action: Action):  # Kened
+        # Action is from the active Player
+        # Set Action to the GameState ==> make movement on the "board"
+
+        return 
+
         # Get the active player
         active_player = self.list_player[self.idx_player_active]
 
@@ -343,19 +348,11 @@ class GameState(BaseModel):
         # Update the marble's position
         marble_to_move.pos = (action.pos_to)
 
-        # Check if the marble's new position is in a final or safe zone Check if marble can go in finish position and# thats a function input marble_to_move and the action(Output of the function is True or False)
-        self.check_final_pos(pos_to=action.pos_to, pos_from=action.pos_from, marble=marble_to_move)
+        #TODO: function check_special_action | input Action | output = True/False
+        #   ==> Check if it is a nomal foreward movement or not
 
-        # Handle cases where another player's marble occupies the destination
-        for player in self.list_player:
-            if player != active_player:
-                opponent_marble = next((m for m in player.list_marble if m.pos == action.pos_to), None)
-                if opponent_marble:
-                    self.sending_home(opponent_marble)  # Send the opponent's marble home
-        # Discard the played card
-        active_player.list_card.remove(action.card)
-        self.list_card_discard.append(action.card)
-
+        #TODO:  if Normal make movement
+        #       if special 
         # Handle special cards
         if action.card.rank == '7':
             # 7 allows multiple movements; the game logic should track additional actions
@@ -369,6 +366,34 @@ class GameState(BaseModel):
         else:
             # Reset the active card for regular actions
             self.card_active = None
+
+
+        #TODO:
+        # function for sending home | input= Action | output = None
+        #   ==> Function is sending other marbels home if possible
+        #   ==> Logic not implementet in set_action_to_game
+
+        # Check if the marble's new position is in a final or safe zone
+
+
+        self.check_final_pos(pos_to=action.pos_to, pos_from=action.pos_from, marble=marble_to_move)
+
+        # ____________________________ This is Sending home function
+        # Handle cases where another player's marble occupies the destination
+        for player in self.list_player:
+            if player != active_player:
+                opponent_marble = next((m for m in player.list_marble if m.pos == action.pos_to), None)
+                if opponent_marble:
+                    self.sending_home(opponent_marble)  # Send the opponent's marble home
+        # ____________________________
+        
+        
+        
+        # Discard the played card
+        active_player.list_card.remove(action.card)
+        self.list_card_discard.append(action.card)
+
+       
 
     def can_leave_kennel(self) -> bool:  # <============= DOPPELT
         if self.card_active is None:
@@ -638,8 +663,15 @@ class Dog(Game):
 
         2. Wenn Zug abgeschlossen Aktiver spieler weitergeben
         """
+        if self.state.bool_card_exchanged == False:
+            self.state.exchange_cards(action)
+
         # Check if exchange cards is needed
-        if action is None:
+        if action:
+            self.state.set_action_to_game(action)
+        
+        else: 
+
             # Move to next player
             self.state.idx_player_active = (self.state.idx_player_active + 1) % 4
 
@@ -760,7 +792,7 @@ if __name__ == '__main__':
         print("*"*50)
 
 
-        if debug_counter >4:
+        if debug_counter >3:
             print("-"*50,"> break becaus of counter")
             break
         debug_counter+=1
