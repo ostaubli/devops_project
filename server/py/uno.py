@@ -309,7 +309,7 @@ class Uno(Game):
                 self._advance_turn()
 
             if action.card.symbol in ["draw2", "wilddraw4"] and self.state.cnt_player==2:
-                self._advance_turn(skip=True)
+                self._advance_turn()
 
             self.state.has_drawn = False
 
@@ -320,7 +320,7 @@ class Uno(Game):
                     if self.state.list_card_draw:
                         active_player.list_card.append(self.state.list_card_draw.pop())
                 self.state.cnt_to_draw = 0
-                self._advance_turn()
+                self._advance_turn(skip=True)
                 self.state.has_drawn = False
             else:
                 for _ in range(action.draw):
@@ -380,7 +380,7 @@ class Uno(Game):
                 else:
                     self._advance_turn(skip=True)
             elif top_card.symbol == "wild":
-                self.state.color = 'blue'
+                self.state.color = 'any'
 
         self.state.phase = GamePhase.RUNNING
 
@@ -412,7 +412,8 @@ class Uno(Game):
         if not top_discard:
             return True
         return (
-            card.color == self.state.color
+            card.color == self.state.color 
+            or self.state.color == 'any'
             or (card.number is not None and top_discard.number is not None
                 and card.number == top_discard.number)
             or (card.symbol is not None and top_discard.symbol == card.symbol)
