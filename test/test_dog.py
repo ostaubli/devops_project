@@ -73,6 +73,32 @@ def test_game_state():
     assert state.phase == GamePhase.SETUP
 
 
+def test_find_marble_by_pos(game):
+    m, idx = game._find_marble_by_pos(64)
+    assert m is not None
+    assert idx == 0
+
+
+def test_reset_card_active(game):
+    game._reset_card_active()
+    assert game.state.card_active is None
+    assert game.temp_seven_moves is None
+    assert game.temp_seven_card is None
+    assert game.temp_joker_card is None
+    assert game.temp_seven_state is None
+
+
+def test_find_player_card(game):
+    p = game.state.list_player[0]
+    c = p.list_card[0]
+    found = game._find_player_card(p, c)
+    assert found == c
+
+
+def test_handle_jack_action(game):
+    action = Action(pos_from=64, pos_to=65)
+    game._handle_jack_action(action)
+
 # TODO: These are the old tests, they need to be updated or removed. Insert new tests above!
 # def test_initial_game_state_values(game):
 #     """Test 001: Validate values of initial game state (cnt_round=1) [5 points]"""

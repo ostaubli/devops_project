@@ -146,6 +146,40 @@ class Dog(Game):
         self.exchange_buffer: List[Optional[Card]] = [None] * cnt_players
         self._initialize_game(cnt_players)
 
+    def _reset_card_active(self) -> None:
+        self.state.card_active = None
+        self.temp_seven_moves = None
+        self.temp_seven_card = None
+        self.temp_joker_card = None
+        self.temp_seven_state = None
+
+    def _find_player_card(self, player: PlayerState, card: Optional[Card]) -> Optional[Card]:
+        if card is None:
+            return None
+        for c in player.list_card:
+            if c.suit == card.suit and c.rank == card.rank:
+                return c
+        return None
+
+    def _find_marble_by_pos(self, pos: int) -> Tuple[Optional[Marble], Optional[int]]:
+        assert self.state is not None
+        for p_idx, p in enumerate(self.state.list_player):
+            for m in p.list_marble:
+                if m.pos == pos:
+                    return m, p_idx
+        return None, None
+
+    def _handle_jack_action(self, action: Action) -> None:
+        assert self.state is not None
+        pos_from = action.pos_from if action.pos_from is not None else -1
+        pos_to = action.pos_to if action.pos_to is not None else -1
+        fm, _fp = self._find_marble_by_pos(pos_from)
+        tm, _tp = self._find_marble_by_pos(pos_to)
+        if fm and tm:
+            pos_tmp = fm.pos
+            fm.pos = tm.pos
+            tm.pos = pos_tmp
+
     def _initialize_game(self, cnt_players: int) -> None:
         """Initialize the game to its starting state"""
         if cnt_players not in [4]:
