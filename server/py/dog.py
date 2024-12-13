@@ -551,39 +551,62 @@ class Dog(Game):
                 continue
 
             if card.rank == 'J':
+                opponent_swap_actions = []
+                self_swap_actions = []
+
+                # Collect valid opponent swap actions (only unsafe marbles)
                 for marble in all_marbles:
-                    if marble["position"] > 63:
-                        continue  # Skip this marble
+                    if marble["player_idx"] == self.state.idx_player_active or marble["position"] > 63:
+                        continue  # Skip own marbles and marbles in the kennel
 
-                    if marble["player_idx"] != self.state.idx_player_active and marble["is_save"] is True:
-                        continue
+                    if marble["is_save"]:
+                        continue  # Skip safe opponent marbles
 
+                    # For each opponent marble, check for valid target marbles (belong to the active player)
                     for target in all_marbles:
-                        # Skip if the same marble is being compared
-                        if marble is target:
-                            continue
+                        if target["player_idx"] != self.state.idx_player_active or target["position"] > 63:
+                            continue  # Only consider active player's marbles on the board
 
-                        if target["position"] > 63:
-                            continue  # Skip this marble
+                        if marble["player_idx"] == target["player_idx"]:
+                            continue  # Skip swaps with marbles of the same player
 
-                        if target["player_idx"] != self.state.idx_player_active and target["is_save"] is True:
-                            continue
-
-                        if self.state.idx_player_active not in (marble['player_idx'], target['player_idx']):
-                            continue
-
-                        # prevent swapping on the same player
-                        if (marble["player_idx"] is self.state.idx_player_active and
-                            target["player_idx"] is self.state.idx_player_active):
-                            continue
-
-                        # Add swap action
-                        actions_list.append(Action(
+                        # Add both directions for swaps: (marble <-> target) and (target <-> marble)
+                        opponent_swap_actions.append(Action(
                             card=card,
                             pos_from=marble["position"],
                             pos_to=target["position"],
                             card_swap=None
                         ))
+                        opponent_swap_actions.append(Action(
+                            card=card,
+                            pos_from=target["position"],
+                            pos_to=marble["position"],
+                            card_swap=None
+                        ))
+
+                # Collect self-swap actions as a fallback (only if no opponent swaps were found)
+                if not opponent_swap_actions:
+                    for marble in all_marbles:
+                        if marble["player_idx"] != self.state.idx_player_active or marble["position"] > 63:
+                            continue  # Skip opponent marbles and marbles in the kennel
+
+                        for target in all_marbles:
+                            if target["player_idx"] != self.state.idx_player_active or marble is target or target["position"] > 63:
+                                continue  # Skip the same marble and marbles in the kennel
+
+                            # Add valid self-swap action
+                            self_swap_actions.append(Action(
+                                card=card,
+                                pos_from=marble["position"],
+                                pos_to=target["position"],
+                                card_swap=None
+                            ))
+
+                # Prioritize opponent swaps, fallback to self-swaps if none are available
+                actions_list.extend(opponent_swap_actions if opponent_swap_actions else self_swap_actions)
+
+
+
                 continue
 
             # For marbles outside the kennel, handle swaps and normal moves
