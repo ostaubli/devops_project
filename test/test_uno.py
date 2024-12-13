@@ -381,6 +381,27 @@ def test_advance_turn_skip_three_players():
     game._advance_turn(skip=True)
     assert game.state.idx_player_active == 2
 
+def test_get_player_view():
+    """Test that get_player_view masks other players' cards."""
+    game = Uno()
+    state = GameState(
+        cnt_player=3,
+        list_player=[
+            PlayerState(name="P1", list_card=[Card(color="red", number=1), Card(color="blue", number=2)]),
+            PlayerState(name="P2", list_card=[Card(color="green", number=3)]),
+            PlayerState(name="P3", list_card=[Card(color="yellow", number=4)])
+        ],
+        phase=GamePhase.RUNNING,
+        idx_player_active=0
+    )
+    game.set_state(state)
+    view_for_p1 = game.get_player_view(0)
+    assert len(view_for_p1.list_player[0].list_card) == 2
+    assert all(c.color is None and c.number is None and c.symbol is None 
+               for c in view_for_p1.list_player[1].list_card)
+    assert all(c.color is None and c.number is None and c.symbol is None 
+               for c in view_for_p1.list_player[2].list_card)
+
 def test_list_action_card_matching_1() -> None:
     """Test 003: Test player card matching with discard pile card - simple cards [3 points]"""
     # self.game_server.game = Uno()
