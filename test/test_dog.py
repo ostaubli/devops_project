@@ -2485,43 +2485,10 @@ def test_handle_seven_card_logic_invalid_moves():
     assert result is False, "Invalid SEVEN actions with None positions should fail."
 
 
-# def test_handle_seven_card_logic_violating_safe_space():
-#     """Test SEVEN card logic with a move violating the inside-out safe space rule."""
-#     dog = Dog()
-#     dog.initialize_game()
-
-#     # Setup player safe spaces
-#     dog.SAFE_SPACES[0] = [10, 11, 12, 13, 14]
-
-#     # Set marble positions
-#     dog.state.list_player[0].list_marble[0].pos = 10
-#     card = Card(suit="H", rank="7")
-
-#     # Move violates safe space rule
-#     grouped_actions = [
-#         Action(card=card, pos_from=10, pos_to=14, card_swap=None)
-#     ]
-
-#     result = dog._handle_seven_card_logic(grouped_actions)
-#     assert result is False, "Move violating safe space inside-out rule should fail."
 
 
-# def test_handle_seven_card_logic_remaining_steps_unfinished():
-#     """Test SEVEN card logic when not all steps are used."""
-#     dog = Dog()
-#     dog.initialize_game()
 
-#     # Set marble positions
-#     dog.state.list_player[0].list_marble[0].pos = 0
-#     card = Card(suit="H", rank="7")
 
-#     # Only part of the 7 steps are used
-#     grouped_actions = [
-#         Action(card=card, pos_from=0, pos_to=3, card_swap=None)
-#     ]
-
-#     result = dog._handle_seven_card_logic(grouped_actions)
-#     assert result is False, "SEVEN card logic should fail when not all steps are used."
 
 
 
