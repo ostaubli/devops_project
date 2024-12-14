@@ -499,6 +499,19 @@ class GameState(BaseModel):
         player_marble.is_save = False
         opponent_marble.is_save = False
 
+    def skip_save_marble(self, action: Action) -> bool:
+        """
+        Prüft, ob zwischen action.pos_from und action.pos_to sichere Murmeln liegen.
+        Gibt False zurück, wenn eine sichere Murmel in diesem Bereich gefunden wird,
+        andernfalls True.
+        """
+        for player in self.list_player:
+            for marble in player.list_marble:
+                if action.pos_from < marble.pos < action.pos_to and marble.is_save:
+                    return False
+        return True
+
+
     def is_player_finished(self, player: PlayerState) -> bool:
         if not player.list_marble:  # Falls der Spieler keine Murmeln hat
             print(f"{player.name} hat keine Murmeln.")
@@ -579,9 +592,7 @@ class Dog(Game):
         if self.state.card_active is None:
             action_list = self.state.get_list_possible_action()
 
-        else:
-            # Logic for card 7
-
+        # else: Logic for card 7
 
     def apply_action(self, action: Action) -> None:
         """
@@ -594,8 +605,7 @@ class Dog(Game):
         if action:
             self.state.set_action_to_game(action)
         
-        elif False: 
-
+        elif False:
             # Move to next player
             self.state.idx_player_active = (self.state.idx_player_active + 1) % 4
 
