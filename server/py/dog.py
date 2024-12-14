@@ -1,15 +1,8 @@
-from argparse import ArgumentError
-from turtledemo.penrose import start
-
-from mypy.state import state
-from pandas.core.dtypes.inference import is_integer
-
 from server.py.game import Game, Player
 from typing import List, Optional, ClassVar, Dict
-from pydantic import BaseModel, Field
+from pydantic import BaseModel
 from enum import Enum
 import random
-from itertools import combinations_with_replacement, permutations, accumulate
 
 
 class Card(BaseModel):
@@ -287,7 +280,7 @@ class Dog(Game):
         return False
 
     def find_marbles_between(self, pos_from: int, pos_to: int) -> List[Marble]:
-        """"Find all marbles between any two positions on the board"""
+        """Find all marbles between any two positions on the board"""
         found_marbles = []
         positions_to_check = []
 
@@ -482,13 +475,18 @@ class Dog(Game):
         starting_actions = []
         start_position = self.board["start_positions"][self.get_player_index(player)]
         for marble in player.list_marble:
-            for card in starting_cards:
-                starting_actions.append(Action(
+            # Use the helper function to check if placing on start_pos is possible
+            if self.can_place_marble_on_start(player, start_position):
+                # If it is possible, append actions for each starting card
+                for card in starting_cards:
+                    starting_actions.append(Action(
                         card=card,
                         pos_from=marble.pos,
                         pos_to=start_position[0],
-                        card_swap=None)
-                    )
+                        card_swap=None
+                    ))
+            # If can_place_marble_on_start returns False, it means the start position is blocked by the player's own marble,
+            # so we do not add any actions for this marble.
         return starting_actions
 
 
@@ -501,8 +499,7 @@ class Dog(Game):
 
         # Iterate through all marbles of the player
         for marble in player.list_marble:
-            # TODO: adapt marble_is_save
-            if marble.is_save:  # Only consider marbles that are out of the kennel
+            if self.is_movable(marble):  # Only consider marbles that are out of the kennel
                 # Calculate positions for forward and backward moves
                 target_pos_forward = (marble.pos + 4) % len(self.board["circular_path"])
                 target_pos_backward = (marble.pos - 4) % len(self.board["circular_path"])
@@ -593,7 +590,6 @@ class Dog(Game):
 
         # Option 1: Move a marble 13 steps forward
         for marble in player.list_marble:
-            # TODO: adapt marble_is_save
             if self.is_movable(marble):  # Only consider marbles that are out of the kennel
                 target_pos_forward = (marble.pos + 13) % len(self.board["circular_path"])
                 actions.append(Action(
@@ -604,15 +600,7 @@ class Dog(Game):
                 ))
 
         # Option 2: Bring a marble out of the kennel
-        for marble in player.list_marble:
-            # TODO: adapt marble_is_save
-            if marble.pos in kennel_positions:  # Marble is in the kennel
-                actions.append(Action(
-                    card=card,
-                    pos_from=marble.pos,  # Current kennel position
-                    pos_to=start_position[0],  # Move to player's start position
-                    card_swap=None
-                ))
+        actions.extend(self.move_marble_out_of_kennel_actions(player, card, kennel_positions, start_position))
 
         return actions
 
@@ -629,7 +617,6 @@ class Dog(Game):
 
         # Option 1: Move a marble 1 step forward
         for marble in player.list_marble:
-            # TODO: adapt marble_is_save
             if self.is_movable(marble):  # Only consider marbles that are out of the kennel
                 target_pos_forward = (marble.pos + 1) % len(self.board["circular_path"])
                 actions.append(Action(
@@ -641,7 +628,6 @@ class Dog(Game):
 
         # Option 2: Move a marble 11 steps forward
         for marble in player.list_marble:
-            # TODO: adapt marble_is_save
             if self.is_movable(marble):  # Only consider marbles that are out of the kennel
                 target_pos_forward = (marble.pos + 11) % len(self.board["circular_path"])
                 actions.append(Action(
@@ -652,17 +638,54 @@ class Dog(Game):
                 ))
 
         # Option 3: Bring a marble out of the kennel
-        for marble in player.list_marble:
-            # TODO: adapt marble_is_save
-            if marble.pos in kennel_positions:  # Marble is in the kennel
-                actions.append(Action(
-                    card=card,
-                    pos_from=marble.pos,  # Current kennel position
-                    pos_to=start_position[0],  # Move to player's start position
-                    card_swap=None
-                ))
+        actions.extend(self.move_marble_out_of_kennel_actions(player, card, kennel_positions, start_position))
 
         return actions
+
+    def move_marble_out_of_kennel_actions(self, player: PlayerState, card: Card, kennel_positions: List[int],
+                                          start_positions: List[int]) -> List[Action]:
+        """
+        Given a player and a set of kennel and start positions, return a list of actions
+        that move the player's marbles out of the kennel if possible.
+        """
+        out_of_kennel_actions = []
+        start_pos = start_positions[0]  # Assuming there's only one start position
+
+        for marble in player.list_marble:
+            if marble.pos in kennel_positions:
+                # The marble is in the kennel, check if we can move it onto the start position
+                if self.can_place_marble_on_start(player, start_pos):
+                    out_of_kennel_actions.append(Action(
+                        card=card,
+                        pos_from=marble.pos,
+                        pos_to=start_pos,
+                        card_swap=None
+                    ))
+                # If we cannot place it (position occupied by same player's marble), we just skip
+        return out_of_kennel_actions
+
+    def can_place_marble_on_start(self, player: PlayerState, start_pos: int) -> bool:
+        """
+        Check if a marble can be placed on start_pos for the given player.
+        Conditions:
+        - If unoccupied, return True.
+        - If occupied by player's own marble, return False.
+        - If occupied by another player's marble, send that marble home and return True.
+        """
+        if not self.position_is_occupied(start_pos):
+            # Position is free
+            return True
+
+        occupant_marble = self.find_marble_at_position(start_pos)
+        occupant_owner = self.get_owner(occupant_marble)
+
+        if occupant_owner == player:
+            # Same player's marble is already there, cannot move here
+            return False
+        else:
+            # Another player's marble occupies the spot, send it home
+            self.send_home(occupant_marble)
+            return True
 
     def get_actions_for_jkr(self, card: Card, player: PlayerState) -> List[Action]:
         jkr_actions = []  # List to store possible actions
@@ -672,8 +695,7 @@ class Dog(Game):
         for rank in basic_cards:
             if rank in self._BASIC_RANKS:
                 for marble in player.list_marble:
-                    # TODO: adapt marble_is_save
-                    if marble.is_save:  # Marble must be out of the kennel
+                    if self.is_movable(marble):  # Marble must be out of the kennel
                         new_pos = (marble.pos + self._RANK_TO_VALUE[card.rank]) % 96  # Modular board movement
                         jkr_actions.append(Action(card=card, pos_from=marble.pos, pos_to=new_pos, card_swap=None))
 
@@ -724,7 +746,6 @@ class Dog(Game):
                             return
             # Moving forward (1/11 steps for Ace or 13 steps for King)
             for marble in player.list_marble:
-                    # TODO: adapt marble_is_save
                 if marble.pos == action.pos_from and self.is_movable(marble):
                     marble.pos = action.pos_to
                     steps = action.pos_to - action.pos_from
@@ -767,7 +788,6 @@ class Dog(Game):
         """
         Apply the action for the card rank '7'.
         This may involve moving multiple marbles.
-
         :returns True if the card is played completely and false if more steps are needed for 7
         """
 
