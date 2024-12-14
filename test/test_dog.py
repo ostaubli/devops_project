@@ -1,6 +1,8 @@
 import pytest
 import random
 
+from pyparsing import NotAny
+
 if __name__ == '__main__':
     import os
     import sys
@@ -534,3 +536,154 @@ def test_skip_save_marble() -> None:
 # test get_state
 # test print_state
 # test get_player_view
+
+
+def test_get_list_possible_action1() -> None:
+    game_state = GameState()
+    player1 = PlayerState(  #Player1 for test inside kennel, only movement should be going out
+        list_card=[
+            Card(suit='♠',rank="2"),
+            Card(suit = '♦', rank="A")],
+        list_finish_pos=[],
+        list_kennel_pos=[64, 65, 66, 67],
+        list_marble=[Marble(pos=64, is_save=True, start_pos=64),
+                    Marble(pos=65, is_save=True, start_pos=65)],
+        name="Player1",
+        start_pos=0,
+    )
+
+    game_state = GameState(
+        list_player=[player1],
+        idx_player_active=0)
+
+    result = game_state.get_list_possible_action()
+    assert len(result) > 0, 'No Actions althought Cards and Marbles are present'
+
+    assert not any(
+        action.card.rank == "2" and action.pos_from == 0 and action.pos_to == 2
+        for action in result
+    ), 'Actions were generated althought Marbles are in Kennel'
+
+    assert not any(
+        action.card.rank == 7
+        for action in result
+    ), 'Actions were generated althought Marbles are in Kennel'
+
+    kennel_actions = [action for action in result if action.pos_from == 64]
+    assert len(kennel_actions) == 1, "Going out of Kennel is the only action"
+    assert kennel_actions[0].pos_to == player1.start_pos, "Movement from kennel to Board is false"
+
+
+    game_state = GameState()
+    player2 = PlayerState(  # Player2 for test on board with 3 and Ace
+        list_card=[
+            Card(suit='♠',rank="3"),
+            Card(suit = '♦', rank="A")],
+        list_finish_pos=[],
+        list_kennel_pos=[64, 65, 66, 67],
+        list_marble=[Marble(pos=15, is_save=False, start_pos=66),
+                     Marble(pos=67, is_save=False, start_pos=67)],
+        name="Player2",
+        start_pos=48)
+
+    game_state = GameState(
+        list_player=[player2],
+        idx_player_active=0)
+
+    result2 = game_state.get_list_possible_action()
+    assert any(
+        action.card.rank == "3" and action.pos_from == 15 and action.pos_to == 18
+        for action in result2
+    ), 'Actions were not genererated althought Marbles are on Board'
+
+    kennel_actions = [action for action in result if action.pos_from == 64]
+    assert len(kennel_actions) == 1, "Going out of Kennel is the only action"
+    assert kennel_actions[0].pos_to == player1.start_pos, "Movement from kennel to Board is false"
+
+    kennel_actions2 = [action for action in result2 if action.pos_from == 15]
+    assert len(kennel_actions2) == 3, "There should be 3 movements for Marble on 15."
+
+    game_state = GameState()
+    player3 = PlayerState(  # Player3 for test to return multiple actions (however one marble cant move)
+        list_card=[
+            Card(suit='♠', rank="2"),
+            Card(suit='♦', rank="4"),
+            Card(suit='♦', rank='9')],
+        list_finish_pos=[],
+        list_kennel_pos=[64, 65, 66, 67],
+        list_marble=[Marble(pos=15, is_save=False, start_pos=66),
+                     Marble(pos=22, is_save=False, start_pos=67),
+                     Marble(pos=13, is_save=False, start_pos=65 ),
+                     Marble(pos=64, is_save=False, start_pos=64)],
+        name="Player3",
+        start_pos=48)
+
+    game_state = GameState(
+        list_player=[player3],
+        idx_player_active=0)
+
+    result3 = game_state.get_list_possible_action()
+    movement_actions = [action for action in result3]
+    assert len(movement_actions) == 12, "There should be 4 movements for the three Marbles each."
+
+    game_state = GameState()
+    player4 = PlayerState(  # Player4 for test to overstep the 64 rule
+        list_card=[
+            Card(suit='♠', rank="10"),
+            Card(suit='♦', rank="4"),
+            Card(suit='♦', rank='8')],
+        list_finish_pos=[],
+        list_kennel_pos=[64, 65, 66, 67],
+        list_marble=[Marble(pos=60, is_save=False, start_pos=66)],
+        name="Player4",
+        start_pos=48)
+
+    game_state = GameState(
+        list_player=[player4],
+        idx_player_active=0)
+
+    result4 = game_state.get_list_possible_action()
+    assert any(
+        action.card.rank == "10" and action.pos_to == 6
+        for action in result4), 'card moved to invalid position'
+
+    game_state = GameState()
+    player5 = PlayerState(  # Player4 for test to not go negative with -4
+        list_card=[
+            Card(suit='♠', rank="10"),
+            Card(suit='♦', rank="4"),
+            Card(suit='♦', rank='8')],
+        list_finish_pos=[],
+        list_kennel_pos=[64, 65, 66, 67],
+        list_marble=[Marble(pos=2, is_save=False, start_pos=66)],
+        name="Player4",
+        start_pos=48)
+
+    game_state = GameState(
+        list_player=[player4],
+        idx_player_active=0)
+
+    result5 = game_state.get_list_possible_action()
+
+    assert (
+        action.card.rank == "4" and (action.pos_to == 62 and action.pos_to == 6)
+        for action in result5), 'card moved to invalid position'
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
