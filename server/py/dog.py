@@ -648,22 +648,30 @@ class Dog(Game):
         diff = dist - stf
         return self._move_through_final_area(fs, diff)
 
-    def apply_action(self, action: Action) -> None:  # pylint: disable=redefined-outer-name
-        """ Apply the given action to the game """
-        if action is None:
-            # print("No valid action provided. Skipping turn.")
-            self.next_turn()
-            return
-
-        if action.card is None:
-            raise ValueError("Invalid action: No card provided.")
-
+    def apply_action(self, action: Optional[Action]) -> None:
+        assert self.state is not None
         player = self.state.list_player[self.state.idx_player_active]
-        # Remove the card from the player's hand
-        player.list_card.remove(action.card)
-        self.state.list_card_discard.append(action.card)
-        # Advance to the next player
-        self.next_turn()
+        if action is None:
+            self._handle_no_action(player)
+            return
+        if action.pos_from == -1 and action.pos_to == -1 and action.card is not None and action.card_swap is None:
+            self._handle_card_exchange(player, action)
+            return
+        if action.card and action.card.rank == 'JKR' and action.card_swap:
+            self._handle_joker_swap(player, action)
+            return
+        found_card = self._find_player_card(player, action.card)
+        if found_card and found_card.rank == '7':
+            self._handle_card_7(player, found_card, action)
+        elif found_card and found_card.rank == 'JKR':
+            self._handle_card_joker(player, found_card, action)
+        elif found_card and found_card.rank == 'J':
+            self._handle_card_j(player, found_card, action)
+        elif found_card:
+            self._handle_card_other(player, found_card, action)
+        else:
+            self._handle_active_card_move(player, action)
+        self.check_game_status()
 
     def check_game_status(self) -> None:
         assert self.state is not None
@@ -687,6 +695,8 @@ class Dog(Game):
 
     def get_player_view(self, idx_player: int) -> GameState:
         return self.state
+
+
 
     def swap_cards(self, player1_idx: int, player2_idx: int, card1: Card, card2: Card) -> None:
         # Hole die Spielerobjekte
