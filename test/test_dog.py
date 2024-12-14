@@ -2440,6 +2440,120 @@ def test_handle_kennel_to_start_action():
     print("test_handle_kennel_to_start_action passed successfully.")
 
 
+def test_reshuffle_discard_into_draw_reset():
+    dog = Dog()
+    dog.initialize_game()  # Ensure the game state is initialized properly
+
+    # Mock GameState.LIST_CARD with a full deck of 110 cards
+    GameState.LIST_CARD = [Card(suit="H", rank=str(i % 13 + 1)) for i in range(110)]
+
+    # Simulate an excessive card count scenario (more than 110 cards)
+    dog.state.list_card_draw = [Card(suit="H", rank="A") for _ in range(60)]
+    dog.state.list_card_discard = [Card(suit="H", rank="K") for _ in range(30)]
+    for player in dog.state.list_player:
+        player.list_card = [Card(suit="H", rank="Q") for _ in range(30)]
+
+    # Total cards now: 60 (draw) + 30 (discard) + 30*len(players) = 150+ (exceeds 110)
+
+    # Call reshuffle_discard_into_draw
+    dog.reshuffle_discard_into_draw()
+
+    # Check that the card deck is reset
+    assert len(dog.state.list_card_draw) == 110, "Deck should reset to 110 cards."
+    assert len(dog.state.list_card_discard) == 0, "Discard pile should be empty after reset."
+    for player in dog.state.list_player:
+        assert len(player.list_card) == 0, "Player hands should be cleared after reset."
+
+    print("test_reshuffle_discard_into_draw_reset passed successfully.")
+    
+    
+    
+    
+
+# def test_handle_seven_card_logic_valid():
+#     """Test valid SEVEN card split actions."""
+#     dog = Dog()
+#     dog.initialize_game()
+    
+#     # Mock initial positions for marbles
+#     active_player = dog.state.list_player[dog.state.idx_player_active]
+#     active_player.list_marble[0].pos = 0
+    
+#     # Valid grouped actions
+#     card = Card(suit="H", rank="7")
+#     grouped_actions = [
+#         [
+#             Action(card=card, pos_from=0, pos_to=3, card_swap=None),
+#             Action(card=card, pos_from=3, pos_to=7, card_swap=None)
+#         ]
+#     ]
+    
+#     # Call the method
+#     result = dog._handle_seven_card_logic(grouped_actions)
+#     assert result is True, "Valid SEVEN card actions should pass."
+
+# def test_handle_seven_card_logic_safe_space_violation():
+#     """Test SAFE_SPACE violation for SEVEN card actions."""
+#     dog = Dog()
+#     dog.initialize_game()
+    
+#     # Mock positions for marbles and safe spaces
+#     active_player = dog.state.list_player[dog.state.idx_player_active]
+#     active_player.list_marble[0].pos = 10
+#     dog.SAFE_SPACES[dog.state.idx_player_active] = [20, 21, 22]  # Define safe spaces
+    
+#     # Invalid action into SAFE_SPACE violating inside-out logic
+#     card = Card(suit="H", rank="7")
+#     grouped_actions = [
+#         [
+#             Action(card=card, pos_from=10, pos_to=22, card_swap=None)
+#         ]
+#     ]
+    
+#     # Call the method
+#     result = dog._handle_seven_card_logic(grouped_actions)
+#     assert result is False, "SAFE_SPACE violations should fail SEVEN card actions."
+
+# def test_handle_seven_card_logic_remaining_steps():
+#     """Test SEVEN card logic with incomplete remaining steps."""
+#     dog = Dog()
+#     dog.initialize_game()
+    
+#     # Mock initial positions for marbles
+#     active_player = dog.state.list_player[dog.state.idx_player_active]
+#     active_player.list_marble[0].pos = 0
+    
+#     # Actions using fewer than 7 steps
+#     card = Card(suit="H", rank="7")
+#     grouped_actions = [
+#         [
+#             Action(card=card, pos_from=0, pos_to=3, card_swap=None)  # Only 3 steps used
+#         ]
+#     ]
+    
+#     # Call the method
+#     result = dog._handle_seven_card_logic(grouped_actions)
+#     assert result is False, "Incomplete SEVEN card steps should fail."
+
+def test_handle_seven_card_logic_marble_not_found():
+    """Test handling SEVEN card where the marble is not found at pos_from."""
+    dog = Dog()
+    dog.initialize_game()
+    
+    # No marble at starting position 0
+    card = Card(suit="H", rank="7")
+    grouped_actions = [
+        [
+            Action(card=card, pos_from=0, pos_to=3, card_swap=None)
+        ]
+    ]
+    
+    # Call the method
+    result = dog._handle_seven_card_logic(grouped_actions)
+    assert result is False, "Actions where no marble exists at pos_from should fail."
+
+
+
     
     
     
