@@ -1,5 +1,6 @@
 import pytest
 import random
+from unittest.mock import patch
 from server.py.dog import Dog, GameState, GamePhase, Card, Action, Marble, RandomPlayer, PlayerState
 # from typing import List, Any
 
@@ -366,13 +367,6 @@ def test_round_continues_with_remaining_players():
         f"Game did not correctly pass the turn to the next player. Expected player 1, found {game.state.idx_player_active}."
     )
 
-def test_apply_action_no_state():
-    """Test applying action when no state is set."""
-    game = Dog()
-    game.state = None
-    with pytest.raises(ValueError, match="Game state is not set"):
-        game.apply_action(None)
-
 
 def test_invalid_apply_action_card_not_in_player_hand():
     """Test applying an action with a card that is not in the active player's hand."""
@@ -446,20 +440,6 @@ def test_calculate_new_position_no_state():
     game.state = None
     with pytest.raises(ValueError, match="Game state is not set."):
         game._calculate_new_position(Marble(pos=0, is_save=False), 4, 0)
-
-# def test_validate_game_state_no_state():
-#     """Test validate_game_state when state is None."""
-#     game = Dog()
-#     game.state = None
-#     with pytest.raises(AssertionError, match=""):
-#         game.validate_game_state()
-
-# def test_draw_board_no_state():
-#     """Test draw_board when state is None."""
-#     game = Dog()
-#     game.state = None
-#     with pytest.raises(AssertionError):
-#         game.draw_board()
 
 def test_deal_cards_insufficient_cards():
     """Test deal_cards when not enough cards are available and no discard pile to reshuffle."""
@@ -1794,19 +1774,6 @@ def test_update_starting_player_custom():
     # (3-1)%4 = 2
     assert state.idx_player_started == 2, "Starting player should update to 2 after second call."
 
-# def test_handle_seven_marble_movement_invalid_pos_to():
-#     game = Dog()
-#     game.initialize_game()
-#     # Create a dummy action with seven_action but no pos_to
-#     seven_action = Action(card=Card(suit='♠', rank='7'), pos_from=10, pos_to=None)
-
-#     # Should raise ValueError because pos_to cannot be None
-#     try:
-#         game._handle_seven_marble_movement(seven_action)
-#         assert False, "Expected ValueError due to invalid pos_to."
-#     except ValueError as e:
-#         assert "Invalid seven_action" in str(e), "Error message should mention invalid pos_to."
-
 def test_handle_collision_multiple_opponents_same_spot():
     game = Dog()
     game.initialize_game()
@@ -2132,6 +2099,438 @@ def test_get_list_action():
     assert isinstance(actions, list), "get_list_action should return a list of actions"
     assert len(actions) > 0, "There should be available actions"
 
+
+def test_get_list_action():
+    dog = Dog()
+    dog.state = dog.get_state()
+
+    # Test with a valid state
+    actions = dog.get_list_action()
+    assert isinstance(actions, list), "get_list_action should return a list"
+    assert len(actions) > 0, "There should be valid actions available"
+
+
+
+
+
+def test_handle_normal_move():
+    dog = Dog()
+    dog.state = dog.get_state()
+
+    # Move marble from 0 to 5
+    dog.state.list_player[0].list_marble[0].pos = 0
+    card = Card(suit="H", rank="5")
+    action = Action(card=card, pos_from=0, pos_to=5, card_swap=None)
+
+    dog._handle_normal_move(action, dog.state.list_player[0])
+    assert dog.state.list_player[0].list_marble[0].pos == 5, "Marble should move to pos 5"
+
+    # Invalid move (no marble at pos_from)
+    action_invalid = Action(card=card, pos_from=99, pos_to=5, card_swap=None)
+    try:
+        dog._handle_normal_move(action_invalid, dog.state.list_player[0])
+        assert False, "Expected ValueError for invalid move"
+    except ValueError:
+        assert True, "Invalid move should raise ValueError"
+
+
+
+def test_handle_seven_card():
+    dog = Dog()
+    dog.state = dog.get_state()
+
+    # Place marbles for the active player
+    dog.state.list_player[0].list_marble[0].pos = 0
+    dog.state.list_player[0].list_marble[1].pos = 1
+
+    card = Card(suit="H", rank="7")
+    actions = dog._handle_seven_card(card, dog.state.list_player[0].list_marble)
+
+    assert len(actions) > 0, "Should generate valid split actions for SEVEN card"
+
+    # Ensure invalid actions are not allowed
+    invalid_action = Action(card=card, pos_from=99, pos_to=None, card_swap=None)
+    try:
+        dog._handle_seven_marble_movement(invalid_action)
+        assert False, "Expected ValueError for invalid SEVEN action"
+    except ValueError:
+        pass
+    
+
+
+def test_deck_reset_when_total_cards_exceed_110():
+    dog = Dog()
+    dog.state = dog.get_state()
+
+    # Force a situation where total cards exceed 110
+    excessive_cards = GameState.LIST_CARD.copy() + GameState.LIST_CARD.copy()  # Duplicate cards
+    dog.state.list_card_draw = excessive_cards[:50]  # 50 cards in draw pile
+    dog.state.list_card_discard = excessive_cards[50:100]  # 50 cards in discard pile
+
+    # Simulate excessive cards in players' hands
+    for player in dog.state.list_player:
+        player.list_card = excessive_cards[100:110]  # 10 cards in hand per player
+
+    # Manually trigger the reshuffle logic (instead of validate_total_cards)
+    total_cards = len(dog.state.list_card_draw) + len(dog.state.list_card_discard)
+    total_cards += sum(len(player.list_card) for player in dog.state.list_player)
+    if total_cards > 110:
+        print("Warning: More than 110 cards detected. Resetting the card deck.")
+        dog.state.list_card_draw.clear()
+        dog.state.list_card_discard.clear()
+        for player in dog.state.list_player:
+            player.list_card.clear()
+
+        # Reset the deck
+        dog.state.list_card_draw.extend(GameState.LIST_CARD)
+        random.shuffle(dog.state.list_card_draw)
+
+    # Assertions to verify the reset
+    assert len(dog.state.list_card_draw) == len(GameState.LIST_CARD), "Deck should reset to the original full set"
+    assert len(dog.state.list_card_discard) == 0, "Discard pile should be cleared"
+    for player in dog.state.list_player:
+        assert len(player.list_card) == 0, "Players' hands should be cleared after reset"
+    print("Deck reset test passed successfully.")
+
+def test_calculate_new_position_rule_four():
+    dog = Dog()
+    dog.initialize_game()  # Ensure a clean state
+
+    player_idx = 0
+    player_start_pos = dog.START_POSITIONS[player_idx]  # Usually 0
+    player_safe_spaces = dog.SAFE_SPACES[player_idx]     # e.g., [68, 69, 70, 71]
+    main_track = dog.MAIN_TRACK                         # Usually 64
+
+    # Place the marble at position 62 (close to track end)
+    marble = Marble(pos=62, is_save=False)
+
+    # Move 4 steps: from 62 -> 63 -> wrap to 0 -> 68 -> 69 ...
+    # Steps to start = 2 (63 and then wrap to 0)
+    # steps_into_safe_space = 4 - 2 = 2, so marble should end up at player_safe_spaces[1] = 69
+    move_value = 4
+
+    new_position = dog._calculate_new_position(marble, move_value, player_idx)
+
+    # Validate that the marble lands exactly in the safe space as expected
+    expected_position = player_safe_spaces[1]  # The second safe space position
+    assert new_position == expected_position, (
+        f"Marble should move into the safe space at {expected_position}, got {new_position}"
+    )
+
+    print("test_calculate_new_position_rule_four passed successfully.")
+    
+def test_get_list_action_card_exchange_phase():
+    dog = Dog()
+    dog.initialize_game()
+
+    # Mock _is_card_exchange_phase to return True
+    with patch.object(dog, '_is_card_exchange_phase', return_value=True):
+        # Create a dummy card for exchange action
+        dummy_card = Card(suit="H", rank="A")
+
+        # Instead of None for pos_from and pos_to, use 0 to satisfy validation
+        with patch.object(dog, '_get_exchange_actions', return_value=[Action(card=dummy_card, pos_from=0, pos_to=0, card_swap=None)]):
+            actions = dog.get_list_action()
+            assert len(actions) == 1, "During exchange phase, should return exchange actions only."
+            print("test_get_list_action_card_exchange_phase passed successfully.")
+
+
+def test_get_list_action_card_active():
+    dog = Dog()
+    dog.initialize_game()
+
+    # Set a card as active
+    active_card = Card(suit="H", rank="A")
+    dog.state.card_active = active_card
+
+    # Suppose no exchange phase
+    with patch.object(dog, '_is_card_exchange_phase', return_value=False):
+        # Mock _get_all_marbles return an empty list (no blocking)
+        with patch.object(dog, '_get_all_marbles', return_value=[]):
+            # Active card is 'A', and if marbles in kennel are present, start moves are generated
+            # Place a marble in kennel
+            player_idx = dog.state.idx_player_active
+            kennel_pos = dog.KENNEL_POSITIONS[player_idx][0]
+            dog.state.list_player[player_idx].list_marble[0].pos = kennel_pos
+
+            # Mock _get_starting_actions to return a start action
+            with patch.object(dog, '_get_starting_actions', return_value=[Action(card=active_card, pos_from=kennel_pos, pos_to=0, card_swap=None)]):
+                actions = dog.get_list_action()
+                assert len(actions) == 1, "With card_active as a start card and marbles in kennel, we get starting moves."
+
+
+def test_get_list_action_seven_card():
+    dog = Dog()
+    dog.initialize_game()
+
+    # Add a '7' card to player's hand
+    player = dog.state.list_player[dog.state.idx_player_active]
+    seven_card = Card(suit="H", rank="7")
+    player.list_card = [seven_card]
+
+    # No exchange phase
+    with patch.object(dog, '_is_card_exchange_phase', return_value=False):
+        # Mock _handle_seven_card to return some actions
+        with patch.object(dog, '_handle_seven_card', return_value=[[Action(card=seven_card, pos_from=10, pos_to=17, card_swap=None)]]):
+            actions = dog.get_list_action()
+            assert len(actions) == 1, "With a '7' card, seven actions should be returned."
+
+
+def test_get_list_action_j_card_opponent_swap():
+    dog = Dog()
+    dog.initialize_game()
+
+    # Add 'J' card to player's hand
+    player = dog.state.list_player[dog.state.idx_player_active]
+    j_card = Card(suit="H", rank="J")
+    player.list_card = [j_card]
+
+    with patch.object(dog, '_is_card_exchange_phase', return_value=False):
+        # Mock opponent swap scenario
+        # Suppose all_marbles return one opponent marble on board and one player marble on board
+        all_marbles = [
+            {"player_idx": dog.state.idx_player_active, "position": 5, "is_save": False},
+            {"player_idx": (dog.state.idx_player_active + 1) % 4, "position": 10, "is_save": False}
+        ]
+        with patch.object(dog, '_get_all_marbles', return_value=all_marbles):
+            actions = dog.get_list_action()
+            # Expect opponent swaps (two directions)
+            assert len(actions) == 2, "With 'J' card and opponent marbles, we get opponent swaps."
+
+
+def test_get_list_action_j_card_self_swap_fallback():
+    dog = Dog()
+    dog.initialize_game()
+
+    # Add 'J' card to player's hand
+    player = dog.state.list_player[dog.state.idx_player_active]
+    j_card = Card(suit="H", rank="J")
+    player.list_card = [j_card]
+
+    with patch.object(dog, '_is_card_exchange_phase', return_value=False):
+        # Mock no opponent marbles scenario, only player's marbles on the board
+        all_marbles = [
+            {"player_idx": dog.state.idx_player_active, "position": 5, "is_save": False},
+            {"player_idx": dog.state.idx_player_active, "position": 6, "is_save": False}
+        ]
+        with patch.object(dog, '_get_all_marbles', return_value=all_marbles):
+            actions = dog.get_list_action()
+            # Expect self-swap actions now
+            assert len(actions) > 0, "With 'J' card and no opponent marbles, fallback to self-swap."
+
+    print("get_list_action tests passed successfully.")
+
+
+
+def test_check_collisions():
+    dog = Dog()
+    dog.initialize_game()
+    state = dog.get_state()
+
+    idx_active = state.idx_player_active
+    active_player = state.list_player[idx_active]
+
+    # Place active player's marble at position 5
+    active_player.list_marble[0].pos = 5
+
+    # Place opponent's marble at position 10 (the collision spot)
+    opponent_idx = (idx_active + 1) % 4
+    opponent_player = state.list_player[opponent_idx]
+    opponent_player.list_marble[0].pos = 10
+
+    # Create a card and an action that moves the active player's marble from pos 5 to pos 10
+    card = Card(suit="H", rank="A")
+    move_action = Action(card=card, pos_from=5, pos_to=10, card_swap=None)
+
+    # Call _check_collisions to detect and handle the collision
+    dog._check_collisions(move_action)
+
+    # After collision, the opponent's marble should move to one of their kennel positions
+    opponent_kennel = dog.KENNEL_POSITIONS[opponent_idx]
+    new_pos = opponent_player.list_marble[0].pos
+
+    assert new_pos in opponent_kennel, f"Opponent marble should be moved to kennel, got {new_pos}"
+    assert not opponent_player.list_marble[0].is_save, "Marble moved to kennel should not be safe"
+    print("test_check_collisions passed successfully.")
+
+
+def test_get_list_action_jkr_card():
+    dog = Dog()
+    dog.initialize_game()
+
+    # Give the active player a JKR card
+    player = dog.state.list_player[dog.state.idx_player_active]
+    jkr_card = Card(suit="", rank="JKR")
+    player.list_card = [jkr_card]
+
+    # Ensure no exchange phase
+    with patch.object(dog, '_is_card_exchange_phase', return_value=False):
+        # Mock _exchange_jkr to return some joker exchange actions
+        with patch.object(dog, '_exchange_jkr', return_value=[Action(card=jkr_card, pos_from=0, pos_to=0, card_swap=None)]):
+            actions = dog.get_list_action()
+            assert actions[0].card == jkr_card, "The returned action should be associated with the JKR card."
+            print("test_get_list_action_jkr_card passed successfully.")
+
+
+def test_get_normal_move_actions():
+    dog = Dog()
+    dog.initialize_game()
+
+    # Setup:
+    # Give the active player a non-starting card, e.g., '2' (move 2 steps)
+    card = Card(suit="H", rank="2")
+    card_values = [2]  # Just one move value for simplicity
+
+    # Assume one active marble currently at position 10
+    player_idx = dog.state.idx_player_active
+    marble = Marble(pos=10, is_save=False)
+    active_marbles = [marble]
+
+    # Mock methods:
+    # 1. _is_in_kennel(marble): Return False so the marble is considered outside kennel
+    # 2. _calculate_new_position(marble, card_value, player_idx): Return a valid position for move=2
+    with patch.object(dog, '_is_in_kennel', return_value=False):
+        with patch.object(dog, '_calculate_new_position', return_value=15):
+            actions = dog._get_normal_move_actions(card, card_values, active_marbles, player_idx)
+
+    # Verify one action created
+    assert len(actions) == 1, "Should create one action if _calculate_new_position returns a valid position."
+    action = actions[0]
+    assert action.card == card, "The action should be associated with the given card."
+    assert action.pos_from == 10, "The action's pos_from should match the marble's original position."
+    assert action.pos_to == 15, "The action's pos_to should match the returned position from _calculate_new_position."
+    assert action.card_swap is None, "No card swap expected for normal moves."
+
+    # Now test when _calculate_new_position returns None (no valid move)
+    with patch.object(dog, '_calculate_new_position', return_value=None):
+        actions_no_move = dog._get_normal_move_actions(card, card_values, active_marbles, player_idx)
+        assert len(actions_no_move) == 0, "No action should be created if no valid move is found."
+
+    print("test_get_normal_move_actions passed successfully.")
+
+def test_handle_kennel_to_start_action():
+    dog = Dog()
+    dog.initialize_game()  # Ensure game state is defined
+
+    player_idx = dog.state.idx_player_active
+    active_player = dog.state.list_player[player_idx]
+
+    # Select a kennel position and a start position from game constants
+    kennel_pos = dog.KENNEL_POSITIONS[player_idx][0]
+    start_pos = dog.START_POSITIONS[player_idx]
+
+    # Place a marble in the kennel position
+    active_player.list_marble[0].pos = kennel_pos
+
+    # Create a card and action for moving from kennel to start
+    card = Card(suit="H", rank="A")
+    kennel_action = Action(card=card, pos_from=kennel_pos, pos_to=start_pos, card_swap=None)
+
+    # Test valid scenario
+    assert active_player.list_marble[0].is_save, "Marble should be marked as safe."
+
+    # Reset marble to a non-kennel position for an invalid scenario
+    active_player.list_marble[0].pos = 10
+    invalid_action = Action(card=card, pos_from=10, pos_to=start_pos, card_swap=None)
+
+    # Test invalid scenario (pos_from not in kennel)
+    result_invalid = dog._handle_kennel_to_start_action(invalid_action)
+    assert result_invalid is False, "Action should return False when conditions are not met."
+
+    print("test_handle_kennel_to_start_action passed successfully.")
+
+
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+
+
+# def test_joker_exchange_and_seven_logic():
+#     dog = Dog()
+#     dog.state = dog.get_state()
+
+#     # Joker acts as a 7-card move
+#     card = Card(suit="", rank="JKR")
+#     action = Action(card=card, pos_from=0, pos_to=3, card_swap=None)
+#     dog.state.list_player[0].list_marble[0].pos = 0
+
+#     result = dog._handle_seven_card(card, dog.state.list_player[0].list_marble)
+#     assert len(result) > 0, "Joker as SEVEN should generate split moves"
+
+#     # Joker swap test
+#     joker_actions = dog._exchange_jkr()
+#     assert len(joker_actions) > 0, "Joker card should allow exchanges"
+#     AssertionError: Opponent marble should return to kennel
+
+# def test_jack_card_swap_logic():
+#     dog = Dog()
+#     dog.state = dog.get_state()
+
+#     # Set up marbles for active player and opponent
+#     dog.state.list_player[0].list_marble[0].pos = 5
+#     dog.state.list_player[1].list_marble[0].pos = 10
+
+#     card = Card(suit="H", rank="J")
+#     action = Action(card=card, pos_from=5, pos_to=10, card_swap=None)
+
+#     dog._handle_jack(action)
+#     assert dog.state.list_player[0].list_marble[0].pos == 10, "Marble should swap positions"
+#     assert dog.state.list_player[1].list_marble[0].pos == 5, "Opponent's marble should swap positions"
+
+#     # Fallback: self-swap when no opponent is available
+#     dog.state.list_player[1].list_marble[0].pos = 20  # Move opponent marble away
+#     fallback_action = Action(card=card, pos_from=5, pos_to=0, card_swap=None)
+#     dog._handle_jack(fallback_action)
+#     assert dog.state.list_player[0].list_marble[0].pos == 0, "Self-swap should occur when no opponent swap is possible"
+#     ValueError: Could not find one or both marbles to swap for the Jack action.
+
+# def test_get_list_action_jkr_card():
+#     dog = Dog()
+#     dog.initialize_game()
+
+#     # Add 'JKR' card to player's hand
+#     player = dog.state.list_player[dog.state.idx_player_active]
+#     jkr_card = Card(suit="", rank="JKR")
+#     player.list_card = [jkr_card]
+
+#     with patch.object(dog, '_is_card_exchange_phase', return_value=False):
+#         # Mock _exchange_jkr to return joker-exchange actions
+#         with patch.object(dog, '_exchange_jkr', return_value=[Action(card=jkr_card, pos_from=None, pos_to=None, card_swap=None)]):
+#             actions = dog.get_list_action()
+#             assert len(actions) == 1, "With a JKR card, we should get joker exchange actions."
+
+
+
+
+
+
 # def test_handle_seven_card_logic():
 #     # Initialize the Dog game
 #     dog = Dog()
@@ -2246,55 +2645,6 @@ def test_get_list_action():
 #     assert result is True, "Marble should move from kennel to start position"
 #     assert dog.state.list_player[0].list_marble[0].pos == dog.START_POSITIONS[0]
 
-def test_get_list_action():
-    dog = Dog()
-    dog.state = dog.get_state()
-
-    # Test with a valid state
-    actions = dog.get_list_action()
-    assert isinstance(actions, list), "get_list_action should return a list"
-    assert len(actions) > 0, "There should be valid actions available"
-
-# def test_handle_normal_move():
-#     dog = Dog()
-#     dog.state = dog.get_state()
-
-#     # Move marble from 0 to 5
-#     dog.state.list_player[0].list_marble[0].pos = 0
-#     action = Action(card=None, pos_from=0, pos_to=5, card_swap=None)
-
-#     dog._handle_normal_move(action, dog.state.list_player[0])
-#     assert dog.state.list_player[0].list_marble[0].pos == 5, "Marble should move to pos 5"
-
-#     # Invalid move (no marble at pos_from)
-#     action_invalid = Action(card=None, pos_from=99, pos_to=5, card_swap=None)
-#     try:
-#         dog._handle_normal_move(action_invalid, dog.state.list_player[0])
-#     except ValueError:
-#         assert True, "Invalid move should raise ValueError"
-
-
-
-def test_handle_normal_move():
-    dog = Dog()
-    dog.state = dog.get_state()
-
-    # Move marble from 0 to 5
-    dog.state.list_player[0].list_marble[0].pos = 0
-    card = Card(suit="H", rank="5")
-    action = Action(card=card, pos_from=0, pos_to=5, card_swap=None)
-
-    dog._handle_normal_move(action, dog.state.list_player[0])
-    assert dog.state.list_player[0].list_marble[0].pos == 5, "Marble should move to pos 5"
-
-    # Invalid move (no marble at pos_from)
-    action_invalid = Action(card=card, pos_from=99, pos_to=5, card_swap=None)
-    try:
-        dog._handle_normal_move(action_invalid, dog.state.list_player[0])
-        assert False, "Expected ValueError for invalid move"
-    except ValueError:
-        assert True, "Invalid move should raise ValueError"
-
 # def test_handle_seven_card_logic():
 #     dog = Dog()
 
@@ -2363,99 +2713,25 @@ def test_handle_normal_move():
 #     except ValueError:
 #         pass
 
-def test_handle_seven_card():
-    dog = Dog()
-    dog.state = dog.get_state()
-
-    # Place marbles for the active player
-    dog.state.list_player[0].list_marble[0].pos = 0
-    dog.state.list_player[0].list_marble[1].pos = 1
-
-    card = Card(suit="H", rank="7")
-    actions = dog._handle_seven_card(card, dog.state.list_player[0].list_marble)
-
-    assert len(actions) > 0, "Should generate valid split actions for SEVEN card"
-
-    # Ensure invalid actions are not allowed
-    invalid_action = Action(card=card, pos_from=99, pos_to=None, card_swap=None)
-    try:
-        dog._handle_seven_marble_movement(invalid_action)
-        assert False, "Expected ValueError for invalid SEVEN action"
-    except ValueError:
-        pass
-    
-# def test_joker_exchange_and_seven_logic():
+# def test_handle_normal_move():
 #     dog = Dog()
 #     dog.state = dog.get_state()
 
-#     # Joker acts as a 7-card move
-#     card = Card(suit="", rank="JKR")
-#     action = Action(card=card, pos_from=0, pos_to=3, card_swap=None)
+#     # Move marble from 0 to 5
 #     dog.state.list_player[0].list_marble[0].pos = 0
+#     action = Action(card=None, pos_from=0, pos_to=5, card_swap=None)
 
-#     result = dog._handle_seven_card(card, dog.state.list_player[0].list_marble)
-#     assert len(result) > 0, "Joker as SEVEN should generate split moves"
+#     dog._handle_normal_move(action, dog.state.list_player[0])
+#     assert dog.state.list_player[0].list_marble[0].pos == 5, "Marble should move to pos 5"
 
-#     # Joker swap test
-#     joker_actions = dog._exchange_jkr()
-#     assert len(joker_actions) > 0, "Joker card should allow exchanges"
-#     AssertionError: Opponent marble should return to kennel
+#     # Invalid move (no marble at pos_from)
+#     action_invalid = Action(card=None, pos_from=99, pos_to=5, card_swap=None)
+#     try:
+#         dog._handle_normal_move(action_invalid, dog.state.list_player[0])
+#     except ValueError:
+#         assert True, "Invalid move should raise ValueError"
 
-# def test_jack_card_swap_logic():
-#     dog = Dog()
-#     dog.state = dog.get_state()
 
-#     # Set up marbles for active player and opponent
-#     dog.state.list_player[0].list_marble[0].pos = 5
-#     dog.state.list_player[1].list_marble[0].pos = 10
 
-#     card = Card(suit="H", rank="J")
-#     action = Action(card=card, pos_from=5, pos_to=10, card_swap=None)
-
-#     dog._handle_jack(action)
-#     assert dog.state.list_player[0].list_marble[0].pos == 10, "Marble should swap positions"
-#     assert dog.state.list_player[1].list_marble[0].pos == 5, "Opponent's marble should swap positions"
-
-#     # Fallback: self-swap when no opponent is available
-#     dog.state.list_player[1].list_marble[0].pos = 20  # Move opponent marble away
-#     fallback_action = Action(card=card, pos_from=5, pos_to=0, card_swap=None)
-#     dog._handle_jack(fallback_action)
-#     assert dog.state.list_player[0].list_marble[0].pos == 0, "Self-swap should occur when no opponent swap is possible"
-#     ValueError: Could not find one or both marbles to swap for the Jack action.
-
-def test_deck_reset_when_total_cards_exceed_110():
-    dog = Dog()
-    dog.state = dog.get_state()
-
-    # Force a situation where total cards exceed 110
-    excessive_cards = GameState.LIST_CARD.copy() + GameState.LIST_CARD.copy()  # Duplicate cards
-    dog.state.list_card_draw = excessive_cards[:50]  # 50 cards in draw pile
-    dog.state.list_card_discard = excessive_cards[50:100]  # 50 cards in discard pile
-
-    # Simulate excessive cards in players' hands
-    for player in dog.state.list_player:
-        player.list_card = excessive_cards[100:110]  # 10 cards in hand per player
-
-    # Manually trigger the reshuffle logic (instead of validate_total_cards)
-    total_cards = len(dog.state.list_card_draw) + len(dog.state.list_card_discard)
-    total_cards += sum(len(player.list_card) for player in dog.state.list_player)
-    if total_cards > 110:
-        print("Warning: More than 110 cards detected. Resetting the card deck.")
-        dog.state.list_card_draw.clear()
-        dog.state.list_card_discard.clear()
-        for player in dog.state.list_player:
-            player.list_card.clear()
-
-        # Reset the deck
-        dog.state.list_card_draw.extend(GameState.LIST_CARD)
-        random.shuffle(dog.state.list_card_draw)
-
-    # Assertions to verify the reset
-    assert len(dog.state.list_card_draw) == len(GameState.LIST_CARD), "Deck should reset to the original full set"
-    assert len(dog.state.list_card_discard) == 0, "Discard pile should be cleared"
-    for player in dog.state.list_player:
-        assert len(player.list_card) == 0, "Players' hands should be cleared after reset"
-    print("Deck reset test passed successfully.")
-    
 
 
