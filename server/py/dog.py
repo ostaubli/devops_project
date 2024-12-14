@@ -346,27 +346,46 @@ class GameState(BaseModel):
         # Get the active player
         active_player = self.list_player[self.idx_player_active]
 
-        # Check if the marble exists at the specified position
+        # Ensure the marble exists at the specified position
         marble_to_move = next((m for m in active_player.list_marble if m.pos == action.pos_from), None)
+        if not marble_to_move:
+            return  # Exit if no marble found at pos_from
 
         # Update the marble's position
         marble_to_move.pos = (action.pos_to)
 
+        # Handle collision with another player's marble
+        for player in self.list_player:
+            if player != active_player:
+                opponent_marble = next((m for m in player.list_marble if m.pos == action.pos_to), None)
+                if opponent_marble:
+                    self.sending_home(opponent_marble)  # Send the opponent's marble home
+
         #TODO: function check_special_action | input Action | output = True/False
+        #   ==> Check if it is a special card or not
+        def check_special_action(action: Action) -> bool:
+            if action.card.rank in ['7', 'J', 'JKR']:
+                return True
+            return False
+
         #   ==> Check if it is a nomal foreward movement or not
 
         #TODO:  if Normal make movement
-        #       if special 
+        #       if special
         # Handle special cards
         if action.card.rank == '7':
             # 7 allows multiple movements; the game logic should track additional actions
             self.card_active = action.card
         elif action.card.rank == 'J':
             # J allows swapping marbles (specific logic to be implemented separately)
-            pass
+            self.card_active = action.card
+            return
+
         elif action.card.rank == 'JKR':
             # Joker allows flexibility, which may require additional rules
-            pass
+            self.card_active = action.card
+            return
+
         else:
             # Reset the active card for regular actions
             self.card_active = None
