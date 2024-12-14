@@ -915,8 +915,17 @@ class Dog(Game):
 
         for marble in active_player.list_marble:
             if marble.pos == mm_action.pos_from:
-                print(f"Moving active player's marble from {mm_action.pos_from}" +
-                    f" to {mm_action.pos_to}.")
+                print(
+                    f"Moving active player's marble from {mm_action.pos_from}"
+                    f" to {mm_action.pos_to}."
+                )
+                
+                # Check if pos_to is not None before assignment
+                if mm_action.pos_to is None:
+                    raise ValueError(
+                        "mm_action.pos_to cannot be None when moving a marble."
+                    )
+                
                 marble.pos = mm_action.pos_to
                 marble.is_save = marble.pos in self.SAFE_SPACES[self.state.idx_player_active]
                 if marble.is_save:
@@ -924,6 +933,7 @@ class Dog(Game):
                     # print(f"Marble moved to a safe space at position {marble.pos}.")
                 moved = True
                 break
+
         if not moved:
             raise ValueError(
                 f"No active player's marble found at position {mm_action.pos_from}. "
@@ -1110,6 +1120,13 @@ class Dog(Game):
                 print(f'''Processing split seven_action:
                     pass
                     # Moving marble from {seven_action.pos_from} to {seven_action.pos_to}.''')
+                
+                # Check if pos_to is not None before assignment
+                if seven_action.pos_to is None:
+                    raise ValueError(
+                        "seven_action.pos_to cannot be None when moving a marble."
+                    )
+                
                 marble.pos = seven_action.pos_to
                 marble.is_save = marble.pos in self.SAFE_SPACES[self.state.idx_player_active]
                 if marble.is_save:
