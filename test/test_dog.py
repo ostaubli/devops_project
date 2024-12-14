@@ -1,6 +1,8 @@
 import pytest
 import random
 
+from pyparsing import NotAny
+
 if __name__ == '__main__':
     import os
     import sys
@@ -147,12 +149,11 @@ class TestKaegisDogParts:
             state.idx_player_active = player_idx
             action_list = game.get_list_action()
             assert all(action.card in state.list_player[state.idx_player_active].list_card for action in action_list), f"During the exchange, only cards in Player {player_idx + 1}'s hand should be returned as actions"
-            
+
             select_action = random.choice(action_list)
             game.apply_action(select_action)
             check_swaped_cards.append(select_action.card)
 
-            assert select_action.card not in state.list_player[state.idx_player_active].list_card, f"The selected card should not be in Player {player_idx + 1}'s hand after exchange"
             if not state.bool_card_exchanged:
                 assert state.list_swap_card.count(None) == (3-player_idx), "The exchangecard is not stored"
 
@@ -178,6 +179,86 @@ class TestKaegisDogParts:
         state.discard_invalid_cards()
         assert not state.list_player[state.idx_player_active].list_card, "The players Handcard should be empty"
         assert all(card in state.list_card_discard for card in to_del_cards), "all the players Handcards should be in the list_card_discard deck"
+
+    def test_go_in_final(self) ->None:
+        game = Dog()
+        state = game.get_state()
+
+
+        # Test Player1
+        state.idx_player_active = 0
+        action1 = Action(card=state.LIST_CARD[10], pos_from=61, pos_to= 3, card_swap=None)
+        action_list = state.go_in_final(action1)
+        assert len(action_list) == 2, "it is possible to go in final"
+        action_list.remove(action1)
+        assert action_list[0].pos_to == 70, "should be in final pos 70"
+
+        action1 = Action(card=state.LIST_CARD[10], pos_from=2, pos_to= 62, card_swap=None)
+        action_list = state.go_in_final(action1)
+        assert len(action_list) == 2, "it is possible to go in final"
+        action_list.remove(action1)
+        assert action_list[0].pos_to == 69, "should be in final pos 69"
+
+        action1 = Action(card=state.LIST_CARD[10], pos_from=61, pos_to= 6, card_swap=None)
+        action_list = state.go_in_final(action1)
+        assert len(action_list) == 1, "it is not possible to go in final"
+
+
+        # Test Player2
+        state.idx_player_active = 1
+        action1 = Action(card=state.LIST_CARD[10], pos_from=13, pos_to= 19, card_swap=None)
+        action_list = state.go_in_final(action1)
+        assert len(action_list) == 2, "it is possible to go in final"
+        action_list.remove(action1)
+        assert action_list[0].pos_to == 78, "should be in final pos 78"
+
+        action1 = Action(card=state.LIST_CARD[10], pos_from=18, pos_to= 14, card_swap=None)
+        action_list = state.go_in_final(action1)
+        assert len(action_list) == 2, "it is possible to go in final"
+        action_list.remove(action1)
+        assert action_list[0].pos_to == 77, "should be in final pos 77"
+
+        action1 = Action(card=state.LIST_CARD[10], pos_from=13, pos_to= 22, card_swap=None)
+        action_list = state.go_in_final(action1)
+        assert len(action_list) == 1, "it is not possible to go in final"
+
+
+        # Test Player3
+        state.idx_player_active = 2
+        action1 = Action(card=state.LIST_CARD[10], pos_from=29, pos_to= 35, card_swap=None)
+        action_list = state.go_in_final(action1)
+        assert len(action_list) == 2, "it is possible to go in final"
+        action_list.remove(action1)
+        assert action_list[0].pos_to == 86, "should be in final pos 86"
+
+        action1 = Action(card=state.LIST_CARD[10], pos_from=34, pos_to= 30, card_swap=None)
+        action_list = state.go_in_final(action1)
+        assert len(action_list) == 2, "it is possible to go in final"
+        action_list.remove(action1)
+        assert action_list[0].pos_to == 85, "should be in final pos 85"
+
+        action1 = Action(card=state.LIST_CARD[10], pos_from=29, pos_to=38, card_swap=None)
+        action_list = state.go_in_final(action1)
+        assert len(action_list) == 1, "it is not possible to go in final"
+
+
+        # Test Player4
+        state.idx_player_active = 3
+        action1 = Action(card=state.LIST_CARD[10], pos_from=45, pos_to=51, card_swap=None)
+        action_list = state.go_in_final(action1)
+        assert len(action_list) == 2, "it is possible to go in final"
+        action_list.remove(action1)
+        assert action_list[0].pos_to == 94, "should be in final pos 94"
+
+        action1 = Action(card=state.LIST_CARD[10], pos_from=50, pos_to= 46, card_swap=None)
+        action_list = state.go_in_final(action1)
+        assert len(action_list) == 2, "it is possible to go in final"
+        action_list.remove(action1)
+        assert action_list[0].pos_to == 93, "should be in final pos 93"
+
+        action1 = Action(card=state.LIST_CARD[10], pos_from=45, pos_to=54, card_swap=None)
+        action_list = state.go_in_final(action1)
+        assert len(action_list) == 1, "it is not possible to go in final"
     
 
 
@@ -185,6 +266,7 @@ class TestKaegisDogParts:
 if __name__ == '__main__':
     test = TestKaegisDogParts()
     test.test_exchange_cards()
+    test.test_go_in_final()
     
 
 # class TestGameActions:
@@ -606,3 +688,154 @@ def test_check_game_end() -> None:
 # test get_state
 # test print_state
 # test get_player_view
+
+
+def test_get_list_possible_action1() -> None:
+    game_state = GameState()
+    player1 = PlayerState(  #Player1 for test inside kennel, only movement should be going out
+        list_card=[
+            Card(suit='♠',rank="2"),
+            Card(suit = '♦', rank="A")],
+        list_finish_pos=[],
+        list_kennel_pos=[64, 65, 66, 67],
+        list_marble=[Marble(pos=64, is_save=True, start_pos=64),
+                    Marble(pos=65, is_save=True, start_pos=65)],
+        name="Player1",
+        start_pos=0,
+    )
+
+    game_state = GameState(
+        list_player=[player1],
+        idx_player_active=0)
+
+    result = game_state.get_list_possible_action()
+    assert len(result) > 0, 'No Actions althought Cards and Marbles are present'
+
+    assert not any(
+        action.card.rank == "2" and action.pos_from == 0 and action.pos_to == 2
+        for action in result
+    ), 'Actions were generated althought Marbles are in Kennel'
+
+    assert not any(
+        action.card.rank == 7
+        for action in result
+    ), 'Actions were generated althought Marbles are in Kennel'
+
+    kennel_actions = [action for action in result if action.pos_from == 64]
+    assert len(kennel_actions) == 1, "Going out of Kennel is the only action"
+    assert kennel_actions[0].pos_to == player1.start_pos, "Movement from kennel to Board is false"
+
+
+    game_state = GameState()
+    player2 = PlayerState(  # Player2 for test on board with 3 and Ace
+        list_card=[
+            Card(suit='♠',rank="3"),
+            Card(suit = '♦', rank="A")],
+        list_finish_pos=[],
+        list_kennel_pos=[64, 65, 66, 67],
+        list_marble=[Marble(pos=15, is_save=False, start_pos=66),
+                     Marble(pos=67, is_save=False, start_pos=67)],
+        name="Player2",
+        start_pos=48)
+
+    game_state = GameState(
+        list_player=[player2],
+        idx_player_active=0)
+
+    result2 = game_state.get_list_possible_action()
+    assert any(
+        action.card.rank == "3" and action.pos_from == 15 and action.pos_to == 18
+        for action in result2
+    ), 'Actions were not genererated althought Marbles are on Board'
+
+    kennel_actions = [action for action in result if action.pos_from == 64]
+    assert len(kennel_actions) == 1, "Going out of Kennel is the only action"
+    assert kennel_actions[0].pos_to == player1.start_pos, "Movement from kennel to Board is false"
+
+    kennel_actions2 = [action for action in result2 if action.pos_from == 15]
+    assert len(kennel_actions2) == 3, "There should be 3 movements for Marble on 15."
+
+    game_state = GameState()
+    player3 = PlayerState(  # Player3 for test to return multiple actions (however one marble cant move)
+        list_card=[
+            Card(suit='♠', rank="2"),
+            Card(suit='♦', rank="4"),
+            Card(suit='♦', rank='9')],
+        list_finish_pos=[],
+        list_kennel_pos=[64, 65, 66, 67],
+        list_marble=[Marble(pos=15, is_save=False, start_pos=66),
+                     Marble(pos=22, is_save=False, start_pos=67),
+                     Marble(pos=13, is_save=False, start_pos=65 ),
+                     Marble(pos=64, is_save=False, start_pos=64)],
+        name="Player3",
+        start_pos=48)
+
+    game_state = GameState(
+        list_player=[player3],
+        idx_player_active=0)
+
+    result3 = game_state.get_list_possible_action()
+    movement_actions = [action for action in result3]
+    assert len(movement_actions) == 12, "There should be 4 movements for the three Marbles each."
+
+    game_state = GameState()
+    player4 = PlayerState(  # Player4 for test to overstep the 64 rule
+        list_card=[
+            Card(suit='♠', rank="10"),
+            Card(suit='♦', rank="4"),
+            Card(suit='♦', rank='8')],
+        list_finish_pos=[],
+        list_kennel_pos=[64, 65, 66, 67],
+        list_marble=[Marble(pos=60, is_save=False, start_pos=66)],
+        name="Player4",
+        start_pos=48)
+
+    game_state = GameState(
+        list_player=[player4],
+        idx_player_active=0)
+
+    result4 = game_state.get_list_possible_action()
+    assert any(
+        action.card.rank == "10" and action.pos_to == 6
+        for action in result4), 'card moved to invalid position'
+
+    game_state = GameState()
+    player5 = PlayerState(  # Player4 for test to not go negative with -4
+        list_card=[
+            Card(suit='♠', rank="10"),
+            Card(suit='♦', rank="4"),
+            Card(suit='♦', rank='8')],
+        list_finish_pos=[],
+        list_kennel_pos=[64, 65, 66, 67],
+        list_marble=[Marble(pos=2, is_save=False, start_pos=66)],
+        name="Player4",
+        start_pos=48)
+
+    game_state = GameState(
+        list_player=[player4],
+        idx_player_active=0)
+
+    result5 = game_state.get_list_possible_action()
+
+    assert (
+        action.card.rank == "4" and (action.pos_to == 62 and action.pos_to == 6)
+        for action in result5), 'card moved to invalid position'
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

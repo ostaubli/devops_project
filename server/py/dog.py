@@ -4,8 +4,6 @@ import random
 import copy
 from typing import List, Optional, ClassVar
 from enum import Enum
-
-from mypy.checkexpr import Finished
 from pydantic import BaseModel
 if __name__ == '__main__':
     from game import Game, Player
@@ -195,13 +193,6 @@ class GameState(BaseModel):
         self.list_card_discard.extend(self.list_player[self.idx_player_active].list_card)
         self.list_player[self.idx_player_active].list_card = []
 
-    def can_marble_leave_kennel(self, player: PlayerState) -> int:
-        for marble in player.list_marble:
-            if int(marble.pos) not in player.list_kennel_pos:
-                if not int(marble.pos) == player.start_pos and marble.is_save:
-                    return None
-                return None
-        return marble.pos
 
     def get_list_possible_action(self) -> List[Action]:  # Nicolas
         list_steps_split_7 = [
@@ -348,27 +339,46 @@ class GameState(BaseModel):
         # Get the active player
         active_player = self.list_player[self.idx_player_active]
 
-        # Check if the marble exists at the specified position
+        # Ensure the marble exists at the specified position
         marble_to_move = next((m for m in active_player.list_marble if m.pos == action.pos_from), None)
+        if not marble_to_move:
+            return  # Exit if no marble found at pos_from
 
         # Update the marble's position
         marble_to_move.pos = (action.pos_to)
 
+        # Handle collision with another player's marble
+        for player in self.list_player:
+            if player != active_player:
+                opponent_marble = next((m for m in player.list_marble if m.pos == action.pos_to), None)
+                if opponent_marble:
+                    self.sending_home(opponent_marble)  # Send the opponent's marble home
+
         #TODO: function check_special_action | input Action | output = True/False
+        #   ==> Check if it is a special card or not
+        def check_special_action(action: Action) -> bool:
+            if action.card.rank in ['7', 'J', 'JKR']:
+                return True
+            return False
+
         #   ==> Check if it is a nomal foreward movement or not
 
         #TODO:  if Normal make movement
-        #       if special 
+        #       if special
         # Handle special cards
         if action.card.rank == '7':
             # 7 allows multiple movements; the game logic should track additional actions
             self.card_active = action.card
         elif action.card.rank == 'J':
             # J allows swapping marbles (specific logic to be implemented separately)
-            pass
+            self.card_active = action.card
+            return
+
         elif action.card.rank == 'JKR':
             # Joker allows flexibility, which may require additional rules
-            pass
+            self.card_active = action.card
+            return
+
         else:
             # Reset the active card for regular actions
             self.card_active = None
@@ -398,30 +408,6 @@ class GameState(BaseModel):
         # Discard the played card
         active_player.list_card.remove(action.card)
         self.list_card_discard.append(action.card)
-
-       
-
-    def can_leave_kennel(self) -> bool:  # <============= DOPPELT
-        if self.card_active is None:
-            return False
-
-        if self.card_active.rank in ["A", "K", "JKR"]:
-            return True
-        return False
-
-    def check_final_pos(self, pos_to: int, pos_from: int, action: Action, marble: Marble) -> None:
-        """
-        Check whether the final position of the marble is a special position.
-        1) The marble is save if it is in one of the four final spots of its color or
-        2) if it is newly out of the kennel.
-        """
-        final_positions: list = [68, 69, 70, 71, 76, 77, 78, 79, 84, 85, 86, 87, 92, 93, 94, 95]
-        if action.pos_to in final_positions:
-            marble.is_save = True
-
-        last_positions: list = [64, 65, 66, 67, 72, 73, 74, 75, 80, 81, 82, 83, 88, 89, 90, 91]
-        if action.pos_from in last_positions:
-            marble.is_save = True
 
 
     def exchange_cards(self, action_cardswap: Action) -> None:
@@ -524,8 +510,68 @@ class GameState(BaseModel):
             if team_finished:
                 self.phase = GamePhase.FINISHED
                 return
+        if finished:
+            print(f"{player.name} hat alle Murmeln im Ziel und ist fertig!")
+        else:
+            print(f"{player.name} hat noch nicht alle Murmeln im Ziel.")
+        return finished
 
-    def init_next_turn(self) -> None: # Kägi
+    def check_game_end(self) -> bool:
+        finished_players = 0
+        for player in self.state.list_player:
+            if self.is_player_finished(player):
+                finished_players += 1
+
+        if finished_players >= 2:
+            self.state.phase = GamePhase.FINISHED  # Setzt den Status auf 'finished', wenn 2 Spieler fertig sind
+            print("Spiel ist zu Ende!")
+            return True
+
+        return False
+
+    def go_in_final(self, action_to_check: Action) -> List[Action]:
+        """
+        Checks if it is possible to go in the final
+        Yes, creat the Actions fo that + unchanged action
+        No, return Action unchanged
+        """
+        # Get infos from Gamestate
+        active_player = self.list_player[self.idx_player_active]
+        final_pos = active_player.list_marble[-1].start_pos+1
+
+        # get positions
+        startpos = active_player.start_pos
+        pos_from = action_to_check.pos_from
+        pos_to = action_to_check.pos_to
+
+        # Calculate the movement for go Final
+        if startpos > 0 or pos_from > pos_to:
+            steps = pos_to - pos_from
+            stepps_to_final = startpos-pos_from
+            overlap = abs(abs(steps) - abs(stepps_to_final))
+        else:
+            steps = 64-pos_to-pos_from
+            stepps_to_final = startpos-pos_from
+            overlap = abs(abs(steps) - abs(stepps_to_final))
+
+        # when the reminderstps after start are between 1&4 go in final
+        if abs(overlap) <5:
+            set_pos_to = final_pos + abs(overlap)-1
+            new_action = Action(card=action_to_check.card,
+                                pos_from=action_to_check.pos_from,
+                                pos_to=set_pos_to,
+                                card_swap=action_to_check.card_swap)
+            return [action_to_check, new_action]
+
+        # If not possible to go in final return given action
+        return [action_to_check]
+
+    def init_next_turn(self) -> None:
+        """
+        Sets the next player with cards to active.
+        if there are all cards played it deals new cards
+        """
+
         # Start with the next player
         idx_next_player = (self.idx_player_active +1) %4
 
@@ -587,39 +633,10 @@ class Dog(Game):
             self.state.exchange_cards(action)
 
         # Check if exchange cards is needed
-        if action:
+        elif action:
             self.state.set_action_to_game(action)
-        
-        elif False:
-            # Move to next player
-            self.state.idx_player_active = (self.state.idx_player_active + 1) % 4
 
-            # If we've gone through all players
-            if self.state.idx_player_active == self.state.idx_player_started:
-                # Move to next round
-                self.state.cnt_round += 1
-                self.state.idx_player_started = (self.state.idx_player_started + 1) % 4
-                self.state.bool_card_exchanged = False
-
-                # Determine the number of cards to deal based on the current round
-                if 1 <= self.state.cnt_round <= 5:
-                    cards_per_player = 7 - self.state.cnt_round  # 6,5,4,3,2
-                elif self.state.cnt_round == 6:
-                    cards_per_player = 6  # Reset to 6
-                else:
-                    # Handle rounds beyond 6 if the game cycles
-                    cards_per_player = 7 - ((self.state.cnt_round - 1) % 5 + 1)
-                    cards_per_player = max(cards_per_player, 2)
-
-                # Deal new cards based on the determined number
-                draw_pile = self.state.list_card_draw
-                for player in self.state.list_player:
-                    player.list_card = draw_pile[:cards_per_player]
-                    draw_pile = draw_pile[cards_per_player:]
-                self.state.list_card_draw = draw_pile
-
-                # Set active player to the player after the starting player
-                self.state.idx_player_active = (self.state.idx_player_started + 1) % 4
+        # Sets the next Player active if there is not a Card active
         if self.state.card_active is None:
             self.state.init_next_turn()
 
@@ -638,7 +655,7 @@ class RandomPlayer(Player):
 
     def select_action(self, state: GameState, actions: List[Action]) -> Optional[Action]:
         """ Given masked game state and possible actions, select the next action """
-        if len(actions) > 0:
+        if actions is not None:
             return random.choice(actions)
         return None
 
@@ -672,9 +689,9 @@ if __name__ == '__main__':
             #print(data)
 
             # If there are possible actions, choose one
-            if action is not None: 
-                action = random.choice(list_action)
-                print(action)
+            action = random.choice(list_action)
+            print(f"Action from Player{state.idx_player_active} is",action)
+            if action is not None:
                 game.apply_action(action)
 
             else: # if not: delet all cards for this round
@@ -698,7 +715,7 @@ if __name__ == '__main__':
             if action is not None:
                 print(f"Player {game.state.idx_player_active} is playing")
                 # await asyncio.sleep(1)
-                print(action)
+                print(f"Action from Player{state.idx_player_active} is",action)
                 game.apply_action(action)
             else:# if not: delet all cards for this round
                 game.state.discard_invalid_cards()
@@ -711,14 +728,14 @@ if __name__ == '__main__':
             data = {'type': 'update', 'state': dict_state}
             # print(data)
             # await websocket.send_json(data)
-        
-               
+
         print("Next Player Active?: ", game.state.idx_player_active)
         print("Exchanged? ",game.state.bool_card_exchanged)
         print("Speciality? card_active? ", game.state.card_active)
         print("*"*50)
 
 
+        # Keeps game away from infinityloop
         if debug_counter >10:
             print("-"*50,"> break becaus of counter")
             break
