@@ -735,6 +735,21 @@ class Dog(Game):
             self._reset_card_active()
             self.check_game_status()
 
+    def _handle_joker_swap(self, player: PlayerState, action: Action) -> None:
+        assert self.state is not None
+        found_card: Optional[Card] = None
+        if action.card is not None:
+            for c in player.list_card:
+                if c.suit == action.card.suit and c.rank == action.card.rank:
+                    found_card = c
+                    break
+        if found_card:
+            self.state.list_card_discard.append(found_card)
+            player.list_card.remove(found_card)
+        if action.card_swap is not None:
+            self.state.card_active = Card(suit=action.card_swap.suit, rank=action.card_swap.rank)
+        self.check_game_status()
+
     def swap_cards(self, player1_idx: int, player2_idx: int, card1: Card, card2: Card) -> None:
         # Hole die Spielerobjekte
         player1 = self.state.list_player[player1_idx]
