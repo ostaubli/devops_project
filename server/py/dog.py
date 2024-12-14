@@ -409,30 +409,6 @@ class GameState(BaseModel):
         active_player.list_card.remove(action.card)
         self.list_card_discard.append(action.card)
 
-       
-
-    # def can_leave_kennel(self) -> bool:  # <============= DOPPELT
-    #     if self.card_active is None:
-    #         return False
-
-    #     if self.card_active.rank in ["A", "K", "JKR"]:
-    #         return True
-    #     return False
-
-    # def check_final_pos(self, pos_to: int, pos_from: int, action: Action, marble: Marble) -> None:
-    #     """
-    #     Check whether the final position of the marble is a special position.
-    #     1) The marble is save if it is in one of the four final spots of its color or
-    #     2) if it is newly out of the kennel.
-    #     """
-    #     final_positions: list = [68, 69, 70, 71, 76, 77, 78, 79, 84, 85, 86, 87, 92, 93, 94, 95]
-    #     if action.pos_to in final_positions:
-    #         marble.is_save = True
-
-    #     last_positions: list = [64, 65, 66, 67, 72, 73, 74, 75, 80, 81, 82, 83, 88, 89, 90, 91]
-    #     if action.pos_from in last_positions:
-    #         marble.is_save = True
-
 
     def exchange_cards(self, action_cardswap: Action) -> None:
 
@@ -588,7 +564,12 @@ class GameState(BaseModel):
         # If not possible to go in final return given action
         return [action_to_check]
 
-    def init_next_turn(self) -> None: # Kägi
+    def init_next_turn(self) -> None: 
+        """
+        Sets the next player with cards to active.
+        if there are all cards played it deals new cards
+        """
+
         # Start with the next player
         idx_next_player = (self.idx_player_active +1) %4
 
@@ -650,39 +631,10 @@ class Dog(Game):
             self.state.exchange_cards(action)
 
         # Check if exchange cards is needed
-        if action:
+        elif action: 
             self.state.set_action_to_game(action)
-        
-        elif False:
-            # Move to next player
-            self.state.idx_player_active = (self.state.idx_player_active + 1) % 4
 
-            # If we've gone through all players
-            if self.state.idx_player_active == self.state.idx_player_started:
-                # Move to next round
-                self.state.cnt_round += 1
-                self.state.idx_player_started = (self.state.idx_player_started + 1) % 4
-                self.state.bool_card_exchanged = False
-
-                # Determine the number of cards to deal based on the current round
-                if 1 <= self.state.cnt_round <= 5:
-                    cards_per_player = 7 - self.state.cnt_round  # 6,5,4,3,2
-                elif self.state.cnt_round == 6:
-                    cards_per_player = 6  # Reset to 6
-                else:
-                    # Handle rounds beyond 6 if the game cycles
-                    cards_per_player = 7 - ((self.state.cnt_round - 1) % 5 + 1)
-                    cards_per_player = max(cards_per_player, 2)
-
-                # Deal new cards based on the determined number
-                draw_pile = self.state.list_card_draw
-                for player in self.state.list_player:
-                    player.list_card = draw_pile[:cards_per_player]
-                    draw_pile = draw_pile[cards_per_player:]
-                self.state.list_card_draw = draw_pile
-
-                # Set active player to the player after the starting player
-                self.state.idx_player_active = (self.state.idx_player_started + 1) % 4
+        # Sets the next Player active if there is not a Card active
         if self.state.card_active is None:
             self.state.init_next_turn()
 
@@ -701,7 +653,7 @@ class RandomPlayer(Player):
 
     def select_action(self, state: GameState, actions: List[Action]) -> Optional[Action]:
         """ Given masked game state and possible actions, select the next action """
-        if len(actions) > 0:
+        if actions is not None:
             return random.choice(actions)
         return None
 
@@ -735,9 +687,9 @@ if __name__ == '__main__':
             #print(data)
 
             # If there are possible actions, choose one
-            if action is not None: 
-                action = random.choice(list_action)
-                print(action)
+            action = random.choice(list_action)
+            print(f"Action from Player{state.idx_player_active} is",action)
+            if action is not None:
                 game.apply_action(action)
 
             else: # if not: delet all cards for this round
@@ -761,7 +713,7 @@ if __name__ == '__main__':
             if action is not None:
                 print(f"Player {game.state.idx_player_active} is playing")
                 # await asyncio.sleep(1)
-                print(action)
+                print(f"Action from Player{state.idx_player_active} is",action)
                 game.apply_action(action)
             else:# if not: delet all cards for this round
                 game.state.discard_invalid_cards()
@@ -774,14 +726,14 @@ if __name__ == '__main__':
             data = {'type': 'update', 'state': dict_state}
             # print(data)
             # await websocket.send_json(data)
-        
-               
+
         print("Next Player Active?: ", game.state.idx_player_active)
         print("Exchanged? ",game.state.bool_card_exchanged)
         print("Speciality? card_active? ", game.state.card_active)
         print("*"*50)
 
 
+        # Keeps game away from infinityloop
         if debug_counter >10:
             print("-"*50,"> break becaus of counter")
             break
