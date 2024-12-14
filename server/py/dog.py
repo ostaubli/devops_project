@@ -735,6 +735,7 @@ class Dog(Game):
             self.apply_simple_move(marble, action.pos_to, player)
 
         elif action.card.rank in ['A', 'K']:  # Handles both Ace and King
+            self.send_home_if_occupied(action.pos_to)
             for start_pos, kennel_positions in self.board["kennel_positions"].items():
                 if action.pos_from in kennel_positions:  # Marble is in the kennel
                     for marble in player.list_marble:
@@ -753,11 +754,14 @@ class Dog(Game):
                     return
 
         elif action.card.rank == 'J':
+            self.send_home_if_occupied(action.pos_to)
             self.get_actions_jack(player)
 
         elif action.card.rank == 'JKR':  # Joker: use as any card
+            self.send_home_if_occupied(action.pos_to)
+            # TODO implement JKR here
             # Action can be anything based on the game rules, e.g., swap a card or move a marble
-            pass
+
         elif action.card.rank == '7':
             card_finished = self.apply_seven_action(action)
         else:  # Regular behavior for moving marbles based on card rank
@@ -834,13 +838,16 @@ class Dog(Game):
             print(f"{player.name if player else 'someone'}'s marble moved to the finish area.")
         else:
             # Check for collisions before moving the marble and send home if so
-            if target_pos is not None and self.position_is_occupied(target_pos):
-                existing_marble = self.find_marble_at_position(target_pos)
-                if existing_marble and not self.is_in_any_finish_area(target_pos):
-                    # Send the existing marble home
-                    self.send_home(existing_marble)
+            self.send_home_if_occupied(target_pos)
             marble.pos = target_pos
         marble.is_save = False
+
+    def send_home_if_occupied(self, target_pos: int):
+        if target_pos is not None and self.position_is_occupied(target_pos):
+            existing_marble = self.find_marble_at_position(target_pos)
+            if existing_marble and not self.is_in_any_finish_area(target_pos):
+                # Send the existing marble home
+                self.send_home(existing_marble)
 
     def is_in_game(self, marble: Marble) -> bool:
         """ Checks if marble is out of the kennel and not in finish area"""
