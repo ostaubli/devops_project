@@ -234,6 +234,22 @@ def test_path_clear(game):
     clear = game._path_clear(0, 10, 0)
     assert isinstance(clear, bool)
 
+# -------------------------------------------------------
+# Aktionen ausführen, spezielle Kartenbewegungen (Joker, 7er, Jack)
+# -------------------------------------------------------
+def test_apply_action_none(game):
+    old_active = game.state.idx_player_active
+    game.apply_action(None)
+    assert game.state.idx_player_active != old_active
+
+def test_handle_joker_swap(game):
+    p = game.state.list_player[0]
+    c = p.list_card[0]
+    action = Action(card=c, card_swap=Card(suit='♥', rank='A'))
+    game._handle_joker_swap(p, action)
+    assert game.state.card_active == Card(suit='♥', rank='A')
+
+
 
 # -------------------------------------------------------
 # Aktionen ausführen und Spielstatus
