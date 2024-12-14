@@ -2466,20 +2466,63 @@ def test_reshuffle_discard_into_draw_reset():
 
     print("test_reshuffle_discard_into_draw_reset passed successfully.")
 
-def test_handle_seven_card_logic_marble_not_found():
-    """Test handling SEVEN card where the marble is not found at pos_from."""
+
+def test_handle_seven_card_logic_invalid_moves():
+    """Test SEVEN card logic with invalid moves (None values)."""
     dog = Dog()
     dog.initialize_game()
-    # No marble at starting position 0
+
+    # SEVEN card
     card = Card(suit="H", rank="7")
+
+    # Invalid actions with None positions
     grouped_actions = [
-        [
-            Action(card=card, pos_from=0, pos_to=3, card_swap=None)
-        ]
+        Action(card=card, pos_from=None, pos_to=3, card_swap=None),
+        Action(card=card, pos_from=0, pos_to=None, card_swap=None)
     ]
 
-    # Call the method
     result = dog._handle_seven_card_logic(grouped_actions)
-    assert result is False, "Actions where no marble exists at pos_from should fail."
+    assert result is False, "Invalid SEVEN actions with None positions should fail."
+
+
+# def test_handle_seven_card_logic_violating_safe_space():
+#     """Test SEVEN card logic with a move violating the inside-out safe space rule."""
+#     dog = Dog()
+#     dog.initialize_game()
+
+#     # Setup player safe spaces
+#     dog.SAFE_SPACES[0] = [10, 11, 12, 13, 14]
+
+#     # Set marble positions
+#     dog.state.list_player[0].list_marble[0].pos = 10
+#     card = Card(suit="H", rank="7")
+
+#     # Move violates safe space rule
+#     grouped_actions = [
+#         Action(card=card, pos_from=10, pos_to=14, card_swap=None)
+#     ]
+
+#     result = dog._handle_seven_card_logic(grouped_actions)
+#     assert result is False, "Move violating safe space inside-out rule should fail."
+
+
+# def test_handle_seven_card_logic_remaining_steps_unfinished():
+#     """Test SEVEN card logic when not all steps are used."""
+#     dog = Dog()
+#     dog.initialize_game()
+
+#     # Set marble positions
+#     dog.state.list_player[0].list_marble[0].pos = 0
+#     card = Card(suit="H", rank="7")
+
+#     # Only part of the 7 steps are used
+#     grouped_actions = [
+#         Action(card=card, pos_from=0, pos_to=3, card_swap=None)
+#     ]
+
+#     result = dog._handle_seven_card_logic(grouped_actions)
+#     assert result is False, "SEVEN card logic should fail when not all steps are used."
+
+
 
 
