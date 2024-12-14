@@ -477,11 +477,9 @@ class Dog(Game):
             pass
             # actions.extend(self.get_actions_jack())
         elif card.rank == 'K':
-            self.get_actions_for_king(player)
-            pass
+            found_actions.extend(self.get_actions_for_king(card, player))
         elif card.rank == 'A':
-            self.get_actions_for_ace(player)
-            pass
+            found_actions.extend(self.get_actions_for_ace(card, player))
 
         return found_actions
 
@@ -575,7 +573,7 @@ class Dog(Game):
                 found_actions.append(Action(card=card, pos_from=marble.pos, pos_to=target_position, card_swap=None))
         return found_actions
 
-    def get_actions_for_king(self, player: PlayerState) -> List[Action]:
+    def get_actions_for_king(self, card: Card, player: PlayerState) -> List[Action]:
         """
         Generate all possible moves for the card 'King', where the player can move a marble
         13 steps forward or bring a marble out of the kennel to the start position.
@@ -590,7 +588,7 @@ class Dog(Game):
             if self.is_movable(marble):  # Only consider marbles that are out of the kennel
                 target_pos_forward = (marble.pos + 13) % len(self.board["circular_path"])
                 actions.append(Action(
-                    card=Card(suit='', rank='K'),
+                    card=card,
                     pos_from=marble.pos,
                     pos_to=target_pos_forward,
                     card_swap=None
@@ -599,9 +597,9 @@ class Dog(Game):
         # Option 2: Bring a marble out of the kennel
         for marble in player.list_marble:
             # TODO: adapt marble_is_save
-            if not marble.is_save and marble.pos in kennel_positions:  # Marble is in the kennel
+            if marble.pos in kennel_positions:  # Marble is in the kennel
                 actions.append(Action(
-                    card=Card(suit='', rank='K'),
+                    card=card,
                     pos_from=marble.pos,  # Current kennel position
                     pos_to=start_position[0],  # Move to player's start position
                     card_swap=None
@@ -609,7 +607,7 @@ class Dog(Game):
 
         return actions
 
-    def get_actions_for_ace(self, player: PlayerState) -> List[Action]:
+    def get_actions_for_ace(self, card: Card, player: PlayerState) -> List[Action]:
         """
         Generate all possible moves for the card 'Ace', where the player can:
         - Move a marble 1 step forward.
@@ -626,7 +624,7 @@ class Dog(Game):
             if self.is_movable(marble):  # Only consider marbles that are out of the kennel
                 target_pos_forward = (marble.pos + 1) % len(self.board["circular_path"])
                 actions.append(Action(
-                    card=Card(suit='', rank='A'),
+                    card=card,
                     pos_from=marble.pos,
                     pos_to=target_pos_forward,
                     card_swap=None
@@ -638,7 +636,7 @@ class Dog(Game):
             if self.is_movable(marble):  # Only consider marbles that are out of the kennel
                 target_pos_forward = (marble.pos + 11) % len(self.board["circular_path"])
                 actions.append(Action(
-                    card=Card(suit='', rank='A'),
+                    card=card,
                     pos_from=marble.pos,
                     pos_to=target_pos_forward,
                     card_swap=None
@@ -649,7 +647,7 @@ class Dog(Game):
             # TODO: adapt marble_is_save
             if marble.pos in kennel_positions:  # Marble is in the kennel
                 actions.append(Action(
-                    card=Card(suit='', rank='A'),
+                    card=card,
                     pos_from=marble.pos,  # Current kennel position
                     pos_to=start_position[0],  # Move to player's start position
                     card_swap=None
@@ -674,16 +672,16 @@ class Dog(Game):
         jkr_actions.extend(self.get_actions_for_4(player))
 
         # get actions for 7
-        jkr_actions.extend(self.get_actions_for_7(player))
+        jkr_actions.extend(self.get_actions_for_7(card, player))
 
         # get actions for jack
         jkr_actions.extend(self.get_actions_jack(player))
 
         # get actions for king
-        jkr_actions.extend(self.get_actions_for_king(player))
+        jkr_actions.extend(self.get_actions_for_king(card, player))
 
         # get actions for ace
-        jkr_actions.extend(self.get_actions_for_ace(player))
+        jkr_actions.extend(self.get_actions_for_ace(card, player))
 
         return jkr_actions
 
