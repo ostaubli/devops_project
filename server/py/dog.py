@@ -793,6 +793,36 @@ class Dog(Game):
             self._reset_card_active()
             self.next_turn()
 
+    def _handle_card_j(self, player: PlayerState, found_card: Card, action: Action) -> None:
+        assert self.state is not None
+        pos_from = action.pos_from if action.pos_from is not None else -1
+        pos_to = action.pos_to if action.pos_to is not None else -1
+        steps = self._calc_steps(pos_from, pos_to, self.state.idx_player_active)
+        if steps is None:
+            self.next_turn()
+            self.check_game_status()
+            return
+        self._move_marble(action)
+        player.list_card.remove(found_card)
+        self.state.list_card_discard.append(found_card)
+        self._reset_card_active()
+        self.next_turn()
+
+    def _handle_card_other(self, player: PlayerState, found_card: Card, action: Action) -> None:
+        assert self.state is not None
+        pos_from = action.pos_from if action.pos_from is not None else -1
+        pos_to = action.pos_to if action.pos_to is not None else -1
+        steps = self._calc_steps(pos_from, pos_to, self.state.idx_player_active)
+        if steps is None:
+            self.next_turn()
+            self.check_game_status()
+            return
+        self._move_marble(action)
+        player.list_card.remove(found_card)
+        self.state.list_card_discard.append(found_card)
+        self._reset_card_active()
+        self.next_turn()
+
     def swap_cards(self, player1_idx: int, player2_idx: int, card1: Card, card2: Card) -> None:
         # Hole die Spielerobjekte
         player1 = self.state.list_player[player1_idx]
