@@ -265,7 +265,7 @@ class Dog(Game):
             # If not someone added a cheated marble this marble is already at home
             return
         marble.pos = free_kennel_positions[0]
-        marble.is_save = False
+        marble.is_save = True
 
     def get_free_kennel_positions(self, player: PlayerState) -> List[int]:
         kennel_positions = self.KENNEL_POSITIONS.get(self.get_player_index(player), [])
@@ -339,6 +339,7 @@ class Dog(Game):
         start_pos = self.board["start_positions"][player_index][0]
 
         # Check if the marble has passed the start at least twice
+        #TODO: Adapt marble_is_save
         if marble.pos <= start_pos and marble.is_save:
             print(f"Marble at position {marble.pos} has not passed the start twice.")
             return False
@@ -402,6 +403,7 @@ class Dog(Game):
             print(f"{player.name}: Cards: {player.list_card}, Marbles: {player.list_marble}")
 
     def deal_cards(self) -> None:
+        # TODO: check deal cards?
         """ Deal cards to all players. """
         for player in self.state.list_player:
             player.list_card = self.state.list_card_draw[:6]
@@ -412,6 +414,7 @@ class Dog(Game):
         possible_actions = []
         if card.rank in self._BASIC_RANKS:
             for marble in marbles:
+                # TODO: marble_is_save
                 if marble.is_save:  # Marble must be out of the kennel
                     new_pos = (marble.pos + self._RANK_TO_VALUE[card.rank]) % self.CIRCULAR_PATH_LENGTH  # Modular board movement
                     possible_actions.append(Action(card=card, pos_from=marble.pos, pos_to=new_pos, card_swap=None))
@@ -425,6 +428,10 @@ class Dog(Game):
         """
         found_actions = []
         player = self.get_active_player()
+
+        # TODO: add check if player has playable marble on board
+
+        # TODO: add check if player has starting card using list of starting cards (A, K, J)
 
         # First check the cases where a card is still active
         active_card = self.state.card_active
@@ -455,8 +462,10 @@ class Dog(Game):
             pass
             # actions.extend(self.get_actions_jack())
         elif card.rank == 'K':
+            # TODO: add
             pass
         elif card.rank == 'A':
+            # TODO: add
             pass
 
         return found_actions
@@ -470,6 +479,7 @@ class Dog(Game):
 
         # Iterate through all marbles of the player
         for marble in player.list_marble:
+            # TODO: adapt marble_is_save
             if marble.is_save:  # Only consider marbles that are out of the kennel
                 # Calculate positions for forward and backward moves
                 target_pos_forward = (marble.pos + 4) % len(self.board["circular_path"])
@@ -561,6 +571,7 @@ class Dog(Game):
 
         # Option 1: Move a marble 13 steps forward
         for marble in player.list_marble:
+            # TODO: adapt marble_is_save
             if marble.is_save:  # Only consider marbles that are out of the kennel
                 target_pos_forward = (marble.pos + 13) % len(self.board["circular_path"])
                 actions.append(Action(
@@ -572,6 +583,7 @@ class Dog(Game):
 
         # Option 2: Bring a marble out of the kennel
         for marble in player.list_marble:
+            # TODO: adapt marble_is_save
             if not marble.is_save and marble.pos in kennel_positions:  # Marble is in the kennel
                 actions.append(Action(
                     card=Card(suit='', rank='K'),
@@ -595,6 +607,7 @@ class Dog(Game):
 
         # Option 1: Move a marble 1 step forward
         for marble in player.list_marble:
+            # TODO: adapt marble_is_save
             if marble.is_save:  # Only consider marbles that are out of the kennel
                 target_pos_forward = (marble.pos + 1) % len(self.board["circular_path"])
                 actions.append(Action(
@@ -606,6 +619,7 @@ class Dog(Game):
 
         # Option 2: Move a marble 11 steps forward
         for marble in player.list_marble:
+            # TODO: adapt marble_is_save
             if marble.is_save:  # Only consider marbles that are out of the kennel
                 target_pos_forward = (marble.pos + 11) % len(self.board["circular_path"])
                 actions.append(Action(
@@ -617,6 +631,7 @@ class Dog(Game):
 
         # Option 3: Bring a marble out of the kennel
         for marble in player.list_marble:
+            # TODO: adapt marble_is_save
             if not marble.is_save and marble.pos in kennel_positions:  # Marble is in the kennel
                 actions.append(Action(
                     card=Card(suit='', rank='A'),
@@ -635,6 +650,7 @@ class Dog(Game):
         for rank in basic_cards:
             if rank in self._BASIC_RANKS:
                 for marble in player.list_marble:
+                    # TODO: adapt marble_is_save
                     if marble.is_save:  # Marble must be out of the kennel
                         new_pos = (marble.pos + self._RANK_TO_VALUE[card.rank]) % 96  # Modular board movement
                         jkr_actions.append(Action(card=card, pos_from=marble.pos, pos_to=new_pos, card_swap=None))
@@ -686,6 +702,7 @@ class Dog(Game):
                             return
             # Moving forward (1/11 steps for Ace or 13 steps for King)
             for marble in player.list_marble:
+                    # TODO: adapt marble_is_save
                 if marble.pos == action.pos_from and marble.is_save:
                     marble.pos = action.pos_to
                     steps = action.pos_to - action.pos_from
@@ -839,6 +856,7 @@ if __name__ == '__main__':
     players = [RandomPlayer() for _ in range(4)]
 
     # Game setup
+    # TODO: check deal cards? already in init of Dog()
     game.deal_cards()
     game.print_state()
 
@@ -855,6 +873,8 @@ if __name__ == '__main__':
             selected_action = active_player.select_action(game.get_player_view(game.state.idx_player_active), actions)
             if selected_action:
                 game.apply_action(selected_action)
+
+        # TODO: handle winning
 
         # End condition (example: after 10 rounds)
         if game.state.cnt_round > 10:
