@@ -116,6 +116,7 @@ class UnoBenchmark(benchmark.Benchmark):
 
                 self.game_server.reset()
 
+                cnt_player = 2
                 idx_player_active = 0
 
                 list_card_draw = []
@@ -128,14 +129,14 @@ class UnoBenchmark(benchmark.Benchmark):
                 card2 = Card(color=color, number=(number + 1) % 10, symbol=None)                    # same color, different number
                 card3 = Card(color=LIST_COLOR[(c + 1) % 4], number=number, symbol=None)             # different color, same number
                 card4 = Card(color=LIST_COLOR[(c + 1) % 4], number=(number + 1) % 10, symbol=None)  # different color, different number
-                list_card_discard = [card1]
+
+                idx_top = self.get_idx_top(list_card_draw, cnt_player)
+                list_card_draw[idx_top] = card1
 
                 state = GameState(
-                    cnt_player=2,
+                    cnt_player=cnt_player,
                     idx_player_active=idx_player_active,
-                    list_card_draw=list_card_draw,
-                    list_card_discard=list_card_discard,
-                    color=card1.color
+                    list_card_draw=list_card_draw
                 )
                 self.game_server.set_state(state)
                 state = self.game_server.get_state()
@@ -175,7 +176,7 @@ class UnoBenchmark(benchmark.Benchmark):
 
                 self.game_server.reset()
 
-                idx_player_active = 0
+                cnt_player = 2
 
                 list_card_draw = []
                 for color2 in LIST_COLOR:
@@ -187,18 +188,20 @@ class UnoBenchmark(benchmark.Benchmark):
                 card2 = Card(color=color, number=None, symbol=LIST_SYMBOL[(s + 1) % 3])                    # same color, different symbol
                 card3 = Card(color=LIST_COLOR[(c + 1) % 4], number=None, symbol=symbol)                    # different color, same symbol
                 card4 = Card(color=LIST_COLOR[(c + 1) % 4], number=None, symbol=LIST_SYMBOL[(s + 1) % 3])  # different color, different symbol
-                list_card_discard = [card1]
+
+                idx_top = self.get_idx_top(list_card_draw, cnt_player)
+                list_card_draw[idx_top] = card1
+
+                idx_player_active = 1 if card1.symbol == 'skip' else 0
 
                 state = GameState(
-                    cnt_player=2,
+                    cnt_player=cnt_player,
                     idx_player_active=idx_player_active,
-                    list_card_draw=list_card_draw,
-                    list_card_discard=list_card_discard,
-                    color=card1.color
+                    list_card_draw=list_card_draw
                 )
                 self.game_server.set_state(state)
                 state = self.game_server.get_state()
-                player = state.list_player[idx_player_active]
+                player = state.list_player[state.idx_player_active]
                 player.list_card = [card1, card2, card3, card4]
                 self.game_server.set_state(state)
                 state = self.game_server.get_state()
@@ -206,13 +209,13 @@ class UnoBenchmark(benchmark.Benchmark):
 
                 list_action_found = self.game_server.get_list_action()
                 list_action_expected = []
-                draw = 2 if card1.symbol == 'draw2' else None
+                draw = state.cnt_to_draw + 2 if card1.symbol == 'draw2' else None
                 action = Action(card=card1, color=card1.color, draw=draw)
                 list_action_expected.append(action)
-                draw = 2 if card2.symbol == 'draw2' else None
-                action = Action(card=card2, color=card2.color, draw=draw)
-                list_action_expected.append(action)
-                draw = 2 if card3.symbol == 'draw2' else None
+                #draw = state.cnt_to_draw + 2 if card2.symbol == 'draw2' else None
+                #action = Action(card=card2, color=card2.color, draw=draw)
+                #list_action_expected.append(action)
+                draw = state.cnt_to_draw + 2 if card3.symbol == 'draw2' else None
                 action = Action(card=card3, color=card3.color, draw=draw)
                 list_action_expected.append(action)
                 action = Action(card=None, color=None, draw=1)
@@ -233,6 +236,7 @@ class UnoBenchmark(benchmark.Benchmark):
 
             self.game_server.reset()
 
+            cnt_player = 2
             idx_player_active = 0
 
             list_card_draw = []
@@ -241,14 +245,14 @@ class UnoBenchmark(benchmark.Benchmark):
                     card = Card(color=color, number=number, symbol=None)
                     list_card_draw.append(card)
             card = Card(color='red', number=1, symbol=None)
-            list_card_discard = [card]
+
+            idx_top = self.get_idx_top(list_card_draw, cnt_player)
+            list_card_draw[idx_top] = card
 
             state = GameState(
-                cnt_player=2,
+                cnt_player=cnt_player,
                 idx_player_active=idx_player_active,
-                list_card_draw=list_card_draw,
-                list_card_discard=list_card_discard,
-                color=card.color
+                list_card_draw=list_card_draw
             )
             self.game_server.set_state(state)
             state = self.game_server.get_state()
