@@ -185,6 +185,14 @@ class GameState(BaseModel):
         # Set Cardexchange
         self.bool_card_exchanged = False
 
+    def discard_invalid_cards(self) -> None:
+        # check if player has cards
+        if not self.list_player[self.idx_player_active].list_card:
+            return
+        # discard the player
+        self.list_card_discard.extend(self.list_player[self.idx_player_active].list_card)
+        self.list_player[self.idx_player_active].list_card = []
+
     def can_marble_leave_kennel(self, player: PlayerState) -> int:
         for marble in player.list_marble:
             if int(marble.pos) not in player.list_kennel_pos:
@@ -327,10 +335,6 @@ class GameState(BaseModel):
                         case _:
                             pass
 
-            # ist ausführbar?
-            # for action in action_list:
-            # fun1 (action, marble)
-            # fun2
         return action_list
 
     def set_action_to_game(self, action: Action):  # Kened
@@ -419,7 +423,6 @@ class GameState(BaseModel):
 
 
     def exchange_cards(self, action_cardswap: Action) -> None:
-        # Part Kägi
 
         # Save selected Card
         self.list_swap_card[self.idx_player_active] = action_cardswap.card
@@ -439,57 +442,6 @@ class GameState(BaseModel):
         self.list_swap_card = [None]*4
 
         return
-
-        ## ----------- Part Renato -----------
-        # player_blue = self.list_player[0]
-        # player_red = self.list_player[2]
-
-        # print(f"\n{player_blue.name}, bitte wähle eine Karte zum Tauschen aus:")
-        # for idx, card in enumerate(player_blue.list_card):
-        #     print(f"{idx + 1}: {card}")
-
-        # blue_choice = int(input("Gib die Nummer der Karte ein, die du tauschen möchtest: ")) - 1
-        # card_blue = player_blue.list_card[blue_choice]
-
-        # print(f"\n{player_red.name}, bitte wähle eine Karte zum Tauschen aus:")
-        # for idx, card in enumerate(player_red.list_card):
-        #     print(f"{idx + 1}: {card}")
-
-        # red_choice = int(input("Gib die Nummer der Karte ein, die du tauschen möchtest: ")) - 1
-        # card_red = player_red.list_card[red_choice]
-
-        # player_blue.list_card.remove(card_blue)
-        # player_red.list_card.remove(card_red)
-
-        # player_blue.list_card.append(card_red)
-        # player_red.list_card.append(card_blue)
-
-        # print(f"{player_blue.name} tauscht {card_blue} mit {player_red.name} für {card_red}")
-
-        # player_yellow = self.list_player[3]
-        # player_green = self.list_player[1]
-
-        # print(f"\n{player_yellow.name}, bitte wähle eine Karte zum Tauschen aus:")
-        # for idx, card in enumerate(player_yellow.list_card):
-        #     print(f"{idx + 1}: {card}")
-
-        # yellow_choice = int(input("Gib die Nummer der Karte ein, die du tauschen möchtest: ")) - 1
-        # card_yellow = player_yellow.list_card[yellow_choice]
-
-        # print(f"\n{player_green.name}, bitte wähle eine Karte zum Tauschen aus:")
-        # for idx, card in enumerate(player_green.list_card):
-        #     print(f"{idx + 1}: {card}")
-
-        # green_choice = int(input("Gib die Nummer der Karte ein, die du tauschen möchtest: ")) - 1
-        # card_green = player_green.list_card[green_choice]
-
-        # player_yellow.list_card.remove(card_yellow)
-        # player_green.list_card.remove(card_green)
-
-        # player_yellow.list_card.append(card_green)
-        # player_green.list_card.append(card_yellow)
-
-        # print(f"{player_yellow.name} tauscht {card_yellow} mit {player_green.name} für {card_green}")
 
     def sending_home(self, marble: Marble, card: Card, action: Action) -> bool:
         # First case: A marble of another player lands exactly on the position of my marble
@@ -547,6 +499,19 @@ class GameState(BaseModel):
         player_marble.is_save = False
         opponent_marble.is_save = False
 
+    def skip_save_marble(self, action: Action) -> bool:
+        """
+        Prüft, ob zwischen action.pos_from und action.pos_to sichere Murmeln liegen.
+        Gibt False zurück, wenn eine sichere Murmel in diesem Bereich gefunden wird,
+        andernfalls True.
+        """
+        for player in self.list_player:
+            for marble in player.list_marble:
+                if action.pos_from < marble.pos < action.pos_to and marble.is_save:
+                    return False
+        return True
+
+
     def is_player_finished(self, player: PlayerState) -> bool:
         if not player.list_marble:  # Falls der Spieler keine Murmeln hat
             print(f"{player.name} hat keine Murmeln.")
@@ -559,7 +524,6 @@ class GameState(BaseModel):
             print(f"{player.name} hat alle Murmeln im Ziel und ist fertig!")
         else:
             print(f"{player.name} hat noch nicht alle Murmeln im Ziel.")
-
         return finished
 
     def check_game_end(self) -> bool:
@@ -625,43 +589,14 @@ class Dog(Game):
             action_list = [Action(card=hand_card,pos_from=None, pos_to=None) for hand_card in self.state.list_player[self.state.idx_player_active].list_card]
             return action_list
         
-        #
-        actions = []
-        # Get cards of active player
-        active_player = self.state.list_player[self.state.idx_player_active]
-        cards = active_player.list_card
+        if self.state.card_active is None:
+            action_list = self.state.get_list_possible_action()
 
-        # Define start cards that allow moving out of kennel
-        start_cards = ['A', 'K', 'JKR']
-
-        # Check if any card allows moving out of kennel
-        for card in cards:
-            if card.rank in start_cards:
-                # Check if marbe in the kennel (pos=64)
-                for marble in active_player.list_marble:
-                    if marble.pos == 64:
-                        actions.append(Action(
-                            card=card,
-                            pos_from=64,
-                            pos_to=0,
-                            card_swap=None
-                        ))
-        return actions
+        # else: Logic for card 7
 
     def apply_action(self, action: Action) -> None:
         """
-        Apply the given action to the game state.
-        Moves the marble from pos_from to pos_to based on the action,
-        and handles special cases like sending marbles home and marking marbles as safe.
-        Apply the given action to the game
-        Aktion auf das spielbrett übertragen ==> Gamestate verändern
-        Logiken:
-        1.1 Normaler Zug von ausgangspos zu zielpos gilt für alle karte ausser JKR, 7 und Jack
-        1.2 7 spezialkarte welche 7 x einen schritt machen kann
-        1.3 Jack tauscht zwei kugeln miteinander NOTE: Muss eine davon eine eigene Kugel sein?
-        1.4 JKR kann alle logiken von 1 bis und mit 3 aufweisen NOTE: Idee für umsetzung?
-
-        2. Wenn Zug abgeschlossen Aktiver spieler weitergeben
+        Do the movement conected to the Action
         """
         if self.state.bool_card_exchanged == False:
             self.state.exchange_cards(action)
@@ -670,8 +605,7 @@ class Dog(Game):
         if action:
             self.state.set_action_to_game(action)
         
-        else: 
-
+        elif False:
             # Move to next player
             self.state.idx_player_active = (self.state.idx_player_active + 1) % 4
 
@@ -701,6 +635,8 @@ class Dog(Game):
 
                 # Set active player to the player after the starting player
                 self.state.idx_player_active = (self.state.idx_player_started + 1) % 4
+        if self.state.card_active is None:
+            self.state.init_next_turn()
 
     def get_player_view(self, idx_player: int) -> GameState:
         """Returns the masked game state for the other players."""
@@ -734,6 +670,9 @@ if __name__ == '__main__':
         if state.phase == GamePhase.FINISHED:
             break
 
+        print("Is Player Active?: ", game.state.idx_player_active)
+        print("Number of Cards: ", len(game.state.list_player[game.state.idx_player_active].list_card))
+
         # game.print_state()
 
         if state.idx_player_active == idx_player_you:
@@ -747,17 +686,14 @@ if __name__ == '__main__':
             # await websocket.send_json(data)
             #print(data)
 
-            if len(list_action) == 0:
-                continue
-                
-            else:
-                action = random.choice(list_action)  # data =
-                # data = await websocket.receive_json()
-                if isinstance(action, Action):
-                    # action = Dog.model_validate(data['action']) # Checks if Action is Valid (only Valid aktion for
-                    # our game?
-                    game.apply_action(action)
-                    print(action)
+            # If there are possible actions, choose one
+            if action is not None: 
+                action = random.choice(list_action)
+                print(action)
+                game.apply_action(action)
+
+            else: # if not: delet all cards for this round
+                game.state.discard_invalid_cards()
 
             state = game.get_player_view(idx_player_you)
             dict_state = state.model_dump()
@@ -772,11 +708,17 @@ if __name__ == '__main__':
 
             list_action = game.get_list_action()
             action = player.select_action(game.state, list_action)
+
+            # If there are possible actions, choose one
             if action is not None:
                 print(f"Player {game.state.idx_player_active} is playing")
                 # await asyncio.sleep(1)
                 print(action)
-            game.apply_action(action)
+                game.apply_action(action)
+            else:# if not: delet all cards for this round
+                game.state.discard_invalid_cards()
+            
+            
             player_state = game.get_player_view(idx_player_you)  # Abbildung für Person zeigen
             dict_state = player_state.model_dump()
             dict_state['idx_player_you'] = idx_player_you
@@ -785,14 +727,14 @@ if __name__ == '__main__':
             # print(data)
             # await websocket.send_json(data)
         
-        print("old Player Active: ", game.state.idx_player_active)
-        game.state.init_next_turn()
-        print("New Player Active: ", game.state.idx_player_active)
+               
+        print("Next Player Active?: ", game.state.idx_player_active)
         print("Exchanged? ",game.state.bool_card_exchanged)
+        print("Speciality? card_active? ", game.state.card_active)
         print("*"*50)
 
 
-        if debug_counter >3:
+        if debug_counter >10:
             print("-"*50,"> break becaus of counter")
             break
         debug_counter+=1
