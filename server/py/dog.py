@@ -319,22 +319,6 @@ class Dog(Game):
         else:
             return pos_to + (self.CIRCULAR_PATH_LENGTH - pos_from)
 
-    def overtake_marble(self, target_pos: int) -> None:
-        # TODO: remove
-        """
-        Handle overtaking at a given position. Send any overtaken marbles back to the kennel.
-        """
-        for player in self.state.list_player:
-            for marble in player.list_marble:
-                if marble.pos == target_pos:
-                    # Check if the marble is protected (e.g., in start or finish)
-                    if self.is_protected_marble(marble):
-                        continue
-                    # Send overtaken marble back to kennel
-                    marble.pos = -1  # Back to kennel
-                    marble.is_save = False
-                    print(f"{player.name}'s marble at position {target_pos} sent back to the kennel.")
-
     def move_to_finish(self, marble: Marble, player_index: int, steps: int) -> bool:
         """
         Attempt to move a marble into the finish area.
@@ -418,7 +402,6 @@ class Dog(Game):
         possible_actions = []
         if card.rank in self._BASIC_RANKS:
             for marble in marbles:
-                # TODO: marble_is_save
                 if self.is_movable(marble):  # Marble must be out of the kennel
                     new_pos = (marble.pos + self._RANK_TO_VALUE[card.rank]) % self.CIRCULAR_PATH_LENGTH  # Modular board movement
                     possible_actions.append(Action(card=card, pos_from=marble.pos, pos_to=new_pos, card_swap=None))
@@ -481,7 +464,7 @@ class Dog(Game):
         elif card.rank == 'JKR':  # Joker can be played as any card
             found_actions.extend(self.get_actions_for_jkr(card, player))
         elif card.rank == '4':
-            found_actions.extend(self.get_actions_for_4(player))
+            found_actions.extend(self.get_actions_for_4(card, player))
         elif card.rank == '7':  # Special case for card "7"
             found_actions.extend(self.get_actions_for_7(card, player))
         elif card.rank == 'J':
@@ -509,7 +492,7 @@ class Dog(Game):
         return starting_actions
 
 
-    def get_actions_for_4(self, player: PlayerState) -> List[Action]:
+    def get_actions_for_4(self, card: Card, player: PlayerState) -> List[Action]:
         """
         Generate all possible moves for the card '4', where the player can move a marble
         4 steps forward or 4 steps backward.
@@ -526,7 +509,7 @@ class Dog(Game):
 
                 # Forward move action
                 actions.append(Action(
-                    card=Card(suit='', rank='4'),
+                    card=card,
                     pos_from=marble.pos,
                     pos_to=target_pos_forward,
                     card_swap=None
@@ -534,7 +517,7 @@ class Dog(Game):
 
                 # Backward move action
                 actions.append(Action(
-                    card=Card(suit='', rank='4'),
+                    card=card,
                     pos_from=marble.pos,
                     pos_to=target_pos_backward,
                     card_swap=None
@@ -695,7 +678,7 @@ class Dog(Game):
                         jkr_actions.append(Action(card=card, pos_from=marble.pos, pos_to=new_pos, card_swap=None))
 
         # get actions for 4
-        jkr_actions.extend(self.get_actions_for_4(player))
+        jkr_actions.extend(self.get_actions_for_4(card, player))
 
         # get actions for 7
         jkr_actions.extend(self.get_actions_for_7(card, player))
