@@ -1125,12 +1125,14 @@ class Dog(Game):
 
         # Iterate through all players to identify overtaken marbles
         for player_idx, player in enumerate(self.state.list_player):
+            print(f"Processing Player {player_idx + 1}: {player.name}")
             for marble in player.list_marble:
                 if marble.pos in overtaken_positions:
 
                     # Log overtaking event
                     print(f"Overtaking detected! Marble at position {marble.pos} is sent back to the kennel.")
-
+                    kennel_positions = self.KENNEL_POSITIONS[player_idx]
+                    print(f"Player {player_idx}'s kennel positions: {kennel_positions}")
                     # Send the overtaken marble back to the kennel
                     for pos in self.KENNEL_POSITIONS[player_idx]:
                         if all(
@@ -1315,29 +1317,8 @@ if __name__ == '__main__':
             # Get the list of possible actions for the active player
             game_actions = game.get_list_action()
 
-            # Flatten the game_actions list if it contains nested lists
-            def flatten_actions(actions):
-                """Helper function to flatten nested action lists."""
-                flat_actions = []
-                for act in actions:
-                    if isinstance(act, list):  # If it's a nested list
-                        flat_actions.extend(flatten_actions(act))  # Recursively flatten it
-                    else:
-                        flat_actions.append(act)  # Append single action directly
-                return flat_actions
-
-            flattened_game_actions = flatten_actions(game_actions)
-
-            # Display possible actions
-            print("\nPossible Actions:")
-            for idx, action in enumerate(flattened_game_actions):
-                if isinstance(action, Action):
-                    print(f"{idx}: Play {action.card.rank} of {action.card.suit} from {action.pos_from} to {action.pos_to}")
-                else:
-                    print(f"{idx}: Invalid action type: {type(action)} - {action}")
-
             # Select an action (random in this example)
-            selected_action = random_player.select_action(game.get_state(), flattened_game_actions)
+            selected_action = random_player.select_action(game.get_state())
 
             # Apply the selected action
             if isinstance(selected_action, list):  # If selected_action is a grouped list (for the 7 card)

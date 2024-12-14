@@ -1,12 +1,12 @@
 from server.py.game import Player
 from server.py.dog_game_state import Action, GameState
-from typing import List, Optional
+from typing import List, Optional, Union
 import random
 
 class RandomPlayer(Player):
     """A player that selects actions randomly."""
 
-    def select_action(self, state: GameState, actions: List[Action]) -> Optional[Action]:
+    def select_action(self, state: GameState, actions: Union[List[Action], List[List[Action]]]) -> Optional[Union[Action, List[Action]]]:
         """
         Given the game state and possible actions, select the next action randomly.
         """
