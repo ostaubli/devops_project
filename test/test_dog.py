@@ -2440,298 +2440,46 @@ def test_handle_kennel_to_start_action():
     print("test_handle_kennel_to_start_action passed successfully.")
 
 
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-
-
-# def test_joker_exchange_and_seven_logic():
-#     dog = Dog()
-#     dog.state = dog.get_state()
-
-#     # Joker acts as a 7-card move
-#     card = Card(suit="", rank="JKR")
-#     action = Action(card=card, pos_from=0, pos_to=3, card_swap=None)
-#     dog.state.list_player[0].list_marble[0].pos = 0
-
-#     result = dog._handle_seven_card(card, dog.state.list_player[0].list_marble)
-#     assert len(result) > 0, "Joker as SEVEN should generate split moves"
-
-#     # Joker swap test
-#     joker_actions = dog._exchange_jkr()
-#     assert len(joker_actions) > 0, "Joker card should allow exchanges"
-#     AssertionError: Opponent marble should return to kennel
-
-# def test_jack_card_swap_logic():
-#     dog = Dog()
-#     dog.state = dog.get_state()
-
-#     # Set up marbles for active player and opponent
-#     dog.state.list_player[0].list_marble[0].pos = 5
-#     dog.state.list_player[1].list_marble[0].pos = 10
-
-#     card = Card(suit="H", rank="J")
-#     action = Action(card=card, pos_from=5, pos_to=10, card_swap=None)
-
-#     dog._handle_jack(action)
-#     assert dog.state.list_player[0].list_marble[0].pos == 10, "Marble should swap positions"
-#     assert dog.state.list_player[1].list_marble[0].pos == 5, "Opponent's marble should swap positions"
-
-#     # Fallback: self-swap when no opponent is available
-#     dog.state.list_player[1].list_marble[0].pos = 20  # Move opponent marble away
-#     fallback_action = Action(card=card, pos_from=5, pos_to=0, card_swap=None)
-#     dog._handle_jack(fallback_action)
-#     assert dog.state.list_player[0].list_marble[0].pos == 0, "Self-swap should occur when no opponent swap is possible"
-#     ValueError: Could not find one or both marbles to swap for the Jack action.
-
-# def test_get_list_action_jkr_card():
-#     dog = Dog()
-#     dog.initialize_game()
-
-#     # Add 'JKR' card to player's hand
-#     player = dog.state.list_player[dog.state.idx_player_active]
-#     jkr_card = Card(suit="", rank="JKR")
-#     player.list_card = [jkr_card]
-
-#     with patch.object(dog, '_is_card_exchange_phase', return_value=False):
-#         # Mock _exchange_jkr to return joker-exchange actions
-#         with patch.object(dog, '_exchange_jkr', return_value=[Action(card=jkr_card, pos_from=None, pos_to=None, card_swap=None)]):
-#             actions = dog.get_list_action()
-#             assert len(actions) == 1, "With a JKR card, we should get joker exchange actions."
-
-
-
-
-
-
-# def test_handle_seven_card_logic():
-#     # Initialize the Dog game
-#     dog = Dog()
-
-#     # Set up valid grouped actions using Action objects
-#     grouped_actions = [
-#         [
-#             Action(card=None, pos_from=0, pos_to=3, card_swap=None),
-#             Action(card=None, pos_from=3, pos_to=7, card_swap=None)
-#         ]
-#     ]
-
-#     # Call _handle_seven_card_logic with valid actions
-#     result = dog._handle_seven_card_logic(grouped_actions)
-#     assert result is True, "Should process all actions for SEVEN card correctly"
-
-#     # Set up invalid grouped actions with an invalid target position
-#     grouped_actions_invalid = [
-#         [
-#             Action(card=None, pos_from=0, pos_to=None, card_swap=None)
-#         ]
-#     ]
-
-#     # Call _handle_seven_card_logic with invalid actions
-#     result = dog._handle_seven_card_logic(grouped_actions_invalid)
-#     assert result is False, "Should fail if one of the SEVEN actions is invalid"
-
-
-
-
-# def test_handle_seven_card_logic_full():
-#     dog = Dog()
-#     # Case 1: Valid grouped SEVEN actions
-#     grouped_actions = [
-#         [
-#             Action(card=None, pos_from=0, pos_to=3, card_swap=None),
-#             Action(card=None, pos_from=3, pos_to=7, card_swap=None)
-#         ]
-#     ]
-#     assert dog._handle_seven_card_logic(grouped_actions) is True, "Valid SEVEN actions should pass"
-
-#     # Case 2: Invalid - invalid position (None)
-#     grouped_actions_invalid = [
-#         [
-#             Action(card=None, pos_from=0, pos_to=None, card_swap=None)
-#         ]
-#     ]
-#     assert dog._handle_seven_card_logic(grouped_actions_invalid) is False, "Invalid SEVEN actions should fail"
-
-#     # Case 3: Marble not found at `pos_from`
-#     grouped_actions_marble_missing = [
-#         [
-#             Action(card=None, pos_from=99, pos_to=3, card_swap=None)  # Invalid pos_from
-#         ]
-#     ]
-#     assert dog._handle_seven_card_logic(grouped_actions_marble_missing) is False, "Should fail if marble not at pos_from"
-
-
-# def test_get_swap_actions():
-#     dog = Dog()
-#     dog.state = dog.get_state()
-
-#     # Mock marbles: One active player's marble, one opponent's marble
-#     dog.state.list_player[0].list_marble[0] = Marble(pos=5, is_save=False)
-#     dog.state.list_player[1].list_marble[0] = Marble(pos=10, is_save=False)
-
-#     card = Action(card=None, pos_from=5, pos_to=10, card_swap=None)
-#     result = dog._get_swap_actions(card, dog.state.list_player[0].list_marble, dog._get_all_marbles())
-
-#     assert len(result) > 0, "Should identify valid swap actions"
-#     pydantic_core._pydantic_core.ValidationError: 1 validation error for Action
-
-# def test_handle_seven_marble_movement():
-#     dog = Dog()
-#     dog.state = dog.get_state()
-
-#     # Marble at pos 0, move it to pos 3
-#     action = Action(card=None, pos_from=0, pos_to=3, card_swap=None)
-#     dog.state.list_player[0].list_marble[0].pos = 0
-
-#     dog._handle_seven_marble_movement(action)
-#     assert dog.state.list_player[0].list_marble[0].pos == 3, "Marble should move to pos 3"
-
-#     # Invalid move: No marble at pos_from
-#     action_invalid = Action(card=None, pos_from=99, pos_to=3, card_swap=None)
-#     try:
-#         dog._handle_seven_marble_movement(action_invalid)
-#     except ValueError:
-#         assert True, "Invalid action should raise ValueError"
-#         pydantic_core._pydantic_core.ValidationError: 1 validation error for Action
-
-# def test_handle_seven_card():
-#     dog = Dog()
-#     dog.state = dog.get_state()
-
-#     card = Action(card=None, pos_from=0, pos_to=3, card_swap=None)
-#     actions = dog._handle_seven_card(card, dog.state.list_player[0].list_marble)
-
-#     assert len(actions) >= 1, "Should generate split SEVEN actions"
-
-# def test_handle_kennel_to_start_action():
-#     dog = Dog()
-#     dog.state = dog.get_state()
-
-#     # Place marble in kennel and test move to start
-#     marble_pos = dog.KENNEL_POSITIONS[0][0]
-#     dog.state.list_player[0].list_marble[0].pos = marble_pos
-
-#     action = Action(card=None, pos_from=marble_pos, pos_to=dog.START_POSITIONS[0], card_swap=None)
-#     result = dog._handle_kennel_to_start_action(action)
-
-#     assert result is True, "Marble should move from kennel to start position"
-#     assert dog.state.list_player[0].list_marble[0].pos == dog.START_POSITIONS[0]
-
-# def test_handle_seven_card_logic():
-#     dog = Dog()
-
-#     # Valid SEVEN actions
-#     card = Card(suit="H", rank="7")
-#     grouped_actions = [
-#         [Action(card=card, pos_from=0, pos_to=3, card_swap=None)]
-#     ]
-#     assert dog._handle_seven_card_logic(grouped_actions) is True, "Valid SEVEN actions should pass"
-
-#     # Invalid SEVEN action (pos_to=None)
-#     grouped_actions_invalid = [
-#         [Action(card=card, pos_from=0, pos_to=None, card_swap=None)]
-#     ]
-#     assert dog._handle_seven_card_logic(grouped_actions_invalid) is False, "Should fail if SEVEN action is invalid"
-
-#     # Marble not found at `pos_from`
-#     grouped_actions_marble_missing = [
-#         [Action(card=card, pos_from=99, pos_to=3, card_swap=None)]
-#     ]
-#     assert dog._handle_seven_card_logic(grouped_actions_marble_missing) is False, "Should fail if marble not at pos_from"
-# AttributeError: 'list' object has no attribute 'pos_from'
-
-# def test_handle_seven_marble_movement():
-#     dog = Dog()
-#     dog.state = dog.get_state()
-
-#     # Step 1: Place the marble at position 0 (simulate start position)
-#     dog.state.list_player[0].list_marble[0].pos = 0
-
-#     # Step 2: Valid move: Move marble from pos 0 to pos 3
-#     card = Card(suit="H", rank="7")
-#     action = Action(card=card, pos_from=0, pos_to=3, card_swap=None)
-
-#     dog._handle_seven_marble_movement(action)
-#     assert dog.state.list_player[0].list_marble[0].pos == 3, "Marble should move to pos 3"
-
-#     # Step 3: Invalid move: No marble at pos_from (99 is invalid)
-#     action_invalid = Action(card=card, pos_from=99, pos_to=3, card_swap=None)
-#     try:
-#         dog._handle_seven_marble_movement(action_invalid)
-#         assert False, "Expected ValueError for invalid move"
-#     except ValueError as e:
-#         assert str(e).startswith("No active player's marble found"), "Invalid action should raise ValueError"
-    
-# def test_rule_four_move_to_safe_spaces():
-#     dog = Dog()
-#     dog.state = dog.get_state()
-
-#     # Place a marble near the start of the safe spaces
-#     card = Card(suit="H", rank="4")  # Card with valid value 4
-#     start_pos = dog.START_POSITIONS[0] + 1  # Position to move into safe space
-#     dog.state.list_player[0].list_marble[0].pos = start_pos
-
-#     # Simulate a valid move into safe spaces
-#     action = Action(card=card, pos_from=start_pos, pos_to=dog.SAFE_SPACES[0][0], card_swap=None)
-#     dog._handle_normal_move(action, dog.state.list_player[0])
-
-#     assert dog.state.list_player[0].list_marble[0].pos == dog.SAFE_SPACES[0][0], "Marble should move into safe space"
-
-#     # Attempt invalid move beyond safe space boundaries
-#     invalid_action = Action(card=card, pos_from=dog.SAFE_SPACES[0][3], pos_to=dog.SAFE_SPACES[0][4], card_swap=None)
-#     try:
-#         dog._handle_normal_move(invalid_action, dog.state.list_player[0])
-#         assert False, "Expected ValueError for move beyond safe space boundaries"
-#     except ValueError:
-#         pass
-
-# def test_handle_normal_move():
-#     dog = Dog()
-#     dog.state = dog.get_state()
-
-#     # Move marble from 0 to 5
-#     dog.state.list_player[0].list_marble[0].pos = 0
-#     action = Action(card=None, pos_from=0, pos_to=5, card_swap=None)
-
-#     dog._handle_normal_move(action, dog.state.list_player[0])
-#     assert dog.state.list_player[0].list_marble[0].pos == 5, "Marble should move to pos 5"
-
-#     # Invalid move (no marble at pos_from)
-#     action_invalid = Action(card=None, pos_from=99, pos_to=5, card_swap=None)
-#     try:
-#         dog._handle_normal_move(action_invalid, dog.state.list_player[0])
-#     except ValueError:
-#         assert True, "Invalid move should raise ValueError"
-
-
-
+def test_reshuffle_discard_into_draw_reset():
+    dog = Dog()
+    dog.initialize_game()  # Ensure the game state is initialized properly
+
+    # Mock GameState.LIST_CARD with a full deck of 110 cards
+    GameState.LIST_CARD = [Card(suit="H", rank=str(i % 13 + 1)) for i in range(110)]
+
+    # Simulate an excessive card count scenario (more than 110 cards)
+    dog.state.list_card_draw = [Card(suit="H", rank="A") for _ in range(60)]
+    dog.state.list_card_discard = [Card(suit="H", rank="K") for _ in range(30)]
+    for player in dog.state.list_player:
+        player.list_card = [Card(suit="H", rank="Q") for _ in range(30)]
+
+    # Total cards now: 60 (draw) + 30 (discard) + 30*len(players) = 150+ (exceeds 110)
+
+    # Call reshuffle_discard_into_draw
+    dog.reshuffle_discard_into_draw()
+
+    # Check that the card deck is reset
+    assert len(dog.state.list_card_draw) == 110, "Deck should reset to 110 cards."
+    assert len(dog.state.list_card_discard) == 0, "Discard pile should be empty after reset."
+    for player in dog.state.list_player:
+        assert len(player.list_card) == 0, "Player hands should be cleared after reset."
+
+    print("test_reshuffle_discard_into_draw_reset passed successfully.")
+
+def test_handle_seven_card_logic_marble_not_found():
+    """Test handling SEVEN card where the marble is not found at pos_from."""
+    dog = Dog()
+    dog.initialize_game()
+    # No marble at starting position 0
+    card = Card(suit="H", rank="7")
+    grouped_actions = [
+        [
+            Action(card=card, pos_from=0, pos_to=3, card_swap=None)
+        ]
+    ]
+
+    # Call the method
+    result = dog._handle_seven_card_logic(grouped_actions)
+    assert result is False, "Actions where no marble exists at pos_from should fail."
 
 
