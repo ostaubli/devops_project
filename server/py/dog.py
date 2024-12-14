@@ -750,6 +750,79 @@ class Dog(Game):
             self.state.card_active = Card(suit=action.card_swap.suit, rank=action.card_swap.rank)
         self.check_game_status()
 
+    def _handle_card_7(self, player: PlayerState, found_card: Card, action: Action) -> None:
+        assert self.state is not None
+        if self.state.card_active is None:
+            self.state.card_active = found_card
+            self.temp_seven_moves = []
+            self.temp_seven_card = found_card
+            self.temp_seven_state = copy.deepcopy(self.state)
+        pos_from = action.pos_from if action.pos_from is not None else -1
+        pos_to = action.pos_to if action.pos_to is not None else -1
+        steps = self._calc_steps(pos_from, pos_to, self.state.idx_player_active)
+        if steps is None:
+            self.next_turn()
+            self.check_game_status()
+            return
+        self._move_marble(action)
+        assert self.temp_seven_moves is not None
+        self.temp_seven_moves.append(abs(steps))
+        if sum(self.temp_seven_moves) == 7:
+            player.list_card.remove(found_card)
+            assert self.state is not None
+            self.state.list_card_discard.append(found_card)
+            self._reset_card_active()
+            self.next_turn()
+
+    def _handle_card_joker(self, player: PlayerState, found_card: Card, action: Action) -> None:
+        assert self.state is not None
+        pos_from = action.pos_from if action.pos_from is not None else -1
+        pos_to = action.pos_to if action.pos_to is not None else -1
+        steps = self._calc_steps(pos_from, pos_to, self.state.idx_player_active)
+        if steps is None:
+            self.next_turn()
+            self.check_game_status()
+            return
+        self._move_marble(action)
+        if self.state.card_active and self.state.card_active.rank != 'JKR':
+            self.state.card_active = None
+            self.next_turn()
+        else:
+            player.list_card.remove(found_card)
+            self.state.list_card_discard.append(found_card)
+            self._reset_card_active()
+            self.next_turn()
+
+    def _handle_card_j(self, player: PlayerState, found_card: Card, action: Action) -> None:
+        assert self.state is not None
+        pos_from = action.pos_from if action.pos_from is not None else -1
+        pos_to = action.pos_to if action.pos_to is not None else -1
+        steps = self._calc_steps(pos_from, pos_to, self.state.idx_player_active)
+        if steps is None:
+            self.next_turn()
+            self.check_game_status()
+            return
+        self._move_marble(action)
+        player.list_card.remove(found_card)
+        self.state.list_card_discard.append(found_card)
+        self._reset_card_active()
+        self.next_turn()
+
+    def _handle_card_other(self, player: PlayerState, found_card: Card, action: Action) -> None:
+        assert self.state is not None
+        pos_from = action.pos_from if action.pos_from is not None else -1
+        pos_to = action.pos_to if action.pos_to is not None else -1
+        steps = self._calc_steps(pos_from, pos_to, self.state.idx_player_active)
+        if steps is None:
+            self.next_turn()
+            self.check_game_status()
+            return
+        self._move_marble(action)
+        player.list_card.remove(found_card)
+        self.state.list_card_discard.append(found_card)
+        self._reset_card_active()
+        self.next_turn()
+
     def swap_cards(self, player1_idx: int, player2_idx: int, card1: Card, card2: Card) -> None:
         # Hole die Spielerobjekte
         player1 = self.state.list_player[player1_idx]
