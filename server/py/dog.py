@@ -696,6 +696,20 @@ class Dog(Game):
     def get_player_view(self, idx_player: int) -> GameState:
         return self.state
 
+    def _handle_no_action(self, player: PlayerState) -> None:
+        assert self.state is not None
+        if not self.get_list_action():
+            if player.list_card:
+                self.state.list_card_discard.extend(player.list_card)
+                player.list_card.clear()
+            if (self.state.card_active and self.state.card_active.rank == '7' and
+                    self.temp_seven_moves and sum(self.temp_seven_moves) < 7):
+                assert self.temp_seven_state is not None
+                self.state = self.temp_seven_state
+            self._reset_card_active()
+        if not (self.state.cnt_round == 0 and not self.state.bool_card_exchanged):
+            self.next_turn()
+        self.check_game_status()
 
 
     def swap_cards(self, player1_idx: int, player2_idx: int, card1: Card, card2: Card) -> None:
