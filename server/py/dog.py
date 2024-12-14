@@ -399,27 +399,27 @@ class GameState(BaseModel):
 
        
 
-    def can_leave_kennel(self) -> bool:  # <============= DOPPELT
-        if self.card_active is None:
-            return False
+    # def can_leave_kennel(self) -> bool:  # <============= DOPPELT
+    #     if self.card_active is None:
+    #         return False
 
-        if self.card_active.rank in ["A", "K", "JKR"]:
-            return True
-        return False
+    #     if self.card_active.rank in ["A", "K", "JKR"]:
+    #         return True
+    #     return False
 
-    def check_final_pos(self, pos_to: int, pos_from: int, action: Action, marble: Marble) -> None:
-        """
-        Check whether the final position of the marble is a special position.
-        1) The marble is save if it is in one of the four final spots of its color or
-        2) if it is newly out of the kennel.
-        """
-        final_positions: list = [68, 69, 70, 71, 76, 77, 78, 79, 84, 85, 86, 87, 92, 93, 94, 95]
-        if action.pos_to in final_positions:
-            marble.is_save = True
+    # def check_final_pos(self, pos_to: int, pos_from: int, action: Action, marble: Marble) -> None:
+    #     """
+    #     Check whether the final position of the marble is a special position.
+    #     1) The marble is save if it is in one of the four final spots of its color or
+    #     2) if it is newly out of the kennel.
+    #     """
+    #     final_positions: list = [68, 69, 70, 71, 76, 77, 78, 79, 84, 85, 86, 87, 92, 93, 94, 95]
+    #     if action.pos_to in final_positions:
+    #         marble.is_save = True
 
-        last_positions: list = [64, 65, 66, 67, 72, 73, 74, 75, 80, 81, 82, 83, 88, 89, 90, 91]
-        if action.pos_from in last_positions:
-            marble.is_save = True
+    #     last_positions: list = [64, 65, 66, 67, 72, 73, 74, 75, 80, 81, 82, 83, 88, 89, 90, 91]
+    #     if action.pos_from in last_positions:
+    #         marble.is_save = True
 
 
     def exchange_cards(self, action_cardswap: Action) -> None:
@@ -538,7 +538,43 @@ class GameState(BaseModel):
             return True
 
         return False
+    
+    def go_in_final(self, action_to_check: Action) -> List[Action]:
+        """
+        Checks if it is possible to go in the final
+        Yes, creat the Actions fo that + unchanged action
+        No, return Action unchanged
+        """
+        # Get infos from Gamestate
+        active_player = self.list_player[self.idx_player_active]
+        final_pos = active_player.list_marble[-1].start_pos+1
 
+        # get positions
+        startpos = active_player.start_pos
+        pos_from = action_to_check.pos_from
+        pos_to = action_to_check.pos_to
+
+        # Calculate the movement for go Final
+        if startpos > 0 or pos_from > pos_to:
+            steps = pos_to - pos_from
+            stepps_to_final = startpos-pos_from
+            overlap = abs(abs(steps) - abs(stepps_to_final))
+        else:
+            steps = 64-pos_to-pos_from
+            stepps_to_final = startpos-pos_from
+            overlap = abs(abs(steps) - abs(stepps_to_final))
+
+        # when the reminderstps after start are between 1&4 go in final
+        if abs(overlap) <5:
+            set_pos_to = final_pos + abs(overlap)-1
+            new_action = Action(card=action_to_check.card, 
+                                pos_from=action_to_check.pos_from, 
+                                pos_to=set_pos_to, 
+                                card_swap=action_to_check.card_swap)
+            return [action_to_check, new_action]
+
+        # If not possible to go in final return given action
+        return [action_to_check]
 
     def init_next_turn(self) -> None: # Kägi
         # Start with the next player

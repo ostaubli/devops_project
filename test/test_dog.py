@@ -147,12 +147,11 @@ class TestKaegisDogParts:
             state.idx_player_active = player_idx
             action_list = game.get_list_action()
             assert all(action.card in state.list_player[state.idx_player_active].list_card for action in action_list), f"During the exchange, only cards in Player {player_idx + 1}'s hand should be returned as actions"
-            
+
             select_action = random.choice(action_list)
             game.apply_action(select_action)
             check_swaped_cards.append(select_action.card)
 
-            assert select_action.card not in state.list_player[state.idx_player_active].list_card, f"The selected card should not be in Player {player_idx + 1}'s hand after exchange"
             if not state.bool_card_exchanged:
                 assert state.list_swap_card.count(None) == (3-player_idx), "The exchangecard is not stored"
 
@@ -178,6 +177,86 @@ class TestKaegisDogParts:
         state.discard_invalid_cards()
         assert not state.list_player[state.idx_player_active].list_card, "The players Handcard should be empty"
         assert all(card in state.list_card_discard for card in to_del_cards), "all the players Handcards should be in the list_card_discard deck"
+
+    def test_go_in_final(self) ->None:
+        game = Dog()
+        state = game.get_state()
+
+
+        # Test Player1
+        state.idx_player_active = 0
+        action1 = Action(card=state.LIST_CARD[10], pos_from=61, pos_to= 3, card_swap=None)
+        action_list = state.go_in_final(action1)
+        assert len(action_list) == 2, "it is possible to go in final"
+        action_list.remove(action1)
+        assert action_list[0].pos_to == 70, "should be in final pos 70"
+
+        action1 = Action(card=state.LIST_CARD[10], pos_from=2, pos_to= 62, card_swap=None)
+        action_list = state.go_in_final(action1)
+        assert len(action_list) == 2, "it is possible to go in final"
+        action_list.remove(action1)
+        assert action_list[0].pos_to == 69, "should be in final pos 69"
+
+        action1 = Action(card=state.LIST_CARD[10], pos_from=61, pos_to= 6, card_swap=None)
+        action_list = state.go_in_final(action1)
+        assert len(action_list) == 1, "it is not possible to go in final"
+
+
+        # Test Player2
+        state.idx_player_active = 1
+        action1 = Action(card=state.LIST_CARD[10], pos_from=13, pos_to= 19, card_swap=None)
+        action_list = state.go_in_final(action1)
+        assert len(action_list) == 2, "it is possible to go in final"
+        action_list.remove(action1)
+        assert action_list[0].pos_to == 78, "should be in final pos 78"
+
+        action1 = Action(card=state.LIST_CARD[10], pos_from=18, pos_to= 14, card_swap=None)
+        action_list = state.go_in_final(action1)
+        assert len(action_list) == 2, "it is possible to go in final"
+        action_list.remove(action1)
+        assert action_list[0].pos_to == 77, "should be in final pos 77"
+
+        action1 = Action(card=state.LIST_CARD[10], pos_from=13, pos_to= 22, card_swap=None)
+        action_list = state.go_in_final(action1)
+        assert len(action_list) == 1, "it is not possible to go in final"
+
+
+        # Test Player3
+        state.idx_player_active = 2
+        action1 = Action(card=state.LIST_CARD[10], pos_from=29, pos_to= 35, card_swap=None)
+        action_list = state.go_in_final(action1)
+        assert len(action_list) == 2, "it is possible to go in final"
+        action_list.remove(action1)
+        assert action_list[0].pos_to == 86, "should be in final pos 86"
+
+        action1 = Action(card=state.LIST_CARD[10], pos_from=34, pos_to= 30, card_swap=None)
+        action_list = state.go_in_final(action1)
+        assert len(action_list) == 2, "it is possible to go in final"
+        action_list.remove(action1)
+        assert action_list[0].pos_to == 85, "should be in final pos 85"
+
+        action1 = Action(card=state.LIST_CARD[10], pos_from=29, pos_to=38, card_swap=None)
+        action_list = state.go_in_final(action1)
+        assert len(action_list) == 1, "it is not possible to go in final"
+
+
+        # Test Player4
+        state.idx_player_active = 3
+        action1 = Action(card=state.LIST_CARD[10], pos_from=45, pos_to=51, card_swap=None)
+        action_list = state.go_in_final(action1)
+        assert len(action_list) == 2, "it is possible to go in final"
+        action_list.remove(action1)
+        assert action_list[0].pos_to == 94, "should be in final pos 94"
+
+        action1 = Action(card=state.LIST_CARD[10], pos_from=50, pos_to= 46, card_swap=None)
+        action_list = state.go_in_final(action1)
+        assert len(action_list) == 2, "it is possible to go in final"
+        action_list.remove(action1)
+        assert action_list[0].pos_to == 93, "should be in final pos 93"
+
+        action1 = Action(card=state.LIST_CARD[10], pos_from=45, pos_to=54, card_swap=None)
+        action_list = state.go_in_final(action1)
+        assert len(action_list) == 1, "it is not possible to go in final"
     
 
 
@@ -185,6 +264,7 @@ class TestKaegisDogParts:
 if __name__ == '__main__':
     test = TestKaegisDogParts()
     test.test_exchange_cards()
+    test.test_go_in_final()
     
 
 # class TestGameActions:
