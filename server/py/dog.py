@@ -433,8 +433,6 @@ class Dog(Game):
         found_actions = []
         player = self.get_active_player()
 
-        # TODO: add check if player has playable marble on board
-        # TODO: add check if player has starting card using list of starting cards (A, K, JKR)
         # Determine if there is at least one marble on the board that can be moved
         movable_marbles = any(self.is_movable(marble) for marble in player.list_marble)
 
@@ -447,7 +445,12 @@ class Dog(Game):
             return []
         # If no movable marbles and only starting cards, return starting actions
         elif not movable_marbles and starting_card_available:
-            return self.get_actions_for_starting_cards(starting_cards, player)
+            # Make sure the returned actions are unique
+            unique_start_actions = []
+            for action in self.get_actions_for_starting_cards(starting_cards, player):
+                if action not in unique_start_actions:
+                    unique_start_actions.append(action)
+            return unique_start_actions
 
         # First check the cases where a card is still active
         active_card = self.state.card_active
@@ -462,7 +465,14 @@ class Dog(Game):
         for card in player.list_card:
             # Append actions for the given card
             found_actions.extend(self.get_actions_for_card(card, player))
-        return found_actions
+
+        # Remove duplicate actions
+        unique_actions = []
+        for action in found_actions:
+            if action not in unique_actions:
+                unique_actions.append(action)
+
+        return unique_actions
 
     def get_actions_for_card(self, card: Card, player: PlayerState) -> List[Action]:
         found_actions = []
@@ -475,6 +485,7 @@ class Dog(Game):
         elif card.rank == '7':  # Special case for card "7"
             found_actions.extend(self.get_actions_for_7(card, player))
         elif card.rank == 'J':
+            # TODO: implement this
             pass
             # actions.extend(self.get_actions_jack())
         elif card.rank == 'K':
