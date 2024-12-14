@@ -775,9 +775,11 @@ class Dog(Game):
             print(f"{player.name if player else 'someone'}'s marble moved to the finish area.")
         else:
             # Check for collisions before moving the marble and send home if so
-            if target_pos is not None and self.position_is_occupied(
-                    target_pos) and not self.is_in_any_finish_area(target_pos):
-                self.send_home(marble)
+            if target_pos is not None and self.position_is_occupied(target_pos):
+                existing_marble = self.find_marble_at_position(target_pos)
+                if existing_marble and not self.is_in_any_finish_area(target_pos):
+                    # Send the existing marble home
+                    self.send_home(existing_marble)
             marble.pos = target_pos
         marble.is_save = False
 
