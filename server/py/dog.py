@@ -113,8 +113,7 @@ class Dog(Game):
 
     def get_state(self) -> GameState:
         """ Get the complete, unmasked game state """
-        if not self.state:
-            raise ValueError("Game state is not set.")
+        assert  self.state
         return self.state
 
     def print_state(self) -> None:
@@ -278,8 +277,7 @@ class Dog(Game):
 
     def validate_total_cards(self) -> None:
         """Ensure the total number of cards remains consistent."""
-        if not self.state:
-            raise ValueError("Game state is not set.")
+        assert self.state
 
         draw_count = len(self.state.list_card_draw)
         discard_count = len(self.state.list_card_discard)
@@ -298,8 +296,7 @@ class Dog(Game):
 
     def _get_all_marbles(self) -> List[dict]:
         """Retrieve a list of all marbles with their positions, is_save status, and player index."""
-        if not self.state:
-            raise ValueError("Game state is not set.")
+        assert self.state
 
         all_marbles = []
         for player_idx, player in enumerate(self.state.list_player):  # Include the player's index
@@ -315,8 +312,7 @@ class Dog(Game):
     def _handle_seven_card(self, card: Card, active_marbles: List[Marble]) -> List[List[Action]]:
         """Generate all possible split actions for the `7` card."""
 
-        if not self.state:
-            raise ValueError("Game state is not set.")
+        assert self.state
 
         player_idx = self.state.idx_player_active
         kennels = self.KENNEL_POSITIONS
@@ -341,9 +337,7 @@ class Dog(Game):
                         if steps > 0:  # Check only marbles with non-zero moves
                             marble = marbles_outside_kennel[marble_indices[i]]
                             pos_to: Optional[int] = self._calculate_new_position(marble, steps, player_idx)
-                            if pos_to is None:
-                                valid_split = False  # Invalidate the entire split if one move fails
-                                break
+                            if pos_to is None: valid_split = False; break
 
                     # If valid, append the current split result
                     if valid_split:
@@ -420,10 +414,8 @@ class Dog(Game):
             - The start position is not occupied by the active player's own marble.
             - The card rank is one of the starting cards.
             """
-            if num_in_kennel == 0:
-                return False
-            if player_start_position in active_marbles_positions:
-                return False
+            if num_in_kennel == 0 or player_start_position in active_marbles_positions: return False
+
             return card_rank in self.STARTING_CARDS
 
         for rank in ranks:
@@ -717,8 +709,7 @@ class Dog(Game):
 
     def apply_action(self, action: Optional[Action]) -> None:
         """Moving marbles based on the chosen action from get_list_action function."""
-        if not self.state:
-            raise ValueError("Game state is not set.")
+        assert self.state
         # Attempt a reshuffle if the draw pile is empty and discard is not empty
         # This ensures that if we run out of cards, we reshuffle before proceeding.
         if not self.state.list_card_draw and self.state.list_card_discard:
@@ -863,8 +854,7 @@ class Dog(Game):
 
     def _check_game_finished(self) -> None:
         """Check if the game has finished or a player should help their teammate."""
-        if not self.state:
-            raise ValueError("Game state is not set.")
+        assert self.state
 
         for player_idx, player in enumerate(self.state.list_player):
             safe_spaces = self.SAFE_SPACES[player_idx]
@@ -932,14 +922,25 @@ class Dog(Game):
 
         for marble in active_player.list_marble:
             if marble.pos == mm_action.pos_from:
-                print(f"Moving active player's marble from {mm_action.pos_from}" +
-                    f" to {mm_action.pos_to}.")
+                print(
+                    f"Moving active player's marble from {mm_action.pos_from}"
+                    f" to {mm_action.pos_to}."
+                )
+                
+                # Check if pos_to is not None before assignment
+                if mm_action.pos_to is None:
+                    raise ValueError(
+                        "mm_action.pos_to cannot be None when moving a marble."
+                    )
+                
                 marble.pos = mm_action.pos_to
                 marble.is_save = marble.pos in self.SAFE_SPACES[self.state.idx_player_active]
                 if marble.is_save:
-                    print(f"Marble moved to a safe space at position {marble.pos}.")
+                    pass
+                    # print(f"Marble moved to a safe space at position {marble.pos}.")
                 moved = True
                 break
+
         if not moved:
             raise ValueError(
                 f"No active player's marble found at position {mm_action.pos_from}. "
@@ -1047,8 +1048,7 @@ class Dog(Game):
 
     def _handle_normal_move(self, move_action: Action, active_player: PlayerState) -> None:
         """Handle a normal move action (non-special card)."""
-        if self.state is None:
-            raise ValueError("Game state is not set.")
+        assert self.state
 
         # Provide a default value if pos_to is None (e.g., -1)
         pos_to = move_action.pos_to if move_action.pos_to is not None else -1
@@ -1098,8 +1098,7 @@ class Dog(Game):
 
     def _check_collisions(self, move_action: Action) -> None:
         """Check for collisions with other players' marbles."""
-        if self.state is None:
-            raise ValueError("Game state is not set.")
+        assert self.state
 
         idx_active = self.state.idx_player_active
         for other_idx, other_player in enumerate(self.state.list_player):
@@ -1126,7 +1125,15 @@ class Dog(Game):
         for marble in active_player.list_marble:
             if marble.pos == seven_action.pos_from:
                 print(f'''Processing split seven_action:
-                    Moving marble from {seven_action.pos_from} to {seven_action.pos_to}.''')
+                    pass
+                    # Moving marble from {seven_action.pos_from} to {seven_action.pos_to}.''')
+                
+                # Check if pos_to is not None before assignment
+                if seven_action.pos_to is None:
+                    raise ValueError(
+                        "seven_action.pos_to cannot be None when moving a marble."
+                    )
+                
                 marble.pos = seven_action.pos_to
                 marble.is_save = marble.pos in self.SAFE_SPACES[self.state.idx_player_active]
                 if marble.is_save:
@@ -1178,15 +1185,13 @@ class Dog(Game):
 
     def get_cards_per_round(self) -> int:
         """Determine the number of cards to be dealt based on the round."""
-        if not self.state:
-            raise ValueError("Game state is not set.")
+        assert self.state
         # Round numbers repeat in cycles of 5: 6, 5, 4, 3, 2
         return 6 - ((self.state.cnt_round - 1) % 5)
 
     def update_starting_player(self) -> None:
         """Update the starting player index for the next round (anti-clockwise)."""
-        if not self.state:
-            raise ValueError("Game state is not set.")
+        assert self.state, "Game state is not set."
         self.state.idx_player_started = (self.state.idx_player_started - 1) % self.state.cnt_player
 
     def reshuffle_discard_into_draw(self) -> None:
@@ -1195,8 +1200,7 @@ class Dog(Game):
         Ensures no cards are lost or duplicated in the process.
         If more than 110 cards are detected, reset the entire deck.
         """
-        if not self.state:
-            raise ValueError("Game state is not set.")
+        assert self.state, "Game state is not set."
 
         if not self.state.list_card_discard:
             raise ValueError("Cannot reshuffle: Discard pile is empty.")
@@ -1238,8 +1242,7 @@ class Dog(Game):
 
     def deal_cards(self) -> None:
         """Deal cards to each player for the current round."""
-        if not self.state:
-            raise ValueError("Game state is not set.")
+        assert self.state
 
         num_cards = self.get_cards_per_round()
         total_needed = num_cards * (len(self.state.list_player))
@@ -1269,8 +1272,7 @@ class Dog(Game):
 
     def validate_game_state(self) -> None:
         """Validate the game state for consistency."""
-        if not self.state:
-            raise ValueError("Game state is not set.")
+        assert self.state
 
         # Ensure the number of cards matches the round logic
         expected_cards = self.get_cards_per_round()
@@ -1288,8 +1290,7 @@ class Dog(Game):
 
     def next_round(self) -> None:
         """Advance to the next round."""
-        if not self.state:
-            raise ValueError("Game state is not set.")
+        assert self.state
 
         print(f"Advancing to round {self.state.cnt_round + 1}.")
         self.state.cnt_round += 1
@@ -1313,8 +1314,7 @@ class Dog(Game):
 
     def get_player_view(self, idx_player: int) -> GameState:
         """ Get the masked state for the active player (e.g. the oppontent's cards are face down)"""
-        if not self.state:
-            raise ValueError("Game state is not set.")
+        assert self.state
         masked_players = []
         for i, player in enumerate(self.state.list_player):
             if i == idx_player:
@@ -1336,33 +1336,33 @@ class Dog(Game):
             board_positions=self.state.board_positions
         )
 
-if __name__ == '__main__':
+# if __name__ == '__main__':
 
-    game = Dog()
-    random_player = RandomPlayer()
-    if game.state is None:
-        print("Error: Game state is not initialized. Exiting...")
+    # game = Dog()
+    # random_player = RandomPlayer()
+    # if game.state is None:
+    #     print("Error: Game state is not initialized. Exiting...")
 
-    else:
-        game.draw_board()  # Draw the initial board
-        game.validate_total_cards()
+    # else:
+    #     game.draw_board()  # Draw the initial board
+    #     game.validate_total_cards()
 
-        while game.state.phase != GamePhase.FINISHED:
-            game.print_state()
-            # Get the list of possible actions for the active player
-            game_actions = game.get_list_action()
-            # Display possible game_actions
-            print("\nPossible Actions:")
-            for idx, action in enumerate(game_actions):
-                print(f"{idx}: Play {action.card.rank} of {action.card.suit} from {action.pos_from} to {action.pos_to}")
-            # Select an action (random in this example)
-            selected_action = random_player.select_action(state=game.state, actions=game_actions)
-            # Apply the selected action
-            game.apply_action(selected_action)
-            game.draw_board()  # Update the board after each action
-            #debuging for deck management to see how many cards are in different piles
-            game.validate_total_cards()
-            # Optionally exit after a certain number of rounds (for testing)
-            if game.state.cnt_round > 15:  # Example limit
-                print(f"Ending game for testing after {game.state.cnt_round} rounds.")
-                break
+    #     while game.state.phase != GamePhase.FINISHED:
+    #         game.print_state()
+    #         # Get the list of possible actions for the active player
+    #         game_actions = game.get_list_action()
+    #         # Display possible game_actions
+    #         print("\nPossible Actions:")
+    #         for idx, action in enumerate(game_actions):
+    #             print(f"{idx}: Play {action.card.rank} of {action.card.suit} from {action.pos_from} to {action.pos_to}")
+    #         # Select an action (random in this example)
+    #         selected_action = random_player.select_action(state=game.state, actions=game_actions)
+    #         # Apply the selected action
+    #         game.apply_action(selected_action)
+    #         game.draw_board()  # Update the board after each action
+    #         #debuging for deck management to see how many cards are in different piles
+    #         game.validate_total_cards()
+    #         # Optionally exit after a certain number of rounds (for testing)
+    #         if game.state.cnt_round > 15:  # Example limit
+    #             print(f"Ending game for testing after {game.state.cnt_round} rounds.")
+    #             break
