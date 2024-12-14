@@ -1,4 +1,5 @@
 from argparse import ArgumentError
+from turtledemo.penrose import start
 
 from mypy.state import state
 from pandas.core.dtypes.inference import is_integer
@@ -105,10 +106,10 @@ class Dog(Game):
 
     # Define kennel positions for initialisation
     KENNEL_POSITIONS = {
-        0: [64, 65, 66, 67],  # Player 1's kennel positions
-        1: [72, 73, 74, 75],  # Player 2's kennel positions
-        2: [80, 81, 82, 83],  # Player 3's kennel positions
-        3: [88, 89, 90, 91]  # Player 4's kennel positions
+        0: 64,  # Player 1's kennel positions
+        1: 72,  # Player 2's kennel positions
+        2: 80,  # Player 3's kennel positions
+        3: 88  # Player 4's kennel positions
     }
 
     CIRCULAR_PATH_LENGTH = 64
@@ -135,8 +136,11 @@ class Dog(Game):
                 name=f"Player {player_idx + 1}",
                 list_card=[],
                 list_marble=[
-                    Marble(pos=self.KENNEL_POSITIONS[player_idx][marble_idx], is_save=True)
-                    for marble_idx in range(4)
+                    Marble(
+                        pos=self.KENNEL_POSITIONS[player_idx],  # Single position used for all marbles
+                        is_save=True
+                    )
+                    for _ in range(4)  # Create 4 marbles
                 ]
             )
             for player_idx in range(4)
@@ -177,10 +181,10 @@ class Dog(Game):
                 3: [92, 93, 94, 95],  # Red player's finish positions
             },
             "kennel_positions": {
-                0: [64, 65, 66, 67],  # Blue player's kennel position
-                1: [72, 73, 74, 75],   # Yellow player's kennel position
-                2: [80, 81, 82, 83],  # Green player's kennel position
-                3: [88, 89, 90, 91],  # Red player's kennel position
+                0: [64],  # Blue player's kennel position
+                1: [72],   # Yellow player's kennel position
+                2: [80],  # Green player's kennel position
+                3: [88],  # Red player's kennel position
             },
             "start_positions": {
                 0: [0],  # Blue player's starting position
@@ -266,20 +270,13 @@ class Dog(Game):
         owner = self.get_owner(marble)
         if not owner:
             raise ValueError("Cannot send a homeless marble home :( (no player owns this marble)")
-        free_kennel_positions = self.get_free_kennel_positions(owner)
-        if len(free_kennel_positions) == 0:
-            # If not someone added a cheated marble this marble is already at home
-            return
-        marble.pos = free_kennel_positions[0]
+        kennel_position = self.get_player_kennel_positions(owner)
+        marble.pos = kennel_position
         marble.is_save = True
 
-    def get_free_kennel_positions(self, player: PlayerState) -> List[int]:
+    def get_player_kennel_positions(self, player: PlayerState) -> List[int]:
         kennel_positions = self.KENNEL_POSITIONS.get(self.get_player_index(player), [])
-        free_positions = kennel_positions.copy()
-        for marble in player.list_marble:
-            if marble.pos in kennel_positions:
-                free_positions.remove(marble.pos)
-        return free_positions
+        return kennel_positions
 
     def position_is_occupied(self, pos: int) -> bool:
         """Checks whether a position on the board is occupied by another marble."""
@@ -323,6 +320,7 @@ class Dog(Game):
             return pos_to + (self.CIRCULAR_PATH_LENGTH - pos_from)
 
     def overtake_marble(self, target_pos: int) -> None:
+        # TODO: remove
         """
         Handle overtaking at a given position. Send any overtaken marbles back to the kennel.
         """
@@ -421,7 +419,7 @@ class Dog(Game):
         if card.rank in self._BASIC_RANKS:
             for marble in marbles:
                 # TODO: marble_is_save
-                if marble.is_save:  # Marble must be out of the kennel
+                if self.is_movable(marble):  # Marble must be out of the kennel
                     new_pos = (marble.pos + self._RANK_TO_VALUE[card.rank]) % self.CIRCULAR_PATH_LENGTH  # Modular board movement
                     possible_actions.append(Action(card=card, pos_from=marble.pos, pos_to=new_pos, card_swap=None))
 
@@ -441,27 +439,30 @@ class Dog(Game):
         movable_marbles = any(self.is_movable(marble) for marble in player.list_marble)
 
         # Check if the player has a starting card
-        starting_card_available = any(card.rank in self._STARTING_RANKS for card in player.list_card)
+        starting_cards = [card for card in player.list_card if card.rank in self._STARTING_RANKS]
+        starting_card_available = len(starting_cards) > 0
 
         # If no movable marbles and no starting card, return empty
         if not movable_marbles and not starting_card_available:
             return []
+        # If no movable marbles and only starting cards, return starting actions
+        elif not movable_marbles and starting_card_available:
+            return self.get_actions_for_starting_cards(starting_cards, player)
 
-        else:
-            # First check the cases where a card is still active
-            active_card = self.state.card_active
-            if active_card:
-                if active_card.rank == '7':
-                    return self.get_actions_for_active_7(active_card, player)
-                elif active_card.rank == 'JKR':
-                    # TODO: Implement this
-                    pass
+        # First check the cases where a card is still active
+        active_card = self.state.card_active
+        if active_card:
+            if active_card.rank == '7':
+                return self.get_actions_for_active_7(active_card, player)
+            elif active_card.rank == 'JKR':
+                # TODO: Implement this
+                pass
 
-            # Check possible card plays based on player cards and current game state
-            for card in player.list_card:
-                # Append actions for the given card
-                found_actions.extend(self.get_actions_for_card(card, player))
-            return found_actions
+        # Check possible card plays based on player cards and current game state
+        for card in player.list_card:
+            # Append actions for the given card
+            found_actions.extend(self.get_actions_for_card(card, player))
+        return found_actions
 
     def get_actions_for_card(self, card: Card, player: PlayerState) -> List[Action]:
         found_actions = []
@@ -482,6 +483,20 @@ class Dog(Game):
             found_actions.extend(self.get_actions_for_ace(card, player))
 
         return found_actions
+
+    def get_actions_for_starting_cards(self, starting_cards: List[Card], player: PlayerState) -> List[Action]:
+        starting_actions = []
+        start_position = self.board["start_positions"][self.get_player_index(player)]
+        for marble in player.list_marble:
+            for card in starting_cards:
+                starting_actions.append(Action(
+                        card=card,
+                        pos_from=marble.pos,
+                        pos_to=start_position[0],
+                        card_swap=None)
+                    )
+        return starting_actions
+
 
     def get_actions_for_4(self, player: PlayerState) -> List[Action]:
         """
