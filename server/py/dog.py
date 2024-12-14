@@ -193,13 +193,6 @@ class GameState(BaseModel):
         self.list_card_discard.extend(self.list_player[self.idx_player_active].list_card)
         self.list_player[self.idx_player_active].list_card = []
 
-    def can_marble_leave_kennel(self, player: PlayerState) -> int:
-        for marble in player.list_marble:
-            if int(marble.pos) not in player.list_kennel_pos:
-                if not int(marble.pos) == player.start_pos and marble.is_save:
-                    return None
-                return None
-        return marble.pos
 
     def get_list_possible_action(self) -> List[Action]:  # Nicolas
         list_steps_split_7 = [
