@@ -4,6 +4,8 @@ import random
 import copy
 from typing import List, Optional, ClassVar
 from enum import Enum
+
+from mypy.checkexpr import Finished
 from pydantic import BaseModel
 if __name__ == '__main__':
     from game import Game, Player
@@ -511,34 +513,17 @@ class GameState(BaseModel):
                     return False
         return True
 
+# MARC: BITTE HIER METHODE is_player_finished einfügen
 
-    def is_player_finished(self, player: PlayerState) -> bool:
-        if not player.list_marble:  # Falls der Spieler keine Murmeln hat
-            print(f"{player.name} hat keine Murmeln.")
-            return False
+    def check_game_end(self) -> None:
+        team1 = [self.list_player[0], self.list_player[2]]
+        team2 = [self.list_player[1], self.list_player[3]]
 
-        # Überprüfen, ob alle Murmeln des Spielers im Zielbereich sind
-        finished = all(marble.pos in player.list_finish_pos for marble in player.list_marble)
-
-        if finished:
-            print(f"{player.name} hat alle Murmeln im Ziel und ist fertig!")
-        else:
-            print(f"{player.name} hat noch nicht alle Murmeln im Ziel.")
-        return finished
-
-    def check_game_end(self) -> bool:
-        finished_players = 0
-        for player in self.state.list_player:
-            if self.is_player_finished(player):
-                finished_players += 1
-
-        if finished_players >= 2:
-            self.state.phase = GamePhase.FINISHED  # Setzt den Status auf 'finished', wenn 2 Spieler fertig sind
-            print("Spiel ist zu Ende!")
-            return True
-
-        return False
-
+        for team in [team1, team2]:
+            team_finished = all(self.is_player_finished(player) for player in team)
+            if team_finished:
+                self.phase = GamePhase.FINISHED
+                return
 
     def init_next_turn(self) -> None: # Kägi
         # Start with the next player

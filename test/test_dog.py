@@ -478,14 +478,67 @@ class TestGameState:
         assert marble1.is_save is True
 
 
-def test_skip_save_marble() -> None:
+    def test_skip_save_marble(self) -> None:
+        # Arrange
+        game_state = GameState()
+
+        # Initialisierung der Spieler
+        player1 = PlayerState(
+            list_card=[],
+            list_finish_pos=[],
+            list_kennel_pos=[],
+            list_marble=[],
+            name="Player1",
+            start_pos=0,
+        )
+        player2 = PlayerState(
+            list_card=[],
+            list_finish_pos=[],
+            list_kennel_pos=[],
+            list_marble=[],
+            name="Player2",
+            start_pos=0,
+        )
+
+        # Initialisiere Murmeln
+        marble1 = Marble(pos=0, start_pos=0, is_save=False)  # Gehört zu player1
+        marble2 = Marble(pos=15, start_pos=15, is_save=True)  # Gehört zu player1
+        marble3 = Marble(pos=5, start_pos=5, is_save=False)  # Gehört zu player2
+        marble4 = Marble(pos=10, start_pos=10, is_save=True)  # Gehört zu player2
+
+        # Füge Murmeln den Spielern hinzu
+        player1.list_marble.append(marble1)
+        player1.list_marble.append(marble2)
+        player2.list_marble.append(marble3)
+        player2.list_marble.append(marble4)
+
+        # Füge Spieler zum GameState hinzu
+        game_state.list_player.extend([player1, player2])
+
+        # Test 1: Keine Murmel blockiert (bereich 3-8, keine sichere Murmel im Weg)
+        card = Card(suit="hearts", rank="5")
+        result = game_state.skip_save_marble(Action(pos_from=3, pos_to=8, card=card))
+        assert result is True
+
+        # Test 2: Blockiert durch Murmel eines fremden Spielers (marble4, pos=10, is_save=True)
+        result = game_state.skip_save_marble(Action(pos_from=8, pos_to=13, card=card))
+        assert result is False
+
+        # Test 3: Blockiert durch eigene Murmel (marble2, pos=15, is_save=True)
+        result = game_state.skip_save_marble(Action(pos_from=13, pos_to=18, card=card))
+        assert result is False
+
+## MARC: BITTE HIER TESTFALL test_is_player_finished EINFÜGEN
+
+
+def test_check_game_end() -> None:
     # Arrange
     game_state = GameState()
 
     # Initialisierung der Spieler
     player1 = PlayerState(
         list_card=[],
-        list_finish_pos=[],
+        list_finish_pos=[68, 69, 70, 71],
         list_kennel_pos=[],
         list_marble=[],
         name="Player1",
@@ -493,40 +546,59 @@ def test_skip_save_marble() -> None:
     )
     player2 = PlayerState(
         list_card=[],
-        list_finish_pos=[],
+        list_finish_pos=[76, 77, 78, 79],
         list_kennel_pos=[],
         list_marble=[],
         name="Player2",
         start_pos=0,
     )
+    player3 = PlayerState(
+        list_card=[],
+        list_finish_pos=[84, 85, 86, 87],
+        list_kennel_pos=[],
+        list_marble=[],
+        name="Player3",
+        start_pos=0,
+    )
 
+    player4 = PlayerState(
+        list_card=[],
+        list_finish_pos=[92, 93, 94, 95],
+        list_kennel_pos=[],
+        list_marble=[],
+        name="Player4",
+        start_pos=0,
+    )
     # Initialisiere Murmeln
-    marble1 = Marble(pos=0, start_pos=0, is_save=False)  # Gehört zu player1
-    marble2 = Marble(pos=15, start_pos=15, is_save=True)  # Gehört zu player1
-    marble3 = Marble(pos=5, start_pos=5, is_save=False)  # Gehört zu player2
-    marble4 = Marble(pos=10, start_pos=10, is_save=True)  # Gehört zu player2
+    marble11 = Marble(pos=68, start_pos=0, is_save=True)
+    marble12 = Marble(pos=69, start_pos=0, is_save=True)
+    marble13 = Marble(pos=70, start_pos=0, is_save=True)
+    marble14 = Marble(pos=71, start_pos=0, is_save=True)
+    marble21 = Marble(pos=76, start_pos=16, is_save=True)
+    marble22 = Marble(pos=77, start_pos=16, is_save=True)
+    marble23 = Marble(pos=78, start_pos=16, is_save=True)
+    marble24 = Marble(pos=79, start_pos=16, is_save=True)
+    marble31 = Marble(pos=84, start_pos=32, is_save=True)
+    marble32 = Marble(pos=85, start_pos=32, is_save=True)
+    marble33 = Marble(pos=86, start_pos=32, is_save=True)
+    marble34 = Marble(pos=87, start_pos=32, is_save=True)
+    marble41 = Marble(pos=92, start_pos=32, is_save=True)
+    marble42 = Marble(pos=93, start_pos=32, is_save=True)
+    marble43 = Marble(pos=94, start_pos=32, is_save=True)
+    marble44 = Marble(pos=22, start_pos=32, is_save=False)
 
     # Füge Murmeln den Spielern hinzu
-    player1.list_marble.append(marble1)
-    player1.list_marble.append(marble2)
-    player2.list_marble.append(marble3)
-    player2.list_marble.append(marble4)
+    player1.list_marble.extend([marble11, marble12, marble13, marble14])
+    player2.list_marble.extend([marble21, marble22, marble23, marble24])
+    player3.list_marble.extend([marble31, marble32, marble33, marble34])
+    player4.list_marble.extend([marble41, marble42, marble43, marble44])
 
-    # Füge Spieler zum GameState hinzu
-    game_state.list_player.extend([player1, player2])
+    game_state.list_player.extend([player1, player2, player3, player4])
 
-    # Test 1: Keine Murmel blockiert (bereich 3-8, keine sichere Murmel im Weg)
-    card = Card(suit="hearts", rank="5")
-    result = game_state.skip_save_marble(Action(pos_from=3, pos_to=8, card=card))
-    assert result is True
+    # Prüfe, ob das Spiel fertig ist
+    game_state.check_game_end()
+    assert game_state.phase == GamePhase.FINISHED
 
-    # Test 2: Blockiert durch Murmel eines fremden Spielers (marble4, pos=10, is_save=True)
-    result = game_state.skip_save_marble(Action(pos_from=8, pos_to=13, card=card))
-    assert result is False
-
-    # Test 3: Blockiert durch eigene Murmel (marble2, pos=15, is_save=True)
-    result = game_state.skip_save_marble(Action(pos_from=13, pos_to=18, card=card))
-    assert result is False
 
 # Test test_is_player_finished
 # Test test_check_game_end
