@@ -6,7 +6,7 @@ This module contains the core game logic and data structures for the Dog card ga
 # runcmd: cd ../.. & venv\Scripts\python server/py/dog_template.py
 import random
 from enum import Enum
-from typing import List, Optional, ClassVar
+from typing import List, Optional, ClassVar, Union
 from pydantic import BaseModel
 from server.py.game import Game, Player
 
@@ -479,10 +479,8 @@ class Dog(Game):
                         split_actions.append(new_action)
         
             grouped_actions_list.append(split_actions)
-            # print(grouped_actions_list)
 
         return grouped_actions_list
-
 
     def _exchange_jkr(self):
 
@@ -638,6 +636,7 @@ class Dog(Game):
                 # continue
 
             if card.rank == '7'and self.state.card_active is None:
+                # actions_list.extend(action for sublist in self._handle_seven_card(card, active_player.list_marble) for action in sublist)
                 actions_list.extend(action for sublist in self._handle_seven_card(card, active_player.list_marble) for action in sublist)
                 # After handling special moves for '7' or 'JKR', continue to next card
                 # falls actions = True -> card = 7 
@@ -917,19 +916,15 @@ class Dog(Game):
             self._handle_jack(action)
         #elif action.card.rank == 'JKR':
             #self._handle_joker(action)
-        elif action.card.rank == '7':
-            # Handle SEVEN card
-            grouped_actions = self.get_list_action()
-            splits_completed = self._handle_seven_card_logic(grouped_actions)
 
-            if splits_completed:
+        # elif action.card.rank == '7':
+            # Handle SEVEN card
+            # grouped_actions = self.get_list_action()
+            # splits_completed = self._handle_seven_card_logic(grouped_actions)
+
+            # if splits_completed:
                 # Remove the SEVEN card from player's hand
-                active_player = self.state.list_player[self.state.idx_player_active]
-                active_player.list_card.remove(action.card)
-                self.state.list_card_discard.append(action.card)
-                # Advance to next player
-                self.state.idx_player_active = (self.state.idx_player_active + 1) % len(self.state.list_player)
-            return
+            # return
         else:
             self._handle_normal_move(action, active_player)
 
@@ -951,37 +946,50 @@ class Dog(Game):
         # Check if the game is finished or if a player needs to help their teammate
         self._check_game_finished()
 
-    def _handle_seven_card_logic(self, grouped_actions: List[List[Action]]) -> bool:
-        """Process a SEVEN card by applying valid split actions, trusting the handle_seven_card results."""
-
-        # Since _handle_seven_card only returns valid splits that sum to 7 steps total,
-        # we do not need to re-check steps or safe spaces.
+    def _handle_seven_card_logic(self, grouped_actions: List['Action']) -> bool:
+        """
+        Process a SEVEN card by applying valid split actions.
+        
+        Args:
+            grouped_actions (List[Action]): A list of Action instances representing split actions.
+        
+        Returns:
+            bool: True if the split actions were processed successfully, False otherwise.
+        """
         if not grouped_actions:
             print("No valid split actions provided for SEVEN card.")
             return False
 
-        # Just process the first valid split scenario (or all of them if you prefer)
-        for split_actions in grouped_actions:
-            if not isinstance(split_actions, list):
-                split_actions = [split_actions]
+        active_player = self.state.list_player[self.state.idx_player_active]
 
-            print(f"Processing a split with {len(split_actions)} actions.")
-            try:
-                for split_action in split_actions:
-                    # Move the marble according to pos_from and pos_to
-                    self._handle_seven_marble_movement(split_action)
-                    print(f"SEVEN card: marble moved from {split_action.pos_from} to {split_action.pos_to}.")
+        try:
+            for split_action in grouped_actions:
+                # Move the marble according to pos_from and pos_to
+                self._handle_seven_marble_movement(split_action)
+                print(f"SEVEN card: marble moved from {split_action.pos_from} to {split_action.pos_to}.")
 
-                # If we got here without exceptions, this split is processed successfully.
-                print("All steps for SEVEN card have been processed (total of 7 steps).")
-                return True
-            except ValueError as e:
-                print(f"Error processing one of the actions in the split: {e}")
-                # Try the next split if desired, or return False if you only process one
-                continue
+                # Remove the SEVEN card from the player's hand
+                if split_action.card in active_player.list_card:
+                    active_player.list_card.remove(split_action.card)
+                    self.state.list_card_discard.append(split_action.card)
+                    print(f"SEVEN card {split_action.card} removed from player's hand and added to discard pile.")
+                else:
+                    print(f"Error: SEVEN card {split_action.card} not found in player's hand.")
+                    return False
 
-        # If none of the splits could be processed (which should be rare), return False
-        return False
+            # Check if the game is finished or if a player needs to help their teammate
+            # self._check_game_finished()
+
+            # Advance to the next player
+            # self.state.idx_player_active = (self.state.idx_player_active + 1) % len(self.state.list_player)
+            # print(f"Advanced to player index {self.state.idx_player_active}.")
+
+            print("All steps for SEVEN card have been processed (total of 7 steps).")
+            return True
+
+        except Exception as e:
+            print(f"Error processing split actions: {e}")
+            return False
 
     def _check_game_finished(self) -> None:
         """Check if the game has finished or a player should help their teammate."""
@@ -1470,7 +1478,7 @@ class Dog(Game):
 class RandomPlayer(Player):
     """A player that selects actions randomly."""
 
-    def select_action(self, state: GameState, actions: List[Action]) -> Optional[Action]:
+    def select_action(self, state: 'GameState', actions: List[Union['Action', List['Action']]]) -> Optional[Union['Action', List['Action']]]:
         """
         Given masked game state and possible actions, select the next action randomly.
         """
@@ -1539,12 +1547,18 @@ if __name__ == '__main__':
             selected_action = random_player.select_action(game.get_state(), flattened_game_actions)
 
             # Apply the selected action
-            if isinstance(selected_action, list):  # If selected_action is a nested list
+            if isinstance(selected_action, list):  # If selected_action is a grouped list (for the 7 card)
                 print(f"Selected split actions: {selected_action}")
-                for sub_action in selected_action:  # Apply each sub-action individually
-                    game.apply_action(sub_action)
-            else:
+                success = game._handle_seven_card_logic(selected_action)
+                game.state.idx_player_active = (game.state.idx_player_active + 1) % len(game.state.list_player)
+                print(f"Advanced to player index {game.state.idx_player_active}.")
+                if not success:
+                    print("Failed to process split actions. Exiting...")
+                    break
+            elif isinstance(selected_action, Action):
                 game.apply_action(selected_action)
+            else:
+                print(f"Selected action has an invalid type: {type(selected_action)} - {selected_action}")
 
             game.draw_board()  # Update the board after each action
 
