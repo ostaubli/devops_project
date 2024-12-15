@@ -596,8 +596,19 @@ class Dog(Game):
 
     def print_state(self) -> None:
         """ Print the current game state """
-        print(self.state)
-        pass
+        current_player_name = self.state.list_player[self.state.idx_player_active].name
+
+        player_data = {
+            player.name: {
+                "positions": [marble.pos for marble in player.list_marble],
+                "cards": len(player.list_card),
+            }
+            for player in self.state.list_player
+        }
+        print(f"We are in round {self.state.cnt_round} and the current player is {current_player_name}")
+        for player_name, data in player_data.items():
+            print(f"Player {player_name} has positions: {data['positions']} and holds {data['cards']} cards")
+        print(f"The actual game phase: {self.state.phase}")
 
     def get_list_action(self) -> List[Action]:
         """ Get a list of possible actions for the active player """

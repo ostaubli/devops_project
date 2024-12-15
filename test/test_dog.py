@@ -1,6 +1,8 @@
 import pytest
 import random
 
+from Demos.SystemParametersInfo import new_h
+from numpy.ma.testutils import assert_not_equal
 from pyparsing import NotAny
 
 from pydantic import BaseModel
@@ -260,7 +262,6 @@ class TestKaegisDogParts:
 class TestGameState:
 
 
-
     def test_sending_home(self) -> None:
         # Arrange
         game_state = GameState()
@@ -508,13 +509,7 @@ class TestGameState:
         game_state.check_game_end()
         assert game_state.phase == GamePhase.FINISHED
 
-
-
-# Test test_check_game_end
-# test_set_state
-# test get_state
-# test print_state
-# test get_player_view
+#    def marble_switch_jake
 
 class TestListPossibleAction:
         
@@ -649,6 +644,58 @@ class TestListPossibleAction:
             action.card.rank == "4" and (action.pos_to == 62 and action.pos_to == 6)
             for action in result5), 'card moved to invalid position'
 
+class TestDog:
+
+# Marc: Platzhalter 2
+
+# Marc: Platzhalter 1
+
+    def test_print_state(self, capfd):
+        # Arrange
+        game = Dog()  # Erstelle eine Instanz
+        new_state = GameState()  # Erstelle ein neues GameState-Objekt
+        new_state.cnt_round = 3
+        new_state.phase = GamePhase.RUNNING
+        new_state.idx_player_active = 0  # Aktueller Spieler ist der erste in der Liste
+
+        # Füge Spieler und Murmeln hinzu
+        player1 = PlayerState(
+            list_card=[Card(suit='♠', rank="5"), Card(suit='♥', rank="6")],
+            list_finish_pos=[],
+            list_kennel_pos=[],
+            list_marble=[
+                Marble(pos=5, start_pos=64, is_save=False),
+                Marble(pos=10, start_pos=65, is_save=False),
+            ],
+            name="Player1",
+            start_pos=0,
+        )
+        player2 = PlayerState(
+            list_card=[Card(suit='♠', rank="10")],
+            list_finish_pos=[],
+            list_kennel_pos=[],
+            list_marble=[
+                Marble(pos=20, start_pos=72, is_save=False),
+                Marble(pos=25, start_pos=73, is_save=False),
+            ],
+            name="Player2",
+            start_pos=32,
+        )
+        new_state.list_player.extend([player1, player2])  # Direkter Zugriff auf `list_player`
+        game.set_state(new_state)  # Setze den Zustand im Spiel
+
+        # Act
+        game.print_state()
+
+        # Capture output
+        captured = capfd.readouterr()
+
+        # Assert: Überprüfe die Konsolenausgabe
+        assert "We are in round 3 and the current player is Player1" in captured.out
+        assert "Player Player1 has positions: [5, 10] and holds 2 cards" in captured.out
+        assert "Player Player2 has positions: [20, 25] and holds 1 cards" in captured.out
+        assert "The actual game phase: GamePhase.RUNNING" in captured.out
+
 
 if __name__ == '__main__':
     # Tests für TestKaegisDogParts
@@ -681,6 +728,13 @@ if __name__ == '__main__':
 
 
 
+
+
+
+# test_set_state
+# test get_state
+# test print_state
+# test get_player_view
 
 
 
