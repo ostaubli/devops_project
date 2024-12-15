@@ -7,6 +7,11 @@ from Demos.SystemParametersInfo import new_h
 from numpy.ma.testutils import assert_not_equal
 from pyparsing import NotAny
 
+if __name__ == '__main__':
+    import os
+    import sys
+    sys.path.append(os.getcwd())
+
 from pydantic import BaseModel
 from typing import List, Optional, Dict
 
@@ -308,7 +313,7 @@ class TestKaegisDogParts:
         assert game_state.list_player[game_state.idx_player_active].list_marble[0].pos == 22, "Pos 1 marbel Player 1 is 22"
         assert game_state.list_player[game_state.idx_player_active-1].list_marble[0].pos == 13, "Pos 1 marbel Player 0 is 13"
         assert game_state.list_player[game_state.idx_player_active-1].list_marble[1].pos == 65, "Pos 2 marbel Player 0 is sent home=> Pos 65"
- 
+
 
 class TestGameState:
 
@@ -543,8 +548,8 @@ class TestGameState:
 #    def marble_switch_jake
 
 class TestListPossibleAction:
-        
-    def test_get_list_possible_action1(self) -> None:
+
+    def test_get_list_possible_action1(self) -> None:   #TODO REWRITE THE TEST INCLUDING THE LOGIC OF GOING IN
         game_state = GameState()
         player1 = PlayerState(  #Player1 for test inside kennel, only movement should be going out
             list_card=[
