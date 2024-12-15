@@ -737,17 +737,17 @@ class TestGameState:
 
         # Test 1: Active player is player1. All marbles in final position. Expect True
         game_state.idx_player_active = 0  # Spieler 1 ist aktiv
-        result = game_state.is_player_finished()
+        result = game_state.is_player_finished(player1)
         assert result is True
 
         # Test 2: Active player is player2. Three out of four in final position. Expect False
         game_state.idx_player_active = 1  # Spieler 2 ist aktiv
-        result = game_state.is_player_finished()
+        result = game_state.is_player_finished(player2)
         assert result is False
 
         # Test 3: Active player is player3. No marble in final position. Expect False
         game_state.idx_player_active = 2  # Spieler 3 ist aktiv
-        result = game_state.is_player_finished()
+        result = game_state.is_player_finished(player3)
         assert result is False
 
 
