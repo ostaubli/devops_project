@@ -35,18 +35,18 @@ jobs:
           project_id: ${{ vars.ENV_VAR_PROJECT_ID }}
 
     # Step 4: Build and push Docker image
-    - name: Build and push Docker image
-      run: |
-        IMAGE_NAME=gcr.io/${{ vars.ENV_VAR_PROJECT_ID }}/aaajp_game_server_from_git
-        docker build -t $IMAGE_NAME .
-        docker push $IMAGE_NAME
+    #- name: Build and push Docker image
+    #  run: |
+    #    IMAGE_NAME=gcr.io/${{ vars.ENV_VAR_PROJECT_ID }}/aaajp_game_server_from_git
+    #    docker build -t $IMAGE_NAME .
+    #    docker push $IMAGE_NAME
 
     # Step 6: Deploy to Google Cloud Run
-    - name: Deploy to game to Cloud Run
+    - name: Deploy game to Cloud Run
       run: |
-        IMAGE_NAME=gcr.io/${{ vars.ENV_VAR_PROJECT_ID }}/aaajp_game_server_from_git
         gcloud run deploy aaajp_game_server_from_git \
-          --port 8080
+          --source . \
           --platform managed \
           --region europe-west6 \
-          --allow-unauthenticated
+          --allow-unauthenticated \
+          --port 8080
