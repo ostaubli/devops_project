@@ -185,6 +185,8 @@ class GameState(BaseModel):
         # Set Cardexchange
         self.bool_card_exchanged = False
 
+        print("==> Deal New card <==")
+
     def discard_invalid_cards(self) -> None:
         # check if player has cards
         if not self.list_player[self.idx_player_active].list_card:
@@ -553,18 +555,27 @@ class Dog(Game):
         if self.state.card_active is None:
             action_list = self.state.get_list_possible_action()
 
+        return action_list
+
         # else: Logic for card 7
 
     def apply_action(self, action: Action) -> None:
         """
         Do the movement conected to the Action
         """
-        if self.state.bool_card_exchanged == False:
-            self.state.exchange_cards(action)
+        if action is None: # If player can not play any actions
+            self.state.discard_invalid_cards()
 
         # Check if exchange cards is needed
+        elif self.state.bool_card_exchanged is False:
+            self.state.exchange_cards(action)
+
         elif action:
             self.state.set_action_to_game(action)
+
+            # Removed played Card from Players Hand
+            self.state.list_card_discard.append(action.card)
+            self.state.list_player[self.state.idx_player_active].list_card.remove(action.card)
 
         # Sets the next Player active if there is not a Card active
         if self.state.card_active is None:
@@ -585,12 +596,14 @@ class RandomPlayer(Player):
 
     def select_action(self, state: GameState, actions: List[Action]) -> Optional[Action]:
         """ Given masked game state and possible actions, select the next action """
-        if actions is not None:
+        if actions and len(actions) > 0: 
             return random.choice(actions)
         return None
 
 
 if __name__ == '__main__':
+    print("*"*30, "- START GAME -", "*"*30)
+
     idx_player_you = 0
     game = Dog()
     player = RandomPlayer()
@@ -611,21 +624,27 @@ if __name__ == '__main__':
 
             player_state = game.get_player_view(idx_player_you)
             list_action = game.get_list_action()
-            dict_state = player_state.model_dump()  # <=== Method of BaseModel !!
-            dict_state['idx_player_you'] = idx_player_you
-            dict_state['list_action'] = [action.model_dump() for action in list_action]
-            data = {'type': 'update', 'state': dict_state}
+            
             # await websocket.send_json(data)
             #print(data)
 
-            # If there are possible actions, choose one
-            action = random.choice(list_action)
-            print(f"Action from Player{state.idx_player_active} is",action)
-            if action is not None:
-                game.apply_action(action)
+            if list_action is not None:
+                print("You are playing")
+
+                dict_state = player_state.model_dump()  # <=== Method of BaseModel !!
+                dict_state['idx_player_you'] = idx_player_you
+                dict_state['list_action'] = [action.model_dump() for action in list_action]
+                data = {'type': 'update', 'state': dict_state}
 
             else: # if not: delet all cards for this round
-                game.state.discard_invalid_cards()
+                print("You don't have any possible Actions")
+
+            # FIXME: Needs to get Choos from Server (real Player)
+            action = player.select_action(game.state, list_action)  # Random Select an Action for debug
+            
+            print(f"Action from Player{state.idx_player_active} is",action)
+            # Apply Action to Game
+            game.apply_action(action)
 
             state = game.get_player_view(idx_player_you)
             dict_state = state.model_dump()
@@ -639,18 +658,19 @@ if __name__ == '__main__':
         else:
 
             list_action = game.get_list_action()
-            action = player.select_action(game.state, list_action)
+            action = player.select_action(game.state, list_action)  # Random Select an Action
 
             # If there are possible actions, choose one
             if action is not None:
                 print(f"Player {game.state.idx_player_active} is playing")
                 # await asyncio.sleep(1)
                 print(f"Action from Player{state.idx_player_active} is",action)
-                game.apply_action(action)
             else:# if not: delet all cards for this round
-                game.state.discard_invalid_cards()
-            
-            
+                print(f"Player {game.state.idx_player_active} has no possible actions.")
+
+            # Apply Action to Game
+            game.apply_action(action)
+
             player_state = game.get_player_view(idx_player_you)  # Abbildung für Person zeigen
             dict_state = player_state.model_dump()
             dict_state['idx_player_you'] = idx_player_you
@@ -659,14 +679,13 @@ if __name__ == '__main__':
             # print(data)
             # await websocket.send_json(data)
 
-        print("Next Player Active?: ", game.state.idx_player_active)
         print("Exchanged? ",game.state.bool_card_exchanged)
         print("Speciality? card_active? ", game.state.card_active)
         print("*"*50)
 
 
         # Keeps game away from infinityloop
-        if debug_counter >10:
+        if debug_counter >30:
             print("-"*50,"> break becaus of counter")
             break
         debug_counter+=1
