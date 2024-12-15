@@ -150,6 +150,7 @@ def test_reverse_card():
     assert game.state.direction == -1
     assert game.state.idx_player_active == 0
 
+
 def test_skip_card():
     """Test if the skip card correctly skips the next player's turn."""
     game = Uno()
@@ -939,6 +940,223 @@ def test_first_turn_with_wild_no_play():
     assert len(actions) == 1
     assert actions[0].draw == 1
     assert actions[0].card is None
+
+def _reshuffle_draw_pile(self) -> None:
+    """
+    Reshuffle the discard pile into the draw pile, keeping the top discard card.
+    """
+    if len(self.state.list_card_discard) <= 1:
+        # Not enough cards to reshuffle
+        return
+    # Keep the top card on the discard pile
+    top_card = self.state.list_card_discard.pop()
+    # Shuffle the remaining discard pile
+    random.shuffle(self.state.list_card_discard)
+    # Assign it to the draw pile
+    self.state.list_card_draw = self.state.list_card_discard.copy()
+    # Reset the discard pile with the top card
+    self.state.list_card_discard = [top_card]
+
+    
+def _handle_draw(self, count: int) -> None:
+    """
+    Handle the drawing of cards by the active player.
+    If the draw pile is empty, reshuffle the discard pile into the draw pile.
+    """
+    for _ in range(count):
+        if not self.state.list_card_draw:
+            self._reshuffle_draw_pile()
+            if not self.state.list_card_draw:
+                # No cards left to draw
+                break
+        card_drawn = self.state.list_card_draw.pop()
+        self.state.list_player[self.state.idx_player_active].list_card.append(card_drawn)
+    self.state.has_drawn = True
+
+
+def _advance_turn(self, skip: bool = False) -> None:
+    """
+    Advance the turn to the next player.
+    If skip is True, skip the next player.
+    """
+    if skip:
+        # Skip the next player
+        steps = 2
+    else:
+        # Normal advancement
+        steps = 1
+    self.state.idx_player_active = (self.state.idx_player_active + steps * self.state.direction) % self.state.cnt_player
+    self.state.has_drawn = False
+
+def apply_action(self, action: Action) -> None:
+    """
+    Apply an action taken by the active player.
+    """
+    if self.state.phase != GamePhase.RUNNING:
+        return
+
+    assert self.state.idx_player_active is not None
+    active_player = self.state.list_player[self.state.idx_player_active]
+
+    if action.card:
+        # Play the card
+        self.state.list_card_discard.append(action.card)
+        active_player.list_card.remove(action.card)
+
+        # Determine the chosen color
+        chosen_color = (
+            action.color if action.color is not None else (
+                action.card.color if action.card.color else 'any'
+            )
+        )
+        self.state.color = chosen_color
+
+        # Handle special cards
+        if action.card.symbol == "reverse":
+            self.state.direction *= -1
+            self._advance_turn()  # Advance turn after reversing
+        elif action.card.symbol == "skip":
+            self._advance_turn(skip=True)
+        elif action.card.symbol == "draw2":
+            self.state.cnt_to_draw += 2
+        elif action.card.symbol == "wilddraw4":
+            self.state.cnt_to_draw += 4
+
+        # Missed UNO penalty
+        if len(active_player.list_card) == 1 and not action.uno:
+            for _ in range(4):
+                if self.state.list_card_draw:
+                    active_player.list_card.append(self.state.list_card_draw.pop())
+
+        # Check if the player has finished all cards
+        if len(active_player.list_card) == 0:
+            self.state.phase = GamePhase.FINISHED
+            return
+
+        # Advance turn based on card played
+        if action.card.symbol not in ["skip", "reverse", "draw2", "wilddraw4"]:
+            self._advance_turn()
+
+        if action.card.symbol in ["draw2", "wilddraw4"] and self.state.cnt_player == 2:
+            self._advance_turn()
+
+        self.state.has_drawn = False
+
+    elif action.draw:
+        # Handle drawing cards
+        if self.state.cnt_to_draw > 0:
+            draw_count = action.draw if action.draw is not None else self.state.cnt_to_draw
+            self._handle_draw(draw_count)
+            self.state.cnt_to_draw = 0
+            self._advance_turn(skip=True)
+        else:
+            draw_count = action.draw if action.draw is not None else 1
+            self._handle_draw(draw_count)
+            self.state.has_drawn = True
+
+    # Check for game end condition
+    if len(self.state.list_player[self.state.idx_player_active].list_card) == 0:
+        self.state.phase = GamePhase.FINISHED
+    else:
+        self._advance_turn()
+
+def test_draw_from_empty_piles():
+    """Test drawing a card when both draw and discard piles are empty."""
+    game = Uno()
+    state = GameState(
+        cnt_player=2,
+        list_player=[
+            PlayerState(name="Player 1", list_card=[Card(color="red", number=5)]),
+            PlayerState(name="Player 2", list_card=[Card(color="blue", number=7)])
+        ],
+        list_card_draw=[],
+        list_card_discard=[],
+        idx_player_active=0,
+        phase=GamePhase.RUNNING,
+        direction=1,
+        color="red"
+    )
+    game.set_state(state)
+    
+    # Player 1 attempts to draw a card
+    action = Action(draw=1)
+    game.apply_action(action)
+    
+    # Since both piles are empty, no card should be drawn
+    assert len(game.state.list_player[0].list_card) == 1, "Player 1 should not have drawn any cards."
+    assert game.state.has_drawn is True, "has_drawn should be set to True even if no card was drawn."
+
+def test_get_player_view():
+    """Test that get_player_view masks other players' cards."""
+    game = Uno()
+    state = GameState(
+        cnt_player=3,
+        list_player=[
+            PlayerState(name="P1", list_card=[Card(color="red", number=1), Card(color="blue", number=2)]),
+            PlayerState(name="P2", list_card=[Card(color="green", number=3)]),
+            PlayerState(name="P3", list_card=[Card(color="yellow", number=4)])
+        ],
+        phase=GamePhase.RUNNING,
+        idx_player_active=0
+    )
+    game.set_state(state)
+    view_for_p1 = game.get_player_view(0)
+    assert len(view_for_p1.list_player[0].list_card) == 2
+    assert all(c.color is None and c.number is None and c.symbol is None
+               for c in view_for_p1.list_player[1].list_card)
+    assert all(c.color is None and c.number is None and c.symbol is None
+               for c in view_for_p1.list_player[2].list_card)
+
+def test_cumulative_draw_multiple_draw2():
+    """Test cumulative drawing with multiple draw2 cards."""
+    game = Uno()
+    state = GameState(
+        cnt_player=2,
+        list_player=[
+            PlayerState(name="Player 1", list_card=[Card(color="red", symbol="draw2")]),
+            PlayerState(name="Player 2", list_card=[Card(color="blue", number=5)])
+        ],
+        list_card_draw=[Card(color="green", number=i) for i in range(1, 6)],
+        list_card_discard=[Card(color="red", symbol="draw2")],
+        idx_player_active=0,
+        phase=GamePhase.RUNNING,
+        color="red",
+        cnt_to_draw=2
+    )
+    game.set_state(state)
+    
+    # Player 1 plays another draw2 to stack
+    action = Action(card=Card(color="red", symbol="draw2"), color="red", draw=4)
+    game.apply_action(action)
+    
+    assert game.state.cnt_to_draw == 4, "cnt_to_draw should be incremented to 4 after stacking draw2."
+    assert game.state.idx_player_active == 0, "Active player should remain Player 1 to handle the draw."
+    
+def test_reverse_card_two_players():
+    """Test that reverse card acts like skip in a two-player game."""
+    game = Uno()
+    state = GameState(
+        cnt_player=2,
+        list_player=[
+            PlayerState(name="Player 1", list_card=[Card(color="yellow", symbol="reverse")]),
+            PlayerState(name="Player 2", list_card=[Card(color="blue", number=7)]),
+        ],
+        list_card_discard=[Card(color="red", number=3)],
+        idx_player_active=0,
+        phase=GamePhase.RUNNING,
+        direction=1,
+        color="red"
+    )
+    game.set_state(state)
+    
+    # Player 1 plays a reverse card
+    action = Action(card=Card(color="yellow", symbol="reverse"))
+    game.apply_action(action)
+    
+    # In two-player game, reverse acts as skip, so Player 1 plays again
+    assert game.state.direction == -1, "Direction should be reversed."
+    assert game.state.idx_player_active == 0, "Active player should remain Player 1 in two-player game."
+
 
 
 if __name__ == "__main__":
