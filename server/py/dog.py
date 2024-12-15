@@ -1351,70 +1351,70 @@ class Dog(Game):
         )
 
       
-if __name__ == '__main__':
+# if __name__ == '__main__':
         
-    # Initialize the game
-    game = Dog()
+#     # Initialize the game
+#     game = Dog()
 
-    # Initialize a random player (or your AI logic)
+#     # Initialize a random player (or your AI logic)
     random_player = RandomPlayer()
 
-    # Ensure the game state is initialized
-    if game.state is None:
-        print("Error: Game state is not initialized. Exiting...")
-    else:
-        game.draw_board()  # Draw the initial board
+#     # Ensure the game state is initialized
+#     if game.state is None:
+#         print("Error: Game state is not initialized. Exiting...")
+#     else:
+#         game.draw_board()  # Draw the initial board
 
-        while game.state.phase != GamePhase.FINISHED:
-            game.print_state()
+#         while game.state.phase != GamePhase.FINISHED:
+#             game.print_state()
 
-            # Get the list of possible actions for the active player
-            game_actions = game.get_list_action()
+#             # Get the list of possible actions for the active player
+#             game_actions = game.get_list_action()
 
-            # Display possible actions
-            print("\nPossible Actions:")
-            for idx, action in enumerate(game_actions):
-                print(f"{idx}: Play {action.card.rank} of {action.card.suit} from {action.pos_from} to {action.pos_to}")
+#             # Display possible actions
+#             print("\nPossible Actions:")
+#             for idx, action in enumerate(game_actions):
+#                 print(f"{idx}: Play {action.card.rank} of {action.card.suit} from {action.pos_from} to {action.pos_to}")
 
-            # Select an action (random in this example)
-            selected_action = random_player.select_action(game.get_state(), game_actions)
+#             # Select an action (random in this example)
+#             selected_action = random_player.select_action(game.get_state(), game_actions)
 
-            if selected_action is None:
-                print("No action selected. Skipping turn.")
-                game.apply_action(None)
-            elif selected_action.card.rank == '7':
-                print(f"Selected SEVEN card: {selected_action.card}")
+#             if selected_action is None:
+#                 print("No action selected. Skipping turn.")
+#                 game.apply_action(None)
+#             elif selected_action.card.rank == '7':
+#                 print(f"Selected SEVEN card: {selected_action.card}")
 
-                # Generate all valid grouped actions
-                active_player = game.state.list_player[game.state.idx_player_active]
-                grouped_actions = game.grouped_actions(selected_action.card, active_player.list_marble)
+#                 # Generate all valid grouped actions
+#                 active_player = game.state.list_player[game.state.idx_player_active]
+#                 grouped_actions = game.grouped_actions(selected_action.card, active_player.list_marble)
 
-                # Find the specific split containing the selected action
-                split_to_process = None
-                for split in grouped_actions:
-                    if selected_action in split:
-                        split_to_process = split
-                        break
+#                 # Find the specific split containing the selected action
+#                 split_to_process = None
+#                 for split in grouped_actions:
+#                     if selected_action in split:
+#                         split_to_process = split
+#                         break
 
-                if split_to_process:
-                    print(f"Processing SEVEN split: {split_to_process}")
-                    for split_action in split_to_process:
-                        game.apply_action(split_action)
-                    print("SEVEN card split handling complete.")
-                else:
-                    print("No valid split found containing the selected SEVEN action.")
-            else:
-                # Apply the selected action (non-SEVEN cards)
-                game.apply_action(selected_action)
+#                 if split_to_process:
+#                     print(f"Processing SEVEN split: {split_to_process}")
+#                     for split_action in split_to_process:
+#                         game.apply_action(split_action)
+#                     print("SEVEN card split handling complete.")
+#                 else:
+#                     print("No valid split found containing the selected SEVEN action.")
+#             else:
+#                 # Apply the selected action (non-SEVEN cards)
+#                 game.apply_action(selected_action)
 
-            # Draw the updated board after each turn
-            game.draw_board()
+#             # Draw the updated board after each turn
+#             game.draw_board()
 
-            # Check for deck consistency
-            game.validate_total_cards()
+#             # Check for deck consistency
+#             game.validate_total_cards()
 
-            # Optionally exit after a certain number of rounds (for testing)
-            if game.state.cnt_round > 15:
-                print(f"Ending game for testing after {game.state.cnt_round} rounds.")
-                break
+#             # Optionally exit after a certain number of rounds (for testing)
+#             if game.state.cnt_round > 15:
+#                 print(f"Ending game for testing after {game.state.cnt_round} rounds.")
+#                 break
 

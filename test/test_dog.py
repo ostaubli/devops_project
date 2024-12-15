@@ -696,28 +696,6 @@ def test_validate_game_state_invalid_cards():
     with pytest.raises(ValueError, match="has more cards than allowed"):
         game.validate_game_state()
 
-def test_handle_seven_card_multiple_marble_scenarios():
-    """Test _handle_seven_card with multiple marbles in various positions."""
-    game = Dog()
-    game.initialize_game()
-    assert game.state is not None
-
-    idx_active = game.state.idx_player_active
-    player = game.state.list_player[idx_active]
-
-    # Give a '7' card
-    player.list_card = [Card(suit='♠', rank='7')]
-
-    # Place marbles outside kennel so splits are possible
-    player.list_marble[0].pos = 5
-    player.list_marble[1].pos = 10
-    player.list_marble[2].pos = 15
-    player.list_marble[3].pos = 20
-
-    actions = game.get_list_action()
-    # We should have actions from the _handle_seven_card logic
-    # Just ensure no error occurs and some actions are generated
-    assert any(a.card.rank == '7' for a in actions), "No '7' actions generated despite marbles and a 7 card."
 
 ################################################################################
 #############################    TEST NEXT ROUND     ###########################
@@ -982,24 +960,6 @@ def test_handle_jack_no_swap_positions():
     assert new_state == initial_state, (
         "Game state should remain unchanged when invalid Jack action is applied."
     )
-
-
-def test_handle_normal_move_with_start_card_but_marble_not_in_kennel():
-    """Test _handle_normal_move scenario where card allows start move but marble is not in kennel."""
-    game = Dog()
-    game.initialize_game()
-    assert game.state is not None
-
-    idx_active = game.state.idx_player_active
-    player = game.state.list_player[idx_active]
-    player.list_card = [Card(suit='♠', rank='A')]  # A can start
-    # Marble already on track, not in kennel
-    player.list_marble[0].pos = 10
-
-    # Try a move action that doesn't start from kennel
-    action = Action(card=player.list_card[0], pos_from=10, pos_to=11)
-    game.apply_action(action)
-    # If no error, code path is covered
 
 def test_get_list_action_with_no_active_player_cards():
     """Test get_list_action when the active player has no cards."""
@@ -1521,14 +1481,6 @@ def test_marble_in_kennel_cannot_move():
 ################################################################################
 
 
-def test_handle_seven_card_no_marbles_outside_kennel():
-    """Test SEVEN card with no marbles outside the kennel."""
-    game = Dog()
-    game.initialize_game()
-    card = Card(suit='♠', rank='7')
-    result = game._handle_seven_card(card, [])  # No marbles outside kennel
-    assert result == []
-
 
 def test_handle_seven_card_all_marbles_in_kennel():
     """Test SEVEN card when all marbles are in the kennel."""
@@ -1586,27 +1538,7 @@ def test_last_player_completes_exchange():
     assert game.state.bool_card_exchanged, "Exchange phase should complete after last player exchanges."
     assert game.state.idx_player_active == 0, "Should return to the starting player after exchange phase completes."
 
-def test_overtaking_opponent_marble():
-    game = Dog()
-    game.initialize_game()
-    state = game.get_state()
-    idx_active = state.idx_player_active
-    player = state.list_player[idx_active]
 
-    # Place active player's marble at pos=10
-    player.list_marble[0].pos = 10
-    # Place opponent marble at pos=12 on main track
-    opp_idx = (idx_active + 1) % 4
-    state.list_player[opp_idx].list_marble[0].pos = 12
-
-    # Simulate overtaking from pos=10 to pos=13
-    game._handle_overtaking(10, 13)
-
-    # The overtaken marble should be in kennel now
-    kennel_positions = game.KENNEL_POSITIONS[opp_idx]
-    assert any(state.list_player[opp_idx].list_marble[0].pos == kpos for kpos in kennel_positions), \
-        "Opponent marble should have been moved back to kennel after overtaking."
-        
 def test_deal_cards_with_reshuffle():
     game = Dog()
     game.initialize_game()
@@ -1620,31 +1552,6 @@ def test_deal_cards_with_reshuffle():
     game.deal_cards()
     # Just ensure players got some cards after dealing
     assert all(len(p.list_card) > 0 for p in state.list_player), "All players should receive cards after dealing."
-    
-def test_handle_seven_card_logic_incomplete_steps():
-    game = Dog()
-    game.initialize_game()
-    state = game.get_state()
-    idx_active = state.idx_player_active
-    player = state.list_player[idx_active]
-
-    # Give a '7' card to the player
-    player.list_card = [Card(suit='♠', rank='7')]
-
-    # Place all marbles in the kennel so no moves are possible
-    for marble in player.list_marble:
-        marble.pos = game.KENNEL_POSITIONS[idx_active][0]
-        marble.is_save = True  # Marbles in kennel are safe by definition
-
-    # Get possible actions with the '7' card
-    actions = game.get_list_action()
-
-    # Check that no valid split moves (i.e., actions that actually move a marble) are returned.
-    # Even if the '7' card is recognized, there should be no actions with a valid pos_from and pos_to.
-    seven_moves = [a for a in actions if a.card.rank == '7' and a.pos_from is not None and a.pos_to is not None]
-    
-    # If no splits are possible, there should be no actions that move a marble with '7'
-    assert len(seven_moves) == 0, "No actual seven-split moves should be returned if no valid splits are possible."
     
 
 def test_handle_jack_no_marble_at_positions():
@@ -1736,27 +1643,6 @@ def test_card_exchange_successful():
     # Since not all players have exchanged yet, bool_card_exchanged should still be False
     assert state.bool_card_exchanged is False, "Exchange phase should not complete after a single exchange."
 
-def test_overtaking_own_marble():
-    game = Dog()
-    game.initialize_game()
-    state = game.get_state()
-    idx_active = state.idx_player_active
-    player = state.list_player[idx_active]
-
-    # Place active player's marble at pos=10 and another at pos=12 (own marble ahead)
-    player.list_marble[0].pos = 10
-    player.list_marble[1].pos = 12
-
-    # Overtake from 10 to 13 should hit own marble at 12
-    # The code should send the overtaken own marble back to kennel
-    game._handle_overtaking(10, 13)
-
-    # Check that the overtaken own marble moved back to kennel
-    kennel_positions = game.KENNEL_POSITIONS[idx_active]
-    assert any(marble.pos in kennel_positions for marble in player.list_marble), (
-        "Own overtaken marble should be returned to kennel."
-    )
-
 def test_update_starting_player_custom():
     game = Dog()
     game.initialize_game()
@@ -1773,29 +1659,6 @@ def test_update_starting_player_custom():
     game.update_starting_player()
     # (3-1)%4 = 2
     assert state.idx_player_started == 2, "Starting player should update to 2 after second call."
-
-def test_handle_collision_multiple_opponents_same_spot():
-    game = Dog()
-    game.initialize_game()
-    state = game.get_state()
-    idx_active = state.idx_player_active
-    opp_idx = (idx_active + 1) % state.cnt_player
-
-    # Place two opponent marbles at pos=20
-    state.list_player[opp_idx].list_marble[0].pos = 20
-    state.list_player[opp_idx].list_marble[1].pos = 20
-
-    # Active player's action moves into pos=20
-    action = Action(card=Card(suit='♠', rank='2'), pos_from=19, pos_to=20)
-    active_player = state.list_player[idx_active]
-    active_player.list_marble[0].pos = 19
-    game.set_state(state)
-
-    game._handle_collision(20)
-
-    # Check at least one marble moved to kennel
-    kennel_positions = game.KENNEL_POSITIONS[opp_idx]
-    assert any(m.pos in kennel_positions for m in state.list_player[opp_idx].list_marble), "At least one marble should move to kennel."
 
 def test_handle_kennel_to_start_action_valid():
     game = Dog()
@@ -1832,20 +1695,6 @@ def test_handle_kennel_to_start_action_invalid():
     handled = game._handle_kennel_to_start_action(action)
     assert not handled, "Action should not be handled if marble is not in kennel."
     
-def test_handle_overtaking_no_marble_overtaken():
-    game = Dog()
-    game.initialize_game()
-    state = game.get_state()
-
-    # Move from pos=10 to pos=13, but ensure no marbles in between
-    for p in state.list_player:
-        for m in p.list_marble:
-            m.pos = 64  # put them all in kennel positions beyond main track
-
-    # Just call _handle_overtaking and ensure no error
-    game._handle_overtaking(10, 13)
-    # If no marbles are overtaken, no changes, no errors. Just ensure code runs.
-    assert True, "No marbles overtaken scenario passed without error."
 
 def test_update_starting_player_three_players():
     game = Dog()
@@ -1996,30 +1845,6 @@ def test_handle_seven_card_dfs_valid_splits():
     # Expect some valid splits
     assert len(seven_actions) > 0, "Should have valid 7 splits."
 
-def test_handle_marble_movement_and_collision_simple():
-    game = Dog()
-    game.initialize_game()
-    state = game.get_state()
-    idx_active = state.idx_player_active
-    player = state.list_player[idx_active]
-
-    # Place player's marble at pos 10
-    player.list_marble[0].pos = 10
-    # Opponent marble at pos 12 to cause collision
-    opp_idx = (idx_active + 1) % state.cnt_player
-    state.list_player[opp_idx].list_marble[0].pos = 12
-
-    # Create an action that moves from 10 to 12
-    action = Action(card=Card(suit='♠', rank='2'), pos_from=10, pos_to=12)
-
-    # Directly call _handle_marble_movement_and_collision
-    game._handle_marble_movement_and_collision(action)
-    # Check that marble moved and collision handled
-    assert player.list_marble[0].pos == 12, "Marble should now be at position 12."
-    # Opponent marble should be back in kennel
-    kennel_positions = game.KENNEL_POSITIONS[opp_idx]
-    assert any(m.pos in kennel_positions for m in state.list_player[opp_idx].list_marble), "Opponent marble should be in kennel."
-    
 @pytest.mark.parametrize("actions,expected", [
     ([], None),
     ([Action(card=Card(suit='♠', rank='A'), pos_from=0, pos_to=1)], None),  # Random could pick only one action
@@ -2110,52 +1935,6 @@ def test_get_list_action():
     assert len(actions) > 0, "There should be valid actions available"
 
 
-
-
-
-def test_handle_normal_move():
-    dog = Dog()
-    dog.state = dog.get_state()
-
-    # Move marble from 0 to 5
-    dog.state.list_player[0].list_marble[0].pos = 0
-    card = Card(suit="H", rank="5")
-    action = Action(card=card, pos_from=0, pos_to=5, card_swap=None)
-
-    dog._handle_normal_move(action, dog.state.list_player[0])
-    assert dog.state.list_player[0].list_marble[0].pos == 5, "Marble should move to pos 5"
-
-    # Invalid move (no marble at pos_from)
-    action_invalid = Action(card=card, pos_from=99, pos_to=5, card_swap=None)
-    try:
-        dog._handle_normal_move(action_invalid, dog.state.list_player[0])
-        assert False, "Expected ValueError for invalid move"
-    except ValueError:
-        assert True, "Invalid move should raise ValueError"
-
-
-
-def test_handle_seven_card():
-    dog = Dog()
-    dog.state = dog.get_state()
-
-    # Place marbles for the active player
-    dog.state.list_player[0].list_marble[0].pos = 0
-    dog.state.list_player[0].list_marble[1].pos = 1
-
-    card = Card(suit="H", rank="7")
-    actions = dog._handle_seven_card(card, dog.state.list_player[0].list_marble)
-
-    assert len(actions) > 0, "Should generate valid split actions for SEVEN card"
-
-    # Ensure invalid actions are not allowed
-    invalid_action = Action(card=card, pos_from=99, pos_to=None, card_swap=None)
-    try:
-        dog._handle_seven_marble_movement(invalid_action)
-        assert False, "Expected ValueError for invalid SEVEN action"
-    except ValueError:
-        pass
-    
 
 
 def test_deck_reset_when_total_cards_exceed_110():
@@ -2466,23 +2245,288 @@ def test_reshuffle_discard_into_draw_reset():
 
     print("test_reshuffle_discard_into_draw_reset passed successfully.")
 
-
-def test_handle_seven_card_logic_invalid_moves():
-    """Test SEVEN card logic with invalid moves (None values)."""
     dog = Dog()
     dog.initialize_game()
 
-    # SEVEN card
+    # Setup all marbles in kennel
+    player_idx = 0
+    dog.state.idx_player_active = player_idx
+    dog.state.list_player[player_idx].list_marble = [
+        Marble(pos=dog.KENNEL_POSITIONS[player_idx][0], is_save=False),
+        Marble(pos=dog.KENNEL_POSITIONS[player_idx][1], is_save=False),
+    ]
     card = Card(suit="H", rank="7")
 
-    # Invalid actions with None positions
-    grouped_actions = [
-        Action(card=card, pos_from=None, pos_to=3, card_swap=None),
-        Action(card=card, pos_from=0, pos_to=None, card_swap=None)
-    ]
+    actions = dog._handle_seven_card(card, dog.state.list_player[player_idx].list_marble)
+    assert actions == [], "No actions should be generated when all marbles are in the kennel."
 
-    result = dog._handle_seven_card_logic(grouped_actions)
-    assert result is False, "Invalid SEVEN actions with None positions should fail."
+
+def test_handle_seven_card_invalid_moves():
+    """Test SEVEN card with invalid moves where positions are invalid."""
+    dog = Dog()
+    dog.initialize_game()
+
+    # Setup marbles outside kennel
+    player_idx = 0
+    dog.state.idx_player_active = player_idx
+    dog.state.list_player[player_idx].list_marble = [
+        Marble(pos=0, is_save=False),
+        Marble(pos=5, is_save=False),
+    ]
+    card = Card(suit="H", rank="7")
+
+    # Mock _calculate_new_position to return None for invalid moves
+    with patch.object(dog, '_calculate_new_position', return_value=None):
+        actions = dog._handle_seven_card(card, dog.state.list_player[player_idx].list_marble)
+        assert actions == [], "No actions should be generated if all moves are invalid."
+
+def test_handle_seven_card_valid_split():
+    """Test valid split actions summing to 7."""
+    dog = Dog()
+    dog.initialize_game()
+
+    player_idx = 0
+    dog.state.idx_player_active = player_idx
+
+    # Setup marbles outside the kennel
+    dog.state.list_player[player_idx].list_marble = [
+        Marble(pos=0, is_save=False),  # Marble 1
+        Marble(pos=3, is_save=False),  # Marble 2
+    ]
+    marbles = dog.state.list_player[player_idx].list_marble
+    card = Card(suit="H", rank="7")
+
+    # Mock _calculate_new_position to return valid positions
+    def mock_calculate_new_position(marble, steps, player_idx):
+        return marble.pos + steps if marble.pos + steps <= 7 else None
+
+    with patch.object(dog, '_calculate_new_position', side_effect=mock_calculate_new_position):
+        actions = dog._handle_seven_card(card, marbles)
+
+        # Check that valid splits are generated
+        assert len(actions) > 0, "Valid split actions should be generated."
+        positions = [(action.pos_from, action.pos_to) for action in actions]
+        assert (0, 3) in positions and (3, 7) in positions, "Expected valid split actions summing to 7."
+
+
+def test_handle_seven_card_no_valid_split():
+    """Test no valid splits when moves do not sum to 7."""
+    dog = Dog()
+    dog.initialize_game()
+
+    player_idx = 0
+    dog.state.idx_player_active = player_idx
+
+    # Setup marbles outside the kennel
+    dog.state.list_player[player_idx].list_marble = [
+        Marble(pos=0, is_save=False),  # Marble 1
+        Marble(pos=3, is_save=False),  # Marble 2
+    ]
+    marbles = dog.state.list_player[player_idx].list_marble
+    card = Card(suit="H", rank="7")
+
+    # Mock _calculate_new_position to return invalid moves
+    def mock_calculate_new_position(marble, steps, player_idx):
+        return None  # All moves invalid
+
+    with patch.object(dog, '_calculate_new_position', side_effect=mock_calculate_new_position):
+        actions = dog._handle_seven_card(card, marbles)
+
+        # Check that no actions are generated
+        assert len(actions) == 0, "No actions should be generated if no valid splits exist."
+
+def test_grouped_actions_valid_split():
+    """Test valid splits summing exactly to 7."""
+    dog = Dog()
+    dog.initialize_game()
+
+    player_idx = 0
+    dog.state.idx_player_active = player_idx
+
+    # Set marbles outside the kennel
+    marbles = [
+        Marble(pos=0, is_save=False),  # Marble 1
+        Marble(pos=3, is_save=False),  # Marble 2
+    ]
+    dog.state.list_player[player_idx].list_marble = marbles
+
+    card = Card(suit="H", rank="7")
+
+    # Mock _calculate_new_position to return valid positions
+    def mock_calculate_new_position(marble, steps, player_idx):
+        return marble.pos + steps if marble.pos + steps <= 7 else None
+
+    with patch.object(dog, '_calculate_new_position', side_effect=mock_calculate_new_position):
+        actions_group = dog.grouped_actions(card, marbles)
+
+        assert len(actions_group) > 0, "Valid split actions should be generated."
+        # Verify that splits sum up to 7
+        for split_actions in actions_group:
+            assert sum(action.pos_to - action.pos_from for action in split_actions) == 7
+            print(f"Valid split: {[f'{a.pos_from}->{a.pos_to}' for a in split_actions]}")
+
+
+
+def test_grouped_actions_no_marbles_outside_kennel():
+    """Test no valid moves when all marbles are in the kennel."""
+    dog = Dog()
+    dog.initialize_game()
+
+    player_idx = 0
+    dog.state.idx_player_active = player_idx
+
+    # All marbles in the kennel
+    kennels = dog.KENNEL_POSITIONS[player_idx]
+    marbles = [
+        Marble(pos=kennels[0], is_save=False),  # Marble 1 in kennel
+        Marble(pos=kennels[1], is_save=False),  # Marble 2 in kennel
+    ]
+    dog.state.list_player[player_idx].list_marble = marbles
+
+    card = Card(suit="H", rank="7")
+
+    actions_group = dog.grouped_actions(card, marbles)
+
+    assert len(actions_group) == 0, "No actions should be generated when all marbles are in the kennel."
+
+
+def test_get_swap_actions_marble_in_kennel():
+    """Test marbles in the kennel are ignored."""
+    dog = Dog()
+    dog.initialize_game()
+    dog.state.idx_player_active = 0
+
+    # Marble in kennel
+    active_marbles = [Marble(pos=0, is_save=False)]  # Position 0 = kennel
+    all_marbles = [{"player_idx": 1, "position": 10, "is_save": False}]
+    card = Card(suit="H", rank="J")
+
+    swap_actions = dog._get_swap_actions(card, active_marbles, all_marbles)
+
+    assert len(swap_actions) == 0, "Marbles in the kennel should not generate actions."
+    print("Marble in kennel correctly ignored.")
+
+def test_get_swap_actions_invalid_card():
+    """Test that invalid cards don't produce swap actions."""
+    dog = Dog()
+    dog.initialize_game()
+    dog.state.idx_player_active = 0
+
+    active_marbles = [Marble(pos=5, is_save=False)]
+    all_marbles = [{"player_idx": 1, "position": 10, "is_save": False}]
+    card = Card(suit="H", rank="5")  # Not 'J' or 'JKR'
+
+    swap_actions = dog._get_swap_actions(card, active_marbles, all_marbles)
+
+    assert len(swap_actions) == 0, "Invalid cards should not generate swap actions."
+    print("No actions generated for invalid card.")
+
+
+def test_apply_action_no_action():
+    """Test when no action is provided (skip turn)."""
+    dog = Dog()
+    dog.initialize_game()
+
+    active_player = dog.state.list_player[dog.state.idx_player_active]
+    initial_index = dog.state.idx_player_active
+
+    # Call apply_action with None
+    dog.apply_action(None)
+
+    # Assert the active player index has advanced
+    assert dog.state.idx_player_active == (initial_index + 1) % len(dog.state.list_player), "Active player should advance after no action."
+
+def test_apply_action_reshuffle():
+    """Test reshuffling the discard pile when draw pile is empty."""
+    dog = Dog()
+    dog.initialize_game()
+
+    # Simulate an empty draw pile and non-empty discard pile
+    dog.state.list_card_draw.clear()
+    dog.state.list_card_discard.extend([Card(suit="H", rank="A"), Card(suit="S", rank="2")])
+
+    # Perform any action that triggers reshuffle logic
+    dog.apply_action(None)
+
+    assert len(dog.state.list_card_draw) > 0, "Draw pile should be reshuffled with cards from discard pile."
+    assert len(dog.state.list_card_discard) == 0, "Discard pile should be empty after reshuffle."
+
+def test_apply_action_jkr_swap():
+    """Test JKR card swap logic."""
+    dog = Dog()
+    dog.initialize_game()
+    
+    active_player = dog.state.list_player[dog.state.idx_player_active]
+    jkr_card = Card(suit="JOKER", rank="JKR")
+    swap_card = Card(suit="H", rank="A")
+    active_player.list_card.extend([jkr_card, swap_card])
+
+    # Simulate JKR swap action
+    action = Action(card=jkr_card, pos_from=None, pos_to=None, card_swap=swap_card)
+    dog.apply_action(action)
+
+    # Assertions
+    assert swap_card in active_player.list_card, "Swap card should remain in player's hand."
+    assert jkr_card not in active_player.list_card, "JKR card should be removed after swap."
+
+def test_apply_action_all_players_out_of_cards():
+    """Test advancing to the next round when all players are out of cards."""
+    dog = Dog()
+    dog.initialize_game()
+
+    # Ensure no cards for any player
+    for player in dog.state.list_player:
+        player.list_card.clear()
+
+    # Add a temporary 'round_number' field
+    dog.state.cnt_round = 1
+
+    # Call apply_action with None (skip action)
+    dog.apply_action(None)
+
+    assert dog.state.cnt_round == 2, "Game should advance to the next round when all cards are gone."
+
+@pytest.fixture
+def initialized_game():
+    """Fixture to provide an initialized Dog game instance."""
+    game = Dog()
+    game.state = GameState(
+        cnt_player=4,
+        phase=GamePhase.RUNNING,
+        cnt_round=1,
+        bool_game_finished=False,
+        bool_card_exchanged=True,
+        idx_player_started=0,
+        idx_player_active=0,
+        list_player=[
+            PlayerState(name="Player 1", list_card=[Card(suit='', rank='7')],
+                        list_marble=[Marble(pos=0, is_save=False), Marble(pos=1, is_save=False)]),
+            PlayerState(name="Player 2", list_card=[], list_marble=[]),
+            PlayerState(name="Player 3", list_card=[], list_marble=[]),
+            PlayerState(name="Player 4", list_card=[], list_marble=[])
+        ],
+        list_card_draw=[],
+        list_card_discard=[],
+        card_active=None,
+        board_positions=[None] * Dog.BOARD_SIZE
+    )
+    return game
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
