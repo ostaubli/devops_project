@@ -164,6 +164,8 @@ class Dog(Game):
             return self.CARD_VALUES[card.rank]
         # Dynamically handle numeric ranks (excluding 4 and 7, as they are special cases)
         if card.rank.isdigit() and card.rank.isdigit() != 7:
+            if card.rank.isdigit() == 4:
+                return[-4,4]
             return [int(card.rank)]
         # Default to [0] for invalid cards
         return [0]
@@ -416,7 +418,8 @@ class Dog(Game):
             - The start position is not occupied by the active player's own marble.
             - The card rank is one of the starting cards.
             """
-            if num_in_kennel == 0 or player_start_position in active_marbles_positions: return False
+            if num_in_kennel == 0 or player_start_position in active_marbles_positions: 
+                return False
 
             return card_rank in self.STARTING_CARDS
 
@@ -773,9 +776,10 @@ class Dog(Game):
 
         #check if only a joker was swapped
         if action.card.rank == 'JKR' and action.card_swap is not None:
-            print(f"{active_player.name} exchanges {action.card.rank} with {action.card_swap.rank}.")
+            print(f"{active_player.name} exchanges {action.card.rank} wit {action.card_swap.rank}.")
             active_player.list_card.append(action.card_swap)
             active_player.list_card.remove(action.card)
+            self.state.card_active = action.card_swap
             # check for further code row: self.state
             return
 
@@ -1132,7 +1136,7 @@ class Dog(Game):
         assert self.state   # Ensure the game state is set  
 
         # Collect all positions between `pos_from` and `pos_to`
-        overtaken_positions = []
+        overtaken_positions: list[int] = []
         if move_action.pos_from < move_action.pos_to:
             overtaken_positions = range(move_action.pos_from + 1, move_action.pos_to + 1)
         else:
