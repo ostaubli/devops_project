@@ -334,13 +334,13 @@ class GameState(BaseModel):
         # Action is from the active Player
         # Set Action to the GameState ==> make movement on the "board"
         marble_to_move = next((marble for marble in self.list_player[self.idx_player_active].list_marble if marble.pos == action.pos_from), None)
-        
+
         # Check if marble comes from kenel
         if marble_to_move.pos == marble_to_move.start_pos:
             marble_to_move.is_save = True
 
         # Goes in final
-        elif action.pos_to > 63: 
+        elif action.pos_to > 63:
             marble_to_move.is_save = True
         # Set Action pos to game
         marble_to_move.pos = action.pos_to
@@ -380,23 +380,6 @@ class GameState(BaseModel):
                 # Check if the marble occupies the same position but isn't the same marble
                 if p_marble.pos == moved_marble.pos and p_marble != moved_marble:
                     p_marble.pos = p_marble.start_pos
-
-    # def sending_home(self, marble: Marble, card: Card, action: Action) -> bool:
-    #     # First case: A marble of another player lands exactly on the position of my marble
-    #     for current_player in self.list_player:
-    #         for opponent_marble in current_player.list_marble:
-    #             if opponent_marble.pos == marble.pos and opponent_marble != marble:
-    #                 marble.pos = marble.start_pos
-    #                 marble.is_save = True
-    #                 return True
-
-    #     # Second case: My marble gets jumped over by a marble with a 7-card
-    #     if action and action.pos_from is not None and action.pos_to is not None:
-    #         if action.pos_from < marble.pos < action.pos_to:
-    #             marble.pos = marble.start_pos
-    #             marble.is_save = True
-    #             return True
-    #     return False
 
     def marble_switch_jake(self, player_idx: int, opponent_idx: int, player_marble_pos: int,
                            opponent_marble_pos: int):  # Kened

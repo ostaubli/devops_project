@@ -264,8 +264,6 @@ class TestGameState:
     def test_sending_home(self) -> None:
         # Arrange
         game_state = GameState()
-
-    # Initialisierung der Spieler mit den verlangten Attributen in PlayerState
         player1 = PlayerState(
             list_card=[],
             list_finish_pos=[],
@@ -274,7 +272,6 @@ class TestGameState:
             name="Player1",
             start_pos=0,
         )
-
         player2 = PlayerState(
             list_card=[],
             list_finish_pos=[],
@@ -284,40 +281,23 @@ class TestGameState:
             start_pos=0,
         )
 
-        # Initialisiere Murmeln
-        marble1 = Marble(pos=0, start_pos=0, is_save=False)
-        marble2 = Marble(pos=5, start_pos=5, is_save=False)
+        marble1 = Marble(pos=5, start_pos=64, is_save=False)  # Moved marble
+        marble2 = Marble(pos=5, start_pos=65, is_save=False)  # Marble at same position
+        marble3 = Marble(pos=3, start_pos=72, is_save=False)  # Unaffected marble
+        marble4 = Marble(pos=8, start_pos=73, is_save=False)  # Unaffected marble
 
-        # Füge Murmeln den Spielern hinzu
-        player1.list_marble.append(marble1)
-        player2.list_marble.append(marble2)
+        player1.list_marble = [marble1, marble3]
+        player2.list_marble = [marble2, marble4]
+        game_state.list_player = [player1, player2]
 
-        # Füge Spieler zum GameState hinzu
-        game_state.list_player.extend([player1, player2])
+        # Act
+        game_state.sending_home(marble1)
 
-        # Case 1: Marble2 lands on position of marble1
-        marble2.pos = 0
-        result = game_state.sending_home(marble1, None, None)  # Keine Action benötigt
-        assert result is True
-        assert marble1.pos == marble1.start_pos
-        assert marble1.is_save is True
-
-        # Case 2: Marble2 does not land on position of marble1
-        marble2.pos = 1
-        result = game_state.sending_home(marble1, None, None)  # Keine Action benötigt
-        assert result is False
-        assert marble1.pos == 0
-        assert marble1.is_save is True
-
-        # Case 3: Marble1 gets jumped over by Marble2 with a 7-card
-        card = Card(suit='hearts', rank='7')  # Erstellt eine gültige Karte
-        action = Action(card=card, pos_from=3, pos_to=8)  # Erstellt eine gültige Action mit Karte und Positionen
-        marble1.pos = 5
-
-        result = game_state.sending_home(marble1, card, action)
-        assert result is True
-        assert marble1.pos == marble1.start_pos
-        assert marble1.is_save is True
+        # Assert
+        assert marble2.pos == marble2.start_pos  # Check marble2 is sent home
+        assert marble1.pos == 5  # marble1 remains in its position
+        assert marble3.pos == 3  # Unaffected marble stays in place
+        assert marble4.pos == 8  # Unaffected marble stays in place
 
 
     def test_skip_save_marble(self) -> None:
