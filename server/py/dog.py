@@ -561,18 +561,21 @@ class GameState(BaseModel):
     def init_next_turn(self) -> None:
         """
         Sets the next player with cards to active.
-        if there are all cards played it deals new cards
+        If all cards are played, it deals new cards and starts a new round.
         """
+        original_active_player = self.idx_player_active
 
-        # Start with the next player
-        idx_next_player = (self.idx_player_active +1) %4
+        while True:
+            self.idx_player_active = (self.idx_player_active + 1) % self.cnt_player
 
-        if idx_next_player == self.idx_player_started:
-            self.deal_cards()
-            self.idx_player_started = (self.idx_player_started + 1) % 4
-            self.idx_player_active = self.idx_player_started
-        else:
-            self.idx_player_active = idx_next_player
+            if self.idx_player_active == original_active_player:
+                self.deal_cards()
+                self.idx_player_started = (self.idx_player_started + 1) % self.cnt_player
+                self.idx_player_active = 0
+                return
+
+            if self.list_player[self.idx_player_active].list_card:
+                return
 
     def __str__(self) -> str:
         main_seperator = "*"*50+"\n"
