@@ -754,8 +754,8 @@ class Dog(Game):
             self.state.card_active = action.card_swap
             return
 
-        print(f"Player {active_player.name} plays {action.card.rank} of {action.card.suit} "
-        f"moving marble from {action.pos_from} to {action.pos_to}.")
+        # print(f"Player {active_player.name} plays {action.card.rank} of {action.card.suit} "
+        # f"moving marble from {action.pos_from} to {action.pos_to}.")
 
         # Handle Jack card swaps and skip collision checks
         if action.card.rank == 'J':
@@ -801,56 +801,61 @@ class Dog(Game):
             print("No valid split actions provided for SEVEN card.")
             return False
 
-        for split_actions in grouped_actions:
-            # print(f"Processing a split with {len(split_actions)} actions.")
-            for split_action in split_actions:
-                assert self.state
-                steps_used = abs(split_action.pos_to - split_action.pos_from)
+        for split_action in grouped_actions:
+            assert self.state
 
-                # Check for SAFE_SPACES inside-out logic
-                if split_action.pos_to in self.SAFE_SPACES[self.state.idx_player_active]:
-                    safe_space_index = self.SAFE_SPACES[self.state.idx_player_active].index(split_action.pos_to)
-                    expected_safe_space = self.SAFE_SPACES[self.state.idx_player_active][:safe_space_index]
-                    if any(
-                        pos not in expected_safe_space
-                        for pos in self.SAFE_SPACES[self.state.idx_player_active][:safe_space_index]
-                    ):
-                        print(f"Invalid SAFE_SPACE move: {split_action.pos_to} violates inside-out rule.")
-                        continue
+            # Validate split_action.pos_from and split_action.pos_to
+            if split_action.pos_from is None or split_action.pos_to is None:
+                print(f"Invalid split action: pos_from={split_action.pos_from}, pos_to={split_action.pos_to}")
+                continue  # Skip invalid actions
 
-                print(f'''Processing SEVEN card action:
-                    {split_action.pos_from} -> {split_action.pos_to} with {steps_used} steps.''')
-                try:
-                    self._handle_seven_marble_movement(split_action)
-                    print(f'''SEVEN card: marble successfully moved
-                        from {split_action.pos_from} to {split_action.pos_to}.''')
+            steps_used = abs(split_action.pos_to - split_action.pos_from)
 
-                    # Validate that the active player's marble was moved to the expected position
-                    active_player = self.state.list_player[self.state.idx_player_active]
-                    marble_found = any(marble.pos == split_action.pos_to for marble in active_player.list_marble)
-                    if not marble_found:
-                        raise AssertionError(
-                            f'''Active player's marble was not found
-                            at the expected position {split_action.pos_to} after the move. '''
-                            f'''Current marble positions:
-                            {[marble.pos for marble in active_player.list_marble]}'''
-                        )
+            # Check for SAFE_SPACES inside-out logic
+            if split_action.pos_to in self.SAFE_SPACES[self.state.idx_player_active]:
+                safe_space_index = self.SAFE_SPACES[self.state.idx_player_active].index(split_action.pos_to)
+                expected_safe_space = self.SAFE_SPACES[self.state.idx_player_active][:safe_space_index]
+                if any(
+                    pos not in expected_safe_space
+                    for pos in self.SAFE_SPACES[self.state.idx_player_active][:safe_space_index]
+                ):
+                    print(f"Invalid SAFE_SPACE move: {split_action.pos_to} violates inside-out rule.")
+                    continue
 
-                    print(f"Validation Passed: Active player's marble is now at position {split_action.pos_to}.")
+            print(f'''Processing SEVEN card action:
+                {split_action.pos_from} -> {split_action.pos_to} with {steps_used} steps.''')
+            try:
+                self._handle_seven_marble_movement(split_action)
+                print(f'''SEVEN card: marble successfully moved
+                    from {split_action.pos_from} to {split_action.pos_to}.''')
 
-                except ValueError as e:
-                    print(f"Error processing action {split_action.pos_from} -> {split_action.pos_to}: {e}")
-                    return False
+                # Validate that the active player's marble was moved to the expected position
+                active_player = self.state.list_player[self.state.idx_player_active]
+                marble_found = any(marble.pos == split_action.pos_to for marble in active_player.list_marble)
+                if not marble_found:
+                    raise AssertionError(
+                        f'''Active player's marble was not found
+                        at the expected position {split_action.pos_to} after the move. '''
+                        f'''Current marble positions:
+                        {[marble.pos for marble in active_player.list_marble]}'''
+                    )
 
-                # Deduct steps used from remaining steps
-                remaining_steps -= steps_used
+                print(f"Validation Passed: Active player's marble is now at position {split_action.pos_to}.")
 
-                if remaining_steps <= 0:
-                    print("All steps for SEVEN card have been processed.")
-                    return True
+            except ValueError as e:
+                print(f"Error processing action {split_action.pos_from} -> {split_action.pos_to}: {e}")
+                return False
+
+            # Deduct steps used from remaining steps
+            remaining_steps -= steps_used
+
+            if remaining_steps <= 0:
+                print("All steps for SEVEN card have been processed.")
+                return True
 
         print("SEVEN card logic complete but not all steps were used.")
         return False
+
 
     def _check_game_finished(self) -> None:
         """Check if the game has finished or a player should help their teammate."""
@@ -901,12 +906,12 @@ class Dog(Game):
                     # Update marble position and mark as safe
                     marble.pos = kennel_action.pos_to
                     marble.is_save = True
-                    print(f"Marble moved from kennel to start position: {marble.pos}.")
+                    # print(f"Marble moved from kennel to start position: {marble.pos}.")
 
                     # Log the kennel_action
-                    print(f"Player {active_player.name} plays {kennel_action.card.rank} "+
-                        f"of {kennel_action.card.suit} moving marble from {kennel_action.pos_from} "+
-                        f"to {kennel_action.pos_to}.")
+                    # print(f"Player {active_player.name} plays {kennel_action.card.rank} "+
+                    #     f"of {kennel_action.card.suit} moving marble from {kennel_action.pos_from} "+
+                    #     f"to {kennel_action.pos_to}.")
 
                     return True  # Action handled successfully
         return False  # Action does not involve moving from kennel to start
@@ -1069,7 +1074,8 @@ class Dog(Game):
                     marble.pos = pos_to  # Assign the (default or valid) pos_to
                     marble.is_save = marble.pos in self.SAFE_SPACES[idx_active]
                     if marble.is_save:
-                        print(f"Marble moved to a safe space at position {marble.pos}.")
+                        pass
+                        # print(f"Marble moved to a safe space at position {marble.pos}.")
                     break
             else:
                 raise ValueError(f"No marble found at position {move_action.pos_from} for Player {active_player.name}.")
@@ -1124,9 +1130,9 @@ class Dog(Game):
         # Move the active player's marble
         for marble in active_player.list_marble:
             if marble.pos == seven_action.pos_from:
-                print(f'''Processing split seven_action:
-                    pass
-                    # Moving marble from {seven_action.pos_from} to {seven_action.pos_to}.''')
+                pass
+                # print(f'''Processing split seven_action:
+                #     # Moving marble from {seven_action.pos_from} to {seven_action.pos_to}.''')
                 
                 # Check if pos_to is not None before assignment
                 if seven_action.pos_to is None:
@@ -1137,7 +1143,8 @@ class Dog(Game):
                 marble.pos = seven_action.pos_to
                 marble.is_save = marble.pos in self.SAFE_SPACES[self.state.idx_player_active]
                 if marble.is_save:
-                    print(f"Marble moved to a safe space at position {marble.pos}.")
+                    pass
+                    # print(f"Marble moved to a safe space at position {marble.pos}.")
                 break
         else:
             raise ValueError(

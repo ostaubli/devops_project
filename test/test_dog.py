@@ -2466,20 +2466,30 @@ def test_reshuffle_discard_into_draw_reset():
 
     print("test_reshuffle_discard_into_draw_reset passed successfully.")
 
-def test_handle_seven_card_logic_marble_not_found():
-    """Test handling SEVEN card where the marble is not found at pos_from."""
+
+def test_handle_seven_card_logic_invalid_moves():
+    """Test SEVEN card logic with invalid moves (None values)."""
     dog = Dog()
     dog.initialize_game()
-    # No marble at starting position 0
+
+    # SEVEN card
     card = Card(suit="H", rank="7")
+
+    # Invalid actions with None positions
     grouped_actions = [
-        [
-            Action(card=card, pos_from=0, pos_to=3, card_swap=None)
-        ]
+        Action(card=card, pos_from=None, pos_to=3, card_swap=None),
+        Action(card=card, pos_from=0, pos_to=None, card_swap=None)
     ]
 
-    # Call the method
     result = dog._handle_seven_card_logic(grouped_actions)
-    assert result is False, "Actions where no marble exists at pos_from should fail."
+    assert result is False, "Invalid SEVEN actions with None positions should fail."
+
+
+
+
+
+
+
+
 
 
