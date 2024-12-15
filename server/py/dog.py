@@ -337,7 +337,9 @@ class Dog(Game):
                         if steps > 0:  # Check only marbles with non-zero moves
                             marble = marbles_outside_kennel[marble_indices[i]]
                             pos_to: Optional[int] = self._calculate_new_position(marble, steps, player_idx)
-                            if pos_to is None: valid_split = False; break
+                            if pos_to is None:
+                                valid_split = False
+                                break
 
                     # If valid, append the current split result
                     if valid_split:
@@ -414,7 +416,8 @@ class Dog(Game):
             - The start position is not occupied by the active player's own marble.
             - The card rank is one of the starting cards.
             """
-            if num_in_kennel == 0 or player_start_position in active_marbles_positions: return False
+            if num_in_kennel == 0 or player_start_position in active_marbles_positions:
+                return False
 
             return card_rank in self.STARTING_CARDS
 
@@ -583,7 +586,8 @@ class Dog(Game):
                             continue  # Skip opponent marbles and marbles in the kennel
 
                         for target in all_marbles:
-                            if target["player_idx"] != self.state.idx_player_active or marble is target or target["position"] > 63:
+                            if (target["player_idx"] != self.state.idx_player_active or
+                                marble is target or target["position"] > 63):
                                 continue  # Skip the same marble and marbles in the kennel
 
                             # Add valid self-swap action
@@ -778,8 +782,8 @@ class Dog(Game):
                 # Advance player
                 self.state.idx_player_active = (self.state.idx_player_active + 1) % len(self.state.list_player)
             return
-        else:
-            self._handle_normal_move(action, active_player)
+
+        self._handle_normal_move(action, active_player)
         # Check for collision with other players' marbles
         self._check_collisions(action)
         # Remove the played card from the player's hand
@@ -931,13 +935,13 @@ class Dog(Game):
                     f"Moving active player's marble from {mm_action.pos_from}"
                     f" to {mm_action.pos_to}."
                 )
-                
+
                 # Check if pos_to is not None before assignment
                 if mm_action.pos_to is None:
                     raise ValueError(
                         "mm_action.pos_to cannot be None when moving a marble."
                     )
-                
+
                 marble.pos = mm_action.pos_to
                 marble.is_save = marble.pos in self.SAFE_SPACES[self.state.idx_player_active]
                 if marble.is_save:
@@ -1130,16 +1134,16 @@ class Dog(Game):
         # Move the active player's marble
         for marble in active_player.list_marble:
             if marble.pos == seven_action.pos_from:
-                pass
-                # print(f'''Processing split seven_action:
-                #     # Moving marble from {seven_action.pos_from} to {seven_action.pos_to}.''')
-                
+                # pass
+                print(f'''Processing split seven_action:
+                    # Moving marble from {seven_action.pos_from} to {seven_action.pos_to}.''')
+
                 # Check if pos_to is not None before assignment
                 if seven_action.pos_to is None:
                     raise ValueError(
                         "seven_action.pos_to cannot be None when moving a marble."
                     )
-                
+
                 marble.pos = seven_action.pos_to
                 marble.is_save = marble.pos in self.SAFE_SPACES[self.state.idx_player_active]
                 if marble.is_save:
@@ -1345,7 +1349,7 @@ class Dog(Game):
 # if __name__ == '__main__':
 
     # game = Dog()
-    # random_player = RandomPlayer()
+    random_player = RandomPlayer()
     # if game.state is None:
     #     print("Error: Game state is not initialized. Exiting...")
 
@@ -1360,7 +1364,8 @@ class Dog(Game):
     #         # Display possible game_actions
     #         print("\nPossible Actions:")
     #         for idx, action in enumerate(game_actions):
-    #             print(f"{idx}: Play {action.card.rank} of {action.card.suit} from {action.pos_from} to {action.pos_to}")
+    #             print(f'''{idx}: Play {action.card.rank} of {action.card.suit}
+    #                       from {action.pos_from} to {action.pos_to}''')
     #         # Select an action (random in this example)
     #         selected_action = random_player.select_action(state=game.state, actions=game_actions)
     #         # Apply the selected action
