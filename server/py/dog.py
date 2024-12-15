@@ -5,10 +5,11 @@ This module contains the core game logic and data structures for the Dog card ga
 
 # runcmd: cd ../.. & venv\Scripts\python server/py/dog_template.py
 import random
-from typing import List, Optional, Dict, Any, Set
+from typing import List, Optional, Dict, Any, Set, Union
 from server.py.game import Game
 from server.py.dog_game_state import Card, Marble, PlayerState, Action, GameState, GamePhase
 from server.py.dog_player import RandomPlayer
+
 class Dog(Game):
     """
     Dog board game implementation.
@@ -312,14 +313,16 @@ class Dog(Game):
     def _handle_seven_card(self, card: Card, active_marbles: List[Marble]) -> List[List[Action]]:
         """Generate all possible split actions for the `7` card."""
 
-        assert self.state
+        if not self.state:
+            raise ValueError("Game state is not set.")
 
         player_idx = self.state.idx_player_active
         kennels = self.KENNEL_POSITIONS
 
         # Filter out marbles in the kennel
         marbles_outside_kennel = [
-            marble for marble in active_marbles if marble.pos not in kennels[player_idx]]
+            marble for marble in active_marbles if marble.pos not in kennels[player_idx]
+        ]
 
         if not marbles_outside_kennel:
             return []  # No valid moves if all marbles are in the kennel
@@ -494,7 +497,7 @@ class Dog(Game):
 
         return actions_list_jkr
 
-    def get_list_action(self) -> List[Action]:
+    def get_list_action(self) -> Union[List[Action], List[List[Action]]]:
         """Generate a list of possible actions for the active player based on the current game state."""
         if not self.state:
             return []
@@ -530,7 +533,7 @@ class Dog(Game):
                     self._get_starting_actions(card, marbles_in_kennel, active_player, player_start_position))
 
             # If card is '7' or 'JKR' (which can act like 7), handle the special "split move"
-            if card.rank == '7'and self.state.card_active is not None:
+            if card.rank == '7'and self.state.card_active is None:
                 seven_actions = self._handle_seven_card(card, active_player.list_marble)
                 if seven_actions:
                     actions_list.append(Action(
@@ -541,19 +544,16 @@ class Dog(Game):
                         ))
                 continue
 
-                # If card is '7' or 'JKR' (which can act like 7), handle the special "split move"
-            # if card.rank == '7':
-                # actions_list.extend(action for sublist in
-                                    # self._handle_seven_card(card, active_player.list_marble) for action in sublist)
                 # After handling special moves for '7' or 'JKR', continue to next card
                 # falls actions = True -> card = 7 
                 # from / to = None
                 # card swap = 7
                 # continue
 
-            if card.rank == '7'and self.state.card_active is None:
+            if card.rank == '7'and self.state.card_active is not None:
                 # actions_list.extend(action for sublist in self._handle_seven_card(card, active_player.list_marble) for action in sublist)
-                actions_list.extend(action for sublist in self._handle_seven_card(card, active_player.list_marble) for action in sublist)
+                # actions_list.extend(action for sublist in self._handle_seven_card(card, active_player.list_marble) for action in sublist)
+                actions_list = self._handle_seven_card(card, active_player.list_marble)
                 # After handling special moves for '7' or 'JKR', continue to next card
                 # falls actions = True -> card = 7 
                 # from / to = None
@@ -731,8 +731,10 @@ class Dog(Game):
         return actions
 
     def apply_action(self, action: Optional[Action]) -> None:
-        """Moving marbles based on the chosen action from get_list_action function."""
-        assert self.state
+        # pylint: disable=redefined-outer-name
+        if not self.state:
+            raise ValueError("Game state is not set.")
+
         # Attempt a reshuffle if the draw pile is empty and discard is not empty
         # This ensures that if we run out of cards, we reshuffle before proceeding.
         if not self.state.list_card_draw and self.state.list_card_discard:
@@ -771,49 +773,58 @@ class Dog(Game):
 
         #check if only a joker was swapped
         if action.card.rank == 'JKR' and action.card_swap is not None:
-            print(f"{active_player.name} exchanges {action.card.rank} wit {action.card_swap.rank}.")
+            print(f"{active_player.name} exchanges {action.card.rank} with {action.card_swap.rank}.")
             active_player.list_card.append(action.card_swap)
             active_player.list_card.remove(action.card)
-            self.state.card_active = action.card_swap
+            # check for further code row: self.state
             return
 
-        # Handle Jack card swaps and skip collision checks
+        # Handle special cards
         if action.card.rank == 'J':
             self._handle_jack(action)
-            active_player.list_card.remove(action.card)
-            self.state.list_card_discard.append(action.card)
-            self.state.card_active = None
-            self.state.idx_player_active = (self.state.idx_player_active + 1) % len(self.state.list_player)
-            return
+        #elif action.card.rank == 'JKR':
+            #self._handle_joker(action)
 
-        # Handle SEVEN card logic
-        if action.card.rank == '7':
-            self._handle_normal_move(action, active_player)
+        # elif action.card.rank == '7':
+            # Handle SEVEN card
+            # grouped_actions = self.get_list_action()
+            # splits_completed = self._handle_seven_card_logic(grouped_actions)
+
+            # if splits_completed:
+                # Remove the SEVEN card from player's hand
+            # return
+        if action.card.rank == '7': 
+            if self.state.card_active is None:
+                self.state.card_active = action.card
+
+            self.state.card_active = action.card
+            print(f"Handling '7' card with active card: {self.state.card_active}")
             self._handle_overtaking(action)
             self._check_collisions(action)
-            print(f"Player {active_player.name} plays {action.card.rank} of {action.card.suit} "
-            f"moving marble from {action.pos_from} to {action.pos_to}.")
-            return
+            self._handle_normal_move(action, active_player)
+
         else:
             self._handle_normal_move(action, active_player)
 
+        # Log the action being applied
         print(f"Player {active_player.name} plays {action.card.rank} of {action.card.suit} "
         f"moving marble from {action.pos_from} to {action.pos_to}.")
 
         # Check for collision with other players' marbles
         self._check_collisions(action)
+
         # Remove the played card from the player's hand
         active_player.list_card.remove(action.card)
+
         # Add the played card to the discard pile
         self.state.list_card_discard.append(action.card)
-        #remove the card_active
-        self.state.card_active = None
+
         # Advance to the next active player
         self.state.idx_player_active = (self.state.idx_player_active + 1) % len(self.state.list_player)
         # Check if the game is finished or if a player needs to help their teammate
         self._check_game_finished()
 
-    def _handle_seven_card_logic(self, grouped_actions: List['Action']) -> bool:
+    def _handle_seven_card_logic(self, grouped_actions: List['Action']) -> None:
         """
         Process a SEVEN card by applying valid split actions.
         
@@ -825,16 +836,29 @@ class Dog(Game):
         """
 
         try:
-            for split_action in grouped_actions:
+            flattened_actions = [
+                action
+                for sublist in grouped_actions
+                for action in (sublist if isinstance(sublist, list) else [sublist])
+            ]
+
+            for split_action in flattened_actions:
                 # Move the marble according to pos_from and pos_to
+                print(f"Applying action: {split_action}")
+                self.state.card_active = split_action.card 
                 self.apply_action(split_action)
                 print(f"SEVEN card: marble moved from {split_action.pos_from} to {split_action.pos_to}.")
             
+            print("Card active state reset to None.")
             active_player = self.state.list_player[self.state.idx_player_active]
             active_player.list_card.remove(split_action.card)
             self.state.list_card_discard.append(split_action.card)
-            self._check_game_finished()
+            #remove the card_active
+            self.state.card_active = None
+            # Advance to the next active player
             self.state.idx_player_active = (self.state.idx_player_active + 1) % len(self.state.list_player)
+            # Check if the game is finished or if a player needs to help their teammate
+            self._check_game_finished()
 
         except Exception as e:
             print(f"Error processing split actions: {e}")
@@ -862,7 +886,6 @@ class Dog(Game):
                 print(f"Player {player.name} has finished and will help teammate {teammate.name}.")
                 self.state.idx_player_active = teammate_idx
                 return
-
 
     def _handle_kennel_to_start_action(self, kennel_action: Action) -> bool:
         """
@@ -1058,8 +1081,8 @@ class Dog(Game):
                     if marble.is_save:
                         print(f"Marble moved to a safe space at position {marble.pos}.")
                     break
-            else:
-                raise ValueError(f"No marble found at position {move_action.pos_from} for Player {active_player.name}.")
+            # else:
+                # raise ValueError(f"No marble found at position {move_action.pos_from} for Player {active_player.name}.")
 
     def _handle_card_exchange(self, move_action: Action, active_player: PlayerState) -> None:
         """Handle the card exchange phase."""
@@ -1103,6 +1126,7 @@ class Dog(Game):
                             other_marble.is_save = False
                             break
 
+
     def _handle_overtaking(self, move_action: Action) -> None:
         """Handle overtaking logic for SEVEN card."""
         assert self.state   # Ensure the game state is set  
@@ -1141,7 +1165,12 @@ class Dog(Game):
                             marble.pos = pos
                             marble.is_save = False
                             print(f"Marble moved to kennel position {pos} for Player {player_idx}.")
-                            break
+                            print("Visualizing marble positions after modification:")
+                            for player_idx, player in enumerate(self.state.list_player):
+                                print(f"Player {player_idx + 1}: {player.name}")
+                                marble_positions = [marble.pos for marble in player.list_marble]
+                                print(f"  Marble positions: {marble_positions}")
+
 
     def get_cards_per_round(self) -> int:
         """Determine the number of cards to be dealt based on the round."""
@@ -1299,42 +1328,32 @@ class Dog(Game):
 if __name__ == '__main__':
 
     game = Dog()
-
     random_player = RandomPlayer()
-
-    # Ensure the game state is initialized before proceeding
     if game.state is None:
         print("Error: Game state is not initialized. Exiting...")
-
     else:
         game.draw_board()  # Draw the initial board
-
         game.validate_total_cards()
 
         while game.state.phase != GamePhase.FINISHED:
             game.print_state()
-
             # Get the list of possible actions for the active player
             game_actions = game.get_list_action()
-
+            # Display possible game_actions
+            print("\nPossible Actions:")
+            print(game_actions)
             # Select an action (random in this example)
-            selected_action = random_player.select_action(game.get_state())
-
-            # Apply the selected action
-            if isinstance(selected_action, list):  # If selected_action is a grouped list (for the 7 card)
-                print(f"Selected split actions: {selected_action}")
-                success = game._handle_seven_card_logic(selected_action)
-            elif isinstance(selected_action, Action):
-                game.apply_action(selected_action)
+            selected_action = random_player.select_action(state=game.state, actions=game_actions)
+            print(f"selected action: {selected_action}")
+            if selected_action is List: 
+                game._handle_seven_card_logic(selected_action)
             else:
-                print(f"Selected action has an invalid type: {type(selected_action)} - {selected_action}")
-
+                # Apply the selected action
+                game.apply_action(selected_action)
             game.draw_board()  # Update the board after each action
-
-            # Debugging for deck management to see how many cards are in different piles
+            #debuging for deck management to see how many cards are in different piles
             game.validate_total_cards()
-
             # Optionally exit after a certain number of rounds (for testing)
-            if game.state.cnt_round > 15:  # Example limit
+            if game.state.cnt_round > 3:  # Example limit
                 print(f"Ending game for testing after {game.state.cnt_round} rounds.")
                 break
