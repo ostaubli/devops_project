@@ -281,13 +281,20 @@ class GameState(BaseModel):
                             if going_final_action_list:
                                 action_list.extend(going_final_action_list)
                         case '7':
-                            for steps_split in list_steps_split_7:
-                                for i, steps in enumerate(steps_split):
-                                    action = Action(card=card, pos_from=marble.pos,
-                                                              pos_to=(marble.pos + steps) % 64, card_swap=None)
-                                    going_final_action_list = self.go_in_final(action)
-                                    if going_final_action_list:
-                                        action_list.extend(going_final_action_list)
+                            action = Action(card=card, pos_from=marble.pos, pos_to=(marble.pos + 7) % 64, # Seven as Normal card
+                                            card_swap=None)
+                            going_final_action_list = self.go_in_final(action)
+                            if going_final_action_list:
+                                action_list.extend(going_final_action_list)
+
+
+                            #for steps_split in list_steps_split_7:
+                            #    for i, steps in enumerate(steps_split):
+                            #        action = Action(card=card, pos_from=marble.pos,
+                            #                                  pos_to=(marble.pos + steps) % 64, card_swap=None)
+                            #        going_final_action_list = self.go_in_final(action)
+                            #        if going_final_action_list:
+                            #            action_list.extend(going_final_action_list)
                         case '8':
                             action = Action(card=card, pos_from=marble.pos, pos_to=(marble.pos +8) % 64,
                                             card_swap=None)
@@ -312,6 +319,9 @@ class GameState(BaseModel):
                                     if not oponent_marble.is_save: 
                                         action_list.append(Action(card = card,pos_from = marble.pos,
                                                                   pos_to = oponent_marble.pos, card_swap = None))
+                                        action_list.append(Action(card = card,pos_from = oponent_marble.pos ,
+                                                                  pos_to = marble.pos, card_swap = None))
+
                         case 'Q':
                             action = Action(card=card, pos_from=marble.pos, pos_to=(marble.pos +12) % 64,
                                             card_swap=None)
@@ -403,23 +413,33 @@ class GameState(BaseModel):
                             if going_final_action_list:
                                 action_list.extend(going_final_action_list)
 
-                            for steps_split in list_steps_split_7:
-                                for i, steps in enumerate(steps_split):
-                                    action = Action(card=card, pos_from=marble.pos,
-                                                    pos_to=(marble.pos + steps) % 64, card_swap=None)
-                                    going_final_action_list = self.go_in_final(action)
-                                    if going_final_action_list:
-                                        action_list.extend(going_final_action_list)
+                            action = Action(card=card, pos_from=marble.pos, pos_to=(marble.pos + 7) % 64, #Seven as a Normal Card
+                                            card_swap=None)
+                            going_final_action_list = self.go_in_final(action)
+                            if going_final_action_list:
+                                action_list.extend(going_final_action_list)
+
+                            #for steps_split in list_steps_split_7:
+                            #    for i, steps in enumerate(steps_split):
+                            #        action = Action(card=card, pos_from=marble.pos,
+                            #                        pos_to=(marble.pos + steps) % 64, card_swap=None)
+                            #        going_final_action_list = self.go_in_final(action)
+                            #        if going_final_action_list:
+                            #            action_list.extend(going_final_action_list)
 
                             for oponent_player in oponent_players:
                                 for oponent_marble in oponent_player.list_marble:
                                     if not oponent_marble.is_save: 
                                         action_list.append(Action(card = card,pos_from = marble.pos,
                                                                   pos_to = oponent_marble.pos, card_swap = None))
+                                        action_list.append(Action(card=card, pos_from=oponent_marble.pos,
+                                                                  pos_to=marble.pos, card_swap=None))
                         case _:
                             pass
 
         return action_list
+
+
 
     def set_action_to_game(self, action: Action):  # kaegi
         # Action is from the active Player
@@ -624,8 +644,9 @@ class Dog(Game):
         if self.state.card_active is None:
             action_list = self.state.get_list_possible_action()
 
-        if self.state.card_active.rank == '7':
-            played_seven_actions = []
+        #if self.state.card_active.rank == '7':
+
+
 
 
 
@@ -646,6 +667,9 @@ class Dog(Game):
             self.state.exchange_cards(action)
 
         elif action:
+            #if action.card.rank == '7':
+            #    self.state.played_seven_actions.append(action)
+
             self.state.set_action_to_game(action)
 
             # Removed played Card from Players Hand
