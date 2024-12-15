@@ -514,24 +514,6 @@ class GameState(BaseModel):
             if team_finished:
                 self.phase = GamePhase.FINISHED
                 return
-        if finished:
-            print(f"{player.name} hat alle Murmeln im Ziel und ist fertig!")
-        else:
-            print(f"{player.name} hat noch nicht alle Murmeln im Ziel.")
-        return finished
-
-    def check_game_end(self) -> bool:
-        finished_players = 0
-        for player in self.state.list_player:
-            if self.is_player_finished(player):
-                finished_players += 1
-
-        if finished_players >= 2:
-            self.state.phase = GamePhase.FINISHED  # Setzt den Status auf 'finished', wenn 2 Spieler fertig sind
-            print("Spiel ist zu Ende!")
-            return True
-
-        return False
 
     def go_in_final(self, action_to_check: Action) -> List[Action]:
         """
