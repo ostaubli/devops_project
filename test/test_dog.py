@@ -550,7 +550,7 @@ class TestListPossibleAction:
             list_card=[
                 Card(suit='♠',rank="2"),
                 Card(suit = '♦', rank="A")],
-            list_finish_pos=[],
+            list_finish_pos=[68, 69, 70, 71],
             list_kennel_pos=[64, 65, 66, 67],
             list_marble=[Marble(pos=64, is_save=True, start_pos=64),
                         Marble(pos=65, is_save=True, start_pos=65)],
@@ -585,7 +585,7 @@ class TestListPossibleAction:
             list_card=[
                 Card(suit='♠',rank="3"),
                 Card(suit = '♦', rank="A")],
-            list_finish_pos=[],
+            list_finish_pos=[68, 69, 70, 71],
             list_kennel_pos=[64, 65, 66, 67],
             list_marble=[Marble(pos=15, is_save=False, start_pos=66),
                         Marble(pos=67, is_save=False, start_pos=67)],
@@ -607,7 +607,7 @@ class TestListPossibleAction:
         assert kennel_actions[0].pos_to == player1.start_pos, "Movement from kennel to Board is false"
 
         kennel_actions2 = [action for action in result2 if action.pos_from == 15]
-        assert len(kennel_actions2) == 3, "There should be 3 movements for Marble on 15."
+        assert len(kennel_actions2) == 4, "There should be 3 movements for Marble on 15."
 
         game_state = GameState()
         player3 = PlayerState(  # Player3 for test to return multiple actions (however one marble cant move)
@@ -615,7 +615,7 @@ class TestListPossibleAction:
                 Card(suit='♠', rank="2"),
                 Card(suit='♦', rank="4"),
                 Card(suit='♦', rank='9')],
-            list_finish_pos=[],
+            list_finish_pos=[68, 69, 70, 71],
             list_kennel_pos=[64, 65, 66, 67],
             list_marble=[Marble(pos=15, is_save=False, start_pos=66),
                         Marble(pos=22, is_save=False, start_pos=67),
@@ -630,7 +630,7 @@ class TestListPossibleAction:
 
         result3 = game_state.get_list_possible_action()
         movement_actions = [action for action in result3]
-        assert len(movement_actions) == 12, "There should be 4 movements for the three Marbles each."
+        assert len(movement_actions) == 18, "There should be 5 movements for the three Marbles each."
 
         game_state = GameState()
         player4 = PlayerState(  # Player4 for test to overstep the 64 rule
@@ -638,7 +638,7 @@ class TestListPossibleAction:
                 Card(suit='♠', rank="10"),
                 Card(suit='♦', rank="4"),
                 Card(suit='♦', rank='8')],
-            list_finish_pos=[],
+            list_finish_pos=[68, 69, 70, 71],
             list_kennel_pos=[64, 65, 66, 67],
             list_marble=[Marble(pos=60, is_save=False, start_pos=66)],
             name="Player4",
@@ -659,7 +659,7 @@ class TestListPossibleAction:
                 Card(suit='♠', rank="10"),
                 Card(suit='♦', rank="4"),
                 Card(suit='♦', rank='8')],
-            list_finish_pos=[],
+            list_finish_pos=[68, 69, 70, 71],
             list_kennel_pos=[64, 65, 66, 67],
             list_marble=[Marble(pos=2, is_save=False, start_pos=66)],
             name="Player5",
