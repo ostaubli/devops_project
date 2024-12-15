@@ -500,7 +500,13 @@ class GameState(BaseModel):
         return True
 
     def is_player_finished(self) -> bool:
-        pass
+        player = self.list_player[self.idx_player_active]
+
+        for marble in player.list_marble:
+            if marble.pos not in player.list_finish_pos:
+                return False
+        else:
+            return True
 
     def check_game_end(self) -> None:
         team1 = [self.list_player[0], self.list_player[2]]
