@@ -1,7 +1,7 @@
 # Kägis Ignors
 *.ipynb
 logs/
-
+test/debug_benchmark_test.py
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]
