@@ -156,11 +156,11 @@ class GameState(BaseModel):
 
     def deal_cards(self) -> None:  # Kägi
         # Check if all players are out of cards.
-        for player in self.list_player:
-            if not player.list_card:
+        for selected_player in self.list_player:
+            if not selected_player.list_card:
                 continue
             else:
-                print(f"{player.name} has still {len(player.list_card)} card's")
+                print(f"{selected_player.name} has still {len(selected_player.list_card)} card's")
                 return
 
         # Go to next Gameround
@@ -330,85 +330,24 @@ class GameState(BaseModel):
 
         return action_list
 
-    def set_action_to_game(self, action: Action):  # Kened
+    def set_action_to_game(self, action: Action):  # kaegi
         # Action is from the active Player
         # Set Action to the GameState ==> make movement on the "board"
+        marble_to_move = next((marble for marble in self.list_player[self.idx_player_active].list_marble if marble.pos == action.pos_from), None)
 
-        return 
+        # Check if marble comes from kenel
+        if marble_to_move.pos == marble_to_move.start_pos:
+            marble_to_move.is_save = True
 
-        # Get the active player
-        active_player = self.list_player[self.idx_player_active]
+        # Goes in final
+        elif action.pos_to > 63:
+            marble_to_move.is_save = True
+        # Set Action pos to game
+        marble_to_move.pos = action.pos_to
 
-        # Ensure the marble exists at the specified position
-        marble_to_move = next((m for m in active_player.list_marble if m.pos == action.pos_from), None)
-        if not marble_to_move:
-            return  # Exit if no marble found at pos_from
-
-        # Update the marble's position
-        marble_to_move.pos = (action.pos_to)
-
-        # Handle collision with another player's marble
-        for player in self.list_player:
-            if player != active_player:
-                opponent_marble = next((m for m in player.list_marble if m.pos == action.pos_to), None)
-                if opponent_marble:
-                    self.sending_home(opponent_marble)  # Send the opponent's marble home
-
-        #TODO: function check_special_action | input Action | output = True/False
-        #   ==> Check if it is a special card or not
-        def check_special_action(action: Action) -> bool:
-            if action.card.rank in ['7', 'J', 'JKR']:
-                return True
-            return False
-
-        #   ==> Check if it is a nomal foreward movement or not
-
-        #TODO:  if Normal make movement
-        #       if special
-        # Handle special cards
-        if action.card.rank == '7':
-            # 7 allows multiple movements; the game logic should track additional actions
-            self.card_active = action.card
-        elif action.card.rank == 'J':
-            # J allows swapping marbles (specific logic to be implemented separately)
-            self.card_active = action.card
-            return
-
-        elif action.card.rank == 'JKR':
-            # Joker allows flexibility, which may require additional rules
-            self.card_active = action.card
-            return
-
-        else:
-            # Reset the active card for regular actions
-            self.card_active = None
-
-
-        #TODO:
-        # function for sending home | input= Action | output = None
-        #   ==> Function is sending other marbels home if possible
-        #   ==> Logic not implementet in set_action_to_game
-
-        # Check if the marble's new position is in a final or safe zone
-
-
-        self.check_final_pos(pos_to=action.pos_to, pos_from=action.pos_from, marble=marble_to_move)
-
-        # ____________________________ This is Sending home function
-        # Handle cases where another player's marble occupies the destination
-        for player in self.list_player:
-            if player != active_player:
-                opponent_marble = next((m for m in player.list_marble if m.pos == action.pos_to), None)
-                if opponent_marble:
-                    self.sending_home(opponent_marble)  # Send the opponent's marble home
-        # ____________________________
-        
-        
-        
-        # Discard the played card
-        active_player.list_card.remove(action.card)
-        self.list_card_discard.append(action.card)
-
+        # Send marble on same pos home
+        self.sending_home(marble_to_move)
+        return
 
     def exchange_cards(self, action_cardswap: Action) -> None:
 
@@ -431,22 +370,16 @@ class GameState(BaseModel):
 
         return
 
-    def sending_home(self, marble: Marble, card: Card, action: Action) -> bool:
-        # First case: A marble of another player lands exactly on the position of my marble
-        for current_player in self.list_player:
-            for opponent_marble in current_player.list_marble:
-                if opponent_marble.pos == marble.pos and opponent_marble != marble:
-                    marble.pos = marble.start_pos
-                    marble.is_save = True
-                    return True
-
-        # Second case: My marble gets jumped over by a marble with a 7-card
-        if action and action.pos_from is not None and action.pos_to is not None:
-            if action.pos_from < marble.pos < action.pos_to:
-                marble.pos = marble.start_pos
-                marble.is_save = True
-                return True
-        return False
+    def sending_home(self, moved_marble: Marble) -> None:
+        """
+        Checks if the active marble jumps on another marble. 
+        If so, sends the other marble back to its start position.
+        """
+        for selected_player in self.list_player:
+            for p_marble in selected_player.list_marble:
+                # Check if the marble occupies the same position but isn't the same marble
+                if p_marble.pos == moved_marble.pos and p_marble != moved_marble:
+                    p_marble.pos = p_marble.start_pos
 
     def marble_switch_jake(self, player_idx: int, opponent_idx: int, player_marble_pos: int,
                            opponent_marble_pos: int):  # Kened
