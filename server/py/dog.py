@@ -497,9 +497,9 @@ class Dog(Game):
             - The start position is not occupied by the active player's own marble.
             - The card rank is one of the starting cards.
             """
-            if num_in_kennel == 0 or player_start_position in active_marbles_positions: 
+            if num_in_kennel == 0 or player_start_position in active_marbles_positions:
                 return False
-
+              
             return card_rank in self.STARTING_CARDS
 
         for rank in ranks:
@@ -676,7 +676,8 @@ class Dog(Game):
                             continue  # Skip opponent marbles and marbles in the kennel
 
                         for target in all_marbles:
-                            if target["player_idx"] != self.state.idx_player_active or marble is target or target["position"] > 63:
+                            if (target["player_idx"] != self.state.idx_player_active or
+                                marble is target or target["position"] > 63):
                                 continue  # Skip the same marble and marbles in the kennel
 
                             # Add valid self-swap action
@@ -992,12 +993,12 @@ class Dog(Game):
                     # Update marble position and mark as safe
                     marble.pos = kennel_action.pos_to
                     marble.is_save = True
-                    print(f"Marble moved from kennel to start position: {marble.pos}.")
+                    # print(f"Marble moved from kennel to start position: {marble.pos}.")
 
                     # Log the kennel_action
-                    print(f"Player {active_player.name} plays {kennel_action.card.rank} "+
-                        f"of {kennel_action.card.suit} moving marble from {kennel_action.pos_from} "+
-                        f"to {kennel_action.pos_to}.")
+                    # print(f"Player {active_player.name} plays {kennel_action.card.rank} "+
+                    #     f"of {kennel_action.card.suit} moving marble from {kennel_action.pos_from} "+
+                    #     f"to {kennel_action.pos_to}.")
 
                     return True  # Action handled successfully
         return False  # Action does not involve moving from kennel to start
@@ -1101,7 +1102,8 @@ class Dog(Game):
                     marble.pos = pos_to  # Assign the (default or valid) pos_to
                     marble.is_save = marble.pos in self.SAFE_SPACES[idx_active]
                     if marble.is_save:
-                        print(f"Marble moved to a safe space at position {marble.pos}.")
+                        pass
+                        # print(f"Marble moved to a safe space at position {marble.pos}.")
                     break
             # else:
                 # raise ValueError(f"No marble found at position {move_action.pos_from} for Player {active_player.name}.")
@@ -1147,7 +1149,6 @@ class Dog(Game):
                             other_marble.pos = pos
                             other_marble.is_save = False
                             break
-
 
     def _handle_overtaking(self, move_action: Action) -> None:
         """Handle overtaking logic for SEVEN card."""
@@ -1349,6 +1350,7 @@ class Dog(Game):
             board_positions=self.state.board_positions
         )
 
+      
 if __name__ == '__main__':
         
     # Initialize the game
@@ -1415,3 +1417,4 @@ if __name__ == '__main__':
             if game.state.cnt_round > 15:
                 print(f"Ending game for testing after {game.state.cnt_round} rounds.")
                 break
+
