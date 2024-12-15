@@ -90,3 +90,4 @@ class GameState(BaseModel):
     card_active: Optional[Card]        # active card (for 7 and JKR with sequence of actions)
     bool_game_finished: bool
     board_positions: List[Optional[int]]
+    remaining_steps: Optional[int] = None
