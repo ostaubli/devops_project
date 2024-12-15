@@ -500,25 +500,30 @@ class GameState(BaseModel):
             self.idx_player_active = idx_next_player
 
     def __str__(self) -> str:
-        seperator = "*"*50+"\n"
+        main_seperator = "*"*50+"\n"
+        part_seperator = "-"*25 +"\n"
         state_details = f"Game Phase: {self.phase}\n" \
                         f"Round: {self.cnt_round}\n" \
                         f"Active Player Index: {self.idx_player_active}\n" \
                         f"Cards Exchanged: {self.bool_card_exchanged}\n" \
                         f"Number of Players: {self.cnt_player}\n"
-        
-        players_info = "\n".join([f"Player {idx+1} ({player.name}): {len(player.list_card)} cards, {len(player.list_marble)} marbles"
-                                for idx, player in enumerate(self.list_player)])
-        
-        deck_info = f"Cards in Draw Pile: {len(self.list_card_draw)}\n" \
+
+        players_info = "\n".join([
+            f"Player {idx+1} ({player.name}): {len(player.list_card)} cards, " \
+            f"{len(player.list_marble)} marbles\n" + 
+            "\n".join([f"  Marble at {marble.pos} - {'Safe' if marble.is_save else 'Not Safe'}" for marble in player.list_marble])
+            for idx, player in enumerate(self.list_player)
+        ])
+
+        deck_info = f"\nCards in Draw Pile: {len(self.list_card_draw)}\n" \
                     f"Cards in Discard Pile: {len(self.list_card_discard)}\n"
-        
+
         if self.card_active:
             active_card_info = f"Active Card: {self.card_active.suit} {self.card_active.rank}\n"
         else:
             active_card_info = "No active card\n"
 
-        return seperator + state_details + players_info + deck_info + active_card_info
+        return main_seperator + state_details + part_seperator + players_info + "\n" + part_seperator + deck_info + active_card_info
 
 class Dog(Game):
 
