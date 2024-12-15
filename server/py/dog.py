@@ -185,8 +185,6 @@ class GameState(BaseModel):
         # Set Cardexchange
         self.bool_card_exchanged = False
 
-        print("==> Deal New card <==")
-
     def discard_invalid_cards(self) -> None:
         # check if player has cards
         if not self.list_player[self.idx_player_active].list_card:
