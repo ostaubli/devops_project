@@ -5,6 +5,7 @@ This module contains the core game logic and data structures for the Dog card ga
 
 # runcmd: cd ../.. & venv\Scripts\python server/py/dog_template.py
 import random
+from itertools import chain
 from typing import List, Optional, Dict, Any, Set, Union
 from server.py.game import Game
 from server.py.dog_game_state import Card, Marble, PlayerState, Action, GameState, GamePhase
@@ -381,13 +382,14 @@ class Dog(Game):
                     if new_action not in split_actions:
                         split_actions.append(new_action)
 
-        
             grouped_actions_list.append(split_actions)
 
         # Flatten the list before returning
-        flattened_actions = [
-            action for group in grouped_actions_list for action in (group if isinstance(group, list) else [group])
-        ]
+        # flattened_actions = [
+        #     action for group in grouped_actions_list for action in (group if isinstance(group, list) else [group])
+        # ]
+        # Flatten the list before returning
+        flattened_actions = list(chain.from_iterable(grouped_actions_list))
 
         return flattened_actions
 
@@ -499,7 +501,7 @@ class Dog(Game):
             """
             if num_in_kennel == 0 or player_start_position in active_marbles_positions:
                 return False
-              
+
             return card_rank in self.STARTING_CARDS
 
         for rank in ranks:
@@ -621,7 +623,7 @@ class Dog(Game):
                     actions_list.append(Action(
                         card=card,
                         pos_from=None,
-                        pos_to=None,  
+                        pos_to=None,
                         card_swap=None
                         ))
                 continue
@@ -858,7 +860,7 @@ class Dog(Game):
             self.state.card_active = None
             self.state.idx_player_active = (self.state.idx_player_active + 1) % len(self.state.list_player)
             return
-        
+
         # Handle Seven card
         if action.card.rank == '7':
             if self.state.card_active is None:
@@ -871,7 +873,11 @@ class Dog(Game):
                 self.state.card_active = action.card
                 self.state.remaining_steps = 7
                 print("SEVEN card detected. Starting split with 7 steps.")
-                
+            
+            #  Validate pos_from and pos_to are not None before calculating steps
+            if action.pos_from is None or action.pos_to is None:
+                raise ValueError("Invalid action: pos_from and pos_to must not be None")
+
             # Process the current split step
             steps_taken = abs(action.pos_to - action.pos_from)
             self._handle_overtaking(action)
@@ -922,6 +928,7 @@ class Dog(Game):
         for idx, split_action in enumerate(grouped_actions):
             print(f"Processing SEVEN card split {idx + 1}/{len(grouped_actions)}: {split_action}")
             # Update card_active to SEVEN
+            assert self.state
             self.state.card_active = split_action.card
             # Apply the action
             self.apply_action(split_action)
@@ -930,6 +937,7 @@ class Dog(Game):
             print(f"Current game state: {self.state}")
 
         # Once all split actions are applied, discard the SEVEN card
+        assert self.state
         active_player = self.state.list_player[self.state.idx_player_active]
         print(f"Removing SEVEN card from active player: {active_player.name}")
         active_player.list_card.remove(grouped_actions[0].card)
@@ -1152,17 +1160,17 @@ class Dog(Game):
 
     def _handle_overtaking(self, move_action: Action) -> None:
         """Handle overtaking logic for SEVEN card."""
-        assert self.state   # Ensure the game state is set  
+        assert self.state   # Ensure the game state is set
 
         if move_action.pos_from is None or move_action.pos_to is None:
             return
-            
+
         # Collect all positions between `pos_from` and `pos_to`
         overtaken_positions: list[int] = []
         if move_action.pos_from < move_action.pos_to:
-            overtaken_positions = range(move_action.pos_from + 1, move_action.pos_to + 1)
+            overtaken_positions = list(range(move_action.pos_from + 1, move_action.pos_to + 1))
         else:
-            overtaken_positions = list(range(move_action.pos_from + 1, 64)) + list(range(0, move_action.pos_to + 1))
+            overtaken_positions = list(range(move_action.pos_from + 1, 64)) + list(range(0, move_action.pos_to + 1)) + list(range(0,))
 
         # Exclude any invalid overtaken positions (e.g., own start or safe spaces)
         excluded_positions = set(self.START_POSITIONS.values())

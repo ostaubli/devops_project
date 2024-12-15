@@ -2512,6 +2512,69 @@ def initialized_game():
     )
     return game
 
+@pytest.fixture
+def initialized_game():
+    """Fixture to provide an initialized Dog game instance."""
+    game = Dog()
+    game.state = GameState(
+        cnt_player=4,
+        phase=GamePhase.RUNNING,
+        cnt_round=1,
+        bool_game_finished=False,
+        bool_card_exchanged=True,
+        idx_player_started=0,
+        idx_player_active=0,
+        list_player=[
+            PlayerState(name="Player 1", list_card=[], list_marble=[
+                Marble(pos=10, is_save=False)  # Active player's marble
+            ]),
+            PlayerState(name="Player 2", list_card=[], list_marble=[
+                Marble(pos=12, is_save=False),  # This marble will be overtaken
+                Marble(pos=14, is_save=False)  # Not in overtaken range
+            ]),
+            PlayerState(name="Player 3", list_card=[], list_marble=[
+                Marble(pos=15, is_save=False)  # Not in overtaken range
+            ]),
+            PlayerState(name="Player 4", list_card=[], list_marble=[])
+        ],
+        list_card_draw=[],
+        list_card_discard=[],
+        card_active=None,
+        board_positions=[None] * Dog.BOARD_SIZE
+    )
+    return game
+
+def test_handle_overtaking(initialized_game):
+    game = initialized_game
+    active_player = game.state.list_player[0]
+    overtaken_player = game.state.list_player[1]
+    overtaken_marble = overtaken_player.list_marble[0]
+
+    # Create a SEVEN card move action from position 10 to 13
+    move_action = Action(
+        card=Card(suit='', rank='7'),
+        pos_from=10,
+        pos_to=13,
+        card_swap=None
+    )
+
+    # Call the method to test
+    game._handle_overtaking(move_action)
+
+    # Check the overtaken marble's position (should now be in the kennel)
+    assert overtaken_marble.pos in game.KENNEL_POSITIONS[1], "Overtaken marble should be moved to the kennel."
+    assert not overtaken_marble.is_save, "Overtaken marble should no longer be marked as safe."
+
+    # Verify other marbles are unaffected
+    assert game.state.list_player[1].list_marble[1].pos == 14, "Other marbles should remain unaffected."
+    assert game.state.list_player[2].list_marble[0].pos == 15, "Marbles of other players should remain unaffected."
+
+    # Verify marble positions in logs
+    print("Post-overtaking marble positions:")
+    for idx, player in enumerate(game.state.list_player):
+        positions = [marble.pos for marble in player.list_marble]
+        print(f"Player {idx + 1}: {positions}")
+
 
 
 
