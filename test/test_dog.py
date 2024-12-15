@@ -6,7 +6,10 @@ from pyparsing import NotAny
 from pydantic import BaseModel
 from typing import List, Optional, Dict
 
-
+if __name__ == '__main__':
+    import os
+    import sys
+    sys.path.append(os.getcwd())
 
 from server.py.dog import Card, Marble, PlayerState, Action, GameState, GamePhase, Dog
 from server.py.game import Player
@@ -255,6 +258,52 @@ class TestKaegisDogParts:
         action_list = state.go_in_final(action1)
         assert len(action_list) == 1, "it is not possible to go in final"
 
+    def test_set_action_to_game(self)->None:
+        game_state = GameState()
+        player1 = PlayerState(
+            list_card=[
+                Card(suit='♠',rank="2"),
+                Card(suit = '♦', rank="A")],
+            list_finish_pos=[],
+            list_kennel_pos=[64, 65, 66, 67],
+            list_marble=[Marble(pos=0, is_save=True, start_pos=64),
+                        Marble(pos=38, is_save=True, start_pos=65)],
+            name="Player1",
+            start_pos=0,
+        )
+        player2 = PlayerState(
+            list_card=[
+                Card(suit='♠',rank="2"),
+                Card(suit = '♦', rank="A")],
+            list_finish_pos=[],
+            list_kennel_pos=[72, 73, 74, 75],
+            list_marble=[Marble(pos=22, is_save=True, start_pos=72),
+                        Marble(pos=35, is_save=True, start_pos=73)],
+            name="Player1",
+            start_pos=0,
+        )
+        game_state.list_player = [player1, player2]
+        game_state.idx_player_active = 0
+
+        assert game_state.list_player[game_state.idx_player_active].list_marble[0].pos == 0, "Pos 1 marbel Player 0 is 0"
+        assert game_state.list_player[game_state.idx_player_active].list_marble[1].pos == 38, "Pos 2 marbel Player 0 is 38"
+        assert game_state.list_player[game_state.idx_player_active+1].list_marble[0].pos == 22, "Pos 1 marbel Player 1 is 22"
+        assert game_state.list_player[game_state.idx_player_active+1].list_marble[1].pos == 35, "Pos 2 marbel Player 1 is 35"
+
+        action1 = Action(card=Card(suit='♠',rank="2"), pos_from=0, pos_to=13, card_swap=None)
+        game_state.set_action_to_game(action1)
+        assert game_state.list_player[game_state.idx_player_active].list_marble[0].pos == 13, "Pos 1 marbel Player 0 is 13"
+        assert game_state.list_player[game_state.idx_player_active].list_marble[1].pos == 38, "Pos 2 marbel Player 0 is 38"
+        assert game_state.list_player[game_state.idx_player_active+1].list_marble[0].pos == 22, "Pos 1 marbel Player 1 is 22"
+        assert game_state.list_player[game_state.idx_player_active+1].list_marble[1].pos == 35, "Pos 2 marbel Player 1 is 35"
+
+        game_state.idx_player_active = 1
+        action2 = Action(card=Card(suit='♠',rank="2"), pos_from=35, pos_to=38, card_swap=None)
+        game_state.set_action_to_game(action2)
+        assert game_state.list_player[game_state.idx_player_active].list_marble[1].pos == 38, "Pos 2 marbel Player 1 is 38"
+        assert game_state.list_player[game_state.idx_player_active].list_marble[0].pos == 22, "Pos 1 marbel Player 1 is 22"
+        assert game_state.list_player[game_state.idx_player_active-1].list_marble[0].pos == 13, "Pos 1 marbel Player 0 is 13"
+        assert game_state.list_player[game_state.idx_player_active-1].list_marble[1].pos == 65, "Pos 2 marbel Player 0 is sent home=> Pos 65"
  
 
 class TestGameState:
@@ -640,6 +689,7 @@ if __name__ == '__main__':
     testKaegisDogParts.test_exchange_cards()
     testKaegisDogParts.test_discard_invalid_cards()
     testKaegisDogParts.test_go_in_final()
+    testKaegisDogParts.test_set_action_to_game()
 
     # Tests für TestGameState
     testGameState = TestGameState()
