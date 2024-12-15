@@ -5,6 +5,7 @@ import copy
 from typing import List, Optional, ClassVar
 from enum import Enum
 from pydantic import BaseModel
+
 if __name__ == '__main__':
     from game import Game, Player
 else:
@@ -100,8 +101,9 @@ class GameState(BaseModel):
     cnt_round: int = 0  # current round
     bool_card_exchanged: bool = False  # true if cards was exchanged in round
     list_swap_card: List[Optional[Card]] = [None]*4 # empty Carddeck for cards to be swapt
-    idx_player_started: int = random.randint(0, 3)  # index of player that started the round
-    idx_player_active: int = idx_player_started  # index of active player in round
+    idx_player_active: int = random.randint(0, 3)   # index of active player in round
+    idx_player_started: int =  idx_player_active# index of player that started the round
+
     list_player: List[PlayerState] = []  # list of players
     list_card_draw: List[Card] = LIST_CARD  # list of cards to draw ==> Was list_id_card_draw in given Template
     list_card_discard: List[Card] = []  # list of cards discarded
@@ -653,6 +655,9 @@ class Dog(Game):
         # Sets the next Player active if there is not a Card active
         if self.state.card_active is None:
             self.state.init_next_turn()
+
+        # Check if the game is finisched:
+        self.state.check_game_end()
 
     def get_player_view(self, idx_player: int) -> GameState:
         """Returns the masked game state for the other players."""
