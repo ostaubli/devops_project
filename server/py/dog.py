@@ -160,9 +160,7 @@ class GameState(BaseModel):
             if not selected_player.list_card:
                 continue
             else:
-                print(f"{selected_player.name} has still {len(selected_player.list_card)} card's")
                 return
-
         # Go to next Gameround
         self.cnt_round += 1
 
@@ -183,7 +181,7 @@ class GameState(BaseModel):
                 self.list_card_draw.remove(card)
 
         # Set Cardexchange
-        self.bool_card_exchanged = False
+        self.bool_card_exchanged = False      
 
     def discard_invalid_cards(self) -> None:
         # check if player has cards
@@ -494,20 +492,33 @@ class GameState(BaseModel):
         # Start with the next player
         idx_next_player = (self.idx_player_active +1) %4
 
-        # Loop through players until a player with cards is found or the cycle returns to the active player
-        while not self.list_player[idx_next_player].list_card and idx_next_player != self.idx_player_active:
-            idx_next_player = (idx_next_player + 1)%4
-            
-        # Check if a player with cards was found
-        if self.list_player[idx_next_player].list_card:
+        if idx_next_player == self.idx_player_started:
+            self.deal_cards()
+            self.idx_player_started = (self.idx_player_started + 1) % 4
+            self.idx_player_active = self.idx_player_started
+        else:
             self.idx_player_active = idx_next_player
 
-        else: #All players are out of cards
-            # Move to the next start player
-            self.deal_cards()
-            self.idx_player_started = (self.idx_player_active +1) %4
-            self.idx_player_active = self.idx_player_started
+    def __str__(self) -> str:
+        seperator = "*"*50+"\n"
+        state_details = f"Game Phase: {self.phase}\n" \
+                        f"Round: {self.cnt_round}\n" \
+                        f"Active Player Index: {self.idx_player_active}\n" \
+                        f"Cards Exchanged: {self.bool_card_exchanged}\n" \
+                        f"Number of Players: {self.cnt_player}\n"
+        
+        players_info = "\n".join([f"Player {idx+1} ({player.name}): {len(player.list_card)} cards, {len(player.list_marble)} marbles"
+                                for idx, player in enumerate(self.list_player)])
+        
+        deck_info = f"Cards in Draw Pile: {len(self.list_card_draw)}\n" \
+                    f"Cards in Discard Pile: {len(self.list_card_discard)}\n"
+        
+        if self.card_active:
+            active_card_info = f"Active Card: {self.card_active.suit} {self.card_active.rank}\n"
+        else:
+            active_card_info = "No active card\n"
 
+        return seperator + state_details + players_info + deck_info + active_card_info
 
 class Dog(Game):
 
