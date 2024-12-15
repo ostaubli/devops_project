@@ -1,3 +1,5 @@
+from token import EQUAL
+
 import pytest
 import random
 
@@ -725,6 +727,84 @@ class TestDog:
         assert "Player Player2 has positions: [20, 25] and holds 1 cards" in captured.out
         assert "The actual game phase: GamePhase.RUNNING" in captured.out
 
+    def test_get_player_view(self):
+        # Arrange
+        game = Dog()  # Erstelle eine Instanz
+        game.state = GameState()  # Erstelle ein neues GameState-Objekt
+
+        player1 = PlayerState(
+            list_card=[Card(suit='♠', rank="5"), Card(suit='♥', rank="6")],
+            list_finish_pos=[],
+            list_kennel_pos=[],
+            list_marble=[
+                Marble(pos=5, start_pos=64, is_save=False),
+                Marble(pos=10, start_pos=65, is_save=False),
+            ],
+            name="Player1",
+            start_pos=0,
+        )
+        player2 = PlayerState(
+            list_card=[Card(suit='♠', rank="10")],
+            list_finish_pos=[],
+            list_kennel_pos=[],
+            list_marble=[
+                Marble(pos=20, start_pos=72, is_save=False),
+                Marble(pos=25, start_pos=73, is_save=False),
+            ],
+            name="Player2",
+            start_pos=16,
+        )
+
+        player3 = PlayerState(
+            list_card=[Card(suit='♠', rank="10"), Card(suit='♥', rank = "JKR"), Card(suit='♥', rank = "4")],
+            list_finish_pos=[],
+            list_kennel_pos=[],
+            list_marble=[
+                Marble(pos=52, start_pos=80, is_save=False),
+                Marble(pos=53, start_pos=81, is_save=False),
+            ],
+            name="Player3",
+            start_pos=32,
+        )
+        player4 = PlayerState(
+            list_card=[Card(suit='♠', rank="4"), Card(suit='♥', rank = "A"), Card(suit='♥', rank = "9")],
+            list_finish_pos=[],
+            list_kennel_pos=[],
+            list_marble=[
+                Marble(pos=15, start_pos=88, is_save=False),
+                Marble(pos=6, start_pos=89, is_save=False),
+            ],
+            name="Player3",
+            start_pos=48,
+        )
+
+        game.state.list_player.extend([player1, player2, player3, player4])
+
+        # Act
+        # Wir holen die Sicht für player1 (Index 0)
+        masked_state = game.get_player_view(idx_player=0)
+
+        # Assert
+        # Player1 (Index 0) sollte seine eigenen Karten unverändert sehen
+        assert masked_state.list_player[0].list_card[0].rank == "5"
+        assert masked_state.list_player[0].list_card[1].rank == "6"
+
+        # Player2 (Index 1), Player3 (Index 2), Player4 (Index 3) sollten maskierte Karten haben
+        # Sie sollten jetzt nur noch Karten mit rank="X" haben.
+        for i in [1, 2, 3]:
+            for card in masked_state.list_player[i].list_card:
+                assert card.rank == "X"
+                assert card.suit == ""
+
+        # Zusätzlich kannst du prüfen, ob die Marble-Positionen unverändert sind
+        assert masked_state.list_player[0].list_marble[0].pos == 5
+        assert masked_state.list_player[0].list_marble[1].pos == 10
+        assert masked_state.list_player[1].list_marble[0].pos == 20
+        assert masked_state.list_player[1].list_marble[1].pos == 25
+        assert masked_state.list_player[2].list_marble[0].pos == 52
+        assert masked_state.list_player[2].list_marble[1].pos == 53
+        assert masked_state.list_player[3].list_marble[0].pos == 15
+        assert masked_state.list_player[3].list_marble[1].pos == 6
 
 if __name__ == '__main__':
     # Tests für TestKaegisDogParts
