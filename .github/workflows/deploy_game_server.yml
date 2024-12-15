@@ -12,7 +12,6 @@ jobs:
     permissions:
       contents: read
       id-token: write
-      artifactregistry.repositories.uploadArtifacts: write
 
     steps:
     # Step 1: Checkout the repository
