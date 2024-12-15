@@ -3,11 +3,6 @@ import random
 
 from pyparsing import NotAny
 
-if __name__ == '__main__':
-    import os
-    import sys
-    sys.path.append(os.getcwd())
-
 from pydantic import BaseModel
 from typing import List, Optional, Dict
 
@@ -259,246 +254,11 @@ class TestKaegisDogParts:
         action1 = Action(card=state.LIST_CARD[10], pos_from=45, pos_to=54, card_swap=None)
         action_list = state.go_in_final(action1)
         assert len(action_list) == 1, "it is not possible to go in final"
-    
 
-
-
-if __name__ == '__main__':
-    test = TestKaegisDogParts()
-    test.test_exchange_cards()
-    test.test_go_in_final()
-    
-
-# class TestGameActions:
-#     @pytest.fixture
-#     def setup_game(self):
-#         # Mock the game state, players, and marbles
-#         class Marble:
-#             def __init__(self, pos, is_save=True):
-#                 self.pos = str(pos)
-#                 self.is_save = is_save
-
-#         class Player:
-#             def __init__(self, marbles):
-#                 self.list_marble = [Marble(pos) for pos in marbles]
-
-#         class Game:
-#             def __init__(self):
-#                 self.list_player = [
-#                     Player([1, 2, 3]),  # Player 1 marbles
-#                     Player([4, 5, 6])   # Player 2 marbles
-#                 ]
-
-#             def marble_switch_jake(self, player_idx, opponent_idx, player_marble_pos, opponent_marble_pos):
-#                 # Please the test case using assert for the marble_switch_jake function
-
-#                 # Find the player and opponent
-#                 player = self.list_player[player_idx]
-#                 opponent = self.list_player[opponent_idx]
-
-#                 # Find the marbles to switch
-#                 player_marble = next((m for m in player.list_marble if m.pos == str(player_marble_pos)), None)
-#                 opponent_marble = next((m for m in opponent.list_marble if m.pos == str(opponent_marble_pos)), None)
-
-#                 # Check if the marbles exist
-#                 if player_marble is None:
-#                     raise ValueError(f"No marble found at position {player_marble_pos} for the active player.")
-#                 if opponent_marble is None:
-#                     raise ValueError(f"No marble found at position {opponent_marble_pos} for the opponent player.")
-
-#                 # Switch the marbles
-#                 player_marble.pos, opponent_marble.pos = opponent_marble.pos, player_marble.pos
-
-#         return Game()
-
-#     def test_marble_switch_valid(self, setup_game):
-#         game = setup_game
-
-#         # Call the marble_switch_jake function
-#         game.marble_switch_jake(player_idx=0, opponent_idx=1, player_marble_pos=1, opponent_marble_pos=4)
-
-#         # Assert that marbles are swapped
-#         assert game.list_player[0].list_marble[0].pos == "4"  # Player 1's marble moved to 4
-#         assert game.list_player[1].list_marble[0].pos == "1"  # Player 2's marble moved to 1
-
-#     def test_marble_switch_invalid_player_marble(self, setup_game):
-#         game = setup_game
-
-#         # Attempt to switch a non-existent marble for the player
-#         with pytest.raises(ValueError, match="No marble found at position 10 for the active player."):
-#             game.marble_switch_jake(player_idx=0, opponent_idx=1, player_marble_pos=10, opponent_marble_pos=4)
-
-#     def test_marble_switch_invalid_opponent_marble(self, setup_game):
-#         game = setup_game
-
-#         # Attempt to switch a non-existent marble for the opponent
-#         with pytest.raises(ValueError, match="No marble found at position 10 for the opponent player."):
-#             game.marble_switch_jake(player_idx=0, opponent_idx=1, player_marble_pos=1, opponent_marble_pos=10)
-
-
-# def test_apply_action_valid_move(setup_game):
-#     game = setup_game
-
-#     class Action:
-#         def __init__(self, card, pos_from, pos_to):
-#             self.card = card
-#             self.pos_from = pos_from
-#             self.pos_to = pos_to
-
-#     class Card:
-#         def __init__(self, rank):
-#             self.rank = rank
-
-#     # Add mock card to active player's hand
-#     active_player = game.list_player[0]
-#     card = Card(rank="5")
-#     active_player.list_card = [card]
-
-#     # Define a valid action
-#     action = Action(card=card, pos_from=1, pos_to=3)
-
-#     # Call apply_action
-#     game.apply_action(action)
-
-#     # Assert the marble has moved
-#     assert active_player.list_marble[0].pos == "3"
-
-#     # Assert the card was removed from the player's hand and discarded
-#     assert card not in active_player.list_card
-#     assert card in game.list_card_discard
-
-# def test_apply_action_invalid_card(setup_game):
-#     game = setup_game
-
-#     class Action:
-#         def __init__(self, card, pos_from, pos_to):
-#             self.card = card
-#             self.pos_from = pos_from
-#             self.pos_to = pos_to
-
-#     class Card:
-#         def __init__(self, rank):
-#             self.rank = rank
-
-#     # Define a card not in the player's hand
-#     card = Card(rank="5")
-
-#     # Define an action with the invalid card
-#     action = Action(card=card, pos_from=1, pos_to=3)
-
-#     with pytest.raises(ValueError, match="The card played is not in the active player's hand."):
-#         game.apply_action(action)
-
-# def test_apply_action_invalid_marble_position(setup_game):
-#     game = setup_game
-
-#     class Action:
-#         def __init__(self, card, pos_from, pos_to):
-#             self.card = card
-#             self.pos_from = pos_from
-#             self.pos_to = pos_to
-
-#     class Card:
-#         def __init__(self, rank):
-#             self.rank = rank
-
-#     # Add mock card to active player's hand
-#     active_player = game.list_player[0]
-#     card = Card(rank="5")
-#     active_player.list_card = [card]
-
-#     # Define an action with an invalid starting position
-#     action = Action(card=card, pos_from=10, pos_to=3)
-
-#     with pytest.raises(ValueError, match="No marble found at the specified pos_from: 10"):
-#         game.apply_action(action)
-
+ 
 
 class TestGameState:
-# Test can_leave_kennel
-    def test_can_leave_kennel_no_card(self) -> None:
-        # Testfall: Keine Karte aktiv
-        game_state = GameState(card_active=None)  # card_active = None
-        assert game_state.can_leave_kennel() is False  # Erwartung: False
 
-    def test_can_leave_kennel_valid_card(self) -> None:
-        # Testfall: Gültige Karte
-        game_state = GameState(card_active=Card(suit="hearts", rank="A"))  # Karte mit Rang "A"
-        assert game_state.can_leave_kennel() is True  # Erwartung: True
-
-        game_state.card_active = Card(suit="clubs", rank="K")  # Karte mit Rang "K"
-        assert game_state.can_leave_kennel() is True  # Erwartung: True
-
-        game_state.card_active = Card(suit="diamonds", rank="JKR")  # Karte mit Rang "JKR"
-        assert game_state.can_leave_kennel() is True  # Erwartung: True
-
-    def test_can_leave_kennel_invalid_card(self) -> None:
-        # Testfall: Ungültige Karte
-        game_state = GameState(card_active=Card(suit="spades", rank="7"))  # Karte mit Rang "7"
-        assert game_state.can_leave_kennel() is False  # Erwartung: False
-
-        game_state.card_active = Card(suit="hearts", rank="Q")  # Karte mit Rang "Q"
-        assert game_state.can_leave_kennel() is False  # Erwartung: False
-
-    def get_list_action_no_start_cards(setup_game) -> None:
-        game = setup_game
-        game.state.list_player[0].list_card = [Card(suit='♠', rank='2'), Card(suit='♠', rank='3')]
-        actions = game.get_list_action()
-        assert actions == []
-
-# Test check_final_position
-    def test_check_final_pos_valid_pos_to(self) -> None:
-        # Arrange
-        game_state = GameState()
-        card = Card(suit="hearts", rank="10")  # Erstelle ein Card-Objekt
-        action = Action(pos_to=68, pos_from=58, card=card)  # Erstelle ein Action-Objekt
-        marble = Marble(pos=58, is_save=False, start_pos=0)  # Erforderliche Felder übergeben
-
-        # Act
-        game_state.check_final_pos(pos_to=action.pos_to, pos_from=action.pos_from, action=action, marble=marble)
-
-        # Assert
-        assert marble.is_save is True  # Marble sollte safe sein
-
-    def test_check_final_pos_valid_pos_from(self) -> None:
-        # Arrange
-        game_state = GameState()
-        card = Card(suit="hearts", rank="10")
-        action = Action(pos_to=74, pos_from=64, card=card)  # pos_from in last_positions
-        marble = Marble(pos=64, is_save=False, start_pos=0)
-
-        # Act
-        game_state.check_final_pos(pos_to=action.pos_to, pos_from=action.pos_from, action=action, marble=marble)
-
-        # Assert
-        assert marble.is_save is True  # Marble sollte safe sein
-
-    def test_check_final_pos_invalid_positions(self) -> None:
-        # Arrange
-        game_state = GameState()
-        card = Card(suit="hearts", rank="10")
-        action = Action(pos_to=50, pos_from=40, card=card)  # Beide Positionen sind ungültig
-        marble = Marble(pos=40, is_save=False, start_pos=0)
-
-        # Act
-        game_state.check_final_pos(pos_to=action.pos_to, pos_from=action.pos_from, action=action, marble=marble)
-
-        # Assert
-        assert marble.is_save is False  # Marble sollte nicht safe sein
-
-
-    def test_check_final_pos_both_valid(self) -> None:
-        # Arrange
-        game_state = GameState()
-        card = Card(suit="hearts", rank="10")
-        action = Action(pos_to=74, pos_from=64, card=card)  # Beide Positionen sind gültig
-        marble = Marble(pos=64, is_save=False, start_pos=0)
-
-        # Act
-        game_state.check_final_pos(pos_to=action.pos_to, pos_from=action.pos_from, action=action, marble=marble)
-
-        # Assert
-        assert marble.is_save is True  # Marble sollte safe sein
 
 
     def test_sending_home(self) -> None:
@@ -756,147 +516,167 @@ class TestGameState:
 # test print_state
 # test get_player_view
 
+class TestListPossibleAction:
+        
+    def test_get_list_possible_action1(self) -> None:
+        game_state = GameState()
+        player1 = PlayerState(  #Player1 for test inside kennel, only movement should be going out
+            list_card=[
+                Card(suit='♠',rank="2"),
+                Card(suit = '♦', rank="A")],
+            list_finish_pos=[],
+            list_kennel_pos=[64, 65, 66, 67],
+            list_marble=[Marble(pos=64, is_save=True, start_pos=64),
+                        Marble(pos=65, is_save=True, start_pos=65)],
+            name="Player1",
+            start_pos=0,
+        )
 
-def test_get_list_possible_action1() -> None:
-    game_state = GameState()
-    player1 = PlayerState(  #Player1 for test inside kennel, only movement should be going out
-        list_card=[
-            Card(suit='♠',rank="2"),
-            Card(suit = '♦', rank="A")],
-        list_finish_pos=[],
-        list_kennel_pos=[64, 65, 66, 67],
-        list_marble=[Marble(pos=64, is_save=True, start_pos=64),
-                    Marble(pos=65, is_save=True, start_pos=65)],
-        name="Player1",
-        start_pos=0,
-    )
+        game_state = GameState(
+            list_player=[player1],
+            idx_player_active=0)
 
-    game_state = GameState(
-        list_player=[player1],
-        idx_player_active=0)
+        result = game_state.get_list_possible_action()
+        assert len(result) > 0, 'No Actions althought Cards and Marbles are present'
 
-    result = game_state.get_list_possible_action()
-    assert len(result) > 0, 'No Actions althought Cards and Marbles are present'
+        assert not any(
+            action.card.rank == "2" and action.pos_from == 0 and action.pos_to == 2
+            for action in result
+        ), 'Actions were generated althought Marbles are in Kennel'
 
-    assert not any(
-        action.card.rank == "2" and action.pos_from == 0 and action.pos_to == 2
-        for action in result
-    ), 'Actions were generated althought Marbles are in Kennel'
+        assert not any(
+            action.card.rank == 7
+            for action in result
+        ), 'Actions were generated althought Marbles are in Kennel'
 
-    assert not any(
-        action.card.rank == 7
-        for action in result
-    ), 'Actions were generated althought Marbles are in Kennel'
-
-    kennel_actions = [action for action in result if action.pos_from == 64]
-    assert len(kennel_actions) == 1, "Going out of Kennel is the only action"
-    assert kennel_actions[0].pos_to == player1.start_pos, "Movement from kennel to Board is false"
-
-
-    game_state = GameState()
-    player2 = PlayerState(  # Player2 for test on board with 3 and Ace
-        list_card=[
-            Card(suit='♠',rank="3"),
-            Card(suit = '♦', rank="A")],
-        list_finish_pos=[],
-        list_kennel_pos=[64, 65, 66, 67],
-        list_marble=[Marble(pos=15, is_save=False, start_pos=66),
-                     Marble(pos=67, is_save=False, start_pos=67)],
-        name="Player2",
-        start_pos=48)
-
-    game_state = GameState(
-        list_player=[player2],
-        idx_player_active=0)
-
-    result2 = game_state.get_list_possible_action()
-    assert any(
-        action.card.rank == "3" and action.pos_from == 15 and action.pos_to == 18
-        for action in result2
-    ), 'Actions were not genererated althought Marbles are on Board'
-
-    kennel_actions = [action for action in result if action.pos_from == 64]
-    assert len(kennel_actions) == 1, "Going out of Kennel is the only action"
-    assert kennel_actions[0].pos_to == player1.start_pos, "Movement from kennel to Board is false"
-
-    kennel_actions2 = [action for action in result2 if action.pos_from == 15]
-    assert len(kennel_actions2) == 3, "There should be 3 movements for Marble on 15."
-
-    game_state = GameState()
-    player3 = PlayerState(  # Player3 for test to return multiple actions (however one marble cant move)
-        list_card=[
-            Card(suit='♠', rank="2"),
-            Card(suit='♦', rank="4"),
-            Card(suit='♦', rank='9')],
-        list_finish_pos=[],
-        list_kennel_pos=[64, 65, 66, 67],
-        list_marble=[Marble(pos=15, is_save=False, start_pos=66),
-                     Marble(pos=22, is_save=False, start_pos=67),
-                     Marble(pos=13, is_save=False, start_pos=65 ),
-                     Marble(pos=64, is_save=False, start_pos=64)],
-        name="Player3",
-        start_pos=48)
-
-    game_state = GameState(
-        list_player=[player3],
-        idx_player_active=0)
-
-    result3 = game_state.get_list_possible_action()
-    movement_actions = [action for action in result3]
-    assert len(movement_actions) == 12, "There should be 4 movements for the three Marbles each."
-
-    game_state = GameState()
-    player4 = PlayerState(  # Player4 for test to overstep the 64 rule
-        list_card=[
-            Card(suit='♠', rank="10"),
-            Card(suit='♦', rank="4"),
-            Card(suit='♦', rank='8')],
-        list_finish_pos=[],
-        list_kennel_pos=[64, 65, 66, 67],
-        list_marble=[Marble(pos=60, is_save=False, start_pos=66)],
-        name="Player4",
-        start_pos=48)
-
-    game_state = GameState(
-        list_player=[player4],
-        idx_player_active=0)
-
-    result4 = game_state.get_list_possible_action()
-    assert any(
-        action.card.rank == "10" and action.pos_to == 6
-        for action in result4), 'card moved to invalid position'
-
-    game_state = GameState()
-    player5 = PlayerState(  # Player4 for test to not go negative with -4
-        list_card=[
-            Card(suit='♠', rank="10"),
-            Card(suit='♦', rank="4"),
-            Card(suit='♦', rank='8')],
-        list_finish_pos=[],
-        list_kennel_pos=[64, 65, 66, 67],
-        list_marble=[Marble(pos=2, is_save=False, start_pos=66)],
-        name="Player4",
-        start_pos=48)
-
-    game_state = GameState(
-        list_player=[player4],
-        idx_player_active=0)
-
-    result5 = game_state.get_list_possible_action()
-
-    assert (
-        action.card.rank == "4" and (action.pos_to == 62 and action.pos_to == 6)
-        for action in result5), 'card moved to invalid position'
+        kennel_actions = [action for action in result if action.pos_from == 64]
+        assert len(kennel_actions) == 1, "Going out of Kennel is the only action"
+        assert kennel_actions[0].pos_to == player1.start_pos, "Movement from kennel to Board is false"
 
 
+        game_state = GameState()
+        player2 = PlayerState(  # Player2 for test on board with 3 and Ace
+            list_card=[
+                Card(suit='♠',rank="3"),
+                Card(suit = '♦', rank="A")],
+            list_finish_pos=[],
+            list_kennel_pos=[64, 65, 66, 67],
+            list_marble=[Marble(pos=15, is_save=False, start_pos=66),
+                        Marble(pos=67, is_save=False, start_pos=67)],
+            name="Player2",
+            start_pos=48)
+
+        game_state = GameState(
+            list_player=[player2],
+            idx_player_active=0)
+
+        result2 = game_state.get_list_possible_action()
+        assert any(
+            action.card.rank == "3" and action.pos_from == 15 and action.pos_to == 18
+            for action in result2
+        ), 'Actions were not genererated althought Marbles are on Board'
+
+        kennel_actions = [action for action in result if action.pos_from == 64]
+        assert len(kennel_actions) == 1, "Going out of Kennel is the only action"
+        assert kennel_actions[0].pos_to == player1.start_pos, "Movement from kennel to Board is false"
+
+        kennel_actions2 = [action for action in result2 if action.pos_from == 15]
+        assert len(kennel_actions2) == 3, "There should be 3 movements for Marble on 15."
+
+        game_state = GameState()
+        player3 = PlayerState(  # Player3 for test to return multiple actions (however one marble cant move)
+            list_card=[
+                Card(suit='♠', rank="2"),
+                Card(suit='♦', rank="4"),
+                Card(suit='♦', rank='9')],
+            list_finish_pos=[],
+            list_kennel_pos=[64, 65, 66, 67],
+            list_marble=[Marble(pos=15, is_save=False, start_pos=66),
+                        Marble(pos=22, is_save=False, start_pos=67),
+                        Marble(pos=13, is_save=False, start_pos=65 ),
+                        Marble(pos=64, is_save=False, start_pos=64)],
+            name="Player3",
+            start_pos=48)
+
+        game_state = GameState(
+            list_player=[player3],
+            idx_player_active=0)
+
+        result3 = game_state.get_list_possible_action()
+        movement_actions = [action for action in result3]
+        assert len(movement_actions) == 12, "There should be 4 movements for the three Marbles each."
+
+        game_state = GameState()
+        player4 = PlayerState(  # Player4 for test to overstep the 64 rule
+            list_card=[
+                Card(suit='♠', rank="10"),
+                Card(suit='♦', rank="4"),
+                Card(suit='♦', rank='8')],
+            list_finish_pos=[],
+            list_kennel_pos=[64, 65, 66, 67],
+            list_marble=[Marble(pos=60, is_save=False, start_pos=66)],
+            name="Player4",
+            start_pos=48)
+
+        game_state = GameState(
+            list_player=[player4],
+            idx_player_active=0)
+
+        result4 = game_state.get_list_possible_action()
+        assert any(
+            action.card.rank == "10" and action.pos_to == 6
+            for action in result4), 'card moved to invalid position'
+
+        game_state = GameState()
+        player5 = PlayerState(  # Player4 for test to not go negative with -4
+            list_card=[
+                Card(suit='♠', rank="10"),
+                Card(suit='♦', rank="4"),
+                Card(suit='♦', rank='8')],
+            list_finish_pos=[],
+            list_kennel_pos=[64, 65, 66, 67],
+            list_marble=[Marble(pos=2, is_save=False, start_pos=66)],
+            name="Player5",
+            start_pos=48)
+
+        game_state = GameState(
+            list_player=[player5],
+            idx_player_active=0)
+
+        result5 = game_state.get_list_possible_action()
+
+        assert (
+            action.card.rank == "4" and (action.pos_to == 62 and action.pos_to == 6)
+            for action in result5), 'card moved to invalid position'
 
 
+if __name__ == '__main__':
+    # Tests für TestKaegisDogParts
+    testKaegisDogParts = TestKaegisDogParts()
+    testKaegisDogParts.test_setup_players()
+    testKaegisDogParts.test_deal_cards()
+    testKaegisDogParts.test_init_next_turn()
+    testKaegisDogParts.test_exchange_cards()
+    testKaegisDogParts.test_discard_invalid_cards()
+    testKaegisDogParts.test_go_in_final()
 
+    # Tests für TestGameState
+    testGameState = TestGameState()
+    # testGameState.test_can_leave_kennel_no_card()
+    # testGameState.test_can_leave_kennel_valid_card()
+    # testGameState.test_can_leave_kennel_invalid_card()
+    # testGameState.get_list_action_no_start_cards()
+    # testGameState.test_check_final_pos_valid_pos_to()
+    # testGameState.test_check_final_pos_valid_pos_from()
+    # testGameState.test_check_final_pos_invalid_positions()
+    # testGameState.test_check_final_pos_both_valid()
+    testGameState.test_sending_home()
+    testGameState.test_skip_save_marble()
+    testGameState.test_check_game_end()
+    testGameState.test_is_player_finished()
 
-
-
-
-
+    actionlist = TestListPossibleAction()
+    actionlist.test_get_list_possible_action1()
 
 
 
