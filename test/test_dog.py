@@ -682,7 +682,10 @@ class TestGameState:
         assert game_state.phase == GamePhase.FINISHED
 
 
-# Test test_is_player_finished
+def test_is_player_finished(self) -> None:
+    pass
+
+
 # Test test_check_game_end
 # test_set_state
 # test get_state
