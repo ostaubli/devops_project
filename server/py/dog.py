@@ -1352,6 +1352,7 @@ if __name__ == '__main__':
             selected_action = random_player.select_action(state=game.state, actions=game_actions)
             print(f"selected action: {selected_action}")
             if isinstance(selected_action, list):
+                # Send to handle_seven_card_logic for further processing
                 print(f"selected action: {selected_action}")
                 game._handle_seven_card_logic(selected_action)
             else:
