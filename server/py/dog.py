@@ -1227,7 +1227,7 @@ class Dog(Game):
             self.state.list_card_draw.extend(GameState.LIST_CARD)
             random.shuffle(self.state.list_card_draw)
 
-            print("Deck has been reset to the original full set of cards.")
+            # print("Deck has been reset to the original full set of cards.")
 
     def deal_cards(self) -> None:
         """Deal cards to each player for the current round."""
@@ -1250,8 +1250,7 @@ class Dog(Game):
             for _, player in enumerate(self.state.list_player):
                 # Ensure enough cards are available in the draw pile
                 if not self.state.list_card_draw:
-                    if not self.state.list_card_discard:
-                        raise ValueError("Not enough cards to reshuffle and deal.")
+                    assert self.state.list_card_discard
                     self.reshuffle_discard_into_draw()
 
                 # Give one card to the current player
