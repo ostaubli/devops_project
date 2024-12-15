@@ -682,8 +682,73 @@ class TestGameState:
         assert game_state.phase == GamePhase.FINISHED
 
 
-def test_is_player_finished(self) -> None:
-    pass
+    def test_is_player_finished(self) -> None:
+        # Arrange
+        game_state = GameState()
+
+        # Initialisierung der Spieler
+        player1 = PlayerState(
+            list_card=[],
+            list_finish_pos=[68, 69, 70, 71],
+            list_kennel_pos=[],
+            list_marble=[],
+            name="Player1",
+            start_pos=0,
+        )
+        player2 = PlayerState(
+            list_card=[],
+            list_finish_pos=[76, 77, 78, 79],
+            list_kennel_pos=[],
+            list_marble=[],
+            name="Player2",
+            start_pos=0,
+        )
+
+        player3 = PlayerState(
+            list_card=[],
+            list_finish_pos=[84, 85, 86, 87],
+            list_kennel_pos=[],
+            list_marble=[],
+            name="Player3",
+            start_pos=0,
+        )
+
+        # Initialisiere Murmeln
+        marble11 = Marble(pos=68, start_pos=0, is_save=True)
+        marble12 = Marble(pos=69, start_pos=0, is_save=True)
+        marble13 = Marble(pos=70, start_pos=0, is_save=True)
+        marble14 = Marble(pos=71, start_pos=0, is_save=True)
+        marble21 = Marble(pos=76, start_pos=16, is_save=True)
+        marble22 = Marble(pos=77, start_pos=16, is_save=True)
+        marble23 = Marble(pos=78, start_pos=16, is_save=True)
+        marble24 = Marble(pos=80, start_pos=16, is_save=False)
+        marble31 = Marble(pos=22, start_pos=32, is_save=False)
+        marble32 = Marble(pos=23, start_pos=32, is_save=False)
+        marble33 = Marble(pos=24, start_pos=32, is_save=False)
+        marble34 = Marble(pos=25, start_pos=32, is_save=False)
+
+        # Füge Murmeln den Spielern hinzu
+        player1.list_marble.extend([marble11, marble12, marble13, marble14])
+        player2.list_marble.extend([marble21, marble22, marble23, marble24])
+        player3.list_marble.extend([marble31, marble32, marble33, marble34])
+
+        # Füge Spieler zum GameState hinzu
+        game_state.list_player.extend([player1, player2, player3])
+
+        # Test 1: Active player is player1. All marbles in final position. Expect True
+        game_state.idx_player_active = 0  # Spieler 1 ist aktiv
+        result = game_state.is_player_finished()
+        assert result is True
+
+        # Test 2: Active player is player2. Three out of four in final position. Expect False
+        game_state.idx_player_active = 1  # Spieler 2 ist aktiv
+        result = game_state.is_player_finished()
+        assert result is False
+
+        # Test 3: Active player is player3. No marble in final position. Expect False
+        game_state.idx_player_active = 2  # Spieler 3 ist aktiv
+        result = game_state.is_player_finished()
+        assert result is False
 
 
 # Test test_check_game_end
