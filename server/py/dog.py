@@ -1131,6 +1131,9 @@ class Dog(Game):
         """Handle overtaking logic for SEVEN card."""
         assert self.state   # Ensure the game state is set  
 
+        if move_action.pos_from is None or move_action.pos_to is None:
+            return
+            
         # Collect all positions between `pos_from` and `pos_to`
         overtaken_positions = []
         if move_action.pos_from < move_action.pos_to:
@@ -1344,7 +1347,8 @@ if __name__ == '__main__':
             # Select an action (random in this example)
             selected_action = random_player.select_action(state=game.state, actions=game_actions)
             print(f"selected action: {selected_action}")
-            if selected_action is List: 
+            if isinstance(selected_action, list):
+                print(f"selected action: {selected_action}")
                 game._handle_seven_card_logic(selected_action)
             else:
                 # Apply the selected action
