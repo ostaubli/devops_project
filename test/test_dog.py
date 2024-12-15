@@ -613,73 +613,73 @@ class TestGameState:
 ## MARC: BITTE HIER TESTFALL test_is_player_finished EINFÜGEN
 
 
-def test_check_game_end() -> None:
-    # Arrange
-    game_state = GameState()
+    def test_check_game_end(self) -> None:
+        # Arrange
+        game_state = GameState()
 
-    # Initialisierung der Spieler
-    player1 = PlayerState(
-        list_card=[],
-        list_finish_pos=[68, 69, 70, 71],
-        list_kennel_pos=[],
-        list_marble=[],
-        name="Player1",
-        start_pos=0,
-    )
-    player2 = PlayerState(
-        list_card=[],
-        list_finish_pos=[76, 77, 78, 79],
-        list_kennel_pos=[],
-        list_marble=[],
-        name="Player2",
-        start_pos=0,
-    )
-    player3 = PlayerState(
-        list_card=[],
-        list_finish_pos=[84, 85, 86, 87],
-        list_kennel_pos=[],
-        list_marble=[],
-        name="Player3",
-        start_pos=0,
-    )
+        # Initialisierung der Spieler
+        player1 = PlayerState(
+            list_card=[],
+            list_finish_pos=[68, 69, 70, 71],
+            list_kennel_pos=[],
+            list_marble=[],
+            name="Player1",
+            start_pos=0,
+        )
+        player2 = PlayerState(
+            list_card=[],
+            list_finish_pos=[76, 77, 78, 79],
+            list_kennel_pos=[],
+            list_marble=[],
+            name="Player2",
+            start_pos=0,
+        )
+        player3 = PlayerState(
+            list_card=[],
+            list_finish_pos=[84, 85, 86, 87],
+            list_kennel_pos=[],
+            list_marble=[],
+            name="Player3",
+            start_pos=0,
+        )
 
-    player4 = PlayerState(
-        list_card=[],
-        list_finish_pos=[92, 93, 94, 95],
-        list_kennel_pos=[],
-        list_marble=[],
-        name="Player4",
-        start_pos=0,
-    )
-    # Initialisiere Murmeln
-    marble11 = Marble(pos=68, start_pos=0, is_save=True)
-    marble12 = Marble(pos=69, start_pos=0, is_save=True)
-    marble13 = Marble(pos=70, start_pos=0, is_save=True)
-    marble14 = Marble(pos=71, start_pos=0, is_save=True)
-    marble21 = Marble(pos=76, start_pos=16, is_save=True)
-    marble22 = Marble(pos=77, start_pos=16, is_save=True)
-    marble23 = Marble(pos=78, start_pos=16, is_save=True)
-    marble24 = Marble(pos=79, start_pos=16, is_save=True)
-    marble31 = Marble(pos=84, start_pos=32, is_save=True)
-    marble32 = Marble(pos=85, start_pos=32, is_save=True)
-    marble33 = Marble(pos=86, start_pos=32, is_save=True)
-    marble34 = Marble(pos=87, start_pos=32, is_save=True)
-    marble41 = Marble(pos=92, start_pos=32, is_save=True)
-    marble42 = Marble(pos=93, start_pos=32, is_save=True)
-    marble43 = Marble(pos=94, start_pos=32, is_save=True)
-    marble44 = Marble(pos=22, start_pos=32, is_save=False)
+        player4 = PlayerState(
+            list_card=[],
+            list_finish_pos=[92, 93, 94, 95],
+            list_kennel_pos=[],
+            list_marble=[],
+            name="Player4",
+            start_pos=0,
+        )
+        # Initialisiere Murmeln
+        marble11 = Marble(pos=68, start_pos=0, is_save=True)
+        marble12 = Marble(pos=69, start_pos=0, is_save=True)
+        marble13 = Marble(pos=70, start_pos=0, is_save=True)
+        marble14 = Marble(pos=71, start_pos=0, is_save=True)
+        marble21 = Marble(pos=76, start_pos=16, is_save=True)
+        marble22 = Marble(pos=77, start_pos=16, is_save=True)
+        marble23 = Marble(pos=78, start_pos=16, is_save=True)
+        marble24 = Marble(pos=79, start_pos=16, is_save=True)
+        marble31 = Marble(pos=84, start_pos=32, is_save=True)
+        marble32 = Marble(pos=85, start_pos=32, is_save=True)
+        marble33 = Marble(pos=86, start_pos=32, is_save=True)
+        marble34 = Marble(pos=87, start_pos=32, is_save=True)
+        marble41 = Marble(pos=92, start_pos=32, is_save=True)
+        marble42 = Marble(pos=93, start_pos=32, is_save=True)
+        marble43 = Marble(pos=94, start_pos=32, is_save=True)
+        marble44 = Marble(pos=22, start_pos=32, is_save=False)
 
-    # Füge Murmeln den Spielern hinzu
-    player1.list_marble.extend([marble11, marble12, marble13, marble14])
-    player2.list_marble.extend([marble21, marble22, marble23, marble24])
-    player3.list_marble.extend([marble31, marble32, marble33, marble34])
-    player4.list_marble.extend([marble41, marble42, marble43, marble44])
+        # Füge Murmeln den Spielern hinzu
+        player1.list_marble.extend([marble11, marble12, marble13, marble14])
+        player2.list_marble.extend([marble21, marble22, marble23, marble24])
+        player3.list_marble.extend([marble31, marble32, marble33, marble34])
+        player4.list_marble.extend([marble41, marble42, marble43, marble44])
 
-    game_state.list_player.extend([player1, player2, player3, player4])
+        game_state.list_player.extend([player1, player2, player3, player4])
 
-    # Prüfe, ob das Spiel fertig ist
-    game_state.check_game_end()
-    assert game_state.phase == GamePhase.FINISHED
+        # Prüfe, ob das Spiel fertig ist
+        game_state.check_game_end()
+        assert game_state.phase == GamePhase.FINISHED
 
 
 # Test test_is_player_finished

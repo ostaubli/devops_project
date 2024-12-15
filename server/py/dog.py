@@ -499,7 +499,7 @@ class GameState(BaseModel):
                     return False
         return True
 
-# MARC: BITTE HIER METHODE is_player_finished einfügen
+# MARC: Bgit HODE is_player_finished einfügen
 
     def check_game_end(self) -> None:
         team1 = [self.list_player[0], self.list_player[2]]
