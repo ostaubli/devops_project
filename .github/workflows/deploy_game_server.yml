@@ -9,16 +9,17 @@ jobs:
   deploy:
     runs-on: ubuntu-latest
 
+    # give permissions to read and write to gcloud
     permissions:
       contents: read
       id-token: write
 
     steps:
-    # Step 1: Checkout the repository
+    # Checkout the repository
     - name: Checkout code
       uses: actions/checkout@v3
 
-    # Step 2:Auth for Google Cloud SDK
+    # Authenticate for Google Cloud SDK
     - name: Google auth
       id: auth
       uses: google-github-actions/auth@v2
@@ -27,21 +28,14 @@ jobs:
         service_account: ${{ secrets.GCP_SA_NAME }}
         project_id: ${{ vars.ENV_VAR_PROJECT_ID }}
 
-    # Step 3: Set up Google Cloud SDK
+    # Set up Google Cloud SDK
     - name: Install Cloud SDK
       uses: google-github-actions/setup-gcloud@v2
       with:
           project_id: ${{ vars.ENV_VAR_PROJECT_ID }}
 
-    # Step 4: Build and push Docker image
-    #- name: Build and push Docker image
-    #  run: |
-    #    IMAGE_NAME=gcr.io/${{ vars.ENV_VAR_PROJECT_ID }}/aaajp_game_server_from_git
-    #    docker build -t $IMAGE_NAME .
-    #    docker push $IMAGE_NAME
-
-    # Step 6: Deploy to Google Cloud Run
-    - name: Deploy game to Cloud Run
+    # Deploy to Google Cloud Run
+    - name: Deploy game server to Cloud Run
       run: |
         gcloud run deploy aaajp-game-server-from-git \
           --source . \
