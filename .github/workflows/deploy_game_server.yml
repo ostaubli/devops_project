@@ -43,7 +43,7 @@ jobs:
     # Step 6: Deploy to Google Cloud Run
     - name: Deploy game to Cloud Run
       run: |
-        gcloud run deploy aaajp_game_server_from_git \
+        gcloud run deploy aaajp-game-server-from-git \
           --source . \
           --platform managed \
           --region europe-west6 \
