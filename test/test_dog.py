@@ -242,12 +242,14 @@ def test_apply_action_none(game):
     game.apply_action(None)
     assert game.state.idx_player_active != old_active
 
+
 def test_handle_joker_swap(game):
     p = game.state.list_player[0]
     c = p.list_card[0]
     action = Action(card=c, card_swap=Card(suit='♥', rank='A'))
     game._handle_joker_swap(p, action)
     assert game.state.card_active == Card(suit='♥', rank='A')
+
 
 def test_handle_active_card_move(game):
     p = game.state.list_player[0]
@@ -256,6 +258,7 @@ def test_handle_active_card_move(game):
     action = Action(card=c, pos_from=64, pos_to=0)
     game._handle_active_card_move(p, action)
 
+
 def test_handle_seven_move(game):
     p = game.state.list_player[0]
     c = Card(suit='♥', rank='7')
@@ -263,17 +266,20 @@ def test_handle_seven_move(game):
     action = Action(card=c, pos_from=64, pos_to=65)
     game._handle_seven_move(action)
 
+
 def test_handle_standard_move(game):
     p = game.state.list_player[0]
     c = p.list_card[0]
     action = Action(card=c, pos_from=64, pos_to=65)
     game._handle_standard_move(action)
 
+
 def test_move_marble(game):
     p = game.state.list_player[0]
     c = p.list_card[0]
     action = Action(card=c, pos_from=64, pos_to=65)
     game._move_marble(action)
+
 
 def test_send_to_kennel(game):
     p = game.state.list_player[0]
@@ -309,15 +315,34 @@ def test_find_player_card(game):
     assert found == c
 
 
+def test_handle_card_7(game):
+    p = game.state.list_player[0]
+    c = Card(suit='♥', rank='7')
+    p.list_card.append(c)
+    action = Action(card=c, pos_from=64, pos_to=game.PLAYER_BOARD_SEGMENTS[0]['start'])
+    game._handle_card_7(p, c, action)
+    # Kein Fehler => ok
+
+
+def test_handle_card_joker(game):
+    p = game.state.list_player[0]
+    c = Card(suit='♥', rank='JKR')
+    p.list_card.append(c)
+    action = Action(card=c, pos_from=64, pos_to=0)
+    game._handle_card_joker(p, c, action)
+
+
+def test_handle_card_other(game):
+    p = game.state.list_player[0]
+    c = Card(suit='♥', rank='5')
+    p.list_card.append(c)
+    action = Action(card=c, pos_from=64, pos_to=0)
+    game._handle_card_other(p, c, action)
+
+
 def test_handle_jack_action(game):
     action = Action(pos_from=64, pos_to=65)
     game._handle_jack_action(action)
-
-
-def test_apply_action_none(game):
-    old_active = game.state.idx_player_active
-    game.apply_action(None)
-    assert game.state.idx_player_active != old_active
 
 
 def test_calc_steps(game):
