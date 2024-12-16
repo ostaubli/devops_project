@@ -775,16 +775,27 @@ class Dog(Game):
             self.next_turn()
 
     def _handle_seven_move(self, action: Action) -> None:
+        # Stellt sicher, dass ein gültiger Spielstatus vorhanden ist.
         assert self.state is not None
+
+        # Berechne Spieler-Index und Positionen für den Zug.
         player_idx = self.state.idx_player_active
         pos_from = action.pos_from if action.pos_from is not None else -1
         pos_to = action.pos_to if action.pos_to is not None else -1
+
+        # Hole das Spielfeldsegment des aktiven Spielers.
         segment = self.PLAYER_BOARD_SEGMENTS[player_idx]
+
+        # Berechne die Distanz zwischen Ausgangs- und Zielposition.
         dist_val = (pos_to - pos_from) % self.MAIN_PATH_LENGTH
         if pos_from >= segment['final_start']:
             dist_val = pos_to - pos_from
+        
+        # Bestimme die Bewegungsrichtung.
         direction = 1 if dist_val is not None and dist_val >= 0 else -1
         dist_abs = abs(dist_val) if dist_val is not None else 0
+
+        # Iteriere über alle Positionen auf dem Weg und überprüfe auf Kollisionen.
         current = pos_from
         for _ in range(dist_abs):
             current = (current + direction) % self.MAIN_PATH_LENGTH
@@ -794,6 +805,7 @@ class Dog(Game):
                 op_segment = self.PLAYER_BOARD_SEGMENTS[op]
                 in_final = op_segment['final_start'] <= current < op_segment['final_start'] + 4
                 if not (om.is_save and (current == op_segment['start'] or in_final)):
+                    # Schicke kollidierende Murmeln in die Wartezone (Kennel).
                     self._send_to_kennel(om, op)
 
     def _handle_card_joker(self, player: PlayerState, found_card: Card, action: Action) -> None:
@@ -846,69 +858,114 @@ class Dog(Game):
         self.next_turn()
 
     def _handle_active_card_move(self, player: PlayerState, action: Action) -> None:
+        # Stellt sicher, dass ein gültiger Spielstatus vorhanden ist.
         assert self.state is not None
+
+        # Initialisiere die Ausgangs- und Zielpositionen, falls sie nicht angegeben sind.
         pos_from = action.pos_from if action.pos_from is not None else -1
         pos_to = action.pos_to if action.pos_to is not None else -1
+
+        # Berechnet die Bewegungsanzahl (Schritte) basierend auf der aktuellen Karte.
         steps = self._calc_steps(pos_from, pos_to, self.state.idx_player_active)
+
+        # Wenn keine Schritte möglich sind, beende den Zug und überprüfe den Spielstatus.
         if steps is None:
             self.next_turn()
             self.check_game_status()
             return
+        
+        # Führt die Bewegung der Murmel aus.
         self._move_marble(action)
+
+        # Sonderfall: Aktive Karte ist eine Sieben (7).
         if self.state.card_active and self.state.card_active.rank == '7':
             assert self.temp_seven_moves is not None
+            # Speichere die aktuelle Bewegung in der temporären Sieben-Liste
             self.temp_seven_moves.append(abs(steps))
+
+            # Überprüfe, ob die gesamte Bewegung der Sieben abgeschlossen ist.
             if sum(self.temp_seven_moves) == 7:
+                # Entferne die Karte, falls sie noch in der Hand des Spielers ist
                 if self.temp_seven_card and self.temp_seven_card in player.list_card:
                     player.list_card.remove(self.temp_seven_card)
                     self.state.list_card_discard.append(self.temp_seven_card)
+                 # Zurücksetzen der aktiven Karte und zum nächsten Spieler wechseln.
                 self._reset_card_active()
                 self.next_turn()
+        
+        # Sonderfall: Aktive Karte ist ein Bube (J).
         elif self.state.card_active and self.state.card_active.rank == 'J':
             self._reset_card_active()
             self.next_turn()
+        # Standardfall: Beende Zug und setze aktive Karte zurück.
         else:
             self._reset_card_active()
             self.next_turn()
 
     def _handle_standard_move(self, action: Action) -> None:
+        # Stellt sicher, dass ein gültiger Spielstatus vorhanden ist.
         assert self.state is not None
+
+        # Hole Ausgangs- und Zielposition.
         pos_from = action.pos_from if action.pos_from is not None else -1
         pos_to = action.pos_to if action.pos_to is not None else -1
+        
+        # Suche die Murmel an der Ausgangsposition.
         m, _ = self._find_marble_by_pos(pos_from)
         if not m:
             return
+        
+        # Überprüfe, ob an der Zielposition eine andere Murmel ist.
         km, kp = self._find_marble_by_pos(pos_to)
         if km and km != m:
             assert kp is not None
             segment = self.PLAYER_BOARD_SEGMENTS[kp]
             in_final = segment['final_start'] <= pos_to < segment['final_start'] + 4
             if not (km.is_save and (pos_to == segment['start'] or in_final)):
+                # Schicke kollidierende Murmeln in die Wartezone (Kennel).
                 self._send_to_kennel(km, kp)
+
+        # Bewege die Murmel zur Zielposition.
         m.pos = pos_to
+
+        # Markiere Murmel als sicher, wenn sie die Startposition erreicht.
         start_pos = self.PLAYER_BOARD_SEGMENTS[self.state.idx_player_active]['start']
         if m.pos == start_pos:
             m.is_save = True
 
     def _move_marble(self, action: Action) -> None:
+        # Stellt sicher, dass ein gültiger Spielstatus vorhanden ist.
         assert self.state is not None
+
+        # Überprüfe, ob die Bewegung mit einer Sieben durchgeführt wird.
         is_seven_move = (
                 (action.card and action.card.rank == '7') or
                 (self.state.card_active and self.state.card_active.rank == '7')
         )
+
+        # Spezialfall: Bewegung mit einem Buben (J).
         if action.card and action.card.rank == 'J':
             self._handle_jack_action(action)
             return
+        
+        # Spezialfall: Bewegung mit einer Sieben.
         if is_seven_move:
             self._handle_seven_move(action)
+
+        # Standardfall: Standardbewegung.
         self._handle_standard_move(action)
 
     def _send_to_kennel(self, marble: Marble, player_idx: int) -> None:
+        # Stellt sicher, dass ein gültiger Spielstatus vorhanden ist.
         assert self.state is not None
+
+        # Bestimme die erste verfügbare Position in der Wartezone (Kennel).
         kennel_pos = self.PLAYER_BOARD_SEGMENTS[player_idx]['queue_start']
         for i in range(4):
             spot = kennel_pos + i
+            # Überprüfe, ob die Position frei ist.
             if all(mm.pos != spot for mm in self.state.list_player[player_idx].list_marble):
+                # Setze die Murmel in die Wartezone.
                 marble.pos = spot
                 marble.is_save = False
                 break
