@@ -1,10 +1,9 @@
-from typing import List, Optional, ClassVar, Union, Tuple # pylint: disable=unused-import
+from typing import List, Optional, ClassVar, Union, Tuple
 from enum import Enum
 import random
-import copy # pylint: disable=unused-import
+import copy
 from pydantic import BaseModel
 from server.py.game import Game, Player
-
 
 class Card(BaseModel):
     suit: str
@@ -29,17 +28,14 @@ class Card(BaseModel):
         return ((suit_order.index(self.suit), rank_order.index(self.rank)) <
                 (suit_order.index(other.suit), rank_order.index(other.rank)))
 
-
 class Marble(BaseModel):
     pos: int
     is_save: bool
-
 
 class PlayerState(BaseModel):
     name: str
     list_card: List[Card]
     list_marble: List[Marble]
-
 
 class Action(BaseModel):
     card: Optional[Card] = None
@@ -67,12 +63,10 @@ class Action(BaseModel):
         return (f"Action(card={repr(self.card)}, pos_from={self.pos_from}, "
                 f"pos_to={self.pos_to}, card_swap={repr(self.card_swap)})")
 
-
 class GamePhase(str, Enum):
     SETUP = 'setup'
     RUNNING = 'running'
     FINISHED = 'finished'
-
 
 class GameState(BaseModel):
     LIST_SUIT: ClassVar[List[str]] = ['♠', '♥', '♦', '♣']
@@ -97,7 +91,6 @@ class GameState(BaseModel):
     list_card_discard: List[Card]
     card_active: Optional[Card]
 
-
 class RandomPlayer(Player):
     def select_action(self, state: GameState, actions: List[Action]) -> Optional[Action]:
         if actions:
@@ -106,7 +99,6 @@ class RandomPlayer(Player):
 
     def do_nothing(self) -> None:
         pass
-
 
 class Dog(Game):
 
@@ -782,7 +774,6 @@ class Dog(Game):
         player_idx = self.state.idx_player_active
         pos_from = action.pos_from if action.pos_from is not None else -1
         pos_to = action.pos_to if action.pos_to is not None else -1
-
         # Hole das Spielfeldsegment des aktiven Spielers.
         segment = self.PLAYER_BOARD_SEGMENTS[player_idx]
 
@@ -790,7 +781,7 @@ class Dog(Game):
         dist_val = (pos_to - pos_from) % self.MAIN_PATH_LENGTH
         if pos_from >= segment['final_start']:
             dist_val = pos_to - pos_from
-        
+
         # Bestimme die Bewegungsrichtung.
         direction = 1 if dist_val is not None and dist_val >= 0 else -1
         dist_abs = abs(dist_val) if dist_val is not None else 0
@@ -864,7 +855,6 @@ class Dog(Game):
         # Initialisiere die Ausgangs- und Zielpositionen, falls sie nicht angegeben sind.
         pos_from = action.pos_from if action.pos_from is not None else -1
         pos_to = action.pos_to if action.pos_to is not None else -1
-
         # Berechnet die Bewegungsanzahl (Schritte) basierend auf der aktuellen Karte.
         steps = self._calc_steps(pos_from, pos_to, self.state.idx_player_active)
 
@@ -873,7 +863,7 @@ class Dog(Game):
             self.next_turn()
             self.check_game_status()
             return
-        
+
         # Führt die Bewegung der Murmel aus.
         self._move_marble(action)
 
@@ -892,7 +882,7 @@ class Dog(Game):
                  # Zurücksetzen der aktiven Karte und zum nächsten Spieler wechseln.
                 self._reset_card_active()
                 self.next_turn()
-        
+
         # Sonderfall: Aktive Karte ist ein Bube (J).
         elif self.state.card_active and self.state.card_active.rank == 'J':
             self._reset_card_active()
@@ -909,12 +899,11 @@ class Dog(Game):
         # Hole Ausgangs- und Zielposition.
         pos_from = action.pos_from if action.pos_from is not None else -1
         pos_to = action.pos_to if action.pos_to is not None else -1
-        
         # Suche die Murmel an der Ausgangsposition.
         m, _ = self._find_marble_by_pos(pos_from)
         if not m:
             return
-        
+
         # Überprüfe, ob an der Zielposition eine andere Murmel ist.
         km, kp = self._find_marble_by_pos(pos_to)
         if km and km != m:
@@ -947,7 +936,7 @@ class Dog(Game):
         if action.card and action.card.rank == 'J':
             self._handle_jack_action(action)
             return
-        
+
         # Spezialfall: Bewegung mit einer Sieben.
         if is_seven_move:
             self._handle_seven_move(action)
@@ -991,42 +980,19 @@ class Dog(Game):
         player2.list_card.remove(card2)
         player1.list_card.append(card2)
 
-    
-
-
 if __name__ == '__main__':
-
     game = Dog()
-
-    # Get the initial state of the game and print it
     initial_state = game.get_state()
-    print("Initial Game State:")
-    print(initial_state)
-
-    # Simulate setting up the next rounds to see how the card distribution changes
     for round_num in range(1, 4):
-        game.setup_next_round()
-        print(f"\nGame State after setting up round {round_num + 1}:")
-        print(game.get_state())
-
-    # Simulate a few turns to see how the game progresses
-    print("\nStarting turns simulation:")
-    for turn in range(6):
-        # Example of getting available actions (currently, not implemented)
-        ACTIONS = game.get_list_action()
-        if ACTIONS:
-            # Apply a random action (using RandomPlayer logic as an example)
-            action = random.choice(ACTIONS)
-            game.apply_action(action)
-        else:
-            # If no valid actions, skip the turn
-            game.next_turn()
-
-        # Print the game state after each turn
-        print(f"\nGame State after turn {turn + 1}:")
-        print(game.get_state())
-
-    # Reset the game and print the reset state
+        for _ in range(game.state.cnt_player):
+            available_actions = game.get_list_action()
+            if available_actions:
+                selected_action = random.choice(available_actions)
+                game.apply_action(selected_action)
+            else:
+                game.apply_action(None)
+        game.check_game_status()
+        if game.state.phase == GamePhase.FINISHED:
+            break
     game.reset()
-    print("\nGame State after resetting:")
-    print(game.get_state())
+    game.get_state()
