@@ -705,8 +705,8 @@ def test_get_list_action_cnt_to_draw_stackable_and_normal():
         cnt_player=2,
         list_player=[
             PlayerState(name="P1", list_card=[
-                Card(color="red", number=3),      # normal playable
-                Card(color="red", symbol="draw2"),# stackable
+                Card(color="red", number=3),      # normal playable (should NOT be available)
+                Card(color="red", symbol="draw2"),# stackable (should be available)
                 Card(color="blue", number=1),
                 Card(color="yellow", number=2)
             ]),
@@ -721,12 +721,20 @@ def test_get_list_action_cnt_to_draw_stackable_and_normal():
     )
     game.set_state(state)
     actions = game.get_list_action()
-    draw2_actions = [a for a in actions if a.card and a.card.symbol == 'draw2']
+    
+    # Extract actions based on their types
+    stackable_actions = [a for a in actions if a.card and a.card.symbol == 'draw2']
     normal_red3_actions = [a for a in actions if a.card and a.card.number == 3 and a.card.color == 'red']
-    draw1_actions = [a for a in actions if a.draw == 1 and a.card is None]
-    assert len(draw2_actions) > 0, f"No draw2 actions found. Actions: {actions}"
-    assert len(normal_red3_actions) > 0, f"No normal red3 actions found. Actions: {actions}"
-    assert len(draw1_actions) > 0, f"No draw=1 action found. Actions: {actions}"
+    draw_actions = [a for a in actions if a.draw == 2 and a.card is None]
+    
+    # Assertions
+    assert len(stackable_actions) > 0, f"No stackable draw2 actions found. Actions: {actions}"
+    assert len(normal_red3_actions) == 0, f"Normal red3 actions should NOT be available. Actions: {actions}"
+    assert len(draw_actions) == 1, f"There should be exactly one draw=2 action available. Actions: {actions}"
+    
+    # Optional: Verify the specific stackable action
+    expected_stackable_action = Action(card=Card(color="red", symbol="draw2"), color="red", draw=4, uno=False)
+    assert expected_stackable_action in actions, f"Expected stackable action {expected_stackable_action} not found in actions: {actions}"
 
 
 def test_apply_action_wilddraw4_when_no_other_cards():
@@ -1156,6 +1164,106 @@ def test_reverse_card_two_players():
     # In two-player game, reverse acts as skip, so Player 1 plays again
     assert game.state.direction == -1, "Direction should be reversed."
     assert game.state.idx_player_active == 0, "Active player should remain Player 1 in two-player game."
+
+def test_skip_card_multiple_players():
+    """Test if the skip card correctly skips the next player's turn in a multi-player game."""
+    game = Uno()
+    state = GameState(
+        cnt_player=4,
+        list_player=[
+            PlayerState(name="Player 1", list_card=[Card(color="green", symbol="skip")]),
+            PlayerState(name="Player 2", list_card=[Card(color="red", number=5)]),
+            PlayerState(name="Player 3", list_card=[Card(color="blue", number=2)]),
+            PlayerState(name="Player 4", list_card=[Card(color="yellow", number=9)])
+        ],
+        list_card_discard=[Card(color="yellow", number=3)],
+        idx_player_active=0,
+        phase=GamePhase.RUNNING,
+        color="yellow"
+    )
+    game.set_state(state)
+
+    # Player 1 plays a skip card
+    action = Action(card=Card(color="green", symbol="skip"))
+    game.apply_action(action)
+
+    # The turn should skip Player 2 and move to Player 3
+    assert game.state.idx_player_active == 2, "Turn should skip Player 2 and move to Player 3."
+
+def test_draw_from_empty_piles():
+    """Test drawing a card when both draw and discard piles are empty."""
+    game = Uno()
+    state = GameState(
+        cnt_player=2,
+        list_player=[
+            PlayerState(name="Player 1", list_card=[Card(color="red", number=5)]),
+            PlayerState(name="Player 2", list_card=[Card(color="blue", number=7)])
+        ],
+        list_card_draw=[],
+        list_card_discard=[],
+        idx_player_active=0,
+        phase=GamePhase.RUNNING,
+        direction=1,
+        color="red"
+    )
+    game.set_state(state)
+    
+    # Player 1 attempts to draw a card
+    action = Action(draw=1)
+    game.apply_action(action)
+    
+    # Since both piles are empty, no card should be drawn
+    assert len(game.state.list_player[0].list_card) == 1, "Player 1 should not have drawn any cards."
+    assert game.state.has_drawn is True, "has_drawn should be set to True even if no card was drawn."
+
+def test_random_player_with_actions():
+    """Test RandomPlayer's behavior when actions are available."""
+    random_player = RandomPlayer()
+    game = Uno()
+    state = GameState(
+        cnt_player=2,
+        list_player=[
+            PlayerState(name="Player 1", list_card=[Card(color="red", number=5)]),
+            PlayerState(name="Player 2", list_card=[Card(color="blue", number=2)])
+        ],
+        list_card_discard=[Card(color="yellow", number=3)],
+        phase=GamePhase.RUNNING,
+        color="yellow",
+        idx_player_active=0
+    )
+    game.set_state(state)
+    actions = game.get_list_action()
+    chosen_action = random_player.select_action(state, actions)
+    assert chosen_action in actions, "RandomPlayer should choose a valid action."
+
+
+def test_draw_from_empty_piles():
+    """Test drawing a card when both draw and discard piles are empty."""
+    game = Uno()
+    state = GameState(
+        cnt_player=2,
+        list_player=[
+            PlayerState(name="Player 1", list_card=[Card(color="red", number=5)]),
+            PlayerState(name="Player 2", list_card=[Card(color="blue", number=7)])
+        ],
+        list_card_draw=[],
+        list_card_discard=[],
+        idx_player_active=0,
+        phase=GamePhase.RUNNING,
+        direction=1,
+        color="red"
+    )
+    game.set_state(state)
+    
+    # Player 1 attempts to draw a card
+    action = Action(draw=1)
+    game.apply_action(action)
+    
+    # Since both piles are empty, no card should be drawn
+    assert len(game.state.list_player[0].list_card) == 1, "Player 1 should not have drawn any cards."
+    assert game.state.has_drawn is True, "has_drawn should be set to True even if no card was drawn."
+
+
 
 
 
