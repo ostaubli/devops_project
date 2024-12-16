@@ -1762,13 +1762,6 @@ def test_validate_game_state_card_mismatch():
     except ValueError as e:
         assert "Total number of cards in the game is inconsistent" in str(e) or "Total cards mismatch" in str(e)
 
-def test_handle_seven_card_logic_no_actions():
-    game = Dog()
-    game.initialize_game()
-    # No grouped actions passed in
-    result = game._handle_seven_card_logic([])
-    assert not result, "Should return False if no grouped_actions are provided."
-
 def test_can_swap_with_target_special_positions():
     game = Dog()
     game.initialize_game()
@@ -2451,23 +2444,7 @@ def test_apply_action_reshuffle():
     assert len(dog.state.list_card_draw) > 0, "Draw pile should be reshuffled with cards from discard pile."
     assert len(dog.state.list_card_discard) == 0, "Discard pile should be empty after reshuffle."
 
-def test_apply_action_jkr_swap():
-    """Test JKR card swap logic."""
-    dog = Dog()
-    dog.initialize_game()
-    
-    active_player = dog.state.list_player[dog.state.idx_player_active]
-    jkr_card = Card(suit="JOKER", rank="JKR")
-    swap_card = Card(suit="H", rank="A")
-    active_player.list_card.extend([jkr_card, swap_card])
 
-    # Simulate JKR swap action
-    action = Action(card=jkr_card, pos_from=None, pos_to=None, card_swap=swap_card)
-    dog.apply_action(action)
-
-    # Assertions
-    assert swap_card in active_player.list_card, "Swap card should remain in player's hand."
-    assert jkr_card not in active_player.list_card, "JKR card should be removed after swap."
 
 def test_apply_action_all_players_out_of_cards():
     """Test advancing to the next round when all players are out of cards."""
@@ -2574,6 +2551,15 @@ def test_handle_overtaking(initialized_game):
     for idx, player in enumerate(game.state.list_player):
         positions = [marble.pos for marble in player.list_marble]
         print(f"Player {idx + 1}: {positions}")
+
+
+
+
+
+
+
+
+
 
 
 

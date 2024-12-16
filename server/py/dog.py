@@ -6,7 +6,7 @@ This module contains the core game logic and data structures for the Dog card ga
 # runcmd: cd ../.. & venv\Scripts\python server/py/dog_template.py
 import random
 from itertools import chain
-from typing import List, Optional, Dict, Any, Set, Union
+from typing import List, Optional, Dict, Any, Set
 from server.py.game import Game
 from server.py.dog_game_state import Card, Marble, PlayerState, Action, GameState, GamePhase
 from server.py.dog_player import RandomPlayer
