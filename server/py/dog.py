@@ -887,17 +887,20 @@ class Dog(Game):
                 raise ValueError("Invalid action: pos_from and pos_to must not be None")
 
             # Process the current split step
-            # if statement for safe space 
-            steps_taken = self.calculate_steps(action.pos_from, action.pos_to, self.state.idx_player_active) 
+            # if statement for safe space
+            steps_taken = self.calculate_steps(action.pos_from, action.pos_to, self.state.idx_player_active)
             self._handle_overtaking(action)
             self._check_collisions(action)
             self._handle_normal_move(action, active_player)
 
             # Update remaining steps
             self.state.remaining_steps -= steps_taken
-                
+
             # If all steps are completed, finalize SEVEN handling
-            if self.state.remaining_steps <= 0:
+            assert self.state
+
+            # Check if remaining_steps is not None and handle completion of the SEVEN card
+            if self.state.remaining_steps is not None and self.state.remaining_steps <= 0:
                 active_player.list_card.remove(action.card)
                 self.state.list_card_discard.append(action.card)
                 self.state.card_active = None
@@ -920,7 +923,18 @@ class Dog(Game):
         # Check if the game is finished or if a player needs to help their teammate
         self._check_game_finished()
 
-    def calculate_steps(self, pos_from, pos_to, player_idx):
+    def calculate_steps(self, pos_from: int, pos_to: int, player_idx: int) -> int:
+        """
+        Calculate the number of steps a marble takes to move from one position to another.
+
+        Args:
+            pos_from (int): Starting position of the marble.
+            pos_to (int): Target position of the marble.
+            player_idx (int): Index of the player.
+
+        Returns:
+            int: Number of steps taken.
+        """
         if pos_to in self.SAFE_SPACES[player_idx]:
             if pos_from == self.ENTERING_POINTS[player_idx][0]:  # Directly entering safe space
                 steps_taken = 1 + self.SAFE_SPACES[player_idx].index(pos_to)
