@@ -193,15 +193,13 @@ class Uno(Game):
             else:
                 actions.extend(normal_actions)
                 actions.extend(stackable)
-                if actions:
-                    if len(active_player.list_card) == 2:
-                        card_play_actions = [a for a in actions if a.card is not None]
-                        for a in card_play_actions:
-                            actions.append(Action(card=a.card, color=a.color, draw=a.draw, uno=True))
-                    if normal_playable_exists:
-                        actions.append(Action(draw=1))
-                else:
-                    actions.append(Action(draw=self.state.cnt_to_draw))
+                if len(active_player.list_card) == 2:
+                    card_play_actions = [a for a in actions if a.card is not None]
+                    for a in card_play_actions:
+                        actions.append(Action(card=a.card, color=a.color, draw=a.draw, uno=True))
+                if normal_playable_exists:
+                    actions.append(Action(draw=1))
+                actions.append(Action(draw=self.state.cnt_to_draw))
 
             return sorted(actions)
 
@@ -259,6 +257,7 @@ class Uno(Game):
                     card_play_actions = [a for a in actions if a.card is not None]
                     for a in card_play_actions:
                         actions.append(Action(card=a.card, color=a.color, draw=a.draw, uno=True))
+                actions.append(Action(draw=1))
                 return sorted(actions)
 
             for c in playable_cards:
@@ -437,6 +436,10 @@ class Uno(Game):
         # If there is no card on the discard pile, we can play anything
         if not top_discard:
             return True
+
+        if top_discard.symbol in ["draw2"]:
+            if card.symbol != "draw2":
+                return False
 
         # Check by color first
         if self.state.color in (card.color, 'any'):
