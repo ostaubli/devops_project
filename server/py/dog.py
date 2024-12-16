@@ -903,6 +903,16 @@ class Dog(Game):
             self._handle_seven_move(action)
         self._handle_standard_move(action)
 
+    def _send_to_kennel(self, marble: Marble, player_idx: int) -> None:
+        assert self.state is not None
+        kennel_pos = self.PLAYER_BOARD_SEGMENTS[player_idx]['queue_start']
+        for i in range(4):
+            spot = kennel_pos + i
+            if all(mm.pos != spot for mm in self.state.list_player[player_idx].list_marble):
+                marble.pos = spot
+                marble.is_save = False
+                break
+
     def swap_cards(self, player1_idx: int, player2_idx: int, card1: Card, card2: Card) -> None:
         # Hole die Spielerobjekte
         player1 = self.state.list_player[player1_idx]
