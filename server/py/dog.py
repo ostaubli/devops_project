@@ -979,20 +979,3 @@ class Dog(Game):
         # Entferne die Karte von Spieler 2 und füge sie zu Spieler 1 hinzu
         player2.list_card.remove(card2)
         player1.list_card.append(card2)
-
-if __name__ == '__main__':
-    game = Dog()
-    initial_state = game.get_state()
-    for round_num in range(1, 4):
-        for _ in range(game.state.cnt_player):
-            available_actions = game.get_list_action()
-            if available_actions:
-                selected_action = random.choice(available_actions)
-                game.apply_action(selected_action)
-            else:
-                game.apply_action(None)
-        game.check_game_status()
-        if game.state.phase == GamePhase.FINISHED:
-            break
-    game.reset()
-    game.get_state()
