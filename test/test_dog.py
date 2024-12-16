@@ -249,7 +249,38 @@ def test_handle_joker_swap(game):
     game._handle_joker_swap(p, action)
     assert game.state.card_active == Card(suit='♥', rank='A')
 
+def test_handle_active_card_move(game):
+    p = game.state.list_player[0]
+    c = Card(suit='♥', rank='Q')
+    p.list_card.append(c)
+    action = Action(card=c, pos_from=64, pos_to=0)
+    game._handle_active_card_move(p, action)
 
+def test_handle_seven_move(game):
+    p = game.state.list_player[0]
+    c = Card(suit='♥', rank='7')
+    p.list_card.append(c)
+    action = Action(card=c, pos_from=64, pos_to=65)
+    game._handle_seven_move(action)
+
+def test_handle_standard_move(game):
+    p = game.state.list_player[0]
+    c = p.list_card[0]
+    action = Action(card=c, pos_from=64, pos_to=65)
+    game._handle_standard_move(action)
+
+def test_move_marble(game):
+    p = game.state.list_player[0]
+    c = p.list_card[0]
+    action = Action(card=c, pos_from=64, pos_to=65)
+    game._move_marble(action)
+
+def test_send_to_kennel(game):
+    p = game.state.list_player[0]
+    m = p.list_marble[0]
+    game._send_to_kennel(m, 0)
+    ks = game.PLAYER_BOARD_SEGMENTS[0]['queue_start']
+    assert ks <= m.pos <= ks+3
 
 # -------------------------------------------------------
 # Aktionen ausführen und Spielstatus
