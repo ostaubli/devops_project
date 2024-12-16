@@ -774,6 +774,28 @@ class Dog(Game):
             self._reset_card_active()
             self.next_turn()
 
+    def _handle_seven_move(self, action: Action) -> None:
+        assert self.state is not None
+        player_idx = self.state.idx_player_active
+        pos_from = action.pos_from if action.pos_from is not None else -1
+        pos_to = action.pos_to if action.pos_to is not None else -1
+        segment = self.PLAYER_BOARD_SEGMENTS[player_idx]
+        dist_val = (pos_to - pos_from) % self.MAIN_PATH_LENGTH
+        if pos_from >= segment['final_start']:
+            dist_val = pos_to - pos_from
+        direction = 1 if dist_val is not None and dist_val >= 0 else -1
+        dist_abs = abs(dist_val) if dist_val is not None else 0
+        current = pos_from
+        for _ in range(dist_abs):
+            current = (current + direction) % self.MAIN_PATH_LENGTH
+            om, op = self._find_marble_by_pos(current)
+            if om:
+                assert op is not None
+                op_segment = self.PLAYER_BOARD_SEGMENTS[op]
+                in_final = op_segment['final_start'] <= current < op_segment['final_start'] + 4
+                if not (om.is_save and (current == op_segment['start'] or in_final)):
+                    self._send_to_kennel(om, op)
+
     def _handle_card_joker(self, player: PlayerState, found_card: Card, action: Action) -> None:
         assert self.state is not None
         pos_from = action.pos_from if action.pos_from is not None else -1
@@ -823,6 +845,64 @@ class Dog(Game):
         self._reset_card_active()
         self.next_turn()
 
+    def _handle_active_card_move(self, player: PlayerState, action: Action) -> None:
+        assert self.state is not None
+        pos_from = action.pos_from if action.pos_from is not None else -1
+        pos_to = action.pos_to if action.pos_to is not None else -1
+        steps = self._calc_steps(pos_from, pos_to, self.state.idx_player_active)
+        if steps is None:
+            self.next_turn()
+            self.check_game_status()
+            return
+        self._move_marble(action)
+        if self.state.card_active and self.state.card_active.rank == '7':
+            assert self.temp_seven_moves is not None
+            self.temp_seven_moves.append(abs(steps))
+            if sum(self.temp_seven_moves) == 7:
+                if self.temp_seven_card and self.temp_seven_card in player.list_card:
+                    player.list_card.remove(self.temp_seven_card)
+                    self.state.list_card_discard.append(self.temp_seven_card)
+                self._reset_card_active()
+                self.next_turn()
+        elif self.state.card_active and self.state.card_active.rank == 'J':
+            self._reset_card_active()
+            self.next_turn()
+        else:
+            self._reset_card_active()
+            self.next_turn()
+
+    def _handle_standard_move(self, action: Action) -> None:
+        assert self.state is not None
+        pos_from = action.pos_from if action.pos_from is not None else -1
+        pos_to = action.pos_to if action.pos_to is not None else -1
+        m, _ = self._find_marble_by_pos(pos_from)
+        if not m:
+            return
+        km, kp = self._find_marble_by_pos(pos_to)
+        if km and km != m:
+            assert kp is not None
+            segment = self.PLAYER_BOARD_SEGMENTS[kp]
+            in_final = segment['final_start'] <= pos_to < segment['final_start'] + 4
+            if not (km.is_save and (pos_to == segment['start'] or in_final)):
+                self._send_to_kennel(km, kp)
+        m.pos = pos_to
+        start_pos = self.PLAYER_BOARD_SEGMENTS[self.state.idx_player_active]['start']
+        if m.pos == start_pos:
+            m.is_save = True
+
+    def _move_marble(self, action: Action) -> None:
+        assert self.state is not None
+        is_seven_move = (
+                (action.card and action.card.rank == '7') or
+                (self.state.card_active and self.state.card_active.rank == '7')
+        )
+        if action.card and action.card.rank == 'J':
+            self._handle_jack_action(action)
+            return
+        if is_seven_move:
+            self._handle_seven_move(action)
+        self._handle_standard_move(action)
+
     def swap_cards(self, player1_idx: int, player2_idx: int, card1: Card, card2: Card) -> None:
         # Hole die Spielerobjekte
         player1 = self.state.list_player[player1_idx]
@@ -843,6 +923,8 @@ class Dog(Game):
         # Entferne die Karte von Spieler 2 und füge sie zu Spieler 1 hinzu
         player2.list_card.remove(card2)
         player1.list_card.append(card2)
+
+    
 
 
 if __name__ == '__main__':
