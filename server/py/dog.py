@@ -35,8 +35,6 @@ class GamePhase(str, Enum):
 
 
 class GameState(BaseModel):
-    def __init__(self):
-        self.list_player = []  # List of players in the game
 
     LIST_SUIT: ClassVar[List[str]] = ['♠', '♥', '♦', '♣']  # 4 suits (colors)
     LIST_RANK: ClassVar[List[str]] = [
@@ -527,58 +525,39 @@ class Dog(Game):
     def get_actions_jake(self, card: Card, player: PlayerState) -> List[Action]:
         actions = []
         marbles_to_swap = []
+        active_player_marbles = []
 
-        # Loop through all players to find marbles to swap
+        # Find marbles to swap from other players
         for other in self.state.list_player:
             if other != player:  # Not the active player
-                for marble in other.list_marble:
-                    if marble.is_save and not self.is_protected_marble(marble):
-                        marbles_to_swap.append(marble)
+                marbles_to_swap.extend([
+                    marble for marble in other.list_marble
+                    if marble.is_save and not self.is_protected_marble(marble)
+                ])
 
-        # For the active player, ensure a marble can be exchanged
-        active_player_marbles = [marble for marble in player.list_marble if
-                                 marble.is_save and not self.is_protected_marble(marble)]
+        # Find active player's marbles eligible for swapping
+        active_player_marbles = [
+            marble for marble in player.list_marble
+            if marble.is_save and not self.is_protected_marble(marble)
+        ]
 
-        if marbles_to_swap and active_player_marbles:
-            # Swap one marble from the active player with one from another player
-            selected_active_marble = active_player_marbles[0]  # Example: Select the first available marble
-            selected_other_marble = marbles_to_swap[0]  # Example: Select the first available other player's marble
+        # Generate actions by swapping marbles
+        for x in active_player_marbles:
+            for y in marbles_to_swap:
+                actions.append(Action(
+                    card=card,
+                    pos_from=self.get_position_marble(x),
+                    pos_to=self.get_position_marble(y),
+                    card_swap=None,
+                ))
 
-            actions.append(Action(
-                card=card,
-                pos_from=selected_active_marble.pos,
-                pos_to=selected_other_marble.pos,
-                card_swap=None  # Ensure swapping logic here if necessary
-            ))
-
+        print(f"Generated actions for Jake: {actions}")
         return actions
 
-    def get_all_marbles(self) -> List[Marble]:
-        """
-        Retrieve a flat list of all marbles from all players in the current game state.
-        """
-        if not self.state or not self.state.list_player:
-            raise ValueError("Game state is not initialized or players are missing.")
+    def get_position_marble(self, marble) -> int:
+        """ Get the position of a marble on the board """
+        return marble.pos  # Access marble's position directly
 
-        all_marbles = []
-        for player in self.state.list_player:
-            all_marbles.extend(player.list_marble)
-        return all_marbles
-
-    def get_player_marbles(self, player_index: int) -> List[Marble]:
-        """
-        Retrieve all marbles for a given player.
-
-        Args:
-            player_index (int): Index of the player (0 to 3).
-
-        Returns:
-            List[Marble]: List of marbles belonging to the player.
-        """
-        if player_index < 0 or player_index >= len(self.state.list_player):
-            raise ValueError(f"Player index {player_index} is out of range.")
-
-        return self.state.list_player[player_index].list_marble
 
     def undo_active_card_moves(self):
         for marble_index, position in self.action_marble_reset_positions.items():
@@ -782,9 +761,21 @@ class Dog(Game):
                     print(f"{player.name}'s marble moved {steps} steps forward to position {action.pos_to}.")
                     return
 
-        elif action.card.rank == 'J':
-            self.send_home_if_occupied(action.pos_to)
-            self.get_actions_jake(player)
+        elif action.card.rank == 'J':  # Jake action
+            # Swap marbles
+            print(f"Handling Jake action: {action}")
+            marble_from = self.find_marble_at_position(action.pos_from)
+            marble_to = self.find_marble_at_position(action.pos_to)
+
+            if marble_from and marble_to:
+                # Swap positions of the two marbles
+                marble_from.pos, marble_to.pos = marble_to.pos, marble_from.pos
+                print(f"Swapped marbles: {marble_from} at {marble_from.pos}, {marble_to} at {marble_to.pos}.")
+            else:
+                print("Invalid Jake action: Missing marbles for swapping.")
+                return
+
+
 
         elif action.card.rank == 'JKR':  # Joker: use as any card
             self.send_home_if_occupied(action.pos_to)
