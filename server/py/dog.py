@@ -437,7 +437,7 @@ class GameState(BaseModel):
                         case _:
                             pass
 
-        return action_list
+        return list(set(action_list))
 
 
 
