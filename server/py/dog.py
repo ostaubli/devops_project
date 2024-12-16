@@ -48,6 +48,12 @@ class Dog(Game):
         '4': [-4, 4],
         '7': [7]
     }
+    ENTERING_POINTS = {
+        0: [63],  # Blue Player entry to safe space
+        1: [15],  # Green Player entry to safe space
+        2: [31],  # Red Player entry to safe space
+        3: [47]   # Yellow Player entry to safe space
+    }
 
     TEAM_MAPPING = {
     0: 2,  # Player 0 helps Player 2
@@ -170,6 +176,7 @@ class Dog(Game):
             return [int(card.rank)]
         # Default to [0] for invalid cards
         return [0]
+
     def _calculate_new_position(self, marble: Marble, move_value: int, player_idx: int) -> Optional[int]:
         """
         Calculate the new position of a marble, considering:
@@ -626,6 +633,7 @@ class Dog(Game):
                         pos_to=None,
                         card_swap=None
                         ))
+
                 continue
 
             if card.rank == '7'and self.state.card_active is not None:
@@ -879,14 +887,15 @@ class Dog(Game):
                 raise ValueError("Invalid action: pos_from and pos_to must not be None")
 
             # Process the current split step
-            steps_taken = abs(action.pos_to - action.pos_from)
+            # if statement for safe space 
+            steps_taken = self.calculate_steps(action.pos_from, action.pos_to, self.state.idx_player_active) 
             self._handle_overtaking(action)
             self._check_collisions(action)
             self._handle_normal_move(action, active_player)
 
             # Update remaining steps
             self.state.remaining_steps -= steps_taken
-
+                
             # If all steps are completed, finalize SEVEN handling
             if self.state.remaining_steps <= 0:
                 active_player.list_card.remove(action.card)
@@ -895,7 +904,6 @@ class Dog(Game):
                 self.state.remaining_steps = None
                 self.state.idx_player_active = (self.state.idx_player_active + 1) % len(self.state.list_player)
                 self._check_game_finished()
-
             return
 
         self._handle_normal_move(action, active_player)
@@ -912,46 +920,20 @@ class Dog(Game):
         # Check if the game is finished or if a player needs to help their teammate
         self._check_game_finished()
 
-    def _handle_seven_card_logic(self, grouped_actions: List['Action']) -> None:
-        """
-        Process a SEVEN card by applying valid split actions.
+    def calculate_steps(self, pos_from, pos_to, player_idx):
+        if pos_to in self.SAFE_SPACES[player_idx]:
+            if pos_from == self.ENTERING_POINTS[player_idx][0]:  # Directly entering safe space
+                steps_taken = 1 + self.SAFE_SPACES[player_idx].index(pos_to)
+            else:
+                # Steps to entry + steps within safe space
+                steps_to_entry = (self.ENTERING_POINTS[player_idx][0] - pos_from + 1) % self.MAIN_TRACK
+                steps_within_safe_space = self.SAFE_SPACES[player_idx].index(pos_to)
+                steps_taken = steps_to_entry + steps_within_safe_space
+        else:
+            # Moving purely on the main track
+            steps_taken = (pos_to - pos_from) % self.MAIN_TRACK
 
-        Args:
-            grouped_actions (List[Action]): A list of Action instances representing split actions.
-        """
-        # Ensure grouped_actions is a valid input
-        if not grouped_actions:
-            print("No valid split actions provided for SEVEN card.")
-            return
-
-        # Apply each split action incrementally
-        for idx, split_action in enumerate(grouped_actions):
-            print(f"Processing SEVEN card split {idx + 1}/{len(grouped_actions)}: {split_action}")
-            # Update card_active to SEVEN
-            assert self.state
-            self.state.card_active = split_action.card
-            # Apply the action
-            self.apply_action(split_action)
-            # Debugging: Confirm state updates
-            print(f"SEVEN card: Marble moved from {split_action.pos_from} to {split_action.pos_to}.")
-            print(f"Current game state: {self.state}")
-
-        # Once all split actions are applied, discard the SEVEN card
-        assert self.state
-        active_player = self.state.list_player[self.state.idx_player_active]
-        print(f"Removing SEVEN card from active player: {active_player.name}")
-        active_player.list_card.remove(grouped_actions[0].card)
-        self.state.list_card_discard.append(grouped_actions[0].card)
-
-        # Reset card_active to None
-        self.state.card_active = None
-
-        # Advance to the next active player
-        self.state.idx_player_active = (self.state.idx_player_active + 1) % len(self.state.list_player)
-        print(f"Next active player: Player {self.state.idx_player_active + 1}")
-
-        # Check if the game is finished
-        self._check_game_finished()
+        return steps_taken
 
     def _check_game_finished(self) -> None:
         """Check if the game has finished or a player should help their teammate."""
@@ -1173,8 +1155,9 @@ class Dog(Game):
             overtaken_positions = list(range(move_action.pos_from + 1, 64)) + list(range(0, move_action.pos_to + 1)) + list(range(0,))
 
         # Exclude any invalid overtaken positions (e.g., own start or safe spaces)
-        excluded_positions = set(self.START_POSITIONS.values())
-        excluded_positions.update(self.SAFE_SPACES[self.state.idx_player_active])
+        # excluded_positions = set(self.START_POSITIONS.values()) 
+        # excluded_positions.update(self.SAFE_SPACES[self.state.idx_player_active])
+        excluded_positions = {marble.pos for player in self.state.list_player for marble in player.list_marble if marble.is_save}
 
         # Filter overtaken positions and exclude `pos_to`
         overtaken_positions = [
@@ -1384,8 +1367,9 @@ class Dog(Game):
 #             for idx, action in enumerate(game_actions):
 #                 print(f"{idx}: Play {action.card.rank} of {action.card.suit} from {action.pos_from} to {action.pos_to}")
 
-#             # Select an action (random in this example)
-#             selected_action = random_player.select_action(game.get_state(), game_actions)
+            # Select an action (random in this example)
+#            selected_action = random_player.select_action(game.get_state(), game_actions)
+#            print(selected_action)
 
 #             if selected_action is None:
 #                 print("No action selected. Skipping turn.")
