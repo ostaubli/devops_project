@@ -434,13 +434,15 @@ class Dog(Game):
         return possible_actions
 
     def is_path_blocked_by_safe_marble(self, pos_from: int, pos_to: int, marbles: List[Marble]) -> bool:
-        # Determine total steps between pos_from and pos_to
-        total_steps = self.get_steps_between(pos_from, pos_to)
-        # Determine all positions on the path (excluding pos_from, including pos_to)
-        path_positions = [(pos_from + i) % self.CIRCULAR_PATH_LENGTH for i in range(1, total_steps + 1)]
+        # Find marbles between pos_from and pos_to
+        found_marbles = self.find_marbles_between(pos_from, pos_to)
 
-        # Check if a safe marble occupies any position in the path
-        return any(m.is_save and m.pos in path_positions for m in marbles)
+        # If you want to exclude the marble at pos_from (the one currently moving), do so:
+        found_marbles = [m for m in found_marbles if m.pos != pos_from]
+
+        # Check if any safe marble is present
+        return any(m.is_save for m in found_marbles)
+
 
 
     def get_list_action(self) -> List[Action]:
