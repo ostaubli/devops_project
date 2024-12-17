@@ -5,6 +5,7 @@ This module contains the core game logic and data structures for the Dog card ga
 
 # runcmd: cd ../.. & venv\Scripts\python server/py/dog_template.py
 import random
+import copy
 from itertools import chain
 from typing import List, Optional, Dict, Any, Set
 from server.py.game import Game
@@ -65,6 +66,7 @@ class Dog(Game):
     def __init__(self) -> None:
         """ Game initialization (set_state call not necessary, we expect 4 players) """
         self.state: Optional[GameState] = None
+        self.state_backup: Optional[GameState] = None
         self.initialize_game()  # Ensure the game state is initialized
 
     def initialize_game(self) -> None:
@@ -109,6 +111,8 @@ class Dog(Game):
         # Deal initial cards (6 cards in first round)
         self.deal_cards()
 
+        self.create_state_backup()
+
     def reset(self) -> None:
         """ Reset the game to its initial state """
         self.initialize_game()
@@ -123,6 +127,11 @@ class Dog(Game):
         """ Get the complete, unmasked game state """
         assert  self.state
         return self.state
+    
+    def create_state_backup(self) -> GameState:
+        """ Saves after turning player the current state to fall back """
+        assert  self.state
+        self.state_backup = copy.deepcopy(self.state)
 
     def print_state(self) -> None:
         """ Print the current game state """
@@ -870,43 +879,63 @@ class Dog(Game):
             return
 
         # Handle Seven card
-        if action.card.rank == '7':
-            if self.state.card_active is None:
+        if action.card.rank == '7'and self.state.card_active is None and self.state.remaining_steps is None:
                 # Initialize SEVEN handling if it's the first split
-                self.state.card_active = action.card
-                self.state.remaining_steps = 7
-
-            if self.state.remaining_steps is None:
-                # Initialize SEVEN handling if it's the first split
+                self.create_state_backup()
                 self.state.card_active = action.card
                 self.state.remaining_steps = 7
                 print("SEVEN card detected. Starting split with 7 steps.")
+
+        if action.card.rank == '7' and self.state.card_active.rank == '7':
             
             #  Validate pos_from and pos_to are not None before calculating steps
             if action.pos_from is None or action.pos_to is None:
-                raise ValueError("Invalid action: pos_from and pos_to must not be None")
+                #move not possible
+                #self.state = copy.deepcopy(self.state_backup)
+                #self.state.card_active = None
+                #self.state.remaining_steps = None
+                #self.state = copy.deepcopy(self.state_backup)
+                #active_player.list_card.remove(action.card)
+                #self.state.list_card_discard.append(action.card)
+                #self.state.list_card_discard.extend(active_player.list_card)
+                #active_player.list_card.clear()
+                #self.state.idx_player_active = (self.state.idx_player_active + 1) % len(self.state.list_player)
+                return
+                #raise ValueError("Invalid action: pos_from and pos_to must not be None")
 
             # Process the current split step
             # if statement for safe space
             steps_taken = self.calculate_steps(action.pos_from, action.pos_to, self.state.idx_player_active)
-            self._handle_overtaking(action)
-            self._check_collisions(action)
-            self._handle_normal_move(action, active_player)
 
             # Update remaining steps
-            self.state.remaining_steps -= steps_taken
+            self.state.remaining_steps = self.state.remaining_steps - steps_taken
 
-            # If all steps are completed, finalize SEVEN handling
-            assert self.state
+            if self.state.remaining_steps is not None and self.state.remaining_steps > 0:
+                self._handle_overtaking(action)
+                self._check_collisions(action)
+                self._handle_normal_move(action, active_player)
+                    #Move not posstible
 
             # Check if remaining_steps is not None and handle completion of the SEVEN card
-            if self.state.remaining_steps is not None and self.state.remaining_steps <= 0:
+            if self.state.remaining_steps is not None and self.state.remaining_steps == 0:
+                self._handle_overtaking(action)
+                self._check_collisions(action)
+                self._handle_normal_move(action, active_player)
                 active_player.list_card.remove(action.card)
                 self.state.list_card_discard.append(action.card)
                 self.state.card_active = None
                 self.state.remaining_steps = None
                 self.state.idx_player_active = (self.state.idx_player_active + 1) % len(self.state.list_player)
                 self._check_game_finished()
+
+            if self.state.remaining_steps is not None and self.state.remaining_steps < 0:
+                # if step not possible, remove all players card
+                self.state = copy.deepcopy(self.state_backup)
+                self.state.list_card_discard.extend(active_player.list_card)
+                active_player.list_card.clear()
+                self.state.idx_player_active = (self.state.idx_player_active + 1) % len(self.state.list_player)
+                self._check_game_finished()
+
             return
 
         self._handle_normal_move(action, active_player)
