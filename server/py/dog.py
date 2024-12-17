@@ -875,14 +875,19 @@ class Dog(Game):
         if marble_index not in self.action_marble_reset_positions.keys():
             self.action_marble_reset_positions[marble_index] = marble.pos
 
-        # overtaken_marbles = self.find_marbles_between(action.pos_from+1, action.pos_to-1)
-        # for marble in overtaken_marbles:
-        #     if not marble.is_save:
-        #         # Save original position of marble for the case of reset due to illegal action
-        #         self.action_marble_reset_positions[self.get_marble_index(marble)] = marble.pos
-        #         self.send_home(marble)
+        # Find marbles between pos_from and pos_to (excluding the starting position but including the end position)
+        overtaken_marbles = self.find_marbles_between(action.pos_from + 1, action.pos_to)
 
-        # TODO: implement overtaking and remember overtaken marble position (for reset)
+        # TODO: Adapt to pass test 33 again, 32 passed
+        # # For each marble found, if it is not safe, send it home
+        # for overtaken_marble in overtaken_marbles:
+        #     if not overtaken_marble.is_save:
+        #         # Record original position of overtaken marble for rollback if needed
+        #         overtaken_marble_index = self.get_marble_index(overtaken_marble)
+        #         if overtaken_marble_index not in self.action_marble_reset_positions:
+        #             self.action_marble_reset_positions[overtaken_marble_index] = overtaken_marble.pos
+        #
+        #         self.send_home(overtaken_marble)
 
         self.apply_simple_move(marble, action.pos_to, current_player)
         self.steps_for_7_remaining -= steps
