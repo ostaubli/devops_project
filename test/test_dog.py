@@ -204,6 +204,7 @@ def test_apply_action_none(game):
     game.apply_action(None)
     assert game.state.idx_player_active != old_active
 
+
 def test_handle_joker_swap(game):
     p = game.state.list_player[0]
     c = p.list_card[0]
@@ -264,17 +265,30 @@ def test_handle_seven_move(game):
     action = Action(card=c, pos_from=64, pos_to=65)
     game._handle_seven_move(action)
 
+
 def test_handle_standard_move(game):
     p = game.state.list_player[0]
     c = p.list_card[0]
     action = Action(card=c, pos_from=64, pos_to=65)
     game._handle_standard_move(action)
 
+
 def test_move_marble(game):
     p = game.state.list_player[0]
     c = p.list_card[0]
     action = Action(card=c, pos_from=64, pos_to=65)
     game._move_marble(action)
+
+def test_send_to_kennel(game):
+    p = game.state.list_player[0]
+    m = p.list_marble[0]
+    game._send_to_kennel(m, 0)
+    ks = game.PLAYER_BOARD_SEGMENTS[0]['queue_start']
+    assert ks <= m.pos <= ks+3
+
+# -------------------------------------------------------
+# Aktionen ausführen und Spielstatus
+# -------------------------------------------------------
 
 def test_find_marble_by_pos(game):
     m, idx = game._find_marble_by_pos(64)
@@ -292,6 +306,42 @@ def test_reset_card_active(game):
     assert game.temp_seven_card is None
     assert game.temp_joker_card is None
     assert game.temp_seven_state is None
+
+def test_find_player_card(game):
+    p = game.state.list_player[0]
+    c = p.list_card[0]
+    found = game._find_player_card(p, c)
+    assert found == c
+
+def test_handle_card_7(game):
+    p = game.state.list_player[0]
+    c = Card(suit='♥', rank='7')
+    p.list_card.append(c)
+    action = Action(card=c, pos_from=64, pos_to=game.PLAYER_BOARD_SEGMENTS[0]['start'])
+    game._handle_card_7(p, c, action)
+    # Kein Fehler => ok
+
+def test_handle_card_joker(game):
+    p = game.state.list_player[0]
+    c = Card(suit='♥', rank='JKR')
+    p.list_card.append(c)
+    action = Action(card=c, pos_from=64, pos_to=0)
+    game._handle_card_joker(p, c, action)
+
+def test_handle_card_other(game):
+    p = game.state.list_player[0]
+    c = Card(suit='♥', rank='5')
+    p.list_card.append(c)
+    action = Action(card=c, pos_from=64, pos_to=0)
+    game._handle_card_other(p, c, action)
+
+def test_handle_jack_action(game):
+    action = Action(pos_from=64, pos_to=65)
+    game._handle_jack_action(action)
+
+def test_calc_steps(game):
+    steps = game._calc_steps(64, game.PLAYER_BOARD_SEGMENTS[0]['start'], 0)
+    assert steps is not None
 
 def test_check_game_status(game):
     game.check_game_status()
