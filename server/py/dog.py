@@ -372,10 +372,11 @@ class Dog(Game):
         """
         Check if a marble is in the finish area for the given player.
         Finish areas are unique to each player.
+        This checks if pos is one of the explicitly listed finish positions for the given player. It returns True if pos is found in that list, and False otherwise.
         """
-        finish_start = 80 + player_index * 4  # Example: Finish starts at position 80 for Player 1
-        finish_end = finish_start + 3  # Each player has 4 finish positions
-        return finish_start <= pos <= finish_end
+        return pos in self.board["finish_positions"][player_index]
+
+
 
     def is_in_any_finish_area(self, pos: int) -> bool:
         for player_index, player in enumerate(self.state.list_player):
