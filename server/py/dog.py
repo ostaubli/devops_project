@@ -422,11 +422,25 @@ class Dog(Game):
         possible_actions = []
         if card.rank in self._BASIC_RANKS:
             for marble in marbles:
-                if self.is_movable(marble):  # Marble must be out of the kennel
-                    new_pos = (marble.pos + self._RANK_TO_VALUE[card.rank]) % self.CIRCULAR_PATH_LENGTH  # Modular board movement
-                    possible_actions.append(Action(card=card, pos_from=marble.pos, pos_to=new_pos, card_swap=None))
+                if self.is_movable(marble):
+                    pos_from = marble.pos
+                    steps = self._RANK_TO_VALUE[card.rank]
+                    pos_to = (pos_from + steps) % self.CIRCULAR_PATH_LENGTH
+
+                    # Use the new helper function to check if path is blocked
+                    if not self.is_path_blocked_by_safe_marble(pos_from, pos_to, marbles):
+                        possible_actions.append(Action(card=card, pos_from=pos_from, pos_to=pos_to, card_swap=None))
 
         return possible_actions
+
+    def is_path_blocked_by_safe_marble(self, pos_from: int, pos_to: int, marbles: List[Marble]) -> bool:
+        # Determine total steps between pos_from and pos_to
+        total_steps = self.get_steps_between(pos_from, pos_to)
+        # Determine all positions on the path (excluding pos_from, including pos_to)
+        path_positions = [(pos_from + i) % self.CIRCULAR_PATH_LENGTH for i in range(1, total_steps + 1)]
+
+        # Check if a safe marble occupies any position in the path
+        return any(m.is_save and m.pos in path_positions for m in marbles)
 
 
     def get_list_action(self) -> List[Action]:
