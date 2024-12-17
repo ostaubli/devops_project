@@ -307,10 +307,36 @@ class Dog(Game):
         return None
 
     def get_steps_between(self, pos_from: int, pos_to: int) -> int:
-        if pos_from <= pos_to:
-            return pos_to - pos_from
+        # Try to find which player's finishing track pos_to belongs to
+        player = None
+        for p, finish_list in self.board["finish_positions"].items():
+            if pos_to in finish_list:
+                player = p
+                break
+
+        # If pos_to is not a finishing position for any player,
+        # it's on the circular track, so we do the old calculation.
+        if player is None:
+            if pos_from <= pos_to:
+                return pos_to - pos_from
+            else:
+                return pos_to + (self.CIRCULAR_PATH_LENGTH - pos_from)
+
+        # If we found a player (pos_to is a finishing position)
+        start_position = self.board["start_positions"][player][0]
+
+        # Steps from pos_from to start_position on the circular path
+        if pos_from <= start_position:
+            steps_to_start = start_position - pos_from
         else:
-            return pos_to + (self.CIRCULAR_PATH_LENGTH - pos_from)
+            steps_to_start = (self.CIRCULAR_PATH_LENGTH - pos_from) + start_position
+
+        # Determine how many steps into the finishing track pos_to is
+        finish_positions = self.board["finish_positions"][player]
+        finish_index = finish_positions.index(pos_to)
+        steps_in_finishing = finish_index + 1  # first finish pos = 1 step beyond start pos
+
+        return steps_to_start + steps_in_finishing
 
     def move_to_finish(self, marble: Marble, player_index: int, steps: int) -> bool:
         """
@@ -457,7 +483,8 @@ class Dog(Game):
         if card.rank in self._BASIC_RANKS:
             found_actions.extend(self.get_actions_for_basic_card(card, player.list_marble))
         elif card.rank == 'JKR':  # Joker can be played as any card
-            found_actions.extend(self.get_actions_for_jkr(card, player))
+            pass
+            #found_actions.extend(self.get_actions_for_jkr(card, player))
         elif card.rank == '4':
             found_actions.extend(self.get_actions_for_4(card, player))
         elif card.rank == '7':  # Special case for card "7"
@@ -853,7 +880,7 @@ class Dog(Game):
         return self.state.list_player[self.state.idx_player_active]
 
     def apply_simple_move(self, marble: Marble, target_pos: int, player: PlayerState = None) -> None:
-        steps = target_pos - marble.pos
+        steps = self.get_steps_between(marble.pos, target_pos)
         if self.move_to_finish(marble, self.state.idx_player_active, steps):
             print(f"{player.name if player else 'someone'}'s marble moved to the finish area.")
         else:
