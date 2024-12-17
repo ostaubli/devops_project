@@ -127,7 +127,7 @@ class Dog(Game):
         """ Get the complete, unmasked game state """
         assert  self.state
         return self.state
-    
+
     def create_state_backup(self) -> GameState:
         """ Saves after turning player the current state to fall back """
         assert  self.state
@@ -844,6 +844,11 @@ class Dog(Game):
                 # Moves are available, but player passed turn: do not discard/clear hand
                 pass
 
+            if self.state.card_active is not None:
+                self.state = copy.deepcopy(self.state_backup)
+                self.state.card_active = None
+                self.state.remaining_steps = None
+
             self.state.idx_player_active = (self.state.idx_player_active + 1) % len(self.state.list_player)
 
             # If all players are out of cards, advance to the next round
@@ -880,14 +885,13 @@ class Dog(Game):
 
         # Handle Seven card
         if action.card.rank == '7'and self.state.card_active is None and self.state.remaining_steps is None:
-                # Initialize SEVEN handling if it's the first split
-                self.create_state_backup()
-                self.state.card_active = action.card
-                self.state.remaining_steps = 7
-                print("SEVEN card detected. Starting split with 7 steps.")
+            # Initialize SEVEN handling if it's the first split
+            self.create_state_backup()
+            self.state.card_active = action.card
+            self.state.remaining_steps = 7
+            print("SEVEN card detected. Starting split with 7 steps.")
 
         if action.card.rank == '7' and self.state.card_active.rank == '7':
-            
             #  Validate pos_from and pos_to are not None before calculating steps
             if action.pos_from is None or action.pos_to is None:
                 #move not possible
@@ -906,36 +910,24 @@ class Dog(Game):
             # Process the current split step
             # if statement for safe space
             steps_taken = self.calculate_steps(action.pos_from, action.pos_to, self.state.idx_player_active)
+            self._handle_overtaking(action)
+            self._check_collisions(action)
+            self._handle_normal_move(action, active_player)
 
             # Update remaining steps
-            self.state.remaining_steps = self.state.remaining_steps - steps_taken
+            self.state.remaining_steps -= steps_taken
 
-            if self.state.remaining_steps is not None and self.state.remaining_steps > 0:
-                self._handle_overtaking(action)
-                self._check_collisions(action)
-                self._handle_normal_move(action, active_player)
-                    #Move not posstible
+            # If all steps are completed, finalize SEVEN handling
+            assert self.state
 
             # Check if remaining_steps is not None and handle completion of the SEVEN card
-            if self.state.remaining_steps is not None and self.state.remaining_steps == 0:
-                self._handle_overtaking(action)
-                self._check_collisions(action)
-                self._handle_normal_move(action, active_player)
+            if self.state.remaining_steps is not None and self.state.remaining_steps <= 0:
                 active_player.list_card.remove(action.card)
                 self.state.list_card_discard.append(action.card)
                 self.state.card_active = None
                 self.state.remaining_steps = None
                 self.state.idx_player_active = (self.state.idx_player_active + 1) % len(self.state.list_player)
                 self._check_game_finished()
-
-            if self.state.remaining_steps is not None and self.state.remaining_steps < 0:
-                # if step not possible, remove all players card
-                self.state = copy.deepcopy(self.state_backup)
-                self.state.list_card_discard.extend(active_player.list_card)
-                active_player.list_card.clear()
-                self.state.idx_player_active = (self.state.idx_player_active + 1) % len(self.state.list_player)
-                self._check_game_finished()
-
             return
 
         self._handle_normal_move(action, active_player)
@@ -1384,9 +1376,10 @@ class Dog(Game):
             board_positions=self.state.board_positions
         )
 
-      
+
+
 # if __name__ == '__main__':
-        
+
 #     # Initialize the game
 #     game = Dog()
 
