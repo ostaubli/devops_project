@@ -307,10 +307,36 @@ class Dog(Game):
         return None
 
     def get_steps_between(self, pos_from: int, pos_to: int) -> int:
-        if pos_from <= pos_to:
-            return pos_to - pos_from
+        # Try to find which player's finishing track pos_to belongs to
+        player = None
+        for p, finish_list in self.board["finish_positions"].items():
+            if pos_to in finish_list:
+                player = p
+                break
+
+        # If pos_to is not a finishing position for any player,
+        # it's on the circular track, so we do the old calculation.
+        if player is None:
+            if pos_from <= pos_to:
+                return pos_to - pos_from
+            else:
+                return pos_to + (self.CIRCULAR_PATH_LENGTH - pos_from)
+
+        # If we found a player (pos_to is a finishing position)
+        start_position = self.board["start_positions"][player][0]
+
+        # Steps from pos_from to start_position on the circular path
+        if pos_from <= start_position:
+            steps_to_start = start_position - pos_from
         else:
-            return pos_to + (self.CIRCULAR_PATH_LENGTH - pos_from)
+            steps_to_start = (self.CIRCULAR_PATH_LENGTH - pos_from) + start_position
+
+        # Determine how many steps into the finishing track pos_to is
+        finish_positions = self.board["finish_positions"][player]
+        finish_index = finish_positions.index(pos_to)
+        steps_in_finishing = finish_index + 1  # first finish pos = 1 step beyond start pos
+
+        return steps_to_start + steps_in_finishing
 
     def move_to_finish(self, marble: Marble, player_index: int, steps: int) -> bool:
         """
@@ -346,10 +372,11 @@ class Dog(Game):
         """
         Check if a marble is in the finish area for the given player.
         Finish areas are unique to each player.
+        This checks if pos is one of the explicitly listed finish positions for the given player. It returns True if pos is found in that list, and False otherwise.
         """
-        finish_start = 80 + player_index * 4  # Example: Finish starts at position 80 for Player 1
-        finish_end = finish_start + 3  # Each player has 4 finish positions
-        return finish_start <= pos <= finish_end
+        return pos in self.board["finish_positions"][player_index]
+
+
 
     def is_in_any_finish_area(self, pos: int) -> bool:
         for player_index, player in enumerate(self.state.list_player):
@@ -395,11 +422,27 @@ class Dog(Game):
         possible_actions = []
         if card.rank in self._BASIC_RANKS:
             for marble in marbles:
-                if self.is_movable(marble):  # Marble must be out of the kennel
-                    new_pos = (marble.pos + self._RANK_TO_VALUE[card.rank]) % self.CIRCULAR_PATH_LENGTH  # Modular board movement
-                    possible_actions.append(Action(card=card, pos_from=marble.pos, pos_to=new_pos, card_swap=None))
+                if self.is_movable(marble):
+                    pos_from = marble.pos
+                    steps = self._RANK_TO_VALUE[card.rank]
+                    pos_to = (pos_from + steps) % self.CIRCULAR_PATH_LENGTH
+
+                    # Use the new helper function to check if path is blocked
+                    if not self.is_path_blocked_by_safe_marble(pos_from, pos_to, marbles):
+                        possible_actions.append(Action(card=card, pos_from=pos_from, pos_to=pos_to, card_swap=None))
 
         return possible_actions
+
+    def is_path_blocked_by_safe_marble(self, pos_from: int, pos_to: int, marbles: List[Marble]) -> bool:
+        # Find marbles between pos_from and pos_to
+        found_marbles = self.find_marbles_between(pos_from, pos_to)
+
+        # If you want to exclude the marble at pos_from (the one currently moving), do so:
+        found_marbles = [m for m in found_marbles if m.pos != pos_from]
+
+        # Check if any safe marble is present
+        return any(m.is_save for m in found_marbles)
+
 
 
     def get_list_action(self) -> List[Action]:
@@ -457,7 +500,8 @@ class Dog(Game):
         if card.rank in self._BASIC_RANKS:
             found_actions.extend(self.get_actions_for_basic_card(card, player.list_marble))
         elif card.rank == 'JKR':  # Joker can be played as any card
-            found_actions.extend(self.get_actions_for_jkr(card, player))
+            pass
+            #found_actions.extend(self.get_actions_for_jkr(card, player))
         elif card.rank == '4':
             found_actions.extend(self.get_actions_for_4(card, player))
         elif card.rank == '7':  # Special case for card "7"
@@ -831,14 +875,19 @@ class Dog(Game):
         if marble_index not in self.action_marble_reset_positions.keys():
             self.action_marble_reset_positions[marble_index] = marble.pos
 
-        # overtaken_marbles = self.find_marbles_between(action.pos_from+1, action.pos_to-1)
-        # for marble in overtaken_marbles:
-        #     if not marble.is_save:
-        #         # Save original position of marble for the case of reset due to illegal action
-        #         self.action_marble_reset_positions[self.get_marble_index(marble)] = marble.pos
-        #         self.send_home(marble)
+        # Find marbles between pos_from and pos_to (excluding the starting position but including the end position)
+        overtaken_marbles = self.find_marbles_between(action.pos_from + 1, action.pos_to)
 
-        # TODO: implement overtaking and remember overtaken marble position (for reset)
+        # TODO: Adapt to pass test 33 again, 32 passed
+        # # For each marble found, if it is not safe, send it home
+        # for overtaken_marble in overtaken_marbles:
+        #     if not overtaken_marble.is_save:
+        #         # Record original position of overtaken marble for rollback if needed
+        #         overtaken_marble_index = self.get_marble_index(overtaken_marble)
+        #         if overtaken_marble_index not in self.action_marble_reset_positions:
+        #             self.action_marble_reset_positions[overtaken_marble_index] = overtaken_marble.pos
+        #
+        #         self.send_home(overtaken_marble)
 
         self.apply_simple_move(marble, action.pos_to, current_player)
         self.steps_for_7_remaining -= steps
@@ -853,7 +902,7 @@ class Dog(Game):
         return self.state.list_player[self.state.idx_player_active]
 
     def apply_simple_move(self, marble: Marble, target_pos: int, player: PlayerState = None) -> None:
-        steps = target_pos - marble.pos
+        steps = self.get_steps_between(marble.pos, target_pos)
         if self.move_to_finish(marble, self.state.idx_player_active, steps):
             print(f"{player.name if player else 'someone'}'s marble moved to the finish area.")
         else:
