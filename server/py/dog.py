@@ -837,7 +837,10 @@ class Dog(Game):
         return jkr_actions
 
     def apply_action(self, action: Action) -> None:
-        """ Apply the given action to the game """
+        """Apply the given action to the game."""
+
+        if self.state is None:
+            raise ValueError("Game state is not initialized.")
 
         if action is None:
             self.state.card_active = None
