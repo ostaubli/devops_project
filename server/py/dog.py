@@ -912,6 +912,12 @@ class Dog(Game):
             self.proceed_to_next_player()
 
     def proceed_to_next_player(self) -> None:
+        """
+        Proceed to the next player in turn order.
+        Updates the active player index and increments the round counter.
+        """
+        if self.state is None:
+            raise ValueError("Game state is not initialized.")
         self.state.idx_player_active = (self.state.idx_player_active + 1) % self.state.cnt_player
         self.state.cnt_round += 1
 
