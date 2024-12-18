@@ -989,7 +989,9 @@ class Dog(Game):
             self.state.card_active = action.card_swap
         return False
 
-    def get_active_player(self):
+    def get_active_player(self) -> PlayerState:
+        if self.state is None:
+            raise ValueError("Game state is not initialized.")
         return self.state.list_player[self.state.idx_player_active]
 
     def apply_simple_move(self, marble: Marble, target_pos: int, player: PlayerState = None) -> None:
