@@ -671,6 +671,8 @@ class Dog(Game):
 
     def get_position_marble(self, marble) -> int:
         """ Get the position of a marble on the board """
+        if not isinstance(marble.pos, int):
+            raise ValueError(f"Invalid marble position: {marble.pos}")
         return marble.pos  # Access marble's position directly
 
 
