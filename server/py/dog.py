@@ -911,7 +911,7 @@ class Dog(Game):
             # Proceed to the next player after applying the action
             self.proceed_to_next_player()
 
-    def proceed_to_next_player(self):
+    def proceed_to_next_player(self) -> None:
         self.state.idx_player_active = (self.state.idx_player_active + 1) % self.state.cnt_player
         self.state.cnt_round += 1
 
