@@ -1009,7 +1009,7 @@ class Dog(Game):
             marble.pos = target_pos
         marble.is_save = False
 
-    def send_home_if_occupied(self, target_pos: int):
+    def send_home_if_occupied(self, target_pos: int) -> None:
         if target_pos is not None and self.position_is_occupied(target_pos):
             existing_marble = self.find_marble_at_position(target_pos)
             if existing_marble and not self.is_in_any_finish_area(target_pos):
