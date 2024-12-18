@@ -1030,6 +1030,8 @@ class Dog(Game):
 
     def get_owner(self, marble: Marble) -> Optional[PlayerState]:
         """Get player that owns a marble"""
+        if self.state is None:
+            raise ValueError("Game state is not initialized.")
         for player in self.state.list_player:
             if marble in player.list_marble:
                 return player
