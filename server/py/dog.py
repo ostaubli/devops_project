@@ -676,7 +676,7 @@ class Dog(Game):
         return marble.pos  # Access marble's position directly
 
 
-    def undo_active_card_moves(self):
+    def undo_active_card_moves(self) -> None:
         for marble_index, position in self.action_marble_reset_positions.items():
             marble = self.get_marble(marble_index)
             marble.pos = position
