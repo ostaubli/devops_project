@@ -416,6 +416,8 @@ class Dog(Game):
         Finish areas are unique to each player.
         This checks if pos is one of the explicitly listed finish positions for the given player. It returns True if pos is found in that list, and False otherwise.
         """
+        if self.state is None or self.state.list_player is None:
+            raise ValueError("Game state is not properly initialized.")
         return pos in self.board["finish_positions"][player_index]
 
 
