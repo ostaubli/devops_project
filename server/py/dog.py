@@ -423,6 +423,8 @@ class Dog(Game):
 
 
     def is_in_any_finish_area(self, pos: int) -> bool:
+        if self.state is None or self.state.list_player is None:
+            raise ValueError("Game state is not properly initialized.")
         for player_index, player in enumerate(self.state.list_player):
             if self.is_in_player_finish_area(pos, player_index):
                 return True
