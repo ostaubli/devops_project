@@ -1073,6 +1073,8 @@ class Dog(Game):
 
     def get_player_view(self, idx_player: int) -> Optional[GameState]:
         """ Get the masked state for the active player (e.g. the opponent's cards are face down) """
+        if self.state is None:
+            return None  # No state to provide a view
         # Mask the opponent's cards, only showing the player's own cards
         masked_state = self.state.model_copy()
         for i, player in enumerate(masked_state.list_player):
