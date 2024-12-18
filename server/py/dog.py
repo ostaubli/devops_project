@@ -112,7 +112,7 @@ class Dog(Game):
         self.board = self._initialize_board()  # Initialize the board
         self.state: Optional[GameState] = None
         self.steps_for_7_remaining = 7
-        self.action_marble_reset_positions = {}
+        self.action_marble_reset_positions: Dict[int, int] = {}
         self.setup_game()  # Set up the initial game state
 
     def setup_game(self) -> None:
@@ -196,6 +196,9 @@ class Dog(Game):
         - Allow teammates to exchange one card.
         - Set the starting player (anti-clockwise from the dealer).
         """
+        if self.state is None:
+            raise ValueError("Game state is not initialized")
+
         CARD_DISTRIBUTION = [6, 5, 4, 3, 2]  # Number of cards per round
         round_index = (self.state.cnt_round - 1) % len(CARD_DISTRIBUTION)  # Cycle through rounds
         cards_to_deal = CARD_DISTRIBUTION[round_index]
@@ -217,6 +220,10 @@ class Dog(Game):
         Deal a specific number of cards to each player.
         Reshuffle the discard pile if the draw pile runs out of cards.
         """
+        # Ensure state is initialized
+        if self.state is None:
+            raise ValueError("Game state is not initialized")
+
         for player in self.state.list_player:
             # Ensure there are enough cards in the draw pile
             if len(self.state.list_card_draw) < cards_to_deal:
@@ -228,6 +235,9 @@ class Dog(Game):
 
     def reshuffle_discard_pile(self) -> None:
         """Reshuffle the discard pile into the draw pile."""
+        if self.state is None:
+            raise ValueError("Game state is not initialized")
+
         if not self.state.list_card_discard:
             raise ValueError("No cards left to reshuffle!")
         self.state.list_card_draw = random.sample(self.state.list_card_discard, len(self.state.list_card_discard))
@@ -238,6 +248,9 @@ class Dog(Game):
         """
         Allow teammates to exchange one card each without revealing it.
         """
+        if self.state is None:
+            raise ValueError("Game state is not initialized.")
+
         player1 = self.state.list_player[player1_index]
         player2 = self.state.list_player[player2_index]
 
@@ -255,6 +268,22 @@ class Dog(Game):
         Set the starting player for the current round.
         The starting player is the one to the right of the dealer.
         """
+        # Ensure state is initialized
+        if self.state is None:
+            raise ValueError("Game state is not initialized.")
+
+        # Ensure necessary attributes exist
+        if not isinstance(self.state.idx_player_active, int) or not isinstance(self.state.cnt_player, int):
+            raise ValueError("Game state is missing required attributes 'idx_player_active' or 'cnt_player'.")
+
+        # Prevent division/modulo by zero
+        if self.state.cnt_player <= 0:
+            raise ValueError("The number of players (cnt_player) must be greater than zero.")
+
+        # Set the starting player
+        self.state.idx_player_active = (self.state.idx_player_active - 1) % self.state.cnt_player
+        print(f"Player {self.state.idx_player_active} will start this round.")
+
         self.state.idx_player_active = (self.state.idx_player_active - 1) % self.state.cnt_player
         print(f"Player {self.state.idx_player_active} will start this round.")
 
@@ -273,6 +302,9 @@ class Dog(Game):
 
     def position_is_occupied(self, pos: int) -> bool:
         """Checks whether a position on the board is occupied by another marble."""
+        if self.state is None or self.state.list_player is None:
+            raise ValueError("Game state or player list is not initialized.")
+
         for player in self.state.list_player:
             for marble in player.list_marble:
                 if marble.pos == pos:
@@ -281,6 +313,9 @@ class Dog(Game):
 
     def find_marbles_between(self, pos_from: int, pos_to: int) -> List[Marble]:
         """Find all marbles between any two positions on the board"""
+        if self.state is None or self.state.list_player is None:
+            raise ValueError("Game state or player list is not initialized.")
+
         found_marbles = []
         positions_to_check = []
 
@@ -300,6 +335,9 @@ class Dog(Game):
         return found_marbles
 
     def find_marble_at_position(self, position: int) -> Optional[Marble]:
+        if self.state is None or self.state.list_player is None:
+            raise ValueError("Game state or player list is not initialized.")
+
         for player in self.state.list_player:
             for marble in player.list_marble:
                 if marble.pos == position:
@@ -326,6 +364,7 @@ class Dog(Game):
         start_position = self.board["start_positions"][player][0]
 
         # Steps from pos_from to start_position on the circular path
+        steps_to_start: int
         if pos_from <= start_position:
             steps_to_start = start_position - pos_from
         else:
@@ -334,7 +373,7 @@ class Dog(Game):
         # Determine how many steps into the finishing track pos_to is
         finish_positions = self.board["finish_positions"][player]
         finish_index = finish_positions.index(pos_to)
-        steps_in_finishing = finish_index + 1  # first finish pos = 1 step beyond start pos
+        steps_in_finishing: int = finish_index + 1  # first finish pos = 1 step beyond start pos
 
         return steps_to_start + steps_in_finishing
 
@@ -342,6 +381,9 @@ class Dog(Game):
         """
         Attempt to move a marble into the finish area.
         """
+        if self.state is None or self.state.list_player is None:
+            raise ValueError("Game state is not properly initialized.")
+
         finish_positions = self.board["finish_positions"][player_index]
         start_pos = self.board["start_positions"][player_index][0]
 
@@ -374,11 +416,15 @@ class Dog(Game):
         Finish areas are unique to each player.
         This checks if pos is one of the explicitly listed finish positions for the given player. It returns True if pos is found in that list, and False otherwise.
         """
+        if self.state is None or self.state.list_player is None:
+            raise ValueError("Game state is not properly initialized.")
         return pos in self.board["finish_positions"][player_index]
 
 
 
     def is_in_any_finish_area(self, pos: int) -> bool:
+        if self.state is None or self.state.list_player is None:
+            raise ValueError("Game state is not properly initialized.")
         for player_index, player in enumerate(self.state.list_player):
             if self.is_in_player_finish_area(pos, player_index):
                 return True
@@ -388,6 +434,8 @@ class Dog(Game):
         """
         Check if a marble is protected (e.g., at the start or in the finish).
         """
+        if self.state is None or self.state.list_player is None:
+            raise ValueError("Game state is not properly initialized.")
         # Find the player who owns the marble
         for player_index, player in enumerate(self.state.list_player):
             if marble in player.list_marble:
@@ -402,10 +450,14 @@ class Dog(Game):
 
     def get_state(self) -> GameState:
         """ Get the complete, unmasked game state """
+        if self.state is None:
+            raise ValueError("Game state is not initialized.")
         return self.state
 
     def print_state(self) -> None:
         """ Print the current game state """
+        if self.state is None:
+            raise ValueError("Game state is not initialized.")
         print(f"Round: {self.state.cnt_round}, Phase: {self.state.phase}")
         for idx, player in enumerate(self.state.list_player):
             print(f"{player.name}: Cards: {player.list_card}, Marbles: {player.list_marble}")
@@ -413,6 +465,8 @@ class Dog(Game):
     def deal_cards(self) -> None:
         # TODO: check deal cards?
         """ Deal cards to all players. """
+        if self.state is None:
+            raise ValueError("Game state is not initialized.")
         for player in self.state.list_player:
             player.list_card = self.state.list_card_draw[:6]
             self.state.list_card_draw = self.state.list_card_draw[6:]
@@ -449,6 +503,9 @@ class Dog(Game):
         """
         Get a list of possible actions for the active player.
         """
+        if self.state is None:
+            raise ValueError("Game state is not initialized.")
+
         found_actions = []
         player = self.get_active_player()
 
@@ -575,6 +632,8 @@ class Dog(Game):
         return actions
 
     def get_actions_jake(self, card: Card, player: PlayerState) -> List[Action]:
+        if self.state is None:
+            raise ValueError("Game state is not initialized.")
         actions = []
         player_index = self.get_player_index(player)
 
@@ -618,14 +677,18 @@ class Dog(Game):
 
         return actions
 
-    def get_position_marble(self, marble) -> int:
+    def get_position_marble(self, marble: Marble) -> int:
         """ Get the position of a marble on the board """
+        if not isinstance(marble.pos, int):
+            raise ValueError(f"Invalid marble position: {marble.pos}")
         return marble.pos  # Access marble's position directly
 
 
-    def undo_active_card_moves(self):
+    def undo_active_card_moves(self) -> None:
         for marble_index, position in self.action_marble_reset_positions.items():
             marble = self.get_marble(marble_index)
+            if marble is None:
+                raise ValueError(f"No marble found for index: {marble_index}")
             marble.pos = position
         self.action_marble_reset_positions = {}
 
@@ -749,6 +812,9 @@ class Dog(Game):
             return True
 
         occupant_marble = self.find_marble_at_position(start_pos)
+        if occupant_marble is None:
+            raise ValueError(f"No marble found at position {start_pos}.")
+
         occupant_owner = self.get_owner(occupant_marble)
 
         if occupant_owner == player:
