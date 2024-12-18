@@ -624,6 +624,8 @@ class Dog(Game):
         return actions
 
     def get_actions_jake(self, card: Card, player: PlayerState) -> List[Action]:
+        if self.state is None:
+            raise ValueError("Game state is not initialized.")
         actions = []
         player_index = self.get_player_index(player)
 
