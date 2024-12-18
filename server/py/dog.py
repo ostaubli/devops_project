@@ -235,6 +235,9 @@ class Dog(Game):
 
     def reshuffle_discard_pile(self) -> None:
         """Reshuffle the discard pile into the draw pile."""
+        if self.state is None:
+            raise ValueError("Game state is not initialized")
+
         if not self.state.list_card_discard:
             raise ValueError("No cards left to reshuffle!")
         self.state.list_card_draw = random.sample(self.state.list_card_discard, len(self.state.list_card_discard))
