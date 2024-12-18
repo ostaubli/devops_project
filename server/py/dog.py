@@ -381,6 +381,9 @@ class Dog(Game):
         """
         Attempt to move a marble into the finish area.
         """
+        if self.state is None or self.state.list_player is None:
+            raise ValueError("Game state is not properly initialized.")
+
         finish_positions = self.board["finish_positions"][player_index]
         start_pos = self.board["start_positions"][player_index][0]
 
