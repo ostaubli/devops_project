@@ -994,7 +994,12 @@ class Dog(Game):
             raise ValueError("Game state is not initialized.")
         return self.state.list_player[self.state.idx_player_active]
 
-    def apply_simple_move(self, marble: Marble, target_pos: int, player: PlayerState = None) -> None:
+    def apply_simple_move(self, marble: Marble, target_pos: int, player: Optional[PlayerState] = None) -> None:
+        """
+        Move the marble to the target position, handling collisions and finishing moves.
+        """
+        if self.state is None:
+            raise ValueError("Game state is not initialized.")
         steps = self.get_steps_between(marble.pos, target_pos)
         if self.move_to_finish(marble, self.state.idx_player_active, steps):
             print(f"{player.name if player else 'someone'}'s marble moved to the finish area.")
