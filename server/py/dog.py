@@ -217,6 +217,10 @@ class Dog(Game):
         Deal a specific number of cards to each player.
         Reshuffle the discard pile if the draw pile runs out of cards.
         """
+        # Ensure state is initialized
+        if self.state is None:
+            raise ValueError("Game state is not initialized")
+
         for player in self.state.list_player:
             # Ensure there are enough cards in the draw pile
             if len(self.state.list_card_draw) < cards_to_deal:
