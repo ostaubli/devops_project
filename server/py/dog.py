@@ -938,6 +938,8 @@ class Dog(Game):
             raise ValueError(f"An action for rank 7 was applied but there is still an active {self.state.card_active.rank} card")
 
         current_player = self.get_active_player()
+        if action.pos_from is None:
+            raise ValueError("Invalid action: pos_from is None")
         marble = self.find_marble_at_position(action.pos_from)
 
         if marble is None:
