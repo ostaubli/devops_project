@@ -155,8 +155,7 @@ class Dog(Game):
             list_player=players,
             list_card_draw=deck,
             list_card_discard=[],
-            card_active=None,
-            board_positions=[None] * 96  # Empty board positions
+            card_active=None  # Empty board positions
         )
 
         # Distribute the initial hand of cards (6 cards per player in the first round)
@@ -837,7 +836,10 @@ class Dog(Game):
         return jkr_actions
 
     def apply_action(self, action: Action) -> None:
-        """ Apply the given action to the game """
+        """Apply the given action to the game."""
+
+        if self.state is None:
+            raise ValueError("Game state is not initialized.")
 
         if action is None:
             self.state.card_active = None
@@ -908,13 +910,13 @@ class Dog(Game):
             # Proceed to the next player after applying the action
             self.proceed_to_next_player()
 
-    def undo_active_card_moves(self):
-        for marble_index, position in self.action_marble_reset_positions.items():
-            marble = self.get_marble(marble_index)
-            marble.pos = position
-        self.action_marble_reset_positions = {}
-
-    def proceed_to_next_player(self):
+    def proceed_to_next_player(self) -> None:
+        """
+        Proceed to the next player in turn order.
+        Updates the active player index and increments the round counter.
+        """
+        if self.state is None:
+            raise ValueError("Game state is not initialized.")
         self.state.idx_player_active = (self.state.idx_player_active + 1) % self.state.cnt_player
         self.state.cnt_round += 1
 
@@ -924,6 +926,8 @@ class Dog(Game):
         This may involve moving multiple marbles.
         :returns True if the card is played completely and false if more steps are needed for 7
         """
+        if self.state is None:
+            raise ValueError("Game state is not initialized.")
 
         if self.state.card_active is None:
             # This is the first action of a 7 action set
@@ -933,7 +937,15 @@ class Dog(Game):
             raise ValueError(f"An action for rank 7 was applied but there is still an active {self.state.card_active.rank} card")
 
         current_player = self.get_active_player()
+        if action.pos_from is None:
+            raise ValueError("Invalid action: pos_from is None")
         marble = self.find_marble_at_position(action.pos_from)
+
+        if marble is None:
+            raise ValueError(f"No marble found at position {action.pos_from}")
+
+        if action.pos_from is None or action.pos_to is None:
+            raise ValueError("Invalid action: pos_from or pos_to is None")
 
         steps = self.get_steps_between(action.pos_from, action.pos_to)
 
@@ -942,11 +954,16 @@ class Dog(Game):
             self.action_marble_reset_positions[marble_index] = marble.pos
 
         # Find marbles between pos_from and pos_to (excluding the starting position but including the end position)
+        if action.pos_from + 1 is None:
+            raise ValueError("Invalid position: pos_from + 1 results in None")
+
         overtaken_marbles = self.find_marbles_between(action.pos_from + 1, action.pos_to)
 
         # TODO: Adapt to pass test 33 again, 32 passed
         # For each marble found, if it is not safe, send it home
         for overtaken_marble in overtaken_marbles:
+            if overtaken_marble is None:
+                continue  # Skip if overtaken_marble is None
             if not overtaken_marble.is_save:
                 # Record original position of overtaken marble for rollback if needed
                 overtaken_marble_index = self.get_marble_index(overtaken_marble)
@@ -964,15 +981,24 @@ class Dog(Game):
 
         return False
 
-    def apply_jkr_action(self, action: Action, player) -> bool:
+    def apply_jkr_action(self, action: Action, player: PlayerState) -> bool:
+        if self.state is None:
+            raise ValueError("Game state is not initialized.")
         if self.state.card_active is None:
             self.state.card_active = action.card_swap
         return False
 
-    def get_active_player(self):
+    def get_active_player(self) -> PlayerState:
+        if self.state is None:
+            raise ValueError("Game state is not initialized.")
         return self.state.list_player[self.state.idx_player_active]
 
-    def apply_simple_move(self, marble: Marble, target_pos: int, player: PlayerState = None) -> None:
+    def apply_simple_move(self, marble: Marble, target_pos: int, player: Optional[PlayerState] = None) -> None:
+        """
+        Move the marble to the target position, handling collisions and finishing moves.
+        """
+        if self.state is None:
+            raise ValueError("Game state is not initialized.")
         steps = self.get_steps_between(marble.pos, target_pos)
         if self.move_to_finish(marble, self.state.idx_player_active, steps):
             print(f"{player.name if player else 'someone'}'s marble moved to the finish area.")
@@ -982,7 +1008,7 @@ class Dog(Game):
             marble.pos = target_pos
         marble.is_save = False
 
-    def send_home_if_occupied(self, target_pos: int):
+    def send_home_if_occupied(self, target_pos: int) -> None:
         if target_pos is not None and self.position_is_occupied(target_pos):
             existing_marble = self.find_marble_at_position(target_pos)
             if existing_marble and not self.is_in_any_finish_area(target_pos):
@@ -1003,21 +1029,31 @@ class Dog(Game):
 
     def get_owner(self, marble: Marble) -> Optional[PlayerState]:
         """Get player that owns a marble"""
+        if self.state is None:
+            raise ValueError("Game state is not initialized.")
         for player in self.state.list_player:
             if marble in player.list_marble:
                 return player
         return None
 
     def get_player_index(self, player: PlayerState) -> int:
+        if self.state is None:
+            raise ValueError("Game state is not initialized.")
+        if player not in self.state.list_player:
+            raise ValueError(f"Player {player.name} not found in the game state.")
         return self.state.list_player.index(player)
 
     def get_player(self, player_index: int) -> Optional[PlayerState]:
-        return self.state.list_player[player_index] if player_index < len(self.state.list_player) else None
+        if self.state is None:
+            raise ValueError("Game state is not initialized.")
+        if player_index < len(self.state.list_player):
+            return self.state.list_player[player_index]
+        return None
 
-    def get_marble_index(self, marble: Marble, player: PlayerState = None) -> int:
-        owner = player
-        if not owner:
-            owner = self.get_owner(marble)
+    def get_marble_index(self, marble: Marble, player: Optional[PlayerState] = None) -> int:
+        owner = player or self.get_owner(marble)
+        if owner is None:
+            raise ValueError(f"Marble {marble} does not belong to any player.")
         owner_index = self.get_player_index(owner)
         return owner_index * 4 + owner.list_marble.index(marble)
 
@@ -1027,10 +1063,17 @@ class Dog(Game):
         # Find index of marble in player's marbles
         player_marble_index = marble_index % 4
         player = self.get_player(player_index)
-        return player.list_marble[player_marble_index] if player_marble_index < len(player.list_marble) else None
+        if player is None:
+            return None  # Player does not exist
+        # Check if the marble index is valid for the player's list
+        if player_marble_index < len(player.list_marble):
+            return player.list_marble[player_marble_index]
+        return None  # Marble index is out of range
 
-    def get_player_view(self, idx_player: int) -> GameState:
+    def get_player_view(self, idx_player: int) -> Optional[GameState]:
         """ Get the masked state for the active player (e.g. the opponent's cards are face down) """
+        if self.state is None:
+            return None  # No state to provide a view
         # Mask the opponent's cards, only showing the player's own cards
         masked_state = self.state.model_copy()
         for i, player in enumerate(masked_state.list_player):
