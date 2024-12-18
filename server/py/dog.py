@@ -450,6 +450,8 @@ class Dog(Game):
 
     def get_state(self) -> GameState:
         """ Get the complete, unmasked game state """
+        if self.state is None:
+            raise ValueError("Game state is not initialized.")
         return self.state
 
     def print_state(self) -> None:
