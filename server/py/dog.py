@@ -570,10 +570,12 @@ class Dog(Game):
         actions = []
         player_index = self.get_player_index(player)
 
-        # Find active player's marbles eligible for swapping
-        active_player_marbles = [
-            marble for marble in player.list_marble
-            if marble.is_save and not self.is_protected_marble(marble)
+        # Get all the marbles on the board
+        all_marbles = [
+            (marble, marble_owner_index)
+            for marble_owner_index, marble_owner in enumerate(self.state.list_player)
+            for marble in marble_owner.list_marble
+            if marble.pos != self.KENNEL_POSITIONS[marble_owner_index]  # Exclude marbles in kennel
         ]
 
         # Generate actions by swapping marbles
