@@ -1051,10 +1051,10 @@ class Dog(Game):
             return self.state.list_player[player_index]
         return None
 
-    def get_marble_index(self, marble: Marble, player: PlayerState = None) -> int:
-        owner = player
-        if not owner:
-            owner = self.get_owner(marble)
+    def get_marble_index(self, marble: Marble, player: Optional[PlayerState] = None) -> int:
+        owner = player or self.get_owner(marble)
+        if owner is None:
+            raise ValueError(f"Marble {marble} does not belong to any player.")
         owner_index = self.get_player_index(owner)
         return owner_index * 4 + owner.list_marble.index(marble)
 
