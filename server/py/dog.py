@@ -578,15 +578,14 @@ class Dog(Game):
             if marble.pos != self.KENNEL_POSITIONS[marble_owner_index]  # Exclude marbles in kennel
         ]
 
-        # Generate actions by swapping marbles
-        for x in active_player_marbles:
-            for y in marbles_to_swap:
-                actions.append(Action(
-                    card=card,
-                    pos_from=self.get_position_marble(x),
-                    pos_to=self.get_position_marble(y),
-                    card_swap=None,
-                ))
+        # Iterate through the player's marbles to consider swaps
+        for marble in player.list_marble:
+            if not self.is_movable(marble):
+                continue
+
+            for target_marble, target_owner_index in all_marbles:
+                if marble.pos == target_marble.pos:
+                    continue  # Skip same position swaps
 
         print(f"Generated actions for Jake: {actions}")
         return actions
