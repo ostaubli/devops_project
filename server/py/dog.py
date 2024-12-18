@@ -568,34 +568,46 @@ class Dog(Game):
 
     def get_actions_jake(self, card: Card, player: PlayerState) -> List[Action]:
         actions = []
-        marbles_to_swap = []
-        active_player_marbles = []
+        player_index = self.get_player_index(player)
 
-        # Find marbles to swap from other players
-        for other in self.state.list_player:
-            if other != player:  # Not the active player
-                marbles_to_swap.extend([
-                    marble for marble in other.list_marble
-                    if marble.is_save and not self.is_protected_marble(marble)
-                ])
-
-        # Find active player's marbles eligible for swapping
-        active_player_marbles = [
-            marble for marble in player.list_marble
-            if marble.is_save and not self.is_protected_marble(marble)
+        # Get all the marbles on the board
+        all_marbles = [
+            (marble, marble_owner_index)
+            for marble_owner_index, marble_owner in enumerate(self.state.list_player)
+            for marble in marble_owner.list_marble
+            if marble.pos != self.KENNEL_POSITIONS[marble_owner_index]  # Exclude marbles in kennel
         ]
 
-        # Generate actions by swapping marbles
-        for x in active_player_marbles:
-            for y in marbles_to_swap:
-                actions.append(Action(
-                    card=card,
-                    pos_from=self.get_position_marble(x),
-                    pos_to=self.get_position_marble(y),
-                    card_swap=None,
-                ))
+        # Iterate through the player's marbles to consider swaps
+        for marble in player.list_marble:
+            if not self.is_movable(marble):
+                continue
 
-        print(f"Generated actions for Jake: {actions}")
+            for target_marble, target_owner_index in all_marbles:
+                if marble.pos == target_marble.pos:
+                    continue  # Skip same position swaps
+
+                # Ensure we don't swap with safe marbles
+                if target_marble.is_save and target_owner_index != player_index:
+                    continue
+
+                # Allow swapping only if there are opponents or empty slots
+                if target_owner_index == player_index and len(self.state.list_player) > 1:
+                    continue
+
+                # Add swap actions
+                actions.append(Action(card=card, pos_from=marble.pos, pos_to=target_marble.pos))
+                actions.append(Action(card=card, pos_from=target_marble.pos, pos_to=marble.pos))
+
+        # If no actions found, add self-swapping actions for the player's marbles
+        if not actions:
+            for i, marble_1 in enumerate(player.list_marble):
+                if not self.is_movable(marble_1):
+                    continue
+                for j, marble_2 in enumerate(player.list_marble):
+                    if i != j and self.is_movable(marble_2):
+                        actions.append(Action(card=card, pos_from=marble_1.pos, pos_to=marble_2.pos))
+
         return actions
 
     def get_position_marble(self, marble) -> int:
