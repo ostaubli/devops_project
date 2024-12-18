@@ -503,6 +503,9 @@ class Dog(Game):
         """
         Get a list of possible actions for the active player.
         """
+        if self.state is None:
+            raise ValueError("Game state is not initialized.")
+
         found_actions = []
         player = self.get_active_player()
 
