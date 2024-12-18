@@ -414,12 +414,10 @@ class Dog(Game):
         if active_card:
             if active_card.rank == '7':
                 return self.get_actions_for_active_7(active_card, player)
+            elif active_card.rank == "J":
+                return self.get_actions_jake(active_card, player) #for active jake def hinzufügen?
             else:
                 return self.get_actions_for_card(active_card, player)
-            # elif active_card.rank == "J":
-            #     return self.get_actions_jake(active_card, player) #for active jake def hinzufügen?
-            # elif active_card.rank == 'JKR':
-            #     return self.get_actions_for_jkr(active_card, player)
 
         # Determine if there is at least one marble on the board that can be moved
         movable_marbles = any(self.is_movable(marble) for marble in player.list_marble)
@@ -843,48 +841,7 @@ class Dog(Game):
     def apply_jkr_action(self, action: Action, player) -> bool:
         if self.state.card_active is None:
             self.state.card_active = action.card_swap
-            return False
-        elif action.card_swap.rank in self._BASIC_RANKS or action.card_swap.rank == '4':
-            marble = self.find_marble_at_position(action.pos_from)
-            self.apply_simple_move(marble, action.pos_to, player)
-            return True
-        elif action.card_swap.rank in ['A', 'K']:  # Handles both Ace and King
-            self.send_home_if_occupied(action.pos_to)
-            for start_pos, kennel_positions in self.board["kennel_positions"].items():
-                if action.pos_from in kennel_positions:  # Marble is in the kennel
-                    for marble in player.list_marble:
-                        if marble.pos == action.pos_from:
-                            # Move marble from kennel to corresponding start position
-                            marble.pos = self.board["start_positions"][start_pos][0]
-                            marble.is_save = True
-                            print(f"{player.name}'s marble moved out of the kennel to position {marble.pos}.")
-                            return True
-            # Moving forward (1/11 steps for Ace or 13 steps for King)
-            for marble in player.list_marble:
-                if marble.pos == action.pos_from and self.is_movable(marble):
-                    marble.pos = action.pos_to
-                    steps = action.pos_to - action.pos_from
-                    print(f"{player.name}'s marble moved {steps} steps forward to position {action.pos_to}.")
-                    return True
-
-        elif action.card_swap.rank == '7':
-            return self.apply_seven_action(action)
-
-        elif action.card_swap.rank == 'J':  # Jake action
-            # Swap marbles
-            print(f"Handling Jake action: {action}")
-            marble_from = self.find_marble_at_position(action.pos_from)
-            marble_to = self.find_marble_at_position(action.pos_to)
-
-            if marble_from and marble_to:
-                # Swap positions of the two marbles
-                marble_from.pos, marble_to.pos = marble_to.pos, marble_from.pos
-                print(f"Swapped marbles: {marble_from} at {marble_from.pos}, {marble_to} at {marble_to.pos}.")
-            else:
-                print("Invalid Jake action: Missing marbles for swapping.")
-            return True
-
-        return True
+        return False
 
     def get_active_player(self):
         return self.state.list_player[self.state.idx_player_active]
