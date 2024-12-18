@@ -679,6 +679,8 @@ class Dog(Game):
     def undo_active_card_moves(self) -> None:
         for marble_index, position in self.action_marble_reset_positions.items():
             marble = self.get_marble(marble_index)
+            if marble is None:
+                raise ValueError(f"No marble found for index: {marble_index}")
             marble.pos = position
         self.action_marble_reset_positions = {}
 
