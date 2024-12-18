@@ -335,6 +335,9 @@ class Dog(Game):
         return found_marbles
 
     def find_marble_at_position(self, position: int) -> Optional[Marble]:
+        if self.state is None or self.state.list_player is None:
+            raise ValueError("Game state or player list is not initialized.")
+
         for player in self.state.list_player:
             for marble in player.list_marble:
                 if marble.pos == position:
