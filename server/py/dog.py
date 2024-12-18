@@ -879,15 +879,15 @@ class Dog(Game):
         overtaken_marbles = self.find_marbles_between(action.pos_from + 1, action.pos_to)
 
         # TODO: Adapt to pass test 33 again, 32 passed
-        # # For each marble found, if it is not safe, send it home
-        # for overtaken_marble in overtaken_marbles:
-        #     if not overtaken_marble.is_save:
-        #         # Record original position of overtaken marble for rollback if needed
-        #         overtaken_marble_index = self.get_marble_index(overtaken_marble)
-        #         if overtaken_marble_index not in self.action_marble_reset_positions:
-        #             self.action_marble_reset_positions[overtaken_marble_index] = overtaken_marble.pos
-        #
-        #         self.send_home(overtaken_marble)
+        # For each marble found, if it is not safe, send it home
+        for overtaken_marble in overtaken_marbles:
+            if not overtaken_marble.is_save:
+                # Record original position of overtaken marble for rollback if needed
+                overtaken_marble_index = self.get_marble_index(overtaken_marble)
+                if overtaken_marble_index not in self.action_marble_reset_positions:
+                    self.action_marble_reset_positions[overtaken_marble_index] = overtaken_marble.pos
+
+                self.send_home(overtaken_marble)
 
         self.apply_simple_move(marble, action.pos_to, current_player)
         self.steps_for_7_remaining -= steps
@@ -951,9 +951,12 @@ class Dog(Game):
         return owner_index * 4 + owner.list_marble.index(marble)
 
     def get_marble(self, marble_index: int) -> Optional[Marble]:
+        # Find player who owns marble
         player_index = marble_index // 4
+        # Find index of marble in player's marbles
+        player_marble_index = marble_index % 4
         player = self.get_player(player_index)
-        return player.list_marble[marble_index] if marble_index < len(player.list_marble) else None
+        return player.list_marble[player_marble_index] if player_marble_index < len(player.list_marble) else None
 
     def get_player_view(self, idx_player: int) -> GameState:
         """ Get the masked state for the active player (e.g. the opponent's cards are face down) """
