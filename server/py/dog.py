@@ -1064,7 +1064,12 @@ class Dog(Game):
         # Find index of marble in player's marbles
         player_marble_index = marble_index % 4
         player = self.get_player(player_index)
-        return player.list_marble[player_marble_index] if player_marble_index < len(player.list_marble) else None
+        if player is None:
+            return None  # Player does not exist
+        # Check if the marble index is valid for the player's list
+        if player_marble_index < len(player.list_marble):
+            return player.list_marble[player_marble_index]
+        return None  # Marble index is out of range
 
     def get_player_view(self, idx_player: int) -> GameState:
         """ Get the masked state for the active player (e.g. the opponent's cards are face down) """
