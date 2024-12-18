@@ -557,8 +557,7 @@ class Dog(Game):
         if card.rank in self._BASIC_RANKS:
             found_actions.extend(self.get_actions_for_basic_card(card, player.list_marble))
         elif card.rank == 'JKR':  # Joker can be played as any card
-            pass
-            #found_actions.extend(self.get_actions_for_jkr(card, player))
+            found_actions.extend(self.get_actions_for_jkr(card, player))
         elif card.rank == '4':
             found_actions.extend(self.get_actions_for_4(card, player))
         elif card.rank == '7':  # Special case for card "7"
