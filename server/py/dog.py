@@ -364,6 +364,7 @@ class Dog(Game):
         start_position = self.board["start_positions"][player][0]
 
         # Steps from pos_from to start_position on the circular path
+        steps_to_start: int
         if pos_from <= start_position:
             steps_to_start = start_position - pos_from
         else:
