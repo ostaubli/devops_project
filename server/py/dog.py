@@ -456,6 +456,8 @@ class Dog(Game):
 
     def print_state(self) -> None:
         """ Print the current game state """
+        if self.state is None:
+            raise ValueError("Game state is not initialized.")
         print(f"Round: {self.state.cnt_round}, Phase: {self.state.phase}")
         for idx, player in enumerate(self.state.list_player):
             print(f"{player.name}: Cards: {player.list_card}, Marbles: {player.list_marble}")
