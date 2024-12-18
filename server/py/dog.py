@@ -452,6 +452,16 @@ class Dog(Game):
         found_actions = []
         player = self.get_active_player()
 
+        # First check the cases where a card is still active
+        active_card = self.state.card_active
+        if active_card:
+            if active_card.rank == '7':
+                return self.get_actions_for_active_7(active_card, player)
+            elif active_card.rank == "J":
+                return self.get_actions_jake(active_card, player) #for active jake def hinzufügen?
+            else:
+                return self.get_actions_for_card(active_card, player)
+
         # Determine if there is at least one marble on the board that can be moved
         movable_marbles = any(self.is_movable(marble) for marble in player.list_marble)
 
@@ -471,16 +481,6 @@ class Dog(Game):
                     unique_start_actions.append(action)
             return unique_start_actions
 
-        # First check the cases where a card is still active
-        active_card = self.state.card_active
-        if active_card:
-            if active_card.rank == '7':
-                return self.get_actions_for_active_7(active_card, player)
-            elif active_card.rank == "J":
-                return self.get_actions_jake(active_card, player) #for active jake def hinzufügen?
-            elif active_card.rank == 'JKR':
-                # TODO: Implement this
-                pass
 
         # Check possible card plays based on player cards and current game state
         for card in player.list_card:
@@ -523,6 +523,14 @@ class Dog(Game):
             if self.can_place_marble_on_start(player, start_position):
                 # If it is possible, append actions for each starting card
                 for card in starting_cards:
+                    if card.rank == 'JKR':
+                        for suit in GameState.LIST_SUIT:
+                            starting_actions.extend([
+                                Action(card=Card(suit='', rank='JKR'), pos_from=None, pos_to=None,
+                                       card_swap=Card(suit=suit, rank='A')),
+                                Action(card=Card(suit='', rank='JKR'), pos_from=None, pos_to=None,
+                                       card_swap=Card(suit=suit, rank='K')),
+                            ])
                     starting_actions.append(Action(
                         card=card,
                         pos_from=marble.pos,
@@ -753,30 +761,13 @@ class Dog(Game):
 
     def get_actions_for_jkr(self, card: Card, player: PlayerState) -> List[Action]:
         jkr_actions = []  # List to store possible actions
+        jkr_ranks = [rank for rank in GameState.LIST_RANK if rank != 'JKR']
 
-        # get basic actions
-        basic_cards = ['2', '3', '5', '6', '8', '9', '10', 'Q']
-        for rank in basic_cards:
-            if rank in self._BASIC_RANKS:
-                for marble in player.list_marble:
-                    if self.is_movable(marble):  # Marble must be out of the kennel
-                        new_pos = (marble.pos + self._RANK_TO_VALUE[card.rank]) % 96  # Modular board movement
-                        jkr_actions.append(Action(card=card, pos_from=marble.pos, pos_to=new_pos, card_swap=None))
-
-        # get actions for 4
-        jkr_actions.extend(self.get_actions_for_4(card, player))
-
-        # get actions for 7
-        jkr_actions.extend(self.get_actions_for_7(card, player))
-
-        # get actions for jack
-        jkr_actions.extend(self.get_actions_jake(player))
-
-        # get actions for king
-        jkr_actions.extend(self.get_actions_for_king(card, player))
-
-        # get actions for ace
-        jkr_actions.extend(self.get_actions_for_ace(card, player))
+        for rank in jkr_ranks:
+            for suit in GameState.LIST_SUIT:
+                jkr_actions.extend([
+                    Action(card=Card(suit='', rank='JKR'), pos_from=None, pos_to=None, card_swap=Card(suit=suit, rank=rank))
+                    ])
 
         return jkr_actions
 
@@ -832,11 +823,9 @@ class Dog(Game):
                 return
 
 
-
         elif action.card.rank == 'JKR':  # Joker: use as any card
-            self.send_home_if_occupied(action.pos_to)
-            # TODO implement JKR here
-            # Action can be anything based on the game rules, e.g., swap a card or move a marble
+            card_finished = self.apply_jkr_action(action, player)
+            player.list_card.remove(action.card)
 
         elif action.card.rank == '7':
             card_finished = self.apply_seven_action(action)
@@ -908,6 +897,11 @@ class Dog(Game):
             self.state.card_active = None
             return True
 
+        return False
+
+    def apply_jkr_action(self, action: Action, player) -> bool:
+        if self.state.card_active is None:
+            self.state.card_active = action.card_swap
         return False
 
     def get_active_player(self):
