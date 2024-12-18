@@ -196,6 +196,9 @@ class Dog(Game):
         - Allow teammates to exchange one card.
         - Set the starting player (anti-clockwise from the dealer).
         """
+        if self.state is None:
+            raise ValueError("Game state is not initialized")
+
         CARD_DISTRIBUTION = [6, 5, 4, 3, 2]  # Number of cards per round
         round_index = (self.state.cnt_round - 1) % len(CARD_DISTRIBUTION)  # Cycle through rounds
         cards_to_deal = CARD_DISTRIBUTION[round_index]
