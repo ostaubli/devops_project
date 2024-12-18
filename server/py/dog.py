@@ -373,7 +373,7 @@ class Dog(Game):
         # Determine how many steps into the finishing track pos_to is
         finish_positions = self.board["finish_positions"][player]
         finish_index = finish_positions.index(pos_to)
-        steps_in_finishing = finish_index + 1  # first finish pos = 1 step beyond start pos
+        steps_in_finishing: int = finish_index + 1  # first finish pos = 1 step beyond start pos
 
         return steps_to_start + steps_in_finishing
 
