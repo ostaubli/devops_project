@@ -911,7 +911,7 @@ class Dog(Game):
             # Proceed to the next player after applying the action
             self.proceed_to_next_player()
 
-    def undo_active_card_moves(self):
+    def undo_active_card_moves(self) -> None:
         for marble_index, position in self.action_marble_reset_positions.items():
             marble = self.get_marble(marble_index)
             marble.pos = position
