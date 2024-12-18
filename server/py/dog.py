@@ -927,6 +927,8 @@ class Dog(Game):
         This may involve moving multiple marbles.
         :returns True if the card is played completely and false if more steps are needed for 7
         """
+        if self.state is None:
+            raise ValueError("Game state is not initialized.")
 
         if self.state.card_active is None:
             # This is the first action of a 7 action set
