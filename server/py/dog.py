@@ -982,7 +982,9 @@ class Dog(Game):
 
         return False
 
-    def apply_jkr_action(self, action: Action, player) -> bool:
+    def apply_jkr_action(self, action: Action, player: PlayerState) -> bool:
+        if self.state is None:
+            raise ValueError("Game state is not initialized.")
         if self.state.card_active is None:
             self.state.card_active = action.card_swap
         return False
