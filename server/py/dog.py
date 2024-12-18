@@ -112,7 +112,7 @@ class Dog(Game):
         self.board = self._initialize_board()  # Initialize the board
         self.state: Optional[GameState] = None
         self.steps_for_7_remaining = 7
-        self.action_marble_reset_positions = {}
+        self.action_marble_reset_positions: Dict[int, int] = {}
         self.setup_game()  # Set up the initial game state
 
     def setup_game(self) -> None:
