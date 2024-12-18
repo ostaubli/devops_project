@@ -434,6 +434,8 @@ class Dog(Game):
         """
         Check if a marble is protected (e.g., at the start or in the finish).
         """
+        if self.state is None or self.state.list_player is None:
+            raise ValueError("Game state is not properly initialized.")
         # Find the player who owns the marble
         for player_index, player in enumerate(self.state.list_player):
             if marble in player.list_marble:
