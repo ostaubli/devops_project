@@ -953,6 +953,9 @@ class Dog(Game):
             self.action_marble_reset_positions[marble_index] = marble.pos
 
         # Find marbles between pos_from and pos_to (excluding the starting position but including the end position)
+        if action.pos_from + 1 is None:
+            raise ValueError("Invalid position: pos_from + 1 results in None")
+
         overtaken_marbles = self.find_marbles_between(action.pos_from + 1, action.pos_to)
 
         # TODO: Adapt to pass test 33 again, 32 passed
