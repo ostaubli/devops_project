@@ -961,6 +961,8 @@ class Dog(Game):
         # TODO: Adapt to pass test 33 again, 32 passed
         # For each marble found, if it is not safe, send it home
         for overtaken_marble in overtaken_marbles:
+            if overtaken_marble is None:
+                continue  # Skip if overtaken_marble is None
             if not overtaken_marble.is_save:
                 # Record original position of overtaken marble for rollback if needed
                 overtaken_marble_index = self.get_marble_index(overtaken_marble)
