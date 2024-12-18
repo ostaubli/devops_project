@@ -1071,7 +1071,7 @@ class Dog(Game):
             return player.list_marble[player_marble_index]
         return None  # Marble index is out of range
 
-    def get_player_view(self, idx_player: int) -> GameState:
+    def get_player_view(self, idx_player: int) -> Optional[GameState]:
         """ Get the masked state for the active player (e.g. the opponent's cards are face down) """
         # Mask the opponent's cards, only showing the player's own cards
         masked_state = self.state.model_copy()
