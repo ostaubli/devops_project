@@ -268,6 +268,22 @@ class Dog(Game):
         Set the starting player for the current round.
         The starting player is the one to the right of the dealer.
         """
+        # Ensure state is initialized
+        if self.state is None:
+            raise ValueError("Game state is not initialized.")
+
+        # Ensure necessary attributes exist
+        if not isinstance(self.state.idx_player_active, int) or not isinstance(self.state.cnt_player, int):
+            raise ValueError("Game state is missing required attributes 'idx_player_active' or 'cnt_player'.")
+
+        # Prevent division/modulo by zero
+        if self.state.cnt_player <= 0:
+            raise ValueError("The number of players (cnt_player) must be greater than zero.")
+
+        # Set the starting player
+        self.state.idx_player_active = (self.state.idx_player_active - 1) % self.state.cnt_player
+        print(f"Player {self.state.idx_player_active} will start this round.")
+
         self.state.idx_player_active = (self.state.idx_player_active - 1) % self.state.cnt_player
         print(f"Player {self.state.idx_player_active} will start this round.")
 
