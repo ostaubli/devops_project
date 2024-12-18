@@ -155,8 +155,7 @@ class Dog(Game):
             list_player=players,
             list_card_draw=deck,
             list_card_discard=[],
-            card_active=None,
-            board_positions=[None] * 96  # Empty board positions
+            card_active=None  # Empty board positions
         )
 
         # Distribute the initial hand of cards (6 cards per player in the first round)
