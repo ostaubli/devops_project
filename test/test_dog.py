@@ -1,6 +1,15 @@
 import pytest
 from server.py.dog import Dog, Card, Marble, PlayerState, GamePhase, Action
 
+@pytest.fixture
+def game_server():
+    """Fixture to create a fresh Dog game instance."""
+    return Dog()
+
+def test_initial_game_state_values(game_server):
+    """Test 001: Validate initial game state values."""
+    game_server.setup_game()
+    state = game_server.get_state()
 
 def test_game_initialization():
     game = Dog()
