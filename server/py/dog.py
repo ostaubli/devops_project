@@ -1045,7 +1045,11 @@ class Dog(Game):
         return self.state.list_player.index(player)
 
     def get_player(self, player_index: int) -> Optional[PlayerState]:
-        return self.state.list_player[player_index] if player_index < len(self.state.list_player) else None
+        if self.state is None:
+            raise ValueError("Game state is not initialized.")
+        if player_index < len(self.state.list_player):
+            return self.state.list_player[player_index]
+        return None
 
     def get_marble_index(self, marble: Marble, player: PlayerState = None) -> int:
         owner = player
