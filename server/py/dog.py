@@ -1038,6 +1038,10 @@ class Dog(Game):
         return None
 
     def get_player_index(self, player: PlayerState) -> int:
+        if self.state is None:
+            raise ValueError("Game state is not initialized.")
+        if player not in self.state.list_player:
+            raise ValueError(f"Player {player.name} not found in the game state.")
         return self.state.list_player.index(player)
 
     def get_player(self, player_index: int) -> Optional[PlayerState]:
