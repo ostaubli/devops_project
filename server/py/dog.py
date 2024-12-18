@@ -804,6 +804,9 @@ class Dog(Game):
             return True
 
         occupant_marble = self.find_marble_at_position(start_pos)
+        if occupant_marble is None:
+            raise ValueError(f"No marble found at position {start_pos}.")
+
         occupant_owner = self.get_owner(occupant_marble)
 
         if occupant_owner == player:
