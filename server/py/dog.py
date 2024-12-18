@@ -568,16 +568,7 @@ class Dog(Game):
 
     def get_actions_jake(self, card: Card, player: PlayerState) -> List[Action]:
         actions = []
-        marbles_to_swap = []
-        active_player_marbles = []
-
-        # Find marbles to swap from other players
-        for other in self.state.list_player:
-            if other != player:  # Not the active player
-                marbles_to_swap.extend([
-                    marble for marble in other.list_marble
-                    if marble.is_save and not self.is_protected_marble(marble)
-                ])
+        player_index = self.get_player_index(player)
 
         # Find active player's marbles eligible for swapping
         active_player_marbles = [
