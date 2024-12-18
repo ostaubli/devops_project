@@ -940,6 +940,12 @@ class Dog(Game):
         current_player = self.get_active_player()
         marble = self.find_marble_at_position(action.pos_from)
 
+        if marble is None:
+            raise ValueError(f"No marble found at position {action.pos_from}")
+
+        if action.pos_from is None or action.pos_to is None:
+            raise ValueError("Invalid action: pos_from or pos_to is None")
+
         steps = self.get_steps_between(action.pos_from, action.pos_to)
 
         marble_index = self.get_marble_index(marble, current_player)
