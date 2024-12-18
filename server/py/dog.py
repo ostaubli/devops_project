@@ -248,6 +248,9 @@ class Dog(Game):
         """
         Allow teammates to exchange one card each without revealing it.
         """
+        if self.state is None:
+            raise ValueError("Game state is not initialized.")
+
         player1 = self.state.list_player[player1_index]
         player2 = self.state.list_player[player2_index]
 
