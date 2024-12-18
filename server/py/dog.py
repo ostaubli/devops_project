@@ -313,6 +313,9 @@ class Dog(Game):
 
     def find_marbles_between(self, pos_from: int, pos_to: int) -> List[Marble]:
         """Find all marbles between any two positions on the board"""
+        if self.state is None or self.state.list_player is None:
+            raise ValueError("Game state or player list is not initialized.")
+
         found_marbles = []
         positions_to_check = []
 
