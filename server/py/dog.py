@@ -302,6 +302,9 @@ class Dog(Game):
 
     def position_is_occupied(self, pos: int) -> bool:
         """Checks whether a position on the board is occupied by another marble."""
+        if self.state is None or self.state.list_player is None:
+            raise ValueError("Game state or player list is not initialized.")
+
         for player in self.state.list_player:
             for marble in player.list_marble:
                 if marble.pos == pos:
