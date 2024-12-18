@@ -465,6 +465,8 @@ class Dog(Game):
     def deal_cards(self) -> None:
         # TODO: check deal cards?
         """ Deal cards to all players. """
+        if self.state is None:
+            raise ValueError("Game state is not initialized.")
         for player in self.state.list_player:
             player.list_card = self.state.list_card_draw[:6]
             self.state.list_card_draw = self.state.list_card_draw[6:]
