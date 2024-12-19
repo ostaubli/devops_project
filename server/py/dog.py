@@ -148,7 +148,6 @@ class Dog(Game):
             cnt_player=4,
             phase=GamePhase.RUNNING,
             cnt_round=1,
-            bool_game_finished=False,
             bool_card_exchanged=False,
             idx_player_started=0,
             idx_player_active=0,
@@ -223,6 +222,8 @@ class Dog(Game):
         """
         Determine the number of cards to deal based on the current round.
         """
+        if self.state is None:
+            raise ValueError("Game state is not initialized.")
         card_distribution = [6, 5, 4, 3, 2]  # Adjust as per your game rules
         round_index = (self.state.cnt_round - 1) % len(card_distribution)
         return card_distribution[round_index]
@@ -276,7 +277,7 @@ class Dog(Game):
 
         print(f"Player {player1_index} and Player {player2_index} exchanged one card.")
 
-    def fold_cards(self):
+    def fold_cards(self) -> None:
         """
         Handles the case when a player has no actions to perform and must fold their cards.
         """
@@ -327,8 +328,10 @@ class Dog(Game):
         marble.pos = kennel_position
         marble.is_save = True
 
-    def get_player_kennel_positions(self, player: PlayerState) -> List[int]:
-        kennel_positions = self.KENNEL_POSITIONS.get(self.get_player_index(player), [])
+    def get_player_kennel_positions(self, player: PlayerState) -> int:
+        kennel_positions = self.KENNEL_POSITIONS.get(self.get_player_index(player))
+        if not isinstance(kennel_positions, int):
+            raise ValueError(f"Invalid kennel position for player {player.name}. Expected a single integer.")
         return kennel_positions
 
     def position_is_occupied(self, pos: int) -> bool:
@@ -462,6 +465,9 @@ class Dog(Game):
         If so, set the game phase to FINISHED and return True.
         """
         # Check for individual players
+        if self.state is None:
+            raise ValueError("Game state is not initialized.")
+
         for player_index, player in enumerate(self.state.list_player):
             finish_positions = self.board["finish_positions"][player_index]
             if all(marble.pos in finish_positions for marble in player.list_marble):
@@ -922,12 +928,18 @@ class Dog(Game):
 
         # Apply move of basic cards
         if action.card.rank in self._BASIC_RANKS or action.card.rank == '4':
+            if action.pos_from is None or action.pos_to is None:
+                raise ValueError("Invalid action: pos_from or pos_to is None.")
             marble = self.find_marble_at_position(action.pos_from)
+            if marble is None:
+                raise ValueError(f"No marble found at position {action.pos_from}")
             self.apply_simple_move(marble, action.pos_to, player)
             if self.check_for_win():  # Check if the game is won after moving a marble
                 return
 
         elif action.card.rank in ['A', 'K']:  # Handles both Ace and King
+            if action.pos_to is None:
+                raise ValueError("Invalid action: pos_to is None.")
             self.send_home_if_occupied(action.pos_to)
             for start_pos, kennel_positions in self.board["kennel_positions"].items():
                 if action.pos_from in kennel_positions:  # Marble is in the kennel
@@ -940,7 +952,8 @@ class Dog(Game):
                             if self.check_for_win():
                                 return
                             return
-            # Moving forward (1/11 steps for Ace or 13 steps for King)
+            if action.pos_from is None:
+                raise ValueError("Invalid action: pos_from is None.")
             for marble in player.list_marble:
                 if marble.pos == action.pos_from and self.is_movable(marble):
                     marble.pos = action.pos_to
@@ -950,10 +963,11 @@ class Dog(Game):
                         return
                     return
 
-
         elif action.card.rank == 'J':  # Jake action
             # Swap marbles
             print(f"Handling Jake action: {action}")
+            if action.pos_from is None or action.pos_to is None:
+                raise ValueError("Invalid action: pos_from or pos_to is None.")
             marble_from = self.find_marble_at_position(action.pos_from)
             marble_to = self.find_marble_at_position(action.pos_to)
 
@@ -963,7 +977,6 @@ class Dog(Game):
                 print(f"Swapped marbles: {marble_from} at {marble_from.pos}, {marble_to} at {marble_to.pos}.")
                 if self.check_for_win():  # Check if the game is won after swapping marbles
                     return
-
 
         elif action.card.rank == 'JKR':  # Joker: use as any card
             card_finished = self.apply_jkr_action(action)
@@ -1145,12 +1158,14 @@ class Dog(Game):
             return player.list_marble[player_marble_index]
         return None  # Marble index is out of range
 
-    def get_player_view(self, idx_player: int) -> Optional[GameState]:
-        """ Get the masked state for the active player (e.g. the opponent's cards are face down) """
+    def get_player_view(self, idx_player: int) -> GameState:
+        """
+        Get the masked state for the active player (e.g., the opponent's cards are face down).
+        """
         if self.state is None:
-            return None  # No state to provide a view
+            raise ValueError("Game state is not initialized.")
         # Mask the opponent's cards, only showing the player's own cards
-        masked_state = self.state.model_copy()
+        masked_state = self.state.copy()  # Create a copy of the game state
         for i, player in enumerate(masked_state.list_player):
             if i != idx_player:
                 player.list_card = []  # Hide the cards of other players
@@ -1168,19 +1183,28 @@ if __name__ == '__main__':
     game = Dog()
     dog_players = [RandomPlayer() for _ in range(4)]
 
+    # Ensure game state is initialized
+    if game.state is None:
+        raise ValueError("Game state is not initialized.")
+
     # Game setup
-    # TODO: check deal cards? already in init of Dog()
     game.deal_cards()
     game.print_state()
 
     # Main game loop
     while game.state.phase != GamePhase.FINISHED:
-        # Start a new round
-        game.state.cnt_round += 1  # Increment the round counter
-        game.handle_round()  # Call the round logic
+        # Increment round counter and call round logic
+        if game.state is None:
+            raise ValueError("Game state is not initialized.")
+        game.state.cnt_round += 1
+        game.handle_round()
 
         # Proceed with player actions
-        for _ in range(game.state.list_player):
+        if game.state.list_player is None:
+            raise ValueError("List of players is not initialized.")
+        for _ in range(len(game.state.list_player)):
+            if game.state is None:
+                raise ValueError("Game state is not initialized.")
             actions_list = game.get_list_action()
             active_player = dog_players[game.state.idx_player_active]
             selected_action = active_player.select_action(
