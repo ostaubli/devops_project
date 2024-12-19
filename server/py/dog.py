@@ -457,8 +457,6 @@ class Dog(Game):
         print(f"Marble moved to position {marble.pos}.")
         return False
 
-        #TODO: Adapt marble_is_save
-
     def check_for_win(self) -> bool:
         """
         Check if any player or team has all their marbles in the finish area.
@@ -585,6 +583,10 @@ class Dog(Game):
         found_actions = []
         player = self.get_active_player()
 
+        # Check whether card exchange still needs to be done and return card exchange actions in this case
+        if self.cards_need_to_be_exchanged():
+            return self.get_card_exchange_actions(player)
+
         # First check the cases where a card is still active
         active_card = self.state.card_active
         if active_card:
@@ -624,6 +626,16 @@ class Dog(Game):
                 unique_actions.append(action)
 
         return unique_actions
+
+    def cards_need_to_be_exchanged(self) -> bool:
+        assert self.state is not None
+        return self.state.bool_card_exchanged is False
+
+    def get_card_exchange_actions(self, current_player: PlayerState) -> List[Action]:
+        """Generates card exchange actions at beginning of a round"""
+        return [
+            Action(card=card, pos_from=None, pos_to=None, card_swap=None)
+            for card in current_player.list_card]
 
     def get_actions_for_card(self, card: Card, player: PlayerState) -> List[Action]:
         found_actions = []
@@ -926,6 +938,11 @@ class Dog(Game):
         player = self.get_active_player()
         card_finished = True
 
+        # Card exchange phase
+        if not self.state.bool_card_exchanged:
+            self.apply_card_exchange_action(action, player)
+            return
+
         # Apply move of basic cards
         if action.card.rank in self._BASIC_RANKS or action.card.rank == '4':
             if action.pos_from is None or action.pos_to is None:
@@ -996,6 +1013,27 @@ class Dog(Game):
                 return
             self.proceed_to_next_player()
 
+    def apply_card_exchange_action(self, move_action: Action, current_player: PlayerState) -> None:
+        """Apply the card exchange at the beginning of a round"""
+        assert self.state
+
+        active_player_index = self.state.idx_player_active
+        partner_index = (active_player_index + 2) % self.state.cnt_player
+        partner = self.state.list_player[partner_index]
+
+        if move_action.card not in current_player.list_card:
+            raise ValueError(f"Card {move_action.card} not found in active player's hand.")
+
+        current_player.list_card.remove(move_action.card)
+        partner.list_card.append(move_action.card)
+
+        # Advance to the next active player
+        self.state.idx_player_active = (active_player_index + 1) % self.state.cnt_player
+
+        if self.state.idx_player_active == self.state.idx_player_started:
+            self.state.bool_card_exchanged = True
+            print("All players have completed their card exchanges.")
+
     def proceed_to_next_player(self) -> None:
         """
         Proceed to the next player in turn order.
@@ -1046,7 +1084,6 @@ class Dog(Game):
 
         overtaken_marbles = self.find_marbles_between(action.pos_from + 1, action.pos_to)
 
-        # TODO: Adapt to pass test 33 again, 32 passed
         # For each marble found, if it is not safe, send it home
         for overtaken_marble in overtaken_marbles:
             if overtaken_marble is None:
