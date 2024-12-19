@@ -1,3 +1,5 @@
+# pylint: disable=too-many-lines,too-many-public-methods,too-many-branches
+
 from typing import List, Optional, ClassVar, Dict
 from enum import Enum
 import random
@@ -118,7 +120,6 @@ class Dog(Game):
     def setup_game(self) -> None:
         """
         Set up the initial game configuration including players, deck, and board positions.
-
         Each player (index: 0 to 3) begins with four marbles (index: 0 to 3),
         all starting at predefined positions (pos).
         """
@@ -186,10 +187,8 @@ class Dog(Game):
         }
         return board
 
-    # Round logic
     def handle_round(self) -> None:
         """
-        Handle a single round:
         - Deal cards based on the current round number.
         - Allow teammates to exchange one card.
         - Set the starting player (anti-clockwise from the dealer).
@@ -198,22 +197,15 @@ class Dog(Game):
             raise ValueError("Game state is not initialized")
 
         cards_to_deal = self.get_card_distribution()
-
         print(f"Starting Round {self.state.cnt_round} - Dealing {cards_to_deal} cards.")
-
-        # Step 1: Deal cards
         self.deal_cards_for_round(cards_to_deal)
         if self.check_for_win():
             return
-
-        # Step 2: Teammates exchange cards
         teammate_pairs = [(0, 2), (1, 3)]  # Example pairing
         for p1, p2 in teammate_pairs:
             self.exchange_cards(p1, p2)
             if self.check_for_win():  # Check after exchanges
                 return
-
-        # Step 3: Set starting player
         self.set_starting_player()
         if self.check_for_win():
             return
@@ -228,7 +220,6 @@ class Dog(Game):
         round_index = (self.state.cnt_round - 1) % len(card_distribution)
         return card_distribution[round_index]
 
-
     def deal_cards_for_round(self, cards_to_deal: int) -> None:
         """
         Deal a specific number of cards to each player.
@@ -242,10 +233,8 @@ class Dog(Game):
             # Ensure there are enough cards in the draw pile
             if len(self.state.list_card_draw) < cards_to_deal:
                 self.reshuffle_discard_pile()
-
-            # Deal the cards
-            player.list_card = self.state.list_card_draw[:cards_to_deal]
-            self.state.list_card_draw = self.state.list_card_draw[cards_to_deal:]
+            player.list_card = self.state.list_card_draw[:cards_to_deal] # slices first cards to the player list_card
+            self.state.list_card_draw = self.state.list_card_draw[cards_to_deal:] # removes the dealt cards
 
     def reshuffle_discard_pile(self) -> None:
         """Reshuffle the discard pile into the draw pile."""
@@ -254,7 +243,8 @@ class Dog(Game):
 
         if not self.state.list_card_discard:
             raise ValueError("No cards left to reshuffle!")
-        self.state.list_card_draw = random.sample(self.state.list_card_discard, len(self.state.list_card_discard))
+        self.state.list_card_draw = (self.state.list_card_draw +
+                                     random.sample(self.state.list_card_discard, len(self.state.list_card_discard)))
         self.state.list_card_discard.clear()
         print("Reshuffled the discard pile into the draw pile.")
 
@@ -300,19 +290,15 @@ class Dog(Game):
         Set the starting player for the current round.
         The starting player is the one to the right of the dealer.
         """
-        # Ensure state is initialized
         if self.state is None:
             raise ValueError("Game state is not initialized.")
 
-        # Ensure necessary attributes exist
         if not isinstance(self.state.idx_player_active, int) or not isinstance(self.state.cnt_player, int):
             raise ValueError("Game state is missing required attributes 'idx_player_active' or 'cnt_player'.")
 
-        # Prevent division/modulo by zero
         if self.state.cnt_player <= 0:
             raise ValueError("The number of players (cnt_player) must be greater than zero.")
 
-        # Set the starting player
         self.state.idx_player_active = (self.state.idx_player_active - 1) % self.state.cnt_player
         print(f"Player {self.state.idx_player_active} will start this round.")
 
@@ -462,7 +448,6 @@ class Dog(Game):
         Check if any player or team has all their marbles in the finish area.
         If so, set the game phase to FINISHED and return True.
         """
-        # Check for individual players
         if self.state is None:
             raise ValueError("Game state is not initialized.")
 
@@ -485,7 +470,6 @@ class Dog(Game):
                 self.state.phase = GamePhase.FINISHED
                 print(f"Team ({team[0]}, {team[1]}) has won the game!")
                 return True
-
         return False
 
     def is_in_player_finish_area(self, pos: int, player_index: int) -> bool:
@@ -923,7 +907,6 @@ class Dog(Game):
 
     def apply_action(self, action: Action) -> None:
         """Apply the given action to the game."""
-
         if self.state is None:
             raise ValueError("Game state is not initialized.")
 
@@ -1225,7 +1208,7 @@ if __name__ == '__main__':
         raise ValueError("Game state is not initialized.")
 
     # Game setup
-    game.deal_cards()
+    # game.deal_cards()
     game.print_state()
 
     # Main game loop
