@@ -13,14 +13,14 @@ jobs:
       - name: Authenticate Google Cloud
         uses: google-github-actions/auth@v2
         with:
-          service_account:
-          project_id:
-          workload_identity_provider:
+          service_account: 732222120211-compute@developer.gserviceaccount.com
+          project_id: devops-team-8-997497
+          workload_identity_provider: projects/732222120211/locations/global/workloadIdentityPools/github/providers/my-repo
 
       - name: Set up Cloud SDK
         uses: google-github-actions/setup-gcloud@v2
         with:
-          project_id:
+          project_id: devops-team-8-997497
 
       - name: Build and deploy Image
         run: |
