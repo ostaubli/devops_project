@@ -938,6 +938,11 @@ class Dog(Game):
         player = self.get_active_player()
         card_finished = True
 
+        # Card exchange phase
+        if not self.state.bool_card_exchanged:
+            self.apply_card_exchange_action(action, player)
+            return
+
         # Apply move of basic cards
         if action.card.rank in self._BASIC_RANKS or action.card.rank == '4':
             if action.pos_from is None or action.pos_to is None:
@@ -1007,6 +1012,27 @@ class Dog(Game):
             if self.check_for_win():  # Check if the game is won after this action
                 return
             self.proceed_to_next_player()
+
+    def apply_card_exchange_action(self, move_action: Action, current_player: PlayerState) -> None:
+        """Apply the card exchange at the beginning of a round"""
+        assert self.state
+
+        active_player_index = self.state.idx_player_active
+        partner_index = (active_player_index + 2) % self.state.cnt_player
+        partner = self.state.list_player[partner_index]
+
+        if move_action.card not in current_player.list_card:
+            raise ValueError(f"Card {move_action.card} not found in active player's hand.")
+
+        current_player.list_card.remove(move_action.card)
+        partner.list_card.append(move_action.card)
+
+        # Advance to the next active player
+        self.state.idx_player_active = (active_player_index + 1) % self.state.cnt_player
+
+        if self.state.idx_player_active == self.state.idx_player_started:
+            self.state.bool_card_exchanged = True
+            print("All players have completed their card exchanges.")
 
     def proceed_to_next_player(self) -> None:
         """
