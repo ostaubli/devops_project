@@ -1,0 +1,39 @@
+name: Deploy Dog
+on: workflow_dispatch
+jobs:
+  deploy-job:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: 'read'
+      id-token: 'write'
+    steps:
+      - name: Get Code
+        uses: actions/checkout@4.2.2
+
+      - name: Authenticate Google Cloud
+        uses: google-github-actions/auth@v2
+        with:
+          service_account:
+          project_id:
+          workload_identity_provider:
+
+      - name: Set up Cloud SDK
+        uses: google-github-actions/setup-gcloud@v2
+        with:
+          project_id:
+
+      - name: Build and deploy Image
+        run: |
+          gcloud run deploy game-server-service \
+            --port 8080 \
+            --source . \
+            --region=europe-west6 \
+            --allow-unauthenticated
+
+      - name: Get service URL
+        run: | 
+          SERVICE_URL=$(gcloud run services describe game-server-service \
+            --platform=managed \
+            --region=europe-west6 \
+            --format='value(status.url)')
+          echo "Service is running at: $SERVICE_URL"
