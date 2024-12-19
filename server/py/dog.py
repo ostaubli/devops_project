@@ -457,8 +457,6 @@ class Dog(Game):
         print(f"Marble moved to position {marble.pos}.")
         return False
 
-        #TODO: Adapt marble_is_save
-
     def check_for_win(self) -> bool:
         """
         Check if any player or team has all their marbles in the finish area.
@@ -585,6 +583,10 @@ class Dog(Game):
         found_actions = []
         player = self.get_active_player()
 
+        # Check whether card exchange still needs to be done and return card exchange actions in this case
+        if self.cards_need_to_be_exchanged():
+            return self.get_card_exchange_actions(player)
+
         # First check the cases where a card is still active
         active_card = self.state.card_active
         if active_card:
@@ -624,6 +626,16 @@ class Dog(Game):
                 unique_actions.append(action)
 
         return unique_actions
+
+    def cards_need_to_be_exchanged(self) -> bool:
+        assert self.state is not None
+        return self.state.bool_card_exchanged is False
+
+    def get_card_exchange_actions(self, current_player: PlayerState) -> List[Action]:
+        """Generates card exchange actions at beginning of a round"""
+        return [
+            Action(card=card, pos_from=None, pos_to=None, card_swap=None)
+            for card in current_player.list_card]
 
     def get_actions_for_card(self, card: Card, player: PlayerState) -> List[Action]:
         found_actions = []
@@ -1046,7 +1058,6 @@ class Dog(Game):
 
         overtaken_marbles = self.find_marbles_between(action.pos_from + 1, action.pos_to)
 
-        # TODO: Adapt to pass test 33 again, 32 passed
         # For each marble found, if it is not safe, send it home
         for overtaken_marble in overtaken_marbles:
             if overtaken_marble is None:
