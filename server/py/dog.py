@@ -508,8 +508,6 @@ class Dog(Game):
         if active_card:
             if active_card.rank == '7':
                 return self.get_actions_for_active_7(active_card, player)
-            if active_card.rank == "J":
-                return self.get_actions_jake(active_card, player) #for active jake def hinzufügen?
             return self.get_actions_for_card(active_card, player)
 
         # Determine if there is at least one marble on the board that can be moved
