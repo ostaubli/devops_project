@@ -1,8 +1,8 @@
-from server.py.game import Game, Player
 from typing import List, Optional, ClassVar, Dict
-from pydantic import BaseModel
 from enum import Enum
 import random
+from pydantic import BaseModel
+from server.py.game import Game, Player
 
 
 class Card(BaseModel):
@@ -155,8 +155,7 @@ class Dog(Game):
             list_player=players,
             list_card_draw=deck,
             list_card_discard=[],
-            card_active=None,
-            board_positions=[None] * 96  # Empty board positions
+            card_active=None  # Empty board positions
         )
 
         # Distribute the initial hand of cards (6 cards per player in the first round)
@@ -166,7 +165,7 @@ class Dog(Game):
         """ Initialize the board representation """
         # Define the circular path and separate home positions for 4 players
         board = {
-            "circular_path": [i for i in range(self.CIRCULAR_PATH_LENGTH)],  # 64 positions in a circular path
+            "circular_path": list(range(self.CIRCULAR_PATH_LENGTH)),  # 64 positions in a circular path
             "finish_positions": {
                 0: [68, 69, 70, 71],  # Blue player's finish positions
                 1: [76, 77, 78, 79],  # Yellow player's finish positions
@@ -224,9 +223,9 @@ class Dog(Game):
         """
         Determine the number of cards to deal based on the current round.
         """
-        CARD_DISTRIBUTION = [6, 5, 4, 3, 2]  # Adjust as per your game rules
-        round_index = (self.state.cnt_round - 1) % len(CARD_DISTRIBUTION)
-        return CARD_DISTRIBUTION[round_index]
+        card_distribution = [6, 5, 4, 3, 2]  # Adjust as per your game rules
+        round_index = (self.state.cnt_round - 1) % len(card_distribution)
+        return card_distribution[round_index]
 
 
     def deal_cards_for_round(self, cards_to_deal: int) -> None:
@@ -389,8 +388,7 @@ class Dog(Game):
         if player is None:
             if pos_from <= pos_to:
                 return pos_to - pos_from
-            else:
-                return pos_to + (self.CIRCULAR_PATH_LENGTH - pos_from)
+            return pos_to + (self.CIRCULAR_PATH_LENGTH - pos_from)
 
         # If we found a player (pos_to is a finishing position)
         start_position = self.board["start_positions"][player][0]
@@ -490,13 +488,12 @@ class Dog(Game):
         """
         Check if a marble is in the finish area for the given player.
         Finish areas are unique to each player.
-        This checks if pos is one of the explicitly listed finish positions for the given player. It returns True if pos is found in that list, and False otherwise.
+        This checks if pos is one of the explicitly listed finish positions for the given player.
+        It returns True if pos is found in that list, and False otherwise.
         """
         if self.state is None or self.state.list_player is None:
             raise ValueError("Game state is not properly initialized.")
         return pos in self.board["finish_positions"][player_index]
-
-
 
     def is_in_any_finish_area(self, pos: int) -> bool:
         if self.state is None or self.state.list_player is None:
@@ -516,8 +513,8 @@ class Dog(Game):
         for player_index, player in enumerate(self.state.list_player):
             if marble in player.list_marble:
                 # Check if the marble is in the start or finish area
-                return (marble.pos in self.board["start_positions"].get(player_index, [])) or self.is_in_player_finish_area(
-                    marble.pos, player_index)
+                return ((marble.pos in self.board["start_positions"].get(player_index, [])) or
+                        self.is_in_player_finish_area(marble.pos, player_index))
         return False
 
     def set_state(self, state: GameState) -> None:
@@ -558,12 +555,11 @@ class Dog(Game):
                     pos_to = (pos_from + steps) % self.CIRCULAR_PATH_LENGTH
 
                     # Use the new helper function to check if path is blocked
-                    if not self.is_path_blocked_by_safe_marble(pos_from, pos_to, marbles):
+                    if not self.is_path_blocked_by_safe_marble(pos_from, pos_to):
                         possible_actions.append(Action(card=card, pos_from=pos_from, pos_to=pos_to, card_swap=None))
-
         return possible_actions
 
-    def is_path_blocked_by_safe_marble(self, pos_from: int, pos_to: int, marbles: List[Marble]) -> bool:
+    def is_path_blocked_by_safe_marble(self, pos_from: int, pos_to: int) -> bool:
         # Find marbles between pos_from and pos_to
         found_marbles = self.find_marbles_between(pos_from, pos_to)
 
@@ -572,8 +568,6 @@ class Dog(Game):
 
         # Check if any safe marble is present
         return any(m.is_save for m in found_marbles)
-
-
 
     def get_list_action(self) -> List[Action]:
         """
@@ -590,10 +584,7 @@ class Dog(Game):
         if active_card:
             if active_card.rank == '7':
                 return self.get_actions_for_active_7(active_card, player)
-            elif active_card.rank == "J":
-                return self.get_actions_jake(active_card, player) #for active jake def hinzufügen?
-            else:
-                return self.get_actions_for_card(active_card, player)
+            return self.get_actions_for_card(active_card, player)
 
         # Determine if there is at least one marble on the board that can be moved
         movable_marbles = any(self.is_movable(marble) for marble in player.list_marble)
@@ -606,7 +597,7 @@ class Dog(Game):
         if not movable_marbles and not starting_card_available:
             return []
         # If no movable marbles and only starting cards, return starting actions
-        elif not movable_marbles and starting_card_available:
+        if not movable_marbles and starting_card_available:
             # Make sure the returned actions are unique
             unique_start_actions = []
             for action in self.get_actions_for_starting_cards(starting_cards, player):
@@ -633,7 +624,7 @@ class Dog(Game):
         if card.rank in self._BASIC_RANKS:
             found_actions.extend(self.get_actions_for_basic_card(card, player.list_marble))
         elif card.rank == 'JKR':  # Joker can be played as any card
-            found_actions.extend(self.get_actions_for_jkr(card, player))
+            found_actions.extend(self.get_actions_for_jkr())
         elif card.rank == '4':
             found_actions.extend(self.get_actions_for_4(card, player))
         elif card.rank == '7':  # Special case for card "7"
@@ -644,7 +635,6 @@ class Dog(Game):
             found_actions.extend(self.get_actions_for_king(card, player))
         elif card.rank == 'A':
             found_actions.extend(self.get_actions_for_ace(card, player))
-
         return found_actions
 
     def get_actions_for_starting_cards(self, starting_cards: List[Card], player: PlayerState) -> List[Action]:
@@ -669,7 +659,8 @@ class Dog(Game):
                         pos_to=start_position[0],
                         card_swap=None
                     ))
-            # If can_place_marble_on_start returns False, it means the start position is blocked by the player's own marble,
+            # If can_place_marble_on_start returns False,
+            # it means the start position is blocked by the player's own marble,
             # so we do not add any actions for this marble.
         return starting_actions
 
@@ -782,7 +773,8 @@ class Dog(Game):
                 target_position = (marble.pos + steps) % self.CIRCULAR_PATH_LENGTH
                 target_marble = self.find_marble_at_position(target_position)
 
-                # Skip illegal actions where a save marble is already at the position (break because overtaking also illegal)
+                # Skip illegal actions where a save marble is already at the position
+                # (break because overtaking also illegal)
                 if target_marble and target_marble.is_save:
                     break
 
@@ -889,31 +881,33 @@ class Dog(Game):
         occupant_marble = self.find_marble_at_position(start_pos)
         if occupant_marble is None:
             raise ValueError(f"No marble found at position {start_pos}.")
-
         occupant_owner = self.get_owner(occupant_marble)
-
-        if occupant_owner == player:
-            # Same player's marble is already there, cannot move here
+        if occupant_owner == player: # Same player's marble is already there, cannot move here
             return False
-        else:
-            # Another player's marble occupies the spot, send it home
-            self.send_home(occupant_marble)
-            return True
+        self.send_home(occupant_marble) # Another player's marble occupies the spot, send it home
+        return True
 
-    def get_actions_for_jkr(self, card: Card, player: PlayerState) -> List[Action]:
+    def get_actions_for_jkr(self) -> List[Action]:
         jkr_actions = []  # List to store possible actions
         jkr_ranks = [rank for rank in GameState.LIST_RANK if rank != 'JKR']
 
         for rank in jkr_ranks:
             for suit in GameState.LIST_SUIT:
                 jkr_actions.extend([
-                    Action(card=Card(suit='', rank='JKR'), pos_from=None, pos_to=None, card_swap=Card(suit=suit, rank=rank))
+                    Action(
+                        card=Card(suit='', rank='JKR'),
+                        pos_from=None,
+                        pos_to=None,
+                        card_swap=Card(suit=suit, rank=rank))
                     ])
 
         return jkr_actions
 
     def apply_action(self, action: Action) -> None:
-        """ Apply the given action to the game """
+        """Apply the given action to the game."""
+
+        if self.state is None:
+            raise ValueError("Game state is not initialized.")
 
         if action is None:
             self.state.card_active = None
@@ -924,7 +918,6 @@ class Dog(Game):
             return
 
         player = self.get_active_player()
-
         card_finished = True
 
         # Apply move of basic cards
@@ -973,7 +966,7 @@ class Dog(Game):
 
 
         elif action.card.rank == 'JKR':  # Joker: use as any card
-            card_finished = self.apply_jkr_action(action, player)
+            card_finished = self.apply_jkr_action(action)
             player.list_card.remove(action.card)
             if self.check_for_win():
                 return
@@ -990,13 +983,13 @@ class Dog(Game):
                 return
             self.proceed_to_next_player()
 
-    def undo_active_card_moves(self):
-        for marble_index, position in self.action_marble_reset_positions.items():
-            marble = self.get_marble(marble_index)
-            marble.pos = position
-        self.action_marble_reset_positions = {}
-
-    def proceed_to_next_player(self):
+    def proceed_to_next_player(self) -> None:
+        """
+        Proceed to the next player in turn order.
+        Updates the active player index and increments the round counter.
+        """
+        if self.state is None:
+            raise ValueError("Game state is not initialized.")
         self.state.idx_player_active = (self.state.idx_player_active + 1) % self.state.cnt_player
         self.state.cnt_round += 1
 
@@ -1006,29 +999,45 @@ class Dog(Game):
         This may involve moving multiple marbles.
         :returns True if the card is played completely and false if more steps are needed for 7
         """
+        if self.state is None:
+            raise ValueError("Game state is not initialized.")
 
         if self.state.card_active is None:
             # This is the first action of a 7 action set
             self.steps_for_7_remaining= 7
             self.state.card_active = action.card
         elif self.state.card_active.rank != '7':
-            raise ValueError(f"An action for rank 7 was applied but there is still an active {self.state.card_active.rank} card")
+            raise ValueError(f"An action for rank 7 was applied but there is still an active "
+                             f"{self.state.card_active.rank} card")
 
         current_player = self.get_active_player()
+        if action.pos_from is None:
+            raise ValueError("Invalid action: pos_from is None")
         marble = self.find_marble_at_position(action.pos_from)
+
+        if marble is None:
+            raise ValueError(f"No marble found at position {action.pos_from}")
+
+        if action.pos_from is None or action.pos_to is None:
+            raise ValueError("Invalid action: pos_from or pos_to is None")
 
         steps = self.get_steps_between(action.pos_from, action.pos_to)
 
         marble_index = self.get_marble_index(marble, current_player)
-        if marble_index not in self.action_marble_reset_positions.keys():
+        if marble_index not in self.action_marble_reset_positions:
             self.action_marble_reset_positions[marble_index] = marble.pos
 
         # Find marbles between pos_from and pos_to (excluding the starting position but including the end position)
+        if action.pos_from + 1 is None:
+            raise ValueError("Invalid position: pos_from + 1 results in None")
+
         overtaken_marbles = self.find_marbles_between(action.pos_from + 1, action.pos_to)
 
         # TODO: Adapt to pass test 33 again, 32 passed
         # For each marble found, if it is not safe, send it home
         for overtaken_marble in overtaken_marbles:
+            if overtaken_marble is None:
+                continue  # Skip if overtaken_marble is None
             if not overtaken_marble.is_save:
                 # Record original position of overtaken marble for rollback if needed
                 overtaken_marble_index = self.get_marble_index(overtaken_marble)
@@ -1046,15 +1055,24 @@ class Dog(Game):
 
         return False
 
-    def apply_jkr_action(self, action: Action, player) -> bool:
+    def apply_jkr_action(self, action: Action) -> bool:
+        if self.state is None:
+            raise ValueError("Game state is not initialized.")
         if self.state.card_active is None:
             self.state.card_active = action.card_swap
         return False
 
-    def get_active_player(self):
+    def get_active_player(self) -> PlayerState:
+        if self.state is None:
+            raise ValueError("Game state is not initialized.")
         return self.state.list_player[self.state.idx_player_active]
 
-    def apply_simple_move(self, marble: Marble, target_pos: int, player: PlayerState = None) -> None:
+    def apply_simple_move(self, marble: Marble, target_pos: int, player: Optional[PlayerState] = None) -> None:
+        """
+        Move the marble to the target position, handling collisions and finishing moves.
+        """
+        if self.state is None:
+            raise ValueError("Game state is not initialized.")
         steps = self.get_steps_between(marble.pos, target_pos)
         if self.move_to_finish(marble, self.state.idx_player_active, steps):
             print(f"{player.name if player else 'someone'}'s marble moved to the finish area.")
@@ -1064,7 +1082,7 @@ class Dog(Game):
             marble.pos = target_pos
         marble.is_save = False
 
-    def send_home_if_occupied(self, target_pos: int):
+    def send_home_if_occupied(self, target_pos: int) -> None:
         if target_pos is not None and self.position_is_occupied(target_pos):
             existing_marble = self.find_marble_at_position(target_pos)
             if existing_marble and not self.is_in_any_finish_area(target_pos):
@@ -1077,7 +1095,8 @@ class Dog(Game):
 
     def is_movable(self, marble: Marble) -> bool:
         # TODO: Handle special case when marble is at the last finish location
-        # TODO: Handle finish in general > if a marble is at a position right in front of the atm marble, cannot move further?
+        # TODO: Handle finish in general > if a marble is at a position right in front of the atm marble,
+        #  cannot move further?
         """Checks whether the marble can be moved. Returns true if it can be moved."""
         if marble.pos in self._LAST_FINISH_POSITION:
             return False
@@ -1085,21 +1104,31 @@ class Dog(Game):
 
     def get_owner(self, marble: Marble) -> Optional[PlayerState]:
         """Get player that owns a marble"""
+        if self.state is None:
+            raise ValueError("Game state is not initialized.")
         for player in self.state.list_player:
             if marble in player.list_marble:
                 return player
         return None
 
     def get_player_index(self, player: PlayerState) -> int:
+        if self.state is None:
+            raise ValueError("Game state is not initialized.")
+        if player not in self.state.list_player:
+            raise ValueError(f"Player {player.name} not found in the game state.")
         return self.state.list_player.index(player)
 
     def get_player(self, player_index: int) -> Optional[PlayerState]:
-        return self.state.list_player[player_index] if player_index < len(self.state.list_player) else None
+        if self.state is None:
+            raise ValueError("Game state is not initialized.")
+        if player_index < len(self.state.list_player):
+            return self.state.list_player[player_index]
+        return None
 
-    def get_marble_index(self, marble: Marble, player: PlayerState = None) -> int:
-        owner = player
-        if not owner:
-            owner = self.get_owner(marble)
+    def get_marble_index(self, marble: Marble, player: Optional[PlayerState] = None) -> int:
+        owner = player or self.get_owner(marble)
+        if owner is None:
+            raise ValueError(f"Marble {marble} does not belong to any player.")
         owner_index = self.get_player_index(owner)
         return owner_index * 4 + owner.list_marble.index(marble)
 
@@ -1109,10 +1138,17 @@ class Dog(Game):
         # Find index of marble in player's marbles
         player_marble_index = marble_index % 4
         player = self.get_player(player_index)
-        return player.list_marble[player_marble_index] if player_marble_index < len(player.list_marble) else None
+        if player is None:
+            return None  # Player does not exist
+        # Check if the marble index is valid for the player's list
+        if player_marble_index < len(player.list_marble):
+            return player.list_marble[player_marble_index]
+        return None  # Marble index is out of range
 
-    def get_player_view(self, idx_player: int) -> GameState:
+    def get_player_view(self, idx_player: int) -> Optional[GameState]:
         """ Get the masked state for the active player (e.g. the opponent's cards are face down) """
+        if self.state is None:
+            return None  # No state to provide a view
         # Mask the opponent's cards, only showing the player's own cards
         masked_state = self.state.model_copy()
         for i, player in enumerate(masked_state.list_player):
@@ -1130,7 +1166,7 @@ class RandomPlayer(Player):
 if __name__ == '__main__':
     # Initialize game and players
     game = Dog()
-    players = [RandomPlayer() for _ in range(4)]
+    dog_players = [RandomPlayer() for _ in range(4)]
 
     # Game setup
     # TODO: check deal cards? already in init of Dog()
@@ -1144,11 +1180,13 @@ if __name__ == '__main__':
         game.handle_round()  # Call the round logic
 
         # Proceed with player actions
-        # TODO: handle winning
-        for _ in range(len(game.state.list_player)):
-            actions = game.get_list_action()
-            active_player = players[game.state.idx_player_active]
-            selected_action = active_player.select_action(game.get_player_view(game.state.idx_player_active), actions)
+        for _ in range(game.state.list_player):
+            actions_list = game.get_list_action()
+            active_player = dog_players[game.state.idx_player_active]
+            selected_action = active_player.select_action(
+                game.get_player_view(game.state.idx_player_active),
+                actions_list
+            )
             if selected_action:
                 game.apply_action(selected_action)
             if game.check_for_win():  # Check for win after each action
