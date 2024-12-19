@@ -198,21 +198,35 @@ class Dog(Game):
         if self.state is None:
             raise ValueError("Game state is not initialized")
 
-        card_distribution = [6, 5, 4, 3, 2]  # Number of cards per round
-        round_index = (self.state.cnt_round - 1) % len(card_distribution)  # Cycle through rounds
-        cards_to_deal = card_distribution[round_index]
+        cards_to_deal = self.get_card_distribution()
 
         print(f"Starting Round {self.state.cnt_round} - Dealing {cards_to_deal} cards.")
 
         # Step 1: Deal cards
         self.deal_cards_for_round(cards_to_deal)
+        if self.check_for_win():
+            return
 
         # Step 2: Teammates exchange cards
-        self.exchange_cards(0, 2)  # Example: Player 0 and Player 2 are teammates
-        self.exchange_cards(1, 3)  # Example: Player 1 and Player 3 are teammates
+        teammate_pairs = [(0, 2), (1, 3)]  # Example pairing
+        for p1, p2 in teammate_pairs:
+            self.exchange_cards(p1, p2)
+            if self.check_for_win():  # Check after exchanges
+                return
 
         # Step 3: Set starting player
         self.set_starting_player()
+        if self.check_for_win():
+            return
+
+    def get_card_distribution(self) -> int:
+        """
+        Determine the number of cards to deal based on the current round.
+        """
+        card_distribution = [6, 5, 4, 3, 2]  # Adjust as per your game rules
+        round_index = (self.state.cnt_round - 1) % len(card_distribution)
+        return card_distribution[round_index]
+
 
     def deal_cards_for_round(self, cards_to_deal: int) -> None:
         """
@@ -261,6 +275,24 @@ class Dog(Game):
         player2.list_card.append(card_from_p1)
 
         print(f"Player {player1_index} and Player {player2_index} exchanged one card.")
+
+    def fold_cards(self):
+        """
+        Handles the case when a player has no actions to perform and must fold their cards.
+        """
+        if self.state is None:
+            raise ValueError("Game state is not initialized.")
+
+        active_player = self.get_active_player()
+
+        # Move all the player's cards to the discard pile
+        self.state.list_card_discard.extend(active_player.list_card)
+        active_player.list_card.clear()  # Remove all cards from the player's hand
+
+        print(f"{active_player.name} has folded their cards.")
+
+        # Proceed to the next player's turn
+        self.proceed_to_next_player()
 
     def set_starting_player(self) -> None:
         """
@@ -386,26 +418,70 @@ class Dog(Game):
         start_pos = self.board["start_positions"][player_index][0]
 
         # Check if the marble has passed the start at least twice
-        #TODO: Adapt marble_is_save
         if marble.pos <= start_pos and marble.is_save:
             print(f"Marble at position {marble.pos} has not passed the start twice.")
             return False
 
-        # Calculate target position
-        target_pos = marble.pos + steps
+        # Case 1: Marble is already in the finish area
+        if marble.pos in finish_positions:
+            current_index = finish_positions.index(marble.pos)
+            target_index = current_index + steps
+
+            # Check if the target index exceeds the finish area boundary
+            if target_index >= len(finish_positions):
+                print(f"Marble at position {marble.pos} cannot move beyond the finish area.")
+                return False
+
+            # Move the marble within the finish area
+            marble.pos = finish_positions[target_index]
+            print(f"Marble moved within finish area to position {marble.pos}.")
+            return True
+
+        # Case 2: Marble is on the circular path, calculate target position
+        target_pos = (marble.pos + steps) % self.CIRCULAR_PATH_LENGTH
 
         # Check if the marble can enter the finish area
         if target_pos in finish_positions:
-            # Place in the next available finish spot (inside to outside)
+            # Place in the first available finish spot
             for pos in finish_positions:
                 if all(m.pos != pos for p in self.state.list_player for m in p.list_marble):
                     marble.pos = pos
-                    print(f"Marble moved to finish at position {pos}.")
+                    print(f"Marble moved to finish area at position {marble.pos}.")
                     return True
 
-        # Otherwise, move normally
-        marble.pos = target_pos % len(self.board["circular_path"])
+        # Case 3: Regular movement on the circular path
+        marble.pos = target_pos
         print(f"Marble moved to position {marble.pos}.")
+        return False
+
+        #TODO: Adapt marble_is_save
+
+    def check_for_win(self) -> bool:
+        """
+        Check if any player or team has all their marbles in the finish area.
+        If so, set the game phase to FINISHED and return True.
+        """
+        # Check for individual players
+        for player_index, player in enumerate(self.state.list_player):
+            finish_positions = self.board["finish_positions"][player_index]
+            if all(marble.pos in finish_positions for marble in player.list_marble):
+                self.state.phase = GamePhase.FINISHED
+                print(f"Player {player.name} has won the game!")
+                return True
+
+        # Check for teams (if applicable)
+        # Example: Player 0 & 2 are a team, Player 1 & 3 are a team
+        teams = [(0, 2), (1, 3)]
+        for team in teams:
+            if all(
+                    all(marble.pos in self.board["finish_positions"][player_index] for marble in
+                        self.state.list_player[player_index].list_marble)
+                    for player_index in team
+            ):
+                self.state.phase = GamePhase.FINISHED
+                print(f"Team ({team[0]}, {team[1]}) has won the game!")
+                return True
+
         return False
 
     def is_in_player_finish_area(self, pos: int, player_index: int) -> bool:
@@ -837,6 +913,8 @@ class Dog(Game):
             self.state.card_active = None
             self.undo_active_card_moves()
             self.proceed_to_next_player()
+            if self.check_for_win():  # Check for win after folding
+                return
             return
 
         player = self.get_active_player()
@@ -846,6 +924,8 @@ class Dog(Game):
         if action.card.rank in self._BASIC_RANKS or action.card.rank == '4':
             marble = self.find_marble_at_position(action.pos_from)
             self.apply_simple_move(marble, action.pos_to, player)
+            if self.check_for_win():  # Check if the game is won after moving a marble
+                return
 
         elif action.card.rank in ['A', 'K']:  # Handles both Ace and King
             self.send_home_if_occupied(action.pos_to)
@@ -857,6 +937,8 @@ class Dog(Game):
                             marble.pos = self.board["start_positions"][start_pos][0]
                             marble.is_save = True
                             print(f"{player.name}'s marble moved out of the kennel to position {marble.pos}.")
+                            if self.check_for_win():
+                                return
                             return
             # Moving forward (1/11 steps for Ace or 13 steps for King)
             for marble in player.list_marble:
@@ -864,7 +946,10 @@ class Dog(Game):
                     marble.pos = action.pos_to
                     steps = action.pos_to - action.pos_from
                     print(f"{player.name}'s marble moved {steps} steps forward to position {action.pos_to}.")
+                    if self.check_for_win():
+                        return
                     return
+
 
         elif action.card.rank == 'J':  # Jake action
             # Swap marbles
@@ -876,29 +961,26 @@ class Dog(Game):
                 # Swap positions of the two marbles
                 marble_from.pos, marble_to.pos = marble_to.pos, marble_from.pos
                 print(f"Swapped marbles: {marble_from} at {marble_from.pos}, {marble_to} at {marble_to.pos}.")
-            else:
-                print("Invalid Jake action: Missing marbles for swapping.")
-                return
+                if self.check_for_win():  # Check if the game is won after swapping marbles
+                    return
 
 
         elif action.card.rank == 'JKR':  # Joker: use as any card
             card_finished = self.apply_jkr_action(action)
             player.list_card.remove(action.card)
+            if self.check_for_win():
+                return
 
         elif action.card.rank == '7':
             card_finished = self.apply_seven_action(action)
-        else:  # Regular behavior for moving marbles based on card rank
-            pass
+            if self.check_for_win():
+                return
 
         if card_finished:
-            # Reset active card status
-            self.state.card_active = None
-            self.action_marble_reset_positions = {}
-            # Update the cards: if it's a move action, discard the played card
             player.list_card.remove(action.card)
             self.state.list_card_discard.append(action.card)
-
-            # Proceed to the next player after applying the action
+            if self.check_for_win():  # Check if the game is won after this action
+                return
             self.proceed_to_next_player()
 
     def proceed_to_next_player(self) -> None:
@@ -1107,11 +1189,7 @@ if __name__ == '__main__':
             )
             if selected_action:
                 game.apply_action(selected_action)
-
-        # TODO: handle winning
-
-        # End condition (example: after 10 rounds)
-        if game.state.cnt_round > 10:
-            game.state.phase = GamePhase.FINISHED
+            if game.check_for_win():  # Check for win after each action
+                break
 
     print("Game Over")
