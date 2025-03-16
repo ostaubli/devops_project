@@ -2,11 +2,39 @@ from typing import Any
 import abc
 import os
 import sys
+import re
 import subprocess
 import importlib
 import traceback
 import pylint.lint
 from mypy import api
+
+IMPORT_PATTERN = re.compile(r"(?:import|from)\s+([a-z0-9_\.]*)")
+PYLINT_DISABLE_PATTERN = re.compile(r'#\s*pylint:\sdisable=(.*)')
+
+
+def get_imported_files(main_file: str, existing_files: list[str]) -> list[str]:
+    """
+    Recursively get all .py-files which are imported inside the main_file.
+    "existing_files" is a list of existing .py files in the project
+    """
+    with open(main_file, 'r', encoding='utf-8') as file:
+        lines = file.readlines()
+    imported_files = []
+    for line in lines:
+        match = IMPORT_PATTERN.search(line)
+        if match:
+            rel_file = match.group(1).strip().replace('.', '/') + '.py'
+            if rel_file in existing_files:
+                imported_files.append(rel_file)
+                imported_files.extend(get_imported_files(rel_file, existing_files))
+            if rel_file.strip('.py') + '/__init__.py' in existing_files:
+                # If theres an init file, all .py-files inside that directory matter
+                for dir_file in existing_files:
+                    if dir_file.startswith(rel_file.strip('.py')):
+                        imported_files.append(dir_file)
+                        imported_files.extend(get_imported_files(dir_file, existing_files))
+    return imported_files
 
 
 class Benchmark:
@@ -16,13 +44,26 @@ class Benchmark:
     COLOR_ENDC = '\033[0m'
     COLOR_RESULT = '\033[93m'
 
-    def __init__(self, argv) -> None:
+    def __init__(self, argv: list[str]) -> None:
         self.mode = argv[1]
         if self.mode == 'python':
             self.script = argv[2]
             self.game_server = Python_Game_Server(self.script)
+            self.relevant_files = self._get_relevant_files()
 
-    def run_tests(self, disable_features=False) -> None:
+    def _get_relevant_files(self) -> list[str]:
+        file_name = f"server/py/{self.script.split('.')[0]}.py"
+        py_files = []
+        for root, _, files in os.walk(os.getcwd()):
+            for file in files:
+                if file.endswith('.py'):
+                    py_files.append(os.path.join(root, file).removeprefix(os.getcwd() + '/'))
+        relevant_files = get_imported_files(file_name, py_files)
+        relevant_files.remove('server/py/game.py')
+        return relevant_files
+
+
+    def run_tests(self, disable_features: bool = False) -> None:
         os.system('color')
 
         print('--- Benchmark ---')
@@ -89,16 +130,37 @@ class Benchmark:
         return list_function_name
 
 
+    @staticmethod
+    def get_disabled_pylint_checks(file_path: str) -> list[str]:
+        with open(file_path, 'r', encoding='utf-8') as file:
+            lines = file.readlines()
+        disable_comments = []
+        for line_nr, line in enumerate(lines, 1):
+            match = PYLINT_DISABLE_PATTERN.search(line)
+            if match:
+                disable_comments.append(
+                    f"File {file_path}: You have used '# pylint: disable={', '.join(match.group(1).split())}'"
+                    f" on line {line_nr}, nice trick, but that does not count.")
+        return disable_comments
+
+
     def test_pylint(self) -> None:
         """Test 100: Code style with Pylint [5 point]"""
         og_pipe = sys.stdout # Save original pipeline
-        with open(os.devnull, 'w', encoding="utf-8") as tmp_pipe:
-            sys.stdout = tmp_pipe # Pipe stdout to temporary pipeline
-            module_name, _ = self.script.split('.')
-            pylint_score = round(pylint.lint.Run([f'server.py.{module_name}'], exit=False).linter.stats.global_note, 2)
+        messy_files = []
+        for file in [f"server/py/{self.script.split('.')[0]}.py"] + self.relevant_files:
+            with open(os.devnull, 'w', encoding="utf-8") as tmp_pipe:
+                sys.stdout = tmp_pipe # Pipe stdout to temporary pipeline
+                import_string = file.replace('/', '.').strip('.py')
+                pylint_score = round(pylint.lint.Run([import_string], exit=False).linter.stats.global_note, 2)
+            if pylint_score != 10:
+                messy_files.append(f"File {file}: Pylint score {pylint_score:.1f}/10")
+            disabled_checks = self.get_disabled_pylint_checks(file)
+            if len(disabled_checks) > 0:
+                messy_files.extend(disabled_checks)
         sys.stdout = og_pipe # Set stdout pipe back to original
-        if pylint_score != 10:
-            raise AssertionError(f'Pylint score {pylint_score:.1f}/10')
+        if len(messy_files) > 0:
+            raise AssertionError('\n'.join(messy_files))
 
 
     def test_mypy(self) -> None:
