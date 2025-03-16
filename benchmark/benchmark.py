@@ -174,7 +174,7 @@ class Benchmark:
     def test_pytest(self) -> None:
         """Test 102: Pytest runs successfully and coverage is >80% [5 point]"""
         module_name, _ = self.script.split('.')
-        test_file = f"test/test_{module_name}.py"
+        test_file = f"tests/test_{module_name}.py"
         if not os.path.isfile(test_file):
             raise AssertionError(f"There is no testfile for module '{module_name}' ('{test_file}')")
         result = subprocess.run(["coverage", "run", "-m", "pytest", test_file], capture_output=True, check=False)
