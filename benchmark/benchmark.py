@@ -184,7 +184,15 @@ class Benchmark:
             ["coverage", "report", "--format=total", f"server/py/{module_name}.py"],
             capture_output=True, text=True, check=True)
         if int(coverage_result.stdout) <= 80:
-            raise AssertionError(f"Test coverage is too low ({int(coverage_result.stdout)}%)")
+            error_msg = f"Test coverage is too low ({int(coverage_result.stdout)}%)"
+            full_report = subprocess.run(
+                ["coverage", "report", "-m", f"server/py/{module_name}.py"],
+                capture_output=True, text=True, check=True)
+            pattern = re.compile(r"\%\s+([0-9\-,\s]*\n)")
+            match = pattern.search(full_report.stdout)
+            if match:
+                error_msg += f"\nCode lines not executed during tests: {match.group(1)}"
+            raise AssertionError(error_msg)
 
 
 class Game_Server(metaclass=abc.ABCMeta):
