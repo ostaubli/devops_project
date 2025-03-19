@@ -58,7 +58,8 @@ class Benchmark:
             for file in files:
                 if file.endswith('.py'):
                     py_files.append(os.path.join(root, file).removeprefix(os.getcwd() + '/'))
-        relevant_files = get_imported_files(file_name, py_files)
+        relevant_files = [f"server/py/{self.script.split('.')[0]}.py"] 
+        relevant_files.extend(get_imported_files(file_name, py_files))
         relevant_files.remove('server/py/game.py')
         return relevant_files
 
@@ -148,7 +149,7 @@ class Benchmark:
         """Test 100: Code style with Pylint [5 point]"""
         og_pipe = sys.stdout # Save original pipeline
         messy_files = []
-        for file in [f"server/py/{self.script.split('.')[0]}.py"] + self.relevant_files:
+        for file in self.relevant_files:
             with open(os.devnull, 'w', encoding="utf-8") as tmp_pipe:
                 sys.stdout = tmp_pipe # Pipe stdout to temporary pipeline
                 import_string = file.replace('/', '.').strip('.py')
@@ -173,26 +174,32 @@ class Benchmark:
 
     def test_pytest(self) -> None:
         """Test 102: Pytest runs successfully and coverage is >80% [5 point]"""
-        module_name, _ = self.script.split('.')
-        test_file = f"tests/test_{module_name}.py"
-        if not os.path.isfile(test_file):
-            raise AssertionError(f"There is no testfile for module '{module_name}' ('{test_file}')")
-        result = subprocess.run(["coverage", "run", "-m", "pytest", test_file], capture_output=True, check=False)
-        if result.returncode != 0:
-            raise AssertionError(f"Pytest exit code is {result.returncode}")
-        coverage_result = subprocess.run(
-            ["coverage", "report", "--format=total", f"server/py/{module_name}.py"],
-            capture_output=True, text=True, check=True)
-        if int(coverage_result.stdout) <= 80:
-            error_msg = f"Test coverage is too low ({int(coverage_result.stdout)}%)"
-            full_report = subprocess.run(
-                ["coverage", "report", "-m", f"server/py/{module_name}.py"],
+        errors = []
+        for file in self.relevant_files:
+            module_name = file.strip('.py').rsplit('/', maxsplit=1)[-1]
+            test_file = f"tests/test_{module_name}.py"
+            if not os.path.isfile(test_file):
+                errors.append(f"{file}: There is no testfile for module '{module_name}' ('{test_file}')")
+                continue
+            result = subprocess.run(["coverage", "run", "-m", "pytest", test_file], capture_output=True, check=False)
+            if result.returncode != 0:
+                errors.append(f"{test_file}: Pytest exit code is {result.returncode}")
+                continue
+            coverage_result = subprocess.run(
+                ["coverage", "report", "--format=total", f"server/py/{module_name}.py"],
                 capture_output=True, text=True, check=True)
-            pattern = re.compile(r"\%\s+([0-9\-,\s]*\n)")
-            match = pattern.search(full_report.stdout)
-            if match:
-                error_msg += f"\nCode lines not executed during tests: {match.group(1)}"
-            raise AssertionError(error_msg)
+            if int(coverage_result.stdout) <= 80:
+                error_msg = f"{test_file}: Test coverage is only {int(coverage_result.stdout)}%"
+                full_report = subprocess.run(
+                    ["coverage", "report", "-m", f"server/py/{module_name}.py"],
+                    capture_output=True, text=True, check=True)
+                pattern = re.compile(r"\%\s+(((\d+\-\d+|\d+),?\s?)+)")
+                match = pattern.search(full_report.stdout)
+                if match:
+                    error_msg += f" (Code lines not executed during tests: {match.group(1).strip()})"
+            errors.append(error_msg)
+        if len(errors) > 0:
+            raise AssertionError('\n'.join(errors))
 
 
 class Game_Server(metaclass=abc.ABCMeta):
