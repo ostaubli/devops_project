@@ -166,10 +166,13 @@ class Benchmark:
 
     def test_mypy(self) -> None:
         """Test 101: Type checking with MyPy [5 point]"""
-        module_name, _ = self.script.split('.')
-        result = api.run([f"server/py/{module_name}.py"])
-        if result[2] != 0:
-            raise AssertionError(f'MyPy exit code is {result[2]}')
+        errors = []
+        for file in self.relevant_files:
+            result = api.run([file])
+            if result[2] != 0:
+                errors.append(f"{file}: MyPy exit code is {result[2]}")
+        if len(errors) > 0:
+            raise AssertionError('\n'.join(errors))
 
 
     def test_pytest(self) -> None:
