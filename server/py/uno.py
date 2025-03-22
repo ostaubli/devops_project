@@ -80,7 +80,7 @@ class GameState(BaseModel):
     cnt_player: int                          # number of players N (to be set in the phase "setup")
     idx_player_active: Optional[int]         # the index (0 to N-1) of active player
     direction: int                           # direction of the game, +1 to the left, -1 to right
-    color: str                               # active color (last card played or the chosen color after a wild cards)
+    color: Optional[str]                     # active color (last card played or the chosen color after a wild cards)
     cnt_to_draw: int                         # accumulated number of cards to draw for the next player
     has_drawn: bool                          # flag to indicate if the last player has alreay drawn cards or not
 
