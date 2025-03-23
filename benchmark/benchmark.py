@@ -28,10 +28,10 @@ def get_imported_files(main_file: str, existing_files: list[str]) -> list[str]:
             if rel_file in existing_files:
                 imported_files.append(rel_file)
                 imported_files.extend(get_imported_files(rel_file, existing_files))
-            if rel_file.strip('.py') + '/__init__.py' in existing_files:
+            if os.path.splitext(rel_file)[0] + '/__init__.py' in existing_files:
                 # If theres an init file, all .py-files inside that directory matter
                 for dir_file in existing_files:
-                    if dir_file.startswith(rel_file.strip('.py')):
+                    if dir_file.startswith(os.path.splitext(rel_file)[0]):
                         imported_files.append(dir_file)
                         imported_files.extend(get_imported_files(dir_file, existing_files))
     return imported_files
@@ -58,7 +58,7 @@ class Benchmark:
             for file in files:
                 if file.endswith('.py'):
                     py_files.append(os.path.join(root, file).removeprefix(os.getcwd() + '/'))
-        relevant_files = [f"server/py/{self.script.split('.')[0]}.py"] 
+        relevant_files = [f"server/py/{self.script.split('.')[0]}.py"]
         relevant_files.extend(get_imported_files(file_name, py_files))
         relevant_files.remove('server/py/game.py')
         return relevant_files
@@ -152,10 +152,10 @@ class Benchmark:
         for file in self.relevant_files:
             with open(os.devnull, 'w', encoding="utf-8") as tmp_pipe:
                 sys.stdout = tmp_pipe # Pipe stdout to temporary pipeline
-                import_string = file.replace('/', '.').strip('.py')
+                import_string = os.path.splitext(file)[0].replace('/', '.')
                 pylint_score = round(pylint.lint.Run([import_string], exit=False).linter.stats.global_note, 2)
             if pylint_score != 10:
-                messy_files.append(f"File {file}: Pylint score {pylint_score:.1f}/10")
+                messy_files.append(f"File {file}: Pylint score {pylint_score:.2f}/10")
             disabled_checks = self.get_disabled_pylint_checks(file)
             if len(disabled_checks) > 0:
                 messy_files.extend(disabled_checks)
@@ -179,7 +179,7 @@ class Benchmark:
         """Test 102: Pytest runs successfully and coverage is >80% [5 point]"""
         errors = []
         for file in self.relevant_files:
-            module_name = file.strip('.py').rsplit('/', maxsplit=1)[-1]
+            module_name = os.path.splitext(file)[0].rsplit('/', maxsplit=1)[-1]
             test_file = f"tests/test_{module_name}.py"
             if not os.path.isfile(test_file):
                 errors.append(f"{file}: There is no testfile for module '{module_name}' ('{test_file}')")
