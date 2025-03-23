@@ -58,11 +58,11 @@ class Hangman(Game):
 
 class RandomPlayer(Player):
 
-    def select_action(self, state: HangmanGameState, actions: List[GuessLetterAction]) -> Optional[GuessLetterAction]:
+    def select_action(self, state: HangmanGameState, actions: List[GuessLetterAction]) -> GuessLetterAction:
         """ Given masked game state and possible actions, select the next action """
-        if len(actions) > 0:
-            return random.choice(actions)
-        return None
+        if len(actions) == 0:
+            raise ValueError('There are no actions to choose from')
+        return random.choice(actions)
 
 
 if __name__ == "__main__":
@@ -70,3 +70,11 @@ if __name__ == "__main__":
     game = Hangman()
     game_state = HangmanGameState(word_to_guess='DevOps', phase=GamePhase.SETUP, guesses=[], incorrect_guesses=[])
     game.set_state(game_state)
+    player = RandomPlayer()
+    while game_state.phase != GamePhase.FINISHED:
+        possible_actions = game.get_list_action()
+        next_action = player.select_action(game_state, possible_actions)
+        game.apply_action(next_action)
+        game.print_state()
+        game_state = game.get_state()
+        print("\n\n")
