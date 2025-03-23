@@ -12,9 +12,10 @@ class BattleshipBenchmark(Benchmark):
     def play_first_n_rounds(self, num_rounds: int) -> None:
         self.game_server.reset()
         for _ in range(num_rounds):
-            action = self.game_server.select_action()
-            if action is None:
+            game_state = self.game_server.get_state()
+            if game_state.phase == GamePhase.FINISHED:
                 break
+            action = self.game_server.select_action()
             self.game_server.apply_action(action)
 
     def test_initial_game_state_structure(self) -> None:
