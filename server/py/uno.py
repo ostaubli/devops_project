@@ -127,6 +127,14 @@ class RandomPlayer(Player):
 
 if __name__ == '__main__':
 
-    uno = Uno()
-    state = GameState(cnt_player=3)
-    uno.set_state(state)
+    game = Uno()
+    game_state = GameState(cnt_player=3)
+    game.set_state(game_state)
+    player = RandomPlayer()
+    while game_state.phase != GamePhase.FINISHED:
+        possible_actions = game.get_list_action()
+        next_action = player.select_action(game_state, possible_actions)
+        game.apply_action(next_action)
+        game.print_state()
+        game_state = game.get_state()
+        print("\n\n")
